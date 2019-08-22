@@ -16,6 +16,7 @@ Contents:
    contributing
    authors
    history
+   license
 
 Feedback
 ========

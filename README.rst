@@ -14,6 +14,7 @@ Features
 
 * TODO
 
+.. include:: HISTORY.rst
 
 .. |build| image:: https://img.shields.io/travis/Ouranosinc/miranda.svg?branch=master
         :target: https://travis-ci.org/Ouranosinc/miranda
