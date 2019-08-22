@@ -11,8 +11,8 @@ This is the preferred method to install miranda, as it will always install the m
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
+.. _pip: https://pip.pypa.io/en/stable/
+.. _Python installation guide: https://docs.python-guide.org/starting/installation/
 
 From sources
 ------------
@@ -35,7 +35,7 @@ Alternatively, you can also install a local copy via pip::
     $ pip install .
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
-.. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
+.. _tarball: https://codeload.github.com/Ouranosinc/xclim/legacy.tar.gz/master
 
 Creating a Conda environment
 ----------------------------

@@ -14,8 +14,6 @@ Features
 
 * TODO
 
-.. include:: HISTORY.rst
-
 .. |build| image:: https://img.shields.io/travis/Ouranosinc/miranda.svg?branch=master
         :target: https://travis-ci.org/Ouranosinc/miranda
         :alt: Build Status
@@ -37,5 +35,5 @@ Features
         :alt: License
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-        :target: https://github.com/python/black
+        :target: https://github.com/psf/black
         :alt: Python Black

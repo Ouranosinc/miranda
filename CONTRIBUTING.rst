@@ -13,7 +13,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/Zeitsperre/miranda/issues.
+Report bugs at https://github.com/Ouranosinc/miranda/issues.
 
 If you are reporting a bug, please include:
 
@@ -43,7 +43,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/Zeitsperre/miranda/issues.
+The best way to send feedback is to file an issue at https://github.com/Ouranosinc/miranda/issues.
 
 If you are proposing a feature:
 
@@ -91,7 +91,7 @@ To get tox, just pip install it.
 
 6. Submit a pull request through the GitHub website.
 
-.. _Fork: https://github.com/Zeitsperre/miranda/fork
+.. _Fork: https://github.com/Ouranosinc/miranda/fork
 
 Pull Request Guidelines
 -----------------------
@@ -103,7 +103,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 2.6, 2.7, and 3.3, and for PyPy.
-   Check https://travis-ci.org/Zeitsperre/miranda
+   Check https://travis-ci.org/Ouranosinc/miranda
    under pull requests for active pull requests or run the ``tox`` command and
    make sure that the tests pass for all supported Python versions.
 
