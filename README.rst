@@ -15,24 +15,24 @@ Features
 * TODO
 
 
-.. |build| image:: https://img.shields.io/travis/Zeitsperre/miranda.svg?branch=master
-        :target: https://travis-ci.org/Zeitsperre/miranda
+.. |build| image:: https://img.shields.io/travis/Ouranosinc/miranda.svg?branch=master
+        :target: https://travis-ci.org/Ouranosinc/miranda
         :alt: Build Status
 
-.. |coveralls| image:: https://coveralls.io/repos/github/Zeitsperre/miranda/badge.svg
-        :target: https://coveralls.io/github/Zeitsperre/miranda
+.. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/miranda/badge.svg
+        :target: https://coveralls.io/github/Ouranosinc/miranda
         :alt: Coveralls
 
-.. |codefactor| image:: https://www.codefactor.io/repository/github/Zeitsperre/miranda/badge
-        :target: https://www.codefactor.io/repository/github/Zeitsperre/miranda
+.. |codefactor| image:: https://www.codefactor.io/repository/github/Ouranosinc/miranda/badge
+        :target: https://www.codefactor.io/repository/github/Ouranosinc/miranda
         :alt: CodeFactor
 
 .. |docs| image:: https://readthedocs.org/projects/miranda/badge
         :target: https://miranda.readthedocs.io/en/latest
         :alt: Documentation Status
 
-.. |license| image:: https://img.shields.io/github/license/Zeitsperre/miranda.svg
-        :target: https://github.com/Zeitsperre/miranda/blob/master/LICENSE
+.. |license| image:: https://img.shields.io/github/license/Ouranosinc/miranda.svg
+        :target: https://github.com/Ouranosinc/miranda/blob/master/LICENSE
         :alt: License
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
