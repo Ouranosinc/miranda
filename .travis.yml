@@ -30,8 +30,8 @@ matrix:
         - TOXENV=pypy
         python: pypy
     allow_failures:
-        - env: TOXENV=pypy
-        - env: TOXENV=py38-dev
+      - env: TOXENV=pypy
+      - env: TOXENV=py38-dev
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
