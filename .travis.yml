@@ -21,17 +21,27 @@ matrix:
       - env: TOXENV=docs
         python: 3.5
       - env: TOXENV=pypy
-        python: pypy
+        python: "pypy"
     allow_failures:
       - env: TOXENV=pypy
       - env: TOXENV=py38-dev
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
+    - |
+         if [[ "${TRAVIS_PYTHON_VERSION}" = pypy ]]; then
+             git clone https://github.com/yyuu/pyenv.git ~/.pyenv
+             PYENV_ROOT="$HOME/.pyenv"
+             PATH="$PYENV_ROOT/bin:$PATH"
+             eval "$(pyenv init -)"
+             pyenv install pypy-5.4.1
+             pyenv global pypy-5.4.1
+             pip install git+https://bitbucket.org/pypy/numpy.git
+         fi
     - sudo -H pip install --upgrade pip
     - pip install -U tox-travis
 
-# command to run tests, e.g. python setup.py test
+# command to run tests, e.g. python setup.py tests
 script: tox -e $TOXENV
 
 before_deploy:
