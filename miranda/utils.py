@@ -1,5 +1,8 @@
+import logging
+import os
 import platform
 from datetime import date
+from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
 
@@ -61,3 +64,15 @@ def creation_date(path_to_file: str or Path) -> float or date:
             # We're probably on Linux. No easy way to get creation dates here,
             # so we'll settle for when its content was last modified.
             return date.fromtimestamp(stat.st_mtime)
+
+
+def read_privileges(location: str or Path) -> bool:
+    if os.access(location, os.R_OK):
+        logging.info(
+            "{}: {} Read OK!".format(dt.now().strftime("%Y-%m-%d %X"), location)
+        )
+    else:
+        msg = "Ensure read privileges. Exiting."
+        logging.error(msg)
+        raise Exception(msg)
+    return True
