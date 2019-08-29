@@ -135,7 +135,7 @@ def delete_by_variable(
     delete=False,
 ) -> None:
     """
-    Given a target database, a list of variables and a server address, perform a glob search
+    Given a target location, a list of variables and a server address, perform a glob search
      and delete file names starting with the variables identified
     """
 
