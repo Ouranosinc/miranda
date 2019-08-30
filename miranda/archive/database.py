@@ -25,7 +25,7 @@ from miranda.archive.generic_archiver import single_item_list
 from miranda.archive.generic_archiver import working_directory
 
 
-class Database(object):
+class DataBase(object):
     """
 
     """

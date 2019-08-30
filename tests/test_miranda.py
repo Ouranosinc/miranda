@@ -1,15 +1,12 @@
 """
 Tests for `miranda` module.
 """
-import pytest
-
 import miranda
-from miranda import __version__
 
 
 class TestMirandaVersion(object):
     def test_version(self):
-        assert __version__
+        assert isinstance(miranda.__version__, str)
 
 
 class TestMiranda(object):

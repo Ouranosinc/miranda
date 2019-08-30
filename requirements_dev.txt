@@ -1,5 +1,10 @@
+pip
+wheel
 tox-travis
+coverage
 pytest
 pytest-runner
 flake8
+tox
+pre-commit
 autopep8
