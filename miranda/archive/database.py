@@ -155,8 +155,6 @@ def archive_database(
         logging.error(msg)
         raise RuntimeError(msg) from e
 
-    return
-
 
 if __name__ == "__main__":
     logging.basicConfig(

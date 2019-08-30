@@ -3,7 +3,6 @@ import logging
 import re
 from collections import defaultdict
 from datetime import datetime as dt
-from math import pow
 from pathlib import Path
 from types import GeneratorType
 from typing import List
@@ -100,7 +99,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
         )
         return dates
 
-    elif dates and total != len(files):
+    if dates and total != len(files):
         logging.info(
             "{}: Not all files were successfully grouped by date. Grouping aborted.".format(
                 now.strftime("%Y-%m-%d %X")
