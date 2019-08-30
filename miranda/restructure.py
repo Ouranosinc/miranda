@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime as dt
 from pathlib import Path
+from typing import Union
 
 from netCDF4 import Dataset
 
@@ -58,7 +59,7 @@ CMIP5_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP5_INSTITUTES.items() for i i
 CMIP6_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP6_INSTITUTES.items() for i in ids}
 
 
-def decode_cmip5_netcdf(file: str or Path) -> dict:
+def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
     facets = defaultdict(str)
     decode_file = Path(file).stem
     decode_file = str(decode_file).split("_")
@@ -82,7 +83,7 @@ def decode_cmip5_netcdf(file: str or Path) -> dict:
     return facets
 
 
-def decode_cmip5_name(file: str or Path) -> dict:
+def decode_cmip5_name(file: Union[Path, str]) -> dict:
     facets = dict()
     decode_file = Path(file).stem
     decode_file = str(decode_file).split("_")
@@ -106,15 +107,15 @@ def decode_cmip5_name(file: str or Path) -> dict:
     return facets
 
 
-def decode_cmip6_netcdf(file: str or Path) -> dict:
+def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
     pass
 
 
-def decode_cmip6_name(file: str or Path) -> dict:
+def decode_cmip6_name(file: Union[Path, str]) -> dict:
     pass
 
 
-def decode_cordex_netcdf(file: str or Path) -> dict:
+def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
     facets = defaultdict(str)
     decode_file = Path(file).stem
     decode_file = str(decode_file).split("_")
@@ -140,7 +141,7 @@ def decode_cordex_netcdf(file: str or Path) -> dict:
     return facets
 
 
-def decode_cordex_name(file: str or Path) -> dict:
+def decode_cordex_name(file: Union[Path, str]) -> dict:
     facets = dict()
     decode_file = Path(file).stem
     decode_file = str(decode_file).split("_")
@@ -162,7 +163,7 @@ def decode_cordex_name(file: str or Path) -> dict:
     return facets
 
 
-def decode_isimip_ft_name(file: str or Path) -> dict:
+def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
     facets = dict()
     f = Path(file)
     segm = str(f.stem).split("_")

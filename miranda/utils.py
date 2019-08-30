@@ -1,10 +1,14 @@
 import logging
 import os
 import platform
+from contextlib import contextmanager
 from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
+from typing import Iterable
+from typing import List
+from typing import Union
 
 conversions = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
@@ -25,7 +29,7 @@ def size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
 
 
 def file_size(
-    file_path_or_bytes: str or Path or int,
+    file_path_or_bytes: Union[Path, str, int, List, GeneratorType],
     use_binary: bool = True,
     significant_digits: int = 2,
 ) -> str or None:
@@ -48,7 +52,7 @@ def file_size(
     return size_formatter(total, binary=use_binary, precision=significant_digits)
 
 
-def creation_date(path_to_file: str or Path) -> float or date:
+def creation_date(path_to_file: Union[Path, str]) -> float or date:
     """
     Try to get the date that a file was created, falling back to when it was
     last modified if that isn't possible.
@@ -66,7 +70,7 @@ def creation_date(path_to_file: str or Path) -> float or date:
             return date.fromtimestamp(stat.st_mtime)
 
 
-def read_privileges(location: str or Path) -> bool:
+def read_privileges(location: Union[Path, str]) -> bool:
     if os.access(location, os.R_OK):
         logging.info(
             "{}: {} Read OK!".format(dt.now().strftime("%Y-%m-%d %X"), location)
@@ -76,3 +80,52 @@ def read_privileges(location: str or Path) -> bool:
         logging.error(msg)
         raise Exception(msg)
     return True
+
+
+@contextmanager
+def working_directory(directory):
+    """
+    This function momentarily changes the working directory within the
+     context and reverts to the file working directory when the code block
+     it is acting upon exits
+    """
+    owd = os.getcwd()
+    try:
+        os.chdir(directory)
+        yield directory
+    finally:
+        os.chdir(owd)
+    return
+
+
+def find_files(
+    source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
+    recursive: bool = True,
+    file_suffixes: str = "*.nc",
+    **_,
+) -> (List, Path):
+
+    if isinstance(source, (GeneratorType, List)):
+        file_list = [Path(f) for f in source]
+        source_path = os.path.commonpath(f for f in file_list)
+    else:
+        if recursive:
+            file_list = [f for f in Path(source).rglob(file_suffixes)]
+        elif not recursive:
+            file_list = [f for f in Path(source).glob(file_suffixes)]
+        else:
+            raise ValueError("Recursive: {}".format(recursive))
+        source_path = Path(source)
+    return file_list, source_path
+
+
+def single_item_list(iterable: Iterable) -> bool:
+    """
+    See: https://stackoverflow.com/a/16801605/7322852
+    """
+    iterator = iter(iterable)
+    has_true = any(iterator)  # consume from "i" until first true or it's exhausted
+    has_another_true = any(
+        iterator
+    )  # carry on consuming until another true value / exhausted
+    return has_true and not has_another_true  # True if exactly one true found

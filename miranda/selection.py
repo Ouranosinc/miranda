@@ -2,16 +2,17 @@ import logging
 from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
+from typing import Union
 
 import fabric
 
-from .utils import creation_date
+from miranda.utils import creation_date
 
 
 def move_by_date(
-    source: str or Path,
-    target: str or Path,
-    server: str or Path,
+    source: Union[Path, str],
+    target: Union[Path, str],
+    server: Union[Path, str],
     username: str,
     password: str,
     year: int,

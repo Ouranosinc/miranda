@@ -1,92 +1,31 @@
 #!/bin/env python3
 import logging
-import os
 import re
 from collections import defaultdict
-from contextlib import contextmanager
 from datetime import datetime as dt
 from math import pow
 from pathlib import Path
 from types import GeneratorType
-from typing import Iterable
 from typing import List
 from typing import Mapping
+from typing import Union
+
+from miranda.utils import file_size
 
 Nested_List = List[List[Path]]
 PathDict = Mapping[str, List[Path]]
 
 GiB = int(pow(2, 30))
 
-
-@contextmanager
-def working_directory(directory):
-    """
-    This function momentarily changes the working directory within the
-     context and reverts to the file working directory when the code block
-     it is acting upon exits
-    """
-    owd = os.getcwd()
-    try:
-        os.chdir(directory)
-        yield directory
-    finally:
-        os.chdir(owd)
-    return
+__all__ = [
+    "group_by_deciphered_date",
+    "group_by_length",
+    "group_by_size",
+    "group_by_subdirectories",
+]
 
 
-def file_size(
-    file_path_or_bytes: str or Path or int,
-    use_binary: bool = True,
-    significant_digits: int = 2,
-) -> str or None:
-    """
-    This function will return the size in bytes of a file or a list of files
-    """
-
-    conversions = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
-
-    def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
-        """
-        This function will format byte size into an appropriate nomenclature
-        """
-        import math
-
-        base = 1024 if binary else 1000
-        if i == 0:
-            return "0 B"
-        multiple = math.trunc(math.log2(i) / math.log2(base))
-        value = i / math.pow(base, multiple)
-        suffix = conversions[multiple].format("i" if binary else "")
-        return "{value:.{precision}f} {suffix}".format(**locals())
-
-    if isinstance(file_path_or_bytes, int):
-        return _size_formatter(
-            file_path_or_bytes, binary=use_binary, precision=significant_digits
-        )
-    elif isinstance(file_path_or_bytes, (list, GeneratorType)):
-        sizes = [Path(f).stat().st_size for f in file_path_or_bytes]
-        total = sum(sizes)
-    elif Path(file_path_or_bytes).is_file():
-        total = Path(file_path_or_bytes).stat().st_size
-    else:
-        return
-
-    return _size_formatter(total, binary=use_binary, precision=significant_digits)
-
-
-def single_item_list(iterable: Iterable) -> bool:
-    """
-    See: https://stackoverflow.com/a/16801605/7322852
-    """
-    iterator = iter(iterable)
-    has_true = any(iterator)  # consume from "i" until first true or it's exhausted
-    has_another_true = any(
-        iterator
-    )  # carry on consuming until another true value / exhausted
-    return has_true and not has_another_true  # True if exactly one true found
-
-
-def group_by_length(files: list or GeneratorType, size: int = 10) -> Nested_List:
+def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested_List:
     """
     This function groups files by an arbitrary number of file entries
     """
@@ -119,7 +58,7 @@ def group_by_length(files: list or GeneratorType, size: int = 10) -> Nested_List
     return grouped_list
 
 
-def group_by_deciphered_date(files: list or GeneratorType) -> PathDict:
+def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
     """
     This function attempts to find a common date and groups files based on year and month
     """
@@ -176,7 +115,9 @@ def group_by_deciphered_date(files: list or GeneratorType) -> PathDict:
     return dict(data=files)
 
 
-def group_by_size(files: list or GeneratorType, size: int = 10 * GiB) -> Nested_List:
+def group_by_size(
+    files: Union[GeneratorType, List], size: int = 10 * GiB
+) -> Nested_List:
     """
     This function will group files up until a desired size and save it as a grouping within a list
     """
@@ -216,7 +157,7 @@ def group_by_size(files: list or GeneratorType, size: int = 10 * GiB) -> Nested_
 
 
 def group_by_subdirectories(
-    files: list or GeneratorType, within: str or Path = None
+    files: Union[GeneratorType, List], within: str or Path = None
 ) -> PathDict:
     """
     This function will group files based on the parent folder that they are located within.

@@ -2,128 +2,30 @@
 import logging
 from collections import defaultdict
 from datetime import datetime as dt
-from getpass import getpass
 from pathlib import Path
-from types import GeneratorType
 from typing import List
-from typing import Optional
-from typing import Tuple
 from typing import Union
 
-import fabric
-from paramiko import AuthenticationException
-
-from miranda.archive._utils import _find_files
-from miranda.archive._utils import _make_remote_directory
-from miranda.archive._utils import _transfer_archive
-from miranda.archive._utils import _transfer_single
-from miranda.archive.generic_archiver import file_size
-from miranda.archive.generic_archiver import group_by_deciphered_date
-from miranda.archive.generic_archiver import group_by_size
-from miranda.archive.generic_archiver import group_by_subdirectories
-from miranda.archive.generic_archiver import single_item_list
-from miranda.archive.generic_archiver import working_directory
-
-
-class DataBase(object):
-    """
-
-    """
-
-    def __init__(
-        self,
-        source,
-        *,
-        destination: Optional[Union[str or Path]] = None,
-        common_path: Optional[Union[str or Path]] = None,
-        file_pattern: str = "*.nc",
-        project_name: str = None,
-        recursive: bool = True,
-    ):
-        self.destination = destination
-        if not self.destination:
-            self.destination = Path().cwd()
-
-        self.project_name = project_name
-        if not self.project_name:
-            self.project_name = self.destination.name
-
-        self.file_suffixes = file_pattern
-        self.recursive = recursive
-        self._files, self.common_path = self._scrape(source)
-        if common_path:
-            self.common_path = common_path
-
-        self.source = Path(source)
-
-    def __repr__(self):
-        return "<{}.{} object at {}>".format(
-            self.__class__.__module__, self.__class__.__name__, hex(id(self))
-        )
-
-    def __str__(self):
-        prepr = "[%s]" % ", ".join(['{}: "{}"'.format(k, v) for k, v in self.items()])
-        return "{}({})".format(self.__class__.__name__, prepr)
-
-    def _scrape(self, source):
-        if source is None:
-            raise ValueError("Source must be a string or Path.")
-        elif isinstance(source, (GeneratorType, List, Tuple, str, Path)):
-            files, source = _find_files(source, **self._as_dict())
-            self._files = files
-            return files, source
-        else:
-            raise ValueError
-
-    def _as_dict(self):
-        return {
-            key: value
-            for key, value in self.__dict__.items()
-            if not key.startswith("__") and not callable(key)
-        }
-
-    def items(self):
-        return self._as_dict().items()
-
-    def keys(self):
-        return self._as_dict().keys()
-
-    def values(self):
-        return self._as_dict().values()
-
-    def group_by(
-        self,
-        *,
-        common_path: str or Path = None,
-        subdirectories: bool = True,
-        dates: bool = True,
-    ):
-        # use_grouping = True
-        #
-        # if subdirectories:
-        #     file_groups = group_by_subdirectories(self._files, within=common_path)
-        #
-        # else:
-        #     file_groups = defaultdict(lambda: list())
-        #     for f in self._files:
-        #         file_groups["."].append(f)
-        pass
-
-    def target(self, target: str or Path):
-        self.destination = target
-
-    def archive(self):
-        pass
+from miranda import Connection
+from miranda.archive import _make_remote_directory
+from miranda.archive import _transfer_archive
+from miranda.archive import _transfer_single
+from miranda.archive import group_by_deciphered_date
+from miranda.archive import group_by_size
+from miranda.archive import group_by_subdirectories
+from miranda.utils import file_size
+from miranda.utils import find_files
+from miranda.utils import single_item_list
+from miranda.utils import working_directory
 
 
 def archive(
-    source: str or Path or List,
-    common_path: str or Path,
-    destination: str or Path,
+    source: Union[Path, str, List],
+    common_path: Union[Path, str],
+    destination: Union[Path, str],
     file_suffixes: str = ".nc",
     server: str = None,
     username: str = None,
-    password: str = None,
     project_name: str = None,
     overwrite: bool = False,
     compression: bool = False,
@@ -147,7 +49,7 @@ def archive(
     else:
         raise ValueError("Compression: {}".format(compression))
 
-    file_list, source_path = _find_files(
+    file_list, source_path = find_files(
         source=source, recursive=recursive, file_suffixes=file_suffixes
     )
 
@@ -159,15 +61,7 @@ def archive(
         for f in file_list:
             file_groups["."].append(f)
 
-    try:
-        user = username or input("Enter username: ")
-        pw = password or getpass("Enter password: ")
-        connection = fabric.Connection(
-            host=server, user=user, connect_kwargs=dict(password=pw)
-        )
-    except AuthenticationException as e:
-        logging.error("{}: Unable to connect to remote host {}.".format(e, server))
-        raise
+    connection = Connection(username=username, server=server, protocol="sftp")
 
     try:
         successful_transfers = list()
@@ -262,3 +156,12 @@ def archive(
         raise RuntimeError(msg) from e
 
     return
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        filename="{}_{}.log".format(
+            dt.strftime(dt.now(), "%Y%m%d"), Path(__name__).stem
+        ),
+        level=logging.INFO,
+    )

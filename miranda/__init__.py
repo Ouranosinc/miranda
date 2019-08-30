@@ -2,4 +2,5 @@ __author__ = "Trevor James Smith"
 __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.1.0-beta"
 
-from .archive import generic_archiver, database
+from .archive import *
+from .connect import Connection
