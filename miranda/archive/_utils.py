@@ -131,7 +131,7 @@ def _find_files(
     source: str or Path or GeneratorType or List[str or Path],
     recursive: bool = True,
     file_suffixes: str = "*.nc",
-    **_
+    **_,
 ) -> (List, Path):
 
     if isinstance(source, (GeneratorType, List)):
