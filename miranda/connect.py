@@ -22,6 +22,11 @@ class Connection(object):
         else:
             raise ValueError("Protocol must be 'sftp' or 'scp'.")
 
+    def __repr__(self):
+        return "<{}.{} object at {}>".format(
+            self.__class__.__module__, self.__class__.__name__, hex(id(self))
+        )
+
     def connect(self):
         if self.protocol == "sftp":
             c = fabric.Connection(

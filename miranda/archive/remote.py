@@ -15,10 +15,10 @@ from scp import SCPClient
 from scp import SCPException
 
 
-__all__ = ["_transfer_single", "_transfer_archive", "_make_remote_directory"]
+__all__ = ["transfer_single", "transfer_archive", "make_remote_directory"]
 
 
-def _make_remote_directory(directory, transport: Union[SSHClient, fabric.Connection]):
+def make_remote_directory(directory, transport: Union[SSHClient, fabric.Connection]):
     """
     This calls a function to create a folder structure over SFTP/SSH and waits
      for confirmation before continuing
@@ -43,7 +43,7 @@ def _make_remote_directory(directory, transport: Union[SSHClient, fabric.Connect
     return
 
 
-def _transfer_archive(
+def transfer_archive(
     source_files: List[Union[Path, str]],
     destination: Union[Path, str],
     transport: Union[SCPClient, SFTPClient, fabric.Connection],
@@ -103,7 +103,7 @@ def _transfer_archive(
     return True
 
 
-def _transfer_single(
+def transfer_single(
     source_file: Union[Path, str],
     destination: Union[Path, str],
     transport: Union[SCPClient, SFTPClient, fabric.Connection],

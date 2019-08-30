@@ -6,20 +6,20 @@ from pathlib import Path
 from typing import List
 from typing import Union
 
-from miranda import Connection
-from miranda.archive import _make_remote_directory
-from miranda.archive import _transfer_archive
-from miranda.archive import _transfer_single
-from miranda.archive import group_by_deciphered_date
-from miranda.archive import group_by_size
-from miranda.archive import group_by_subdirectories
+from .groupings import group_by_deciphered_date
+from .groupings import group_by_size
+from .groupings import group_by_subdirectories
+from .remote import make_remote_directory
+from .remote import transfer_archive
+from .remote import transfer_single
+from miranda.connect import Connection
 from miranda.utils import file_size
 from miranda.utils import find_files
 from miranda.utils import single_item_list
 from miranda.utils import working_directory
 
 
-def archive(
+def archive_database(
     source: Union[Path, str, List],
     common_path: Union[Path, str],
     destination: Union[Path, str],
@@ -70,7 +70,7 @@ def archive(
                 remote_path = Path(destination, group_name)
 
                 if not remote_path.exists():
-                    _make_remote_directory(remote_path, transport=ctx)
+                    make_remote_directory(remote_path, transport=ctx)
 
                 if use_grouping:
                     dated_groups = group_by_deciphered_date(members)
@@ -96,7 +96,7 @@ def archive(
                                     )
                                 )
 
-                            if _transfer_single(archive_file, transfer, transport=ctx):
+                            if transfer_single(archive_file, transfer, transport=ctx):
                                 successful_transfers.append(archive_file)
 
                     elif use_grouping or not single_item_list(files):
@@ -128,7 +128,7 @@ def archive(
                                 )
 
                             with working_directory(source_path):
-                                if _transfer_archive(
+                                if transfer_archive(
                                     sized_group,
                                     transfer,
                                     transport=ctx,
