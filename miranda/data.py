@@ -22,12 +22,18 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from miranda.archive import *
+from miranda.connect import Connection
 from miranda.utils import find_files
+
+__all__ = ["DataBase"]
 
 
 class DataBase(object):
     """
     """
+
+    GiB = int(pow(2, 30))
 
     def __init__(
         self,
@@ -39,23 +45,23 @@ class DataBase(object):
         project_name: str = None,
         recursive: bool = True,
     ):
-        self.destination = destination
+        self.destination = Path(destination)
         if not self.destination:
             self.destination = Path().cwd()
 
-        self.project_name = project_name
+        self.project_name = str(project_name)
         if not self.project_name:
-            self.project_name = self.destination.name
+            self.project_name = str(self.destination.name)
 
-        self.file_suffixes = file_pattern
+        self.file_suffixes = str(file_pattern)
         self.recursive = recursive
 
         self._files, self.common_path = self._scrape(source)
         if common_path:
-            self.common_path = common_path
+            self.common_path = Path(common_path)
         self._is_server = False
         self.source = Path(source)
-        self.successful_transfers = 0
+        self.successful_transfers = int(0)
 
     def __repr__(self):
         return "<{}.{} object at {}>".format(
@@ -66,7 +72,7 @@ class DataBase(object):
         prepr = "[%s]" % ", ".join(['{}: "{}"'.format(k, v) for k, v in self.items()])
         return "{}({})".format(self.__class__.__name__, prepr)
 
-    def _scrape(self, source):
+    def _scrape(self, source) -> Tuple[List[Path], Path]:
         if source is None:
             raise ValueError("Source must be a string or Path.")
         elif isinstance(source, (GeneratorType, List, Tuple, str, Path)):
@@ -98,6 +104,7 @@ class DataBase(object):
         common_path: Union[Path, str] = None,
         subdirectories: bool = True,
         dates: bool = True,
+        size: int = 10 * GiB,
     ):
         # use_grouping = True
         #

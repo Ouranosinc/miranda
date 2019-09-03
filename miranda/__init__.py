@@ -4,4 +4,4 @@ __version__ = "0.1.0-beta"
 
 import miranda.archive
 from .connect import Connection
-from .data_classes import DataBase
+from .data import DataBase

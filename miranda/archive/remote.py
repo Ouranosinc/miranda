@@ -3,6 +3,7 @@ import tarfile
 import tempfile
 import time
 from datetime import datetime as dt
+from functools import singledispatch
 from pathlib import Path
 from typing import List
 from typing import Union
@@ -14,11 +15,13 @@ from paramiko import SSHException
 from scp import SCPClient
 from scp import SCPException
 
+from ..connect import Connection
 
-__all__ = ["transfer_single", "transfer_archive", "make_remote_directory"]
 
-
-def make_remote_directory(directory, transport: Union[SSHClient, fabric.Connection]):
+@singledispatch
+def make_remote_directory(
+    directory, transport: Union[SSHClient, fabric.Connection, Connection]
+):
     """
     This calls a function to create a folder structure over SFTP/SSH and waits
      for confirmation before continuing
@@ -31,8 +34,9 @@ def make_remote_directory(directory, transport: Union[SSHClient, fabric.Connecti
 
     ownership = "0775"
     command = "mkdir -p -m {} '{}'".format(ownership, directory)
-    if isinstance(transport, fabric.Connection):
-        transport.run(command)
+    if isinstance(transport, (fabric.Connection, Connection)):
+        with transport:
+            transport.run(command)
     elif isinstance(transport, (SSHClient, SCPClient)):
         transport.exec_command(command, timeout=1)
         for i in range(5):
@@ -40,6 +44,8 @@ def make_remote_directory(directory, transport: Union[SSHClient, fabric.Connecti
                 time.sleep(1)
                 continue
             break
+    else:
+        raise ConnectionError
     return
 
 
@@ -75,31 +81,7 @@ def transfer_archive(
                     logging.warning(msg)
 
             tar.close()
-
-        try:
-            logging.info(
-                "{}: Beginning scp transfer of {} to {}".format(
-                    dt.now().strftime("%Y-%m-%d %X"),
-                    Path(destination).name,
-                    Path(destination).parent,
-                )
-            )
-            transport.put(str(archive_file), str(destination))
-
-        except SCPException or SSHException or IOError or OSError as e:
-            msg = '{}: File "{}" failed to be added: {}.'.format(
-                dt.now().strftime("%Y-%m-%d %X"), destination.name, e
-            )
-            logging.warning(msg)
-            return False
-
-        logging.info(
-            "{}: Transferred {} to {}".format(
-                dt.now().strftime("%Y-%m-%d %X"),
-                Path(destination).name,
-                Path(destination).parent,
-            )
-        )
+        transfer_single(archive_file, destination, transport)
     return True
 
 
@@ -110,7 +92,9 @@ def transfer_single(
 ) -> bool:
     try:
         logging.info(
-            "{}: Passing {}".format(dt.now().strftime("%Y-%m-%d %X"), source_file)
+            "{}: Beginning transfer of {}".format(
+                dt.now().strftime("%Y-%m-%d %X"), source_file
+            )
         )
         transport.put(str(source_file), str(destination))
         logging.info(
@@ -126,4 +110,13 @@ def transfer_single(
         )
         logging.warning(msg)
         return False
+
+    logging.info(
+        "{}: Transferred {} to {}".format(
+            dt.now().strftime("%Y-%m-%d %X"),
+            Path(destination).name,
+            Path(destination).parent,
+        )
+    )
+
     return True

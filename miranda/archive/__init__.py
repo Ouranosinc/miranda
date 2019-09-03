@@ -1,4 +1,4 @@
-from .database import archive_database
+from .archiver import archive_database
 from .groupings import group_by_deciphered_date
 from .groupings import group_by_length
 from .groupings import group_by_size
