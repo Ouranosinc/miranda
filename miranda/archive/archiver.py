@@ -61,7 +61,7 @@ def archive_database(
         for f in file_list:
             file_groups["."].append(f)
 
-    connection = Connection(username=username, server=server, protocol="sftp")
+    connection = Connection(username=username, host=server, protocol="sftp")
 
     try:
         successful_transfers = list()
