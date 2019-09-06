@@ -9,9 +9,9 @@ from typing import Union
 from .groupings import group_by_deciphered_date
 from .groupings import group_by_size
 from .groupings import group_by_subdirectories
-from .remote import make_remote_directory
-from .remote import transfer_archive
-from .remote import transfer_single
+from .remote import create_archive
+from .remote import create_remote_directory
+from .remote import transfer_file
 from miranda.connect import Connection
 from miranda.utils import file_size
 from miranda.utils import find_files
@@ -70,7 +70,7 @@ def archive_database(
                 remote_path = Path(destination, group_name)
 
                 if not remote_path.exists():
-                    make_remote_directory(remote_path, transport=ctx)
+                    create_remote_directory(remote_path, transport=ctx)
 
                 if use_grouping:
                     dated_groups = group_by_deciphered_date(members)
@@ -96,7 +96,7 @@ def archive_database(
                                     )
                                 )
 
-                            if transfer_single(archive_file, transfer, transport=ctx):
+                            if transfer_file(archive_file, transfer, transport=ctx):
                                 successful_transfers.append(archive_file)
 
                     elif use_grouping or not single_item_list(files):
@@ -128,7 +128,7 @@ def archive_database(
                                 )
 
                             with working_directory(source_path):
-                                if transfer_archive(
+                                if create_archive(
                                     sized_group,
                                     transfer,
                                     transport=ctx,

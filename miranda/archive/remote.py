@@ -3,7 +3,6 @@ import tarfile
 import tempfile
 import time
 from datetime import datetime as dt
-from functools import singledispatch
 from pathlib import Path
 from typing import List
 from typing import Union
@@ -17,9 +16,10 @@ from scp import SCPException
 
 from ..connect import Connection
 
+# from functools import singledispatch
 
-@singledispatch
-def make_remote_directory(
+
+def create_remote_directory(
     directory, transport: Union[SSHClient, fabric.Connection, Connection]
 ):
     """
@@ -49,13 +49,14 @@ def make_remote_directory(
     return
 
 
-def transfer_archive(
+def create_archive(
     source_files: List[Union[Path, str]],
     destination: Union[Path, str],
-    transport: Union[SCPClient, SFTPClient, fabric.Connection],
+    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection] = None,
+    delete: bool = True,
     compression: bool = False,
     recursive: bool = True,
-) -> bool:
+) -> None:
     if compression:
         write = "w:gz"
     elif not compression:
@@ -63,7 +64,7 @@ def transfer_archive(
     else:
         raise ValueError("Compression: {}".format(compression))
 
-    with tempfile.NamedTemporaryFile() as temp:
+    with tempfile.NamedTemporaryFile(delete=delete) as temp:
         archive_file = temp.name
         with tarfile.open(archive_file, write) as tar:
             for name in source_files:
@@ -79,16 +80,24 @@ def transfer_archive(
                         dt.now().strftime("%Y-%m-%d %X"), name.name, e
                     )
                     logging.warning(msg)
-
             tar.close()
-        transfer_single(archive_file, destination, transport)
-    return True
+        if transport:
+            transfer_file(archive_file, destination, transport)
+        else:
+            try:
+                Path(destination).write_bytes(Path(archive_file).read_bytes())
+            except Exception as e:
+                msg = '{}: File "{}" failed to be copied: {}'.format(
+                    dt.now().strftime("%Y-%m-%d %X"), name.name, e
+                )
+                logging.error(msg)
+    return
 
 
-def transfer_single(
+def transfer_file(
     source_file: Union[Path, str],
     destination: Union[Path, str],
-    transport: Union[SCPClient, SFTPClient, fabric.Connection],
+    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection],
 ) -> bool:
     try:
         logging.info(
@@ -105,7 +114,7 @@ def transfer_single(
             )
         )
     except SCPException or SSHException or IOError or OSError as e:
-        msg = '{}: File "{}" failed to be added: {}.'.format(
+        msg = '{}: File "{}" failed to be transferred: {}.'.format(
             dt.now().strftime("%Y-%m-%d %X"), destination.name, e
         )
         logging.warning(msg)

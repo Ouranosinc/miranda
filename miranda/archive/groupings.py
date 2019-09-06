@@ -24,21 +24,24 @@ __all__ = [
 ]
 
 
+def _ingest(files: Union[GeneratorType, List]) -> List:
+    if isinstance(files, GeneratorType):
+        files = [f for f in files]
+    files.sort()
+    return files
+
+
 def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested_List:
     """
     This function groups files by an arbitrary number of file entries
     """
-
-    grouped_list = list()
-    group = list()
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
-    files.sort()
-
     logging.info(
         "{}: Creating groups of {} files".format(dt.now().strftime("%Y-%m-%d %X"), size)
     )
 
+    files = _ingest(files)
+    grouped_list = list()
+    group = list()
     for i, f in enumerate(files):
         group.append(f)
         if (i + 1) % size == 0:
@@ -61,10 +64,6 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
     """
     This function attempts to find a common date and groups files based on year and month
     """
-    if isinstance(files, GeneratorType):
-        files = [Path(f) for f in files]
-    files.sort()
-
     logging.info(
         "{}: Creating files from deciphered dates.".format(
             dt.now().strftime("%Y-%m-%d %X")
@@ -75,6 +74,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
         r"(?P<year>[0-9]{4})-?(?P<month>[0-9]{2})-?(?P<day>[0-9]{2})?.*\.(?P<suffix>nc)$"
     )
 
+    files = _ingest(files)
     dates = defaultdict(lambda: list())
     total = 0
     for f in files:
@@ -120,18 +120,15 @@ def group_by_size(
     """
     This function will group files up until a desired size and save it as a grouping within a list
     """
-    grouped_list = list()
-    group = list()
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
-    files.sort()
-
     logging.info(
         "{}: Creating groups of files based on size not exceeding {}".format(
             dt.now().strftime("%Y-%m-%d %X"), file_size(size)
         )
     )
 
+    files = _ingest(files)
+    grouped_list = list()
+    group = list()
     total = 0
     for f in files:
         total += Path.stat(f).st_size
@@ -161,31 +158,18 @@ def group_by_subdirectories(
     """
     This function will group files based on the parent folder that they are located within.
     """
-    groupings = defaultdict(list)
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
-    files.sort()
-
     if not within:
         within = Path.cwd()
 
+    files = _ingest(files)
+    groups = defaultdict(list)
     for f in files:
         group_name = Path(f).relative_to(within).parent
-        groupings[group_name].append(f)
+        groups[group_name].append(f)
 
     logging.info(
         "{}: File subdirectories found. Proceeding with {}.".format(
-            dt.now().strftime("%Y-%m-%d %X"),
-            str([str(key) for key in groupings.keys()]),
+            dt.now().strftime("%Y-%m-%d %X"), str([str(key) for key in groups.keys()])
         )
     )
-    return groupings
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        filename="{}_{}.log".format(
-            dt.strftime(dt.now(), "%Y%m%d"), Path(__name__).stem
-        ),
-        level=logging.INFO,
-    )
+    return groups
