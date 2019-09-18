@@ -14,7 +14,7 @@ from paramiko import SSHException
 from scp import SCPClient
 from scp import SCPException
 
-from ..connect import Connection
+from ..server.connect import Connection
 
 # from functools import singledispatch
 

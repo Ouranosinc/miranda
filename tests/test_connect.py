@@ -1,6 +1,6 @@
 import re
 
-from miranda.connect import Connection
+from miranda.server import Connection
 
 
 class TestConnection:

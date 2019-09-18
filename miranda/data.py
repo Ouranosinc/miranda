@@ -14,6 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import os
 import re
 from pathlib import Path
 from types import GeneratorType
@@ -22,9 +23,11 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from miranda.archive import *
-from miranda.connect import Connection
-from miranda.utils import find_files
+from .utils import find_filepaths
+from .utils import GiB
+
+# from .archive import *
+# from .server import Connection
 
 __all__ = ["DataBase"]
 
@@ -32,8 +35,6 @@ __all__ = ["DataBase"]
 class DataBase(object):
     """
     """
-
-    GiB = int(pow(2, 30))
 
     def __init__(
         self,
@@ -56,7 +57,8 @@ class DataBase(object):
         self.file_suffixes = str(file_pattern)
         self.recursive = recursive
 
-        self._files, self.common_path = self._scrape(source)
+        self.common_path = Path(source)
+        self._files = self._scrape(source)
         if common_path:
             self.common_path = Path(common_path)
         self._is_server = False
@@ -72,13 +74,15 @@ class DataBase(object):
         prepr = "[%s]" % ", ".join(['{}: "{}"'.format(k, v) for k, v in self.items()])
         return "{}({})".format(self.__class__.__name__, prepr)
 
-    def _scrape(self, source) -> Tuple[List[Path], Path]:
+    def _scrape(self, source) -> List[Path]:
         if source is None:
             raise ValueError("Source must be a string or Path.")
         elif isinstance(source, (GeneratorType, List, Tuple, str, Path)):
-            files, source = find_files(source, **self._as_dict())
+            files = find_filepaths(source, **self._as_dict())
+            common_path = os.path.commonpath(f for f in files)
             self._files = files
-            return files, source
+            self.common_path.update(common_path)
+            return files
         else:
             raise ValueError
 

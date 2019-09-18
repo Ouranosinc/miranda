@@ -74,9 +74,3 @@ class Connection(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__c.close()
-
-
-if __name__ == "__main__":
-    a = Connection(username="tttt", host="1234")
-    with a.connect(password="stuff") as f:
-        print(f.is_connected)

@@ -12,9 +12,9 @@ from .groupings import group_by_subdirectories
 from .remote import create_archive
 from .remote import create_remote_directory
 from .remote import transfer_file
-from miranda.connect import Connection
+from miranda.server import Connection
 from miranda.utils import file_size
-from miranda.utils import find_files
+from miranda.utils import find_filepaths
 from miranda.utils import single_item_list
 from miranda.utils import working_directory
 
@@ -49,7 +49,7 @@ def archive_database(
     else:
         raise ValueError("Compression: {}".format(compression))
 
-    file_list, source_path = find_files(
+    file_list, source_path = find_filepaths(
         source=source, recursive=recursive, file_suffixes=file_suffixes
     )
 
