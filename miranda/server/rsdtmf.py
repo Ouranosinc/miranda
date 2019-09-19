@@ -51,7 +51,7 @@ __all__ = [
     "local_storage_for_rstdmf",
     "rstdmf_divisions",
     "rstdmf_rename",
-    "rstdmfError",
+    "RstdmfError",
 ]
 
 
@@ -80,7 +80,7 @@ def rstdmf_rename(file_list, restore_path):
     try:
         makedirs_secure(restore_path)
     except OSError:
-        raise rstdmfError("Cannot create restore path " + restore_path + ".")
+        raise RstdmfError("Cannot create restore path " + restore_path + ".")
     # Create string with list of files
     file_list_string = "' '".join(file_list)
     file_list_string = "'" + file_list_string + "'"
@@ -89,7 +89,7 @@ def rstdmf_rename(file_list, restore_path):
     # rstdmf call
     flag_system = os.system("rstdmf -m -b " + file_list_string + " " + restore_path)
     if flag_system:
-        raise rstdmfError("rstdmf call failed.")
+        raise RstdmfError("rstdmf call failed.")
     # rename files
     for file_to_restore in file_list:
         file_name = file_to_restore.replace("/", ".").lstrip(".")
@@ -97,7 +97,7 @@ def rstdmf_rename(file_list, restore_path):
         try:
             shutil.move(restored_file, restore_path + "/" + file_name)
         except OSError:
-            raise rstdmfError("Could not move " + restored_file + ".")
+            raise RstdmfError("Could not move " + restored_file + ".")
 
 
 def local_storage_for_rstdmf(files_for_rstdmf, restore_path, max_size_on_disk):
@@ -291,9 +291,9 @@ def rstdmf_divisions(
         DiskSpaceEvent.clear()
         try:
             rstdmf_rename(list_of_path, restore_path)
-        except rstdmfError:
+        except RstdmfError:
             raise
 
 
-class rstdmfError(Exception):
+class RstdmfError(Exception):
     pass
