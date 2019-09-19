@@ -3,9 +3,23 @@ import logging
 from collections import defaultdict
 from datetime import datetime as dt
 from pathlib import Path
+from typing import List
 from typing import Union
 
 from netCDF4 import Dataset
+
+
+def _from_netcdf(file: Union[Path, str]) -> (str, Dataset):
+    decode_file = Path(file).stem
+    decode_file = str(decode_file).split("_")[0]
+    data = Dataset(file)
+    return decode_file, data
+
+
+def _from_filename(file: Union[Path, str]) -> List[str]:
+    decode_file = Path(file).name
+    decode_file = decode_file.split("_")
+    return decode_file
 
 
 CMIP5_INSTITUTES = {
@@ -59,13 +73,19 @@ CMIP5_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP5_INSTITUTES.items() for i i
 CMIP6_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP6_INSTITUTES.items() for i in ids}
 
 
-def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
-    facets = defaultdict(str)
-    decode_file = Path(file).stem
-    decode_file = str(decode_file).split("_")
-    data = Dataset(file)
+def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
+    pass
 
-    facets["variable"] = decode_file[0]
+
+def decode_cmip6_name(file: Union[Path, str]) -> dict:
+    pass
+
+
+def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
+    variable, data = _from_netcdf(file=file)
+
+    facets = dict()
+    facets["variable"] = variable
     facets["project"] = data.project_id
     facets["institute"] = data.institute_id
     facets["frequency"] = data.frequency
@@ -84,10 +104,9 @@ def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
 
 
 def decode_cmip5_name(file: Union[Path, str]) -> dict:
-    facets = dict()
-    decode_file = Path(file).stem
-    decode_file = str(decode_file).split("_")
+    decode_file = _from_filename(file=file)
 
+    facets = dict()
     facets["variable"] = decode_file[0]
     facets["frequency"] = decode_file[1]
     if facets["frequency"] == "Amon":
@@ -107,21 +126,11 @@ def decode_cmip5_name(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
-    pass
-
-
-def decode_cmip6_name(file: Union[Path, str]) -> dict:
-    pass
-
-
 def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
-    facets = defaultdict(str)
-    decode_file = Path(file).stem
-    decode_file = str(decode_file).split("_")
-    data = Dataset(file)
+    variable, data = _from_netcdf(file=file)
 
-    facets["variable"] = decode_file[0]
+    facets = dict()
+    facets["variable"] = variable
     facets["project"] = data.project_id
     facets["institute"] = data.institute_id
     facets["model"] = data.model_id
@@ -130,7 +139,6 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
     facets["driver"] = data.driving_model_id
     facets["experiment"] = data.experiment_id
     facets["ensemble"] = data.parent_experiment_rip
-    facets["realm"] = data.modeling_realm
 
     logging.info(
         "{}: Deciphered the following from {}: {}".format(
@@ -142,15 +150,13 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
 
 
 def decode_cordex_name(file: Union[Path, str]) -> dict:
-    facets = dict()
-    decode_file = Path(file).stem
-    decode_file = str(decode_file).split("_")
+    decode_file = _from_filename(file=file)
 
+    facets = dict()
     facets["institute"] = decode_file[5].split("-")[0]
     facets["model"] = decode_file[5].split("-")[1:]
     facets["experiment"] = "_".join(decode_file[1:4])
     facets["time_frequency"] = decode_file[-2]
-    facets["realm"] = None
     facets["ensemble"] = decode_file[4]
     facets["variable"] = decode_file[0]
 
@@ -164,22 +170,21 @@ def decode_cordex_name(file: Union[Path, str]) -> dict:
 
 
 def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
-    facets = dict()
-    f = Path(file)
-    segm = str(f.stem).split("_")
+    decode_file = _from_filename(file=file)
 
-    facets["variable"] = segm[-4]
+    facets = dict()
+    facets["variable"] = decode_file[-4]
     facets["project"] = "ISIMIP-FT"
-    facets["institute"] = segm[1].split("-")[0]
-    facets["model"] = "-".join(segm[1].split("-")[1:])
-    facets["experiment"] = segm[2]
+    facets["institute"] = decode_file[1].split("-")[0]
+    facets["model"] = "-".join(decode_file[1].split("-")[1:])
+    facets["experiment"] = decode_file[2]
 
     facets["setup"] = "-".join([facets["model"], facets["experiment"]])
 
-    facets["time_frequency"] = segm[-3]
-    facets["impact_model"] = segm[0]
-    facets["soc_forcing"] = segm[3]
-    facets["co2_forcing"] = segm[4]
+    facets["time_frequency"] = decode_file[-3]
+    facets["impact_model"] = decode_file[0]
+    facets["soc_forcing"] = decode_file[3]
+    facets["co2_forcing"] = decode_file[4]
 
     if facets["co2_forcing"] == facets["variable"]:
         if facets["soc_forcing"] in [
@@ -207,13 +212,11 @@ def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
 
 
 def decode_isimip_ft_netcdf(file):
-    facets = defaultdict(str)
-    decode_file = Path(file).stem
-    decode_file = str(decode_file).split("_")
-    data = Dataset(file)
+    variable, data = _from_netcdf(file=file)
 
-    facets["variable"] = decode_file[0]
-    facets["project"] = str(data.project_id).upper()
+    facets = defaultdict(str)
+    facets["variable"] = variable
+    facets["project"] = str(data.project_id)
     facets["institute"] = data.institute_id
     facets["frequency"] = data.time_frequency_id
     facets["model"] = data.model_id
@@ -231,3 +234,27 @@ def decode_isimip_ft_netcdf(file):
     )
 
     return facets
+
+
+class DecorderException(Exception):
+    pass
+
+
+class Decoder:
+    pass
+
+
+class CORDEXDecoder(Decoder):
+    pass
+
+
+class CMIP5Decoder(Decoder):
+    pass
+
+
+class CMIP6Decoder(Decoder):
+    pass
+
+
+class ISIMIPDecorder(Decoder):
+    pass
