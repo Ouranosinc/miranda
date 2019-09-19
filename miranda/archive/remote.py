@@ -81,51 +81,57 @@ def create_archive(
                     )
                     logging.warning(msg)
             tar.close()
-        if transport:
-            transfer_file(archive_file, destination, transport)
-        else:
-            try:
-                Path(destination).write_bytes(Path(archive_file).read_bytes())
-            except Exception as e:
-                msg = '{}: File "{}" failed to be copied: {}'.format(
-                    dt.now().strftime("%Y-%m-%d %X"), name.name, e
-                )
-                logging.error(msg)
+        transfer_file(archive_file, destination, transport)
     return
 
 
 def transfer_file(
     source_file: Union[Path, str],
-    destination: Union[Path, str],
-    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection],
+    destination_file: Union[Path, str],
+    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection] = None,
 ) -> bool:
-    try:
-        logging.info(
-            "{}: Beginning transfer of {}".format(
-                dt.now().strftime("%Y-%m-%d %X"), source_file
+
+    source_file = Path(source_file)
+    destination_file = Path(destination_file)
+
+    if transport:
+        try:
+            logging.info(
+                "{}: Beginning transfer of {}".format(
+                    dt.now().strftime("%Y-%m-%d %X"), source_file
+                )
             )
-        )
-        transport.put(str(source_file), str(destination))
+            transport.put(str(source_file), str(destination_file))
+            logging.info(
+                "{}: Transferred {} to {}".format(
+                    dt.now().strftime("%Y-%m-%d %X"),
+                    Path(destination_file).name,
+                    Path(destination_file).parent,
+                )
+            )
+
+        except SCPException or SSHException or IOError or OSError as e:
+            msg = '{}: File "{}" failed to be transferred: {}.'.format(
+                dt.now().strftime("%Y-%m-%d %X"), destination_file.name, e
+            )
+            logging.warning(msg)
+            return False
+
         logging.info(
             "{}: Transferred {} to {}".format(
                 dt.now().strftime("%Y-%m-%d %X"),
-                Path(destination).name,
-                Path(destination).parent,
+                Path(destination_file).name,
+                Path(destination_file).parent,
             )
         )
-    except SCPException or SSHException or IOError or OSError as e:
-        msg = '{}: File "{}" failed to be transferred: {}.'.format(
-            dt.now().strftime("%Y-%m-%d %X"), destination.name, e
-        )
-        logging.warning(msg)
-        return False
 
-    logging.info(
-        "{}: Transferred {} to {}".format(
-            dt.now().strftime("%Y-%m-%d %X"),
-            Path(destination).name,
-            Path(destination).parent,
-        )
-    )
-
+    else:
+        try:
+            destination_file.write_bytes(source_file.read_bytes())
+        except Exception as e:
+            msg = '{}: File "{}" failed to be copied: {}'.format(
+                dt.now().strftime("%Y-%m-%d %X"), source_file.name, e
+            )
+            logging.error(msg)
+            return False
     return True

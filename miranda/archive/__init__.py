@@ -6,3 +6,4 @@ from .groupings import group_by_subdirectories
 from .remote import create_archive
 from .remote import create_remote_directory
 from .remote import transfer_file
+from .selection import select_by_date_modified

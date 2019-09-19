@@ -138,22 +138,48 @@ def single_item_list(iterable: Iterable) -> bool:
     return has_true and not has_another_true  # True if exactly one true found
 
 
-########################################################################################
-
-
-def makedirs_secure(path_makedirs):
+def make_local_dirs(pathway):
     """Create directories recursively, unless they already exist.
     Parameters
     ----------
-    path_makedirs : str
-        path to create.
+    pathway : Union[Path, str]
+      Path of folders to create.
     """
 
-    if not os.path.isdir(path_makedirs):
+    pathway = Path(pathway)
+
+    if not pathway.exists():
         try:
-            os.makedirs(path_makedirs)
+            pathway.mkdir(parents=True)
         except OSError:
             raise
+
+
+def set_comparions(set1: Sequence, set2: Sequence) -> bool:
+    """Compare two sequences of non hashable objects as if they were sets.
+
+    Parameters
+    ----------
+    set1 : Sequence
+      First sequence of objects.
+    set2 : Sequence
+      Second sequence of objects.
+    Returns
+    -------
+    out : bool
+      True if two sets are identical, that is, they contain the same elements.
+    """
+
+    for item1 in set1:
+        if item1 not in set2:
+            return False
+    for item2 in set2:
+        if item2 not in set1:
+            return False
+    return True
+
+
+########################################################################################
 
 
 def yesno_prompt(query):
@@ -246,27 +272,3 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]):
             for my_path, my_item in zip(next_base_paths, path_content):
                 paths_elements.append({"path": my_path, elements[0]: my_item})
     return paths_elements
-
-
-def set_comparions(set1: Sequence, set2: Sequence):
-    """Compare two sequences of non hashable objects as if they were sets.
-
-    Parameters
-    ----------
-    set1 : Sequence
-      First sequence of objects.
-    set2 : Sequence
-      Second sequence of objects.
-    Returns
-    -------
-    out : bool
-      True if two sets are identical, that is, they contain the same elements.
-    """
-
-    for item1 in set1:
-        if item1 not in set2:
-            return False
-    for item2 in set2:
-        if item2 not in set1:
-            return False
-    return True

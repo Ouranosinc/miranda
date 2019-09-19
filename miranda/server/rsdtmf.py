@@ -36,7 +36,7 @@ import threading
 import time
 
 from ..utils import find_filepaths
-from ..utils import makedirs_secure
+from ..utils import make_local_dirs
 from ..utils import verbose_fn
 from ..utils import yesno_prompt
 from .storage import DiskSpaceError
@@ -78,7 +78,7 @@ def rstdmf_rename(file_list, restore_path):
     restore_path = os.path.abspath(restore_path)
     # Create output directory, if necessary
     try:
-        makedirs_secure(restore_path)
+        make_local_dirs(restore_path)
     except OSError:
         raise RstdmfError("Cannot create restore path " + restore_path + ".")
     # Create string with list of files
