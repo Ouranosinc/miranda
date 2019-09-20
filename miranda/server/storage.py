@@ -103,22 +103,22 @@ class StorageState:
         if -1 == capacity:
             try:
                 self.capacity = int(df_output_split[1]) * 1000
-            except:
-                raise DiskSpaceError("/bin/df output not as expected.")
+            except Exception as e:
+                raise DiskSpaceError("/bin/df output not as expected.") from e
         else:
             self.capacity = capacity
         if -1 == used_space:
             try:
                 self.used_space = int(df_output_split[2]) * 1000
-            except:
-                raise DiskSpaceError("/bin/df output not as expected.")
+            except Exception as e:
+                raise DiskSpaceError("/bin/df output not as expected.") from e
         else:
             self.used_space = used_space
         if -1 == free_space:
             try:
                 self.free_space = int(df_output_split[3]) * 1000
-            except:
-                raise DiskSpaceError("/bin/df output not as expected.")
+            except Exception as e:
+                raise DiskSpaceError("/bin/df output not as expected.") from e
         else:
             self.free_space = free_space
 
