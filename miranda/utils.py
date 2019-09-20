@@ -140,7 +140,7 @@ def find_filepaths(
     source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
     recursive: bool = True,
     file_suffixes: List[str] = None,
-    **_,
+    **_
 ) -> List[Path]:
 
     if file_suffixes is None:

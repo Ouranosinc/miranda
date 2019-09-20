@@ -27,7 +27,7 @@ def delete_by_date(
     year: int,
     month: int,
     day: int,
-    dt_object: Optional[date] = None,
+    dt_object: Optional[date] = None
 ) -> None:
 
     date_selected = date(year, month, day) or dt_object
@@ -69,7 +69,7 @@ def delete_duplicates(
     server: Optional[str or Path],
     user: str = None,
     password: str = None,
-    delete_target_duplicates: bool = False,
+    delete_target_duplicates: bool = False
 ) -> None:
 
     user = user or input("Username:")
@@ -132,7 +132,7 @@ def delete_by_variable(
     server: Optional[str or Path],
     user: str = None,
     password: str = None,
-    delete=False,
+    delete=False
 ) -> None:
     """
     Given a target location, a list of variables and a server address, perform a glob search

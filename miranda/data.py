@@ -44,7 +44,7 @@ class DataBase(object):
         common_path: Optional[Union[Path, str]] = None,
         file_pattern: str = "*.nc",
         project_name: str = None,
-        recursive: bool = True,
+        recursive: bool = True
     ):
         self.destination = Path(destination)
         if not self.destination:
@@ -108,7 +108,7 @@ class DataBase(object):
         common_path: Union[Path, str] = None,
         subdirectories: bool = True,
         dates: bool = True,
-        size: int = 10 * GiB,
+        size: int = 10 * GiB
     ):
         # use_grouping = True
         #
