@@ -13,10 +13,12 @@ from .remote import create_archive
 from .remote import create_remote_directory
 from .remote import transfer_file
 from miranda.server import Connection
-from miranda.utils import file_size
+from miranda.storage import pretty_file_sizer
 from miranda.utils import find_filepaths
 from miranda.utils import single_item_list
 from miranda.utils import working_directory
+
+__all__ = ["archive_database"]
 
 
 def archive_database(
@@ -143,7 +145,7 @@ def archive_database(
             "Transferred {} of {} files totalling {} at {}.".format(
                 len(successful_transfers),
                 len([f for f in file_list]),
-                file_size(successful_transfers),
+                pretty_file_sizer(successful_transfers),
                 dt.now().strftime("%Y-%m-%d %X"),
             )
         )

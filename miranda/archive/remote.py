@@ -14,9 +14,11 @@ from paramiko import SSHException
 from scp import SCPClient
 from scp import SCPException
 
-from ..server.connect import Connection
+from miranda.server import Connection
 
 # from functools import singledispatch
+
+__all__ = ["create_archive", "create_remote_directory", "transfer_file"]
 
 
 def create_remote_directory(

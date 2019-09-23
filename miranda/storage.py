@@ -16,6 +16,13 @@ Functions:
 
 """
 import os
+from functools import reduce
+from pathlib import Path
+from types import GeneratorType
+from typing import List
+from typing import Union
+
+_CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
 
 class DiskSpaceError(Exception):
@@ -44,14 +51,14 @@ class FileMeta:
         """
 
         # Make sure we have the full path of the file
-        self.path = os.path.abspath(path)
+        self.path = Path(path).absolute()
 
         # Get size of file if it is not specified
-        if (-1 == size) and os.path.isfile(self.path):
+        if (-1 == size) and self.path.exists():
             try:
-                self.size = os.path.getsize(self.path)
+                self.size = self.path.stat().st_size
             except OSError:
-                raise DiskSpaceError("Cannot get size of " + self.path + ".")
+                raise DiskSpaceError("Cannot get size of {}.".format(self.path.name))
         elif -1 == size:
             self.size = 0
         else:
@@ -88,7 +95,7 @@ class StorageState:
         """
 
         # Make sure we have the full base path
-        self.base_path = os.path.abspath(base_path)
+        self.base_path = Path(base_path).absolute()
 
         # Get attributes from 'df' function if they are not specified
         if (-1 == capacity) or (-1 == used_space) or (-1 == free_space):
@@ -129,7 +136,7 @@ def total_size(file_list):
 
     Parameters
     ----------
-    file_list : list of strings or FileMeta objects
+    file_list : Union[str, FileMeta, Path]
 
     Returns
     -------
@@ -147,7 +154,7 @@ def total_size(file_list):
                     file_to_add = FileMeta(file_to_add)
                 except DiskSpaceError:
                     raise
-            size = size + file_to_add.size
+            size += file_to_add.size
         return size
     else:
         return 0
@@ -155,17 +162,17 @@ def total_size(file_list):
 
 #
 def size_division(
-    files_to_divide,
-    size_limit=0,
-    file_limit=0,
-    check_name_repetition=False,
-    preserve_order=False,
+    files_to_divide: Union[List, FileMeta, Path],
+    size_limit: int = 0,
+    file_limit: int = 0,
+    check_name_repetition: bool = False,
+    preserve_order: bool = False,
 ):
     """Divide files according to size and number limits.
 
     Parameters
     ----------
-    files_to_divide : list of strings or FileMeta objects
+    files_to_divide : Union[List, FileMeta, Path]
     size_limit : int
         size limit of divisions in bytes (default: no limit).
     file_limit : int
@@ -221,3 +228,44 @@ def size_division(
 
 
 #
+def pretty_file_sizer(
+    file_path_or_bytes: Union[Path, str, int, List, GeneratorType],
+    use_binary: bool = True,
+    significant_digits: int = 2,
+) -> str or None:
+    """
+    This function will parse the contents of a list or generator of files and return the
+    size in bytes of a file or a list of files in pretty formatted text.
+    """
+
+    if isinstance(file_path_or_bytes, int):
+        return size_formatter(
+            file_path_or_bytes, binary=use_binary, precision=significant_digits
+        )
+    elif isinstance(file_path_or_bytes, (list, GeneratorType)):
+        sizes = reduce(
+            (lambda x, y: x + y),
+            map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
+        )
+        total = sizes
+    elif Path(file_path_or_bytes).is_file():
+        total = Path(file_path_or_bytes).stat().st_size
+    else:
+        return
+
+    return size_formatter(total, binary=use_binary, precision=significant_digits)
+
+
+def size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
+    """
+    This function will format byte size into an appropriate nomenclature for prettier printing.
+    """
+    import math
+
+    base = 1024 if binary else 1000
+    if i == 0:
+        return "0 B"
+    multiple = math.trunc(math.log2(i) / math.log2(base))
+    value = i / math.pow(base, multiple)
+    suffix = _CONVERSIONS[multiple].format("i" if binary else "")
+    return "{value:.{precision}f} {suffix}".format(**locals())

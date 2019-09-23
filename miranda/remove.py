@@ -9,8 +9,8 @@ from typing import Optional
 
 import fabric
 
-from .utils import creation_date
-from .utils import file_size
+from miranda.storage import pretty_file_sizer
+from miranda.utils import creation_date
 
 
 def empty_files(files: List[str or Path]) -> None:
@@ -101,7 +101,7 @@ def delete_duplicates(
         "{}: Found {} files totalling {}".format(
             dt.now().strftime("%Y-%m-%d %X"),
             len(nc_file_duplicates),
-            file_size(nc_file_duplicates),
+            pretty_file_sizer(nc_file_duplicates),
         )
     )
 
@@ -119,7 +119,9 @@ def delete_duplicates(
 
     logging.info(
         "{}: Removed {} files totalling {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), deleted_files, file_size(freed_space)
+            dt.now().strftime("%Y-%m-%d %X"),
+            deleted_files,
+            pretty_file_sizer(freed_space),
         )
     )
     return
@@ -155,7 +157,9 @@ def delete_by_variable(
 
         logging.info(
             "{}: Found {} files totalling {}".format(
-                dt.now().strftime("%Y-%m-%d %X"), len(nc_files), file_size(nc_files)
+                dt.now().strftime("%Y-%m-%d %X"),
+                len(nc_files),
+                pretty_file_sizer(nc_files),
             )
         )
 
@@ -173,7 +177,9 @@ def delete_by_variable(
 
     logging.info(
         "{}: Removed {} files totalling {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), deleted_files, file_size(freed_space)
+            dt.now().strftime("%Y-%m-%d %X"),
+            deleted_files,
+            pretty_file_sizer(freed_space),
         )
     )
     return

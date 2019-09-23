@@ -26,24 +26,28 @@ in different locations.
 e.g. /server/path/sample.tar becomes server.path.sample.tar
 The python trick to convert is::
 
-   >>> path_string = os.path.abspath(dmf1_file) # to get full path if necessary.
-   >>> path_string.replace('/','.').lstrip('.')
+   >>> path_string = Path(dmf1_file).absolute() # to get full path if necessary.
+   >>> str(path_string).replace('/','.').lstrip('.')
 
 """
 import os
-import shutil
+import subprocess
 import threading
 import time
+from pathlib import Path
+from typing import List
 
-from ..utils import find_filepaths
-from ..utils import make_local_dirs
-from ..utils import verbose_fn
-from ..utils import yesno_prompt
-from .storage import DiskSpaceError
-from .storage import FileMeta
-from .storage import size_division
-from .storage import StorageState
-from .storage import total_size
+from miranda.archive import transfer_file
+from miranda.storage import DiskSpaceError
+from miranda.storage import FileMeta
+from miranda.storage import size_division
+from miranda.storage import StorageState
+from miranda.storage import total_size
+from miranda.utils import find_filepaths
+from miranda.utils import GiB
+from miranda.utils import make_local_dirs
+from miranda.utils import verbose_fn
+from miranda.utils import yesno_prompt
 
 DiskSpaceEvent = threading.Event()
 
@@ -55,12 +59,12 @@ __all__ = [
 ]
 
 
-def rstdmf_rename(file_list, restore_path):
+def rstdmf_rename(file_list: List[str], restore_path: str):
     """Single rstdmf call with file renaming at the end.
 
     Parameters
     ----------
-    file_list : list of strings
+    file_list : List[str]
         list of files to restore.
     restore_path : str
 
@@ -74,38 +78,42 @@ def rstdmf_rename(file_list, restore_path):
     # Make sure we have the full path of each argument
     if not hasattr(file_list, "__iter__"):
         file_list = [file_list]
-    file_list = map(os.path.abspath, file_list)
-    restore_path = os.path.abspath(restore_path)
+    file_list = map(Path().absolute(), file_list)
+    restore_path = Path(restore_path).absolute()
     # Create output directory, if necessary
     try:
         make_local_dirs(restore_path)
     except OSError:
-        raise RstdmfError("Cannot create restore path " + restore_path + ".")
+        raise RstdmfError("Cannot create restore path {}.".format(restore_path))
     # Create string with list of files
     file_list_string = "' '".join(file_list)
     file_list_string = "'" + file_list_string + "'"
     file_list_string = file_list_string.replace("(", r"\(")
     file_list_string = file_list_string.replace(")", r"\)")
     # rstdmf call
-    flag_system = os.system("rstdmf -m -b " + file_list_string + " " + restore_path)
+    flag_system = subprocess.call(
+        ["rstdmf", "-m", "-b", file_list_string, restore_path]
+    )
     if flag_system:
         raise RstdmfError("rstdmf call failed.")
     # rename files
     for file_to_restore in file_list:
         file_name = file_to_restore.replace("/", ".").lstrip(".")
-        restored_file = restore_path + "/" + os.path.basename(file_to_restore)
+        restored_file = Path(restore_path).joinpath(Path(file_to_restore).name)
         try:
-            shutil.move(restored_file, restore_path + "/" + file_name)
+            transfer_file(restored_file, Path(restore_path).joinpath(file_name))
         except OSError:
-            raise RstdmfError("Could not move " + restored_file + ".")
+            raise RstdmfError("Could not move {}.".format(restored_file))
 
 
-def local_storage_for_rstdmf(files_for_rstdmf, restore_path, max_size_on_disk):
+def local_storage_for_rstdmf(
+    files_for_rstdmf: List[str], restore_path: str, max_size_on_disk: int
+):
     """Create a local storage object for rstdmf_divisions function.
 
     Parameters
     ----------
-    files_for_rstdmf : list of strings
+    files_for_rstdmf : List[str]
         files that will be restored.
     restore_path : str
     max_size_on_disk : int
@@ -120,13 +128,13 @@ def local_storage_for_rstdmf(files_for_rstdmf, restore_path, max_size_on_disk):
     # Get files already restored on disk and their size
     files_on_disk = []
     for file_on_disk in files_for_rstdmf:
-        renamed_file = file_on_disk.path.replace("/", ".").lstrip(".")
-        renamed_path = restore_path + "/" + renamed_file
+        renamed_file = file_on_disk.replace("/", ".").lstrip(".")
+        renamed_path = Path(restore_path).joinpath(renamed_file)
         if os.path.isfile(renamed_path):
             files_on_disk.append(renamed_path)
         elif os.path.isdir(renamed_path):
             files_within = find_filepaths(renamed_path)
-            files_on_disk.append(FileMeta(renamed_path), total_size(files_within))
+            files_on_disk.append([FileMeta(renamed_path), total_size(files_within)])
     size_on_disk = total_size(files_on_disk)
     # create a local storage object
     return StorageState(
@@ -138,9 +146,9 @@ def local_storage_for_rstdmf(files_for_rstdmf, restore_path, max_size_on_disk):
 def rstdmf_divisions(
     paths_to_restore,
     restore_path,
-    disk_space_margin: int = 100000000000,
+    disk_space_margin: int = 100 * GiB,
     disk_refresh_time: int = 60,
-    rstdmf_size_limit: int = 10000000000,
+    rstdmf_size_limit: int = 10 * GiB,
     rstdmf_file_limit: int = 24,
     max_size_on_disk: int = 0,
     verbose: bool = False,
@@ -158,12 +166,12 @@ def rstdmf_divisions(
         Path where files will be restored.
     disk_space_margin : int
         minimum space required on disk to proceed, set to 0 for no minimum
-        requirement (default: 100 GB).
+        requirement (default: 100 GiB).
     disk_refresh_time : int
         time to wait to lookup disk space again when full (default: 60 s).
     rstdmf_size_limit : int
         size limit of a single rstdmf call, set to 0 for no size limit
-        (default: 10 GB).
+        (default: 10 GiB).
     rstdmf_file_limit : int
         limit in number of files of a single rstdmf call, set to 0 for no
         limit (default: 24).
@@ -197,8 +205,9 @@ def rstdmf_divisions(
             file_to_restore = FileMeta(file_to_restore)
         # Skip files that do not exist or are already in the restoration path
         file_name = file_to_restore.path.replace("/", ".").lstrip(".")
-        if os.path.exists(restore_path + "/" + file_name) or not os.path.exists(
-            file_to_restore.path
+        if (
+            Path(restore_path).joinpath(file_name).exists()
+            or not Path(file_to_restore).exists()
         ):
             continue
         # Make sure no files are repeated
@@ -229,10 +238,8 @@ def rstdmf_divisions(
     if verbose:
         size_of_files = total_size(files_for_rstdmf)
         print(
-            "Disk space: %s GB, Restoration size: %s GB, "
-            % (
-                str(float(storage.free_space) / 1000000000.0),
-                str(size_of_files / 1000000000.0),
+            "Disk space: {} GB, Restoration size: {} GiB, ".format(
+                str(float(storage.free_space) / GiB), str(size_of_files / GiB)
             )
             + "Subdivisions: {}".format(str(len(divisions)))
         )
@@ -258,21 +265,22 @@ def rstdmf_divisions(
             DiskSpaceEvent.set()
             if storage.free_space - disk_space_margin < size_of_files:
                 verbose_fn(
-                    "Disk space running low! Starting wait loop (%s s)"
-                    % (disk_refresh_time,)
+                    "Disk space running low! Starting wait loop ({} s)".format(
+                        disk_refresh_time
+                    )
                 )
                 verbose_fn(
-                    "Disk space: %s GB, Disk space to maintain: %s GB, "
-                    % (
-                        str(float(storage.free_space) / 1000000000.0),
-                        str(disk_space_margin / 1000000000.0),
+                    "Disk space: {} GB, Disk space to maintain: {} GiB, ".format(
+                        str(float(storage.free_space) / GiB),
+                        str(disk_space_margin / GiB),
                     )
-                    + "Restore size: {} GB".format(str(size_of_files / 1000000000))
+                    + "Restore size: {} GiB".format(str(size_of_files / GiB))
                 )
             elif local_storage.free_space < size_of_files:
                 verbose_fn(
-                    "Reached size limit of files on disk (%s GB)."
-                    % (str(float(max_size_on_disk) / 1000000000.0),)
+                    "Reached size limit of files on disk ({} GiB).".format(
+                        str(float(max_size_on_disk) / GiB)
+                    )
                     + " Starting wait loop ({} s)".format(disk_refresh_time)
                 )
             while (storage.free_space - disk_space_margin < size_of_files) or (

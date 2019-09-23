@@ -23,11 +23,8 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from .utils import find_filepaths
-from .utils import GiB
-
-# from .archive import *
-# from .server import Connection
+from miranda.utils import find_filepaths
+from miranda.utils import GiB
 
 __all__ = ["DataBase"]
 

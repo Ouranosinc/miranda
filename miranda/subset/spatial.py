@@ -23,6 +23,8 @@ except ImportError as e:
     msg = "{}: Modules not found. Continuing with Xarray only.".format(e)
     logging.warning(msg)
 
+__all__ = ["subset_bbox", "subset_bbox_years", "subset_mask"]
+
 
 def subset_bbox_years(
     nc_file,

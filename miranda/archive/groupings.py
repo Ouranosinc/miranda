@@ -9,7 +9,7 @@ from typing import List
 from typing import Mapping
 from typing import Union
 
-from miranda.utils import file_size
+from miranda.storage import pretty_file_sizer
 
 Nested_List = List[List[Path]]
 PathDict = Mapping[str, List[Path]]
@@ -122,7 +122,7 @@ def group_by_size(
     """
     logging.info(
         "{}: Creating groups of files based on size not exceeding {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file_size(size)
+            dt.now().strftime("%Y-%m-%d %X"), pretty_file_sizer(size)
         )
     )
 
