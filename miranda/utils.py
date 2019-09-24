@@ -11,6 +11,8 @@ from typing import List
 from typing import Sequence
 from typing import Union
 
+KiB = int(pow(2, 10))
+MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
 
@@ -231,3 +233,32 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]):
             for my_path, my_item in zip(next_base_paths, path_content):
                 paths_elements.append({"path": my_path, elements[0]: my_item})
     return paths_elements
+
+
+def get_info_var(variable_name):
+    """fonction qui retourne differentes informations en fonction de la variable voulue"""
+
+    if variable_name == "tas":
+        var_code = 78
+        unites = "degC"
+    elif variable_name == "hourly_rainfall":
+        var_code = 123
+        unites = "mm"
+    elif variable_name == "precipitation_amount":
+        var_code = 262
+        unites = "mm"
+    else:
+        raise RuntimeError
+    fact_mlt = 0.1
+    fact_add = 0.0
+    missing_flags = ["M"]
+    least_sig_digit = None
+
+    return dict(
+        code_var=var_code,
+        unites=unites,
+        fact_mlt=fact_mlt,
+        fact_add=fact_add,
+        flag_manquants=missing_flags,
+        least_significant_digit=least_sig_digit,
+    )

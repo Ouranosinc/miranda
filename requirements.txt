@@ -1,7 +1,11 @@
 fabric
 paramiko>=2.6.0
 scp
+cftime
+numpy
+requests
 netCDF4
 xarray
 dask
+pandas
 geopandas

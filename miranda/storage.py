@@ -228,7 +228,7 @@ def size_division(
 
 
 #
-def pretty_file_sizer(
+def report_file_size(
     file_path_or_bytes: Union[Path, str, int, List, GeneratorType],
     use_binary: bool = True,
     significant_digits: int = 2,

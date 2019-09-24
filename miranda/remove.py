@@ -9,7 +9,7 @@ from typing import Optional
 
 import fabric
 
-from miranda.storage import pretty_file_sizer
+from miranda.storage import report_file_size
 from miranda.utils import creation_date
 
 
@@ -101,7 +101,7 @@ def delete_duplicates(
         "{}: Found {} files totalling {}".format(
             dt.now().strftime("%Y-%m-%d %X"),
             len(nc_file_duplicates),
-            pretty_file_sizer(nc_file_duplicates),
+            report_file_size(nc_file_duplicates),
         )
     )
 
@@ -121,7 +121,7 @@ def delete_duplicates(
         "{}: Removed {} files totalling {}".format(
             dt.now().strftime("%Y-%m-%d %X"),
             deleted_files,
-            pretty_file_sizer(freed_space),
+            report_file_size(freed_space),
         )
     )
     return
@@ -159,7 +159,7 @@ def delete_by_variable(
             "{}: Found {} files totalling {}".format(
                 dt.now().strftime("%Y-%m-%d %X"),
                 len(nc_files),
-                pretty_file_sizer(nc_files),
+                report_file_size(nc_files),
             )
         )
 
@@ -179,7 +179,7 @@ def delete_by_variable(
         "{}: Removed {} files totalling {}".format(
             dt.now().strftime("%Y-%m-%d %X"),
             deleted_files,
-            pretty_file_sizer(freed_space),
+            report_file_size(freed_space),
         )
     )
     return
