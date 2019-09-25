@@ -238,18 +238,32 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]):
 def get_info_var(variable_name):
     """fonction qui retourne differentes informations en fonction de la variable voulue"""
 
-    if variable_name == "tas":
+    if variable_name == "wind_speed":
+        var_code = 76
+        unites = "km h-1"
+        fact_mlt = 1
+    elif variable_name == "station_pressure":
+        var_code = 77
+        unites = "kPa"
+        fact_mlt = 0.01
+    elif variable_name == "dry_bulb_temperature":
         var_code = 78
         unites = "degC"
+        fact_mlt = 0.1
+    elif variable_name == "relative_humidity":
+        var_code = 80
+        unites = "%"
+        fact_mlt = 1
     elif variable_name == "hourly_rainfall":
         var_code = 123
         unites = "mm"
+        fact_mlt = 0.1
     elif variable_name == "precipitation_amount":
         var_code = 262
         unites = "mm"
+        fact_mlt = 0.1
     else:
         raise RuntimeError
-    fact_mlt = 0.1
     fact_add = 0.0
     missing_flags = ["M"]
     least_sig_digit = None
