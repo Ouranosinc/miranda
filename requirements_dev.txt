@@ -8,4 +8,4 @@ flake8
 tox
 pre-commit
 autopep8
--e git://github.com/psf/black.git@master
+-e git://github.com/psf/black.git@master#egg=black
