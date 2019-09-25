@@ -24,10 +24,10 @@ with open("requirements.txt") as req:
     for dependency in req.readlines():
         requirements.append(dependency)
 
-dev_requirements = []
-with open("requirements_dev.txt") as dev:
-    for dependency in dev.readlines():
-        dev_requirements.append(dependency)
+# dev_requirements = []
+# with open("requirements_dev.txt") as dev:
+#     for dependency in dev.readlines():
+#         dev_requirements.append(dependency)
 
 docs_requirements = ["sphinx", "guzzle-sphinx-theme", "nbsphinx", "pandoc", "ipython"]
 
@@ -51,7 +51,7 @@ setup(
     package_dir={"miranda": "miranda"},
     include_package_data=True,
     install_requires=requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    extras_require={"docs": docs_requirements},
     license="MIT",
     zip_safe=False,
     keywords="climate meteorology archiving collection NetCDF",
