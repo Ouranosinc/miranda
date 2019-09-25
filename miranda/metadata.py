@@ -236,7 +236,7 @@ def decode_isimip_ft_netcdf(file):
     return facets
 
 
-class DecorderException(Exception):
+class DecoderException(Exception):
     pass
 
 
