@@ -6,6 +6,7 @@ from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
+from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Sequence
@@ -47,7 +48,7 @@ def read_privileges(location: Union[Path, str]) -> bool:
 
 
 @contextmanager
-def working_directory(directory):
+def working_directory(directory: Union[str, Path]):
     """
     This function momentarily changes the working directory within the
      context and reverts to the file working directory when the code block
@@ -99,19 +100,20 @@ def single_item_list(iterable: Iterable) -> bool:
     return has_true and not has_another_true  # True if exactly one true found
 
 
-def make_local_dirs(pathway):
+def make_local_dirs(pathway: Union[str, Path], mode: int = 0o777) -> None:
     """Create directories recursively, unless they already exist.
     Parameters
     ----------
     pathway : Union[Path, str]
       Path of folders to create.
+    mode : int
     """
 
     pathway = Path(pathway)
 
     if not pathway.exists():
         try:
-            pathway.mkdir(parents=True)
+            pathway.mkdir(parents=True, mode=mode)
         except OSError:
             raise
 
@@ -143,7 +145,7 @@ def set_comparions(set1: Sequence, set2: Sequence) -> bool:
 ########################################################################################
 
 
-def yesno_prompt(query):
+def yesno_prompt(query: str) -> bool:
     """Prompt user for a yes/no answer.
     Parameters
     ----------
@@ -165,7 +167,7 @@ def yesno_prompt(query):
         raise ValueError("{} not in (y, n)".format(user_input))
 
 
-def verbose_fn(message, verbose=True):
+def verbose_fn(message: str, verbose=True) -> None:
     """Trigger verbose mode.
     Parameters
     ----------
@@ -178,7 +180,7 @@ def verbose_fn(message, verbose=True):
         print(message)
 
 
-def list_paths_with_elements(base_paths: List[str], elements: List[str]):
+def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List[Dict]:
     """List a given path structure.
     Parameters
     ----------
@@ -188,7 +190,7 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]):
         ordered list of the expected elements.
     Returns
     -------
-    out : list of dictionaries
+    out : List[Dict]
         the keys are 'path' and each of the members of the given elements,
         the path is the absolute path.
     Notes
