@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import sys
 from contextlib import contextmanager
 from datetime import date
 from datetime import datetime as dt
@@ -55,6 +56,10 @@ def working_directory(directory: Union[str, Path]):
      it is acting upon exits
     """
     owd = os.getcwd()
+
+    if (2, 7) < sys.version_info < (3, 6):
+        directory = str(directory)
+
     try:
         os.chdir(directory)
         yield directory
