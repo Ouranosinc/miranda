@@ -69,3 +69,21 @@ class TestFolderOperations:
 
         with pytest.raises(OSError):
             utils.make_local_dirs(testfolder)
+
+
+class TestReadPrivileges:
+    def test_allowed_folder(self):
+        here = Path.cwd()
+        allowed = utils.read_privileges(here)
+        assert allowed
+
+    def test_nonexistent_folder(self):
+        mythical_folder = Path("/here/there/everwyhere")
+        allowed = utils.read_privileges(mythical_folder)
+        assert not allowed
+
+    def test_forbidden_folder(self):
+        root_folder = Path(Path.cwd().root).joinpath("root")
+        allowed = utils.read_privileges(root_folder)
+
+        assert not allowed

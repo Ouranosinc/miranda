@@ -37,15 +37,28 @@ def creation_date(path_to_file: Union[Path, str]) -> float or date:
 
 
 def read_privileges(location: Union[Path, str]) -> bool:
-    if os.access(location, os.R_OK):
-        logging.info(
-            "{}: {} Read OK!".format(dt.now().strftime("%Y-%m-%d %X"), location)
-        )
-    else:
-        msg = "Ensure read privileges. Exiting."
-        logging.error(msg)
-        raise Exception(msg)
-    return True
+
+    if (2, 7) < sys.version_info < (3, 6):
+        location = str(location)
+
+    try:
+        if Path(location).exists():
+            if os.access(location, os.R_OK):
+                logging.info(
+                    "{} is read OK!".format(dt.now().strftime("%Y-%m-%d %X"), location)
+                )
+                return True
+            else:
+                msg = "Ensure read privileges."
+                logging.error(msg)
+                return False
+        else:
+            logging.error("{} is an invalid path.")
+            return False
+    except OSError:
+        msg = "Ensure read privileges."
+        logging.exception(msg)
+        return False
 
 
 @contextmanager
