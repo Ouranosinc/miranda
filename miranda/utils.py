@@ -91,19 +91,20 @@ def find_filepaths(
     if file_suffixes is None:
         file_suffixes = list().append(["*", ".*"])
 
-    file_list = list()
-    if isinstance(source, (GeneratorType, List)):
-        file_list = [Path(f).expanduser() for f in source]
-    else:
+    found = list()
+    if isinstance(source, (Path, str)):
+        source = [source]
+
+    for location in source:
         for pattern in file_suffixes:
             if recursive:
-                found = [f for f in Path(source).expanduser().rglob(pattern)]
+                found.extend([f for f in Path(location).expanduser().rglob(pattern)])
             elif not recursive:
-                found = [f for f in Path(source).expanduser().glob(pattern)]
+                found.extend([f for f in Path(location).expanduser().glob(pattern)])
             else:
                 raise ValueError("Recursive: {}".format(recursive))
-            file_list.append(found)
-    return file_list
+
+    return found
 
 
 def single_item_list(iterable: Iterable) -> bool:

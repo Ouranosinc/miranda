@@ -16,6 +16,7 @@ limitations under the License.
 """
 import os
 import re
+from functools import reduce
 from pathlib import Path
 from types import GeneratorType
 from typing import List
@@ -39,27 +40,40 @@ class DataBase(object):
         *,
         destination: Optional[Union[Path, str]] = None,
         common_path: Optional[Union[Path, str]] = None,
-        file_pattern: str = "*.nc",
+        file_pattern: Union[str, List[str]] = "*.nc",
         project_name: str = None,
         recursive: bool = True
     ):
-        self.destination = Path(destination)
-        if not self.destination:
+        self._source = Path(source)
+
+        if destination is not None:
+            self._destination = Path(destination)
+        else:
             self.destination = Path().cwd()
 
         self.project_name = str(project_name)
         if not self.project_name:
             self.project_name = str(self.destination.name)
 
-        self.file_suffixes = str(file_pattern)
-        self.recursive = recursive
+        if not file_pattern:
+            self.file_suffixes = ["*"]
 
-        self.common_path = Path(source)
+        elif isinstance(file_pattern, str):
+            self.file_suffixes = [file_pattern]
+        elif isinstance(file_pattern, (GeneratorType, List)):
+            self.file_suffixes = file_pattern
+
+        if not recursive:
+            self.recursive = False
+        else:
+            self.recursive = True
+
+        # if common_path is None:
+        #     self._common_path = Path(source)
+
         self._files = self._scrape(source)
-        if common_path:
-            self.common_path = Path(common_path)
         self._is_server = False
-        self.source = Path(source)
+
         self.successful_transfers = int(0)
 
     def __repr__(self):
@@ -73,15 +87,15 @@ class DataBase(object):
 
     def _scrape(self, source) -> List[Path]:
         if source is None:
-            raise ValueError("Source must be a string or Path.")
-        elif isinstance(source, (GeneratorType, List, Tuple, str, Path)):
+            raise ValueError("No source provided.")
+        if isinstance(source, (GeneratorType, List, Tuple, str, Path)):
             files = find_filepaths(source, **self._as_dict())
-            common_path = os.path.commonpath(f for f in files)
+            common_path = os.path.commonpath(files)
             self._files = files
-            self.common_path.update(common_path)
+            self._common_path = common_path
             return files
         else:
-            raise ValueError
+            raise ValueError("Source must be an iterable of strings or Paths.")
 
     def _as_dict(self):
         return {
