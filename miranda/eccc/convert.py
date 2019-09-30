@@ -17,6 +17,7 @@
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
 import logging.config
+import time
 from datetime import datetime as dt
 from pathlib import Path
 from typing import Union
@@ -40,6 +41,7 @@ def convert_hourly_ec_files(
     variable_name: str,
     missing_value: int = -9999,
 ):
+    func_time = time.time()
     info = get_info_var(variable_name)
     variable_code = info["code_var"]
 
@@ -54,7 +56,11 @@ def convert_hourly_ec_files(
     make_local_dirs(rep_nc)
 
     # boucle sur les fichiers
-    list_files = Path(source_files).rglob("HLY*.gz")
+    if variable_code == 262:
+        list_files = Path(source_files).rglob("HLY*RCS*.gz")
+    else:
+        list_files = Path(source_files).rglob("HLY*.gz")
+
     for fichier in list_files:
         logging.info("Processing file: {}.".format(fichier))
 
@@ -135,29 +141,43 @@ def convert_hourly_ec_files(
             an_f = ds.time.dt.year.values[-1]
             f_nc = "{c}_{v}_{ad}_{af}.nc".format(c=code, v=nom_var, ad=an_d, af=an_f)
 
-            ds.Conventions = "CF-1.5"
+            ds.attrs["Conventions"] = "CF-1.5"
 
-            ds.title = "Environment and Climate Change Canada (ECCC) weather eccc"
-            ds.history = "{}: Merged from multiple individual station files to n-dimensional array.".format(
+            ds.attrs[
+                "title"
+            ] = "Environment and Climate Change Canada (ECCC) weather eccc"
+            ds.attrs[
+                "history"
+            ] = "{}: Merged from multiple individual station files to n-dimensional array.".format(
                 dt.now().strftime("%Y-%m-%d %X")
             )
-            ds.version = "v{}".format(dt.now().strftime("%Y.%M"))
-            ds.institution = "Environment and Climate Change Canada (ECCC)"
-            ds.source = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
-            ds.references = (
-                "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
-            )
-            ds.comment = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
-            ds.redistribution = "Redistribution policy unknown. For internal use only."
+            ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%M"))
+            ds.attrs["institution"] = "Environment and Climate Change Canada (ECCC)"
+            ds.attrs[
+                "source"
+            ] = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
+            ds.attrs[
+                "references"
+            ] = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
+            ds.attrs[
+                "comment"
+            ] = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
+            ds.attrs[
+                "redistribution"
+            ] = "Redistribution policy unknown. For internal use only."
 
             ds.to_netcdf(rep_nc.joinpath(f_nc))
+
+    logging.warning(
+        "Process completed in {:.2f} seconds".format(time.time() - func_time)
+    )
 
 
 if __name__ == "__main__":
     # nom_var = "tas", "hourly_rainfall"
     nom_var = "precipitation_amount"
-    output = "/home/tjs/Desktop/ec_data/"
-    source_data = "/home/tjs/Desktop/ec_data"
+    output = "/home/tjs/Desktop/ec_data/eccc_all"
+    source_data = "/home/tjs/Desktop/ec_data/eccc_all"
     convert_hourly_ec_files(
         source_files=source_data, output_folder=output, variable_name=nom_var
     )
