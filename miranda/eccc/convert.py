@@ -1,13 +1,6 @@
 ######################################################################
 # S.Biner, Ouranos, mai 2019
 #
-# description/commentaires
-#
-# programme qui decode les donnees obtenues par Trevor d'ECCC
-# les donnees sont dans le reperoire data/de_trevor/Climato
-# et semblent correspondre a ce qui est decrit dans
-# /home/biner/projets/donnees_obs_quotid/ref/Technical_Documentation.pdf**
-#
 # methodologie
 #
 # on scan les fichiers sources annuels en cherchant une variable et on sauve
@@ -27,7 +20,7 @@ import pandas as pd
 import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import get_info_var
+from miranda.utils import eccc_hourly_variable_metadata
 from miranda.utils import make_local_dirs
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -42,7 +35,7 @@ def convert_hourly_ec_files(
     missing_value: int = -9999,
 ):
     func_time = time.time()
-    info = get_info_var(variable_name)
+    info = eccc_hourly_variable_metadata(variable_name)
     variable_code = info["code_var"]
 
     # on prepare l'extraction des donnees

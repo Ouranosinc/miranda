@@ -31,7 +31,7 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = utils.get_info_var(key)
+            variables[key] = utils.eccc_hourly_variable_metadata(key)
             codes.append(variables[key]["code_var"])
             assert variables[key]["fact_add"] == 0
             assert variables[key]["flag_manquants"] == ["M"]

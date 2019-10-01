@@ -137,7 +137,7 @@ def make_local_dirs(pathway: Union[str, Path], mode: int = 0o777) -> None:
             raise
 
 
-def set_comparions(set1: Sequence, set2: Sequence) -> bool:
+def set_comparisons(set1: Sequence, set2: Sequence) -> bool:
     """Compare two sequences of non hashable objects as if they were sets.
 
     Parameters
@@ -256,7 +256,7 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List
     return paths_elements
 
 
-def get_info_var(variable_name):
+def eccc_hourly_variable_metadata(variable_name: str) -> dict:
     """fonction qui retourne differentes informations en fonction de la variable voulue"""
 
     if variable_name == "wind_speed":
@@ -300,3 +300,66 @@ def get_info_var(variable_name):
         flag_manquants=missing_flags,
         least_significant_digit=least_sig_digit,
     )
+
+
+def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
+    ec_variables = {
+        "001": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Daily Maximum Temperature",
+            "standard_name": "air_temperature",
+            "nc_name": "tasmax",
+        },
+        "002": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Daily Minimum Temperature",
+            "standard_name": "air_temperature",
+            "nc_name": "tasmin",
+        },
+        "003": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Daily Mean Temperature",
+            "standard_name": "air_temperature",
+            "nc_name": "tas",
+        },
+        "010": {
+            "nc_units": "mm",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Rainfall",
+            "standard_name": "rainfall_accumulation",
+            "nc_name": "rainfall",
+        },
+        "011": {
+            "nc_units": "cm",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Snowfall",
+            "standard_name": "snowfall_accumulation",
+            "nc_name": "snowfall",
+        },
+        "012": {
+            "nc_units": "mm",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Precipitation",
+            "standard_name": "precipitation_accumulation",
+            "nc_name": "precipitation",
+        },
+        "013": {
+            "nc_units": "m",
+            "scale_factor": 0.01,
+            "add_offset": 0,
+            "long_name": "Snow on the Ground",
+            "standard_name": "surface_snow_thickness",
+            "nc_name": "snd",
+        },
+    }
+    code = str(variable_code).zfill(3)
+    return ec_variables[code]
