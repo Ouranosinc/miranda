@@ -96,7 +96,7 @@ def aggregate_hourly_nc_files(
     )[:-1]
 
     # preparation du fichier de sortie
-    logging.info("Preparation du fichier de sortie.")
+    logging.info("Preparing the NetCDF.")
     logging.info(
         "Number of eccc: {}, time steps: {}.".format(
             valid_stations_count, time_index.size
@@ -288,9 +288,9 @@ if __name__ == "__main__":
     keep_double = "first"
     # keep_double = "last"
 
-    var_name = "precipitation_amount"  # "tas"  # "rainfall"
+    var_name = "dry_bulb_temperature"  # "precipitation_amount" "rainfall"
     station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
-    source_data = "/home/tjs/Desktop/ec_data"
+    source_data = "/home/tjs/Desktop/ec_data/eccc_all"
 
     aggregate_hourly_nc_files(
         source_files=source_data,
