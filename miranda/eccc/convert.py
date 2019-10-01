@@ -174,8 +174,9 @@ def convert_hourly_ec_files(
 
 
 if __name__ == "__main__":
-    # nom_var = "tas", "hourly_rainfall"
-    nom_var = "precipitation_amount"
+    nom_var = "dry_bulb_temperature"
+    # nom_var = "hourly_rainfall"
+    # nom_var = "precipitation_amount"
     output = "/home/tjs/Desktop/ec_data/eccc_all"
     source_data = "/home/tjs/Desktop/ec_data/eccc_all"
     convert_hourly_ec_files(

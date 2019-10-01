@@ -284,7 +284,10 @@ def get_info_var(variable_name):
         unites = "mm"
         fact_mlt = 0.1
     else:
-        raise RuntimeError
+        msg = 'Variable name "{}" not recognized'.format(variable_name)
+        logging.error(msg)
+        raise RuntimeError(msg)
+
     fact_add = 0.0
     missing_flags = ["M"]
     least_sig_digit = None
