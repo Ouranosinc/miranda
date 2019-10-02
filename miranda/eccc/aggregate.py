@@ -281,7 +281,7 @@ if __name__ == "__main__":
     keep_double = "first"
     # keep_double = "last"
 
-    var_name = "dry_bulb_temperature"  # "precipitation_amount" "rainfall"
+    var_name = "hourly_rainfall"  # "dry_bulb_temperature"  # "precipitation_amount"
     station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
     source_data = "/home/tjs/Desktop/ec_data/eccc_all"
 

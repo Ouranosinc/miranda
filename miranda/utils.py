@@ -302,8 +302,215 @@ def eccc_hourly_variable_metadata(variable_name: str) -> dict:
     )
 
 
+def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
+    ec_hourly_variables = {
+        "076": {
+            "nc_units": "m s-1",
+            "scale_factor": 0.277777778,
+            "add_offset": 0,
+            "long_name": "Wind Speed (U2A)",
+            "standard_name": "wind_speed",
+            "nc_name": "windspeed",
+        },
+        "077": {
+            "nc_units": "Pa",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Station Pressure",
+            "standard_name": "pressure",
+            "nc_name": "pressure",
+        },
+        "078": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Dry Bulb Temperature",
+            "standard_name": "dry_bulb_temperature",
+            "nc_name": "tas_dry",
+        },
+        "079": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Wet Bulb temperature",
+            "standard_name": "wet_bulb_temperature",
+            "nc_name": "tas_wet",
+        },
+        "080": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Rainfall",
+            "standard_name": "rainfall_amount",
+            "nc_name": "rainfall",
+        },
+        "123": {
+            "nc_units": "1",
+            "scale_factor": 100,
+            "add_offset": 0,
+            "long_name": "Relative Humidity",
+            "standard_name": "relative_humidity",
+            "nc_name": "hur",
+        },
+        "262": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Precipitation (minutes 00-60)",
+            "standard_name": "precipitation_flux",
+            "nc_name": "precipitation_hourly",
+        },
+        "263": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Precipitation (minutes 00-15)",
+            "standard_name": "precipitation_flux",
+            "nc_name": "precipitation_q1",
+        },
+        "264": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Precipitation (minutes 15-30)",
+            "standard_name": "precipitation_flux",
+            "nc_name": "precipitation_q2",
+        },
+        "265": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Precipitation (minutes 30-45)",
+            "standard_name": "precipitation_flux",
+            "nc_name": "precipitation_q3",
+        },
+        "266": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Precipitation (minutes 45-60)",
+            "standard_name": "precipitation_flux",
+            "nc_name": "precipitation_q4",
+        },
+        "267": {
+            "nc_units": "kg m-2",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Precipitation Gauge Weight per Unit Area (at minute 15)",
+            "standard_name": "precipitation_amount",
+            "nc_name": "precip_weight_q1",
+        },
+        "268": {
+            "nc_units": "mk m-2",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
+            "standard_name": "precipitation_amount",
+            "nc_name": "precip_weight_q2",
+        },
+        "269": {
+            "nc_units": "m",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Precipitation Gauge Weight per Unit Area (at minute 45)",
+            "standard_name": "precipitation_amount",
+            "nc_name": "precip_weight_q3",
+        },
+        "270": {
+            "nc_units": "m",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Precipitation Gauge Weight per Unit Area (at minute 60)",
+            "standard_name": "precipitation_amount",
+            "nc_name": "precip_weight_q4",
+        },
+        # "271": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "272": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "273": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "274": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "275": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "276": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "277": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "278": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "279": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+        # "280": {
+        #     "nc_units": "m",
+        #     "scale_factor": 0.01,
+        #     "add_offset": 0,
+        #     "long_name": "Snow on the Ground",
+        #     "standard_name": "surface_snow_thickness",
+        #     "nc_name": "snd",
+        # },
+    }
+    code = str(variable_code).zfill(3)
+    return ec_hourly_variables[code]
+
+
 def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
-    ec_variables = {
+    ec_daily_variables = {
         "001": {
             "nc_units": "K",
             "scale_factor": 0.1,
@@ -362,4 +569,4 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
         },
     }
     code = str(variable_code).zfill(3)
-    return ec_variables[code]
+    return ec_daily_variables[code]
