@@ -104,6 +104,9 @@ def find_filepaths(
             else:
                 raise ValueError("Recursive: {}".format(recursive))
 
+    if (2, 7) < sys.version_info < (3, 6):
+        found = [str(f) for f in found]
+
     return found
 
 
