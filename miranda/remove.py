@@ -13,7 +13,7 @@ from miranda.storage import report_file_size
 from miranda.utils import creation_date
 
 
-def empty_files(files: List[str or Path]) -> None:
+def file_emptier(files: List[str or Path]) -> None:
     for f in files:
         open(f, "w").close()
 
@@ -27,12 +27,14 @@ def delete_by_date(
     year: int,
     month: int,
     day: int,
+    pattern: str = None,
     dt_object: Optional[date] = None
 ) -> None:
 
     date_selected = date(year, month, day) or dt_object
+    glob_pattern = pattern or "*.nc"
 
-    nc_files = Path(source).glob("**/*.nc")
+    nc_files = Path(source).rglob(glob_pattern)
     nc_files = list(nc_files)
     nc_files.sort()
 
@@ -69,11 +71,13 @@ def delete_duplicates(
     server: Optional[str or Path],
     user: str = None,
     password: str = None,
+    pattern: str = None,
     delete_target_duplicates: bool = False
 ) -> None:
 
     user = user or input("Username:")
     password = password or getpass("Password:")
+    glob_pattern = pattern or "*.nc"
 
     connection = fabric.Connection(
         host=server, user=user, connect_kwargs=dict(password=password)
@@ -82,9 +86,9 @@ def delete_duplicates(
     source = source or input("Source files:")
     target = target or input("Target files:")
 
-    nc_files_source = Path(source).glob("**/*.nc")
+    nc_files_source = Path(source).rglob(glob_pattern)
     nc_files_source = {f.stem for f in nc_files_source}
-    nc_files_target = Path(target).glob("**/*.nc")
+    nc_files_target = Path(target).rglob(glob_pattern)
 
     nc_file_duplicates = []
     for f in nc_files_target:
@@ -134,6 +138,7 @@ def delete_by_variable(
     server: Optional[str or Path],
     user: str = None,
     password: str = None,
+    file_suffix: str = None,
     delete=False
 ) -> None:
     """
@@ -151,7 +156,8 @@ def delete_by_variable(
     freed_space = 0
     deleted_files = 0
     for var in variables:
-        nc_files = Path(target).glob("**/{}*.nc".format(var))
+        glob_suffix = file_suffix or ".nc"
+        nc_files = Path(target).rglob("{}*".format(var, glob_suffix))
         nc_files = list(Path(f) for f in nc_files)
         nc_files.sort()
 
