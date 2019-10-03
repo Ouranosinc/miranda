@@ -2,7 +2,6 @@ import logging
 import tarfile
 import tempfile
 import time
-from datetime import datetime as dt
 from pathlib import Path
 from typing import List
 from typing import Union
@@ -28,11 +27,7 @@ def create_remote_directory(
     This calls a function to create a folder structure over SFTP/SSH and waits
      for confirmation before continuing
     """
-    logging.info(
-        "{}: Creating remote path: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), directory
-        )
-    )
+    logging.info("Creating remote path: {}".format(directory))
 
     ownership = "0775"
     command = "mkdir -p -m {} '{}'".format(ownership, directory)
@@ -71,16 +66,10 @@ def create_archive(
         with tarfile.open(archive_file, write) as tar:
             for name in source_files:
                 try:
-                    logging.info(
-                        "{}: Tarring {}".format(
-                            dt.now().strftime("%Y-%m-%d %X"), name.name
-                        )
-                    )
+                    logging.info("Tarring {}".format(name.name))
                     tar.add(name.relative_to(Path.cwd()), recursive=recursive)
                 except Exception as e:
-                    msg = '{}: File "{}" failed to be tarred: {}'.format(
-                        dt.now().strftime("%Y-%m-%d %X"), name.name, e
-                    )
+                    msg = 'File "{}" failed to be tarred: {}'.format(name.name, e)
                     logging.warning(msg)
             tar.close()
         transfer_file(archive_file, destination, transport)
@@ -98,32 +87,24 @@ def transfer_file(
 
     if transport:
         try:
-            logging.info(
-                "{}: Beginning transfer of {}".format(
-                    dt.now().strftime("%Y-%m-%d %X"), source_file
-                )
-            )
+            logging.info("Beginning transfer of {}".format(source_file))
             transport.put(str(source_file), str(destination_file))
             logging.info(
-                "{}: Transferred {} to {}".format(
-                    dt.now().strftime("%Y-%m-%d %X"),
-                    Path(destination_file).name,
-                    Path(destination_file).parent,
+                "Transferred {} to {}".format(
+                    Path(destination_file).name, Path(destination_file).parent
                 )
             )
 
         except SCPException or SSHException or IOError or OSError as e:
-            msg = '{}: File "{}" failed to be transferred: {}.'.format(
-                dt.now().strftime("%Y-%m-%d %X"), destination_file.name, e
+            msg = 'File "{}" failed to be transferred: {}.'.format(
+                destination_file.name, e
             )
             logging.warning(msg)
             return False
 
         logging.info(
-            "{}: Transferred {} to {}".format(
-                dt.now().strftime("%Y-%m-%d %X"),
-                Path(destination_file).name,
-                Path(destination_file).parent,
+            "Transferred {} to {}".format(
+                Path(destination_file).name, Path(destination_file).parent
             )
         )
 
@@ -131,9 +112,7 @@ def transfer_file(
         try:
             destination_file.write_bytes(source_file.read_bytes())
         except Exception as e:
-            msg = '{}: File "{}" failed to be copied: {}'.format(
-                dt.now().strftime("%Y-%m-%d %X"), source_file.name, e
-            )
+            msg = 'File "{}" failed to be copied: {}'.format(source_file.name, e)
             logging.error(msg)
             return False
     return True

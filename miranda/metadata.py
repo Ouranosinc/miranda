@@ -1,7 +1,6 @@
 #!/bin/env python3
 import logging
 from collections import defaultdict
-from datetime import datetime as dt
 from pathlib import Path
 from typing import List
 from typing import Union
@@ -94,11 +93,7 @@ def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
     facets["ensemble"] = data.parent_experiment_rip
     facets["realm"] = data.modeling_realm
 
-    logging.info(
-        "{}: Deciphered the following from {}: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file, facets.items()
-        )
-    )
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
     return facets
 
@@ -117,11 +112,7 @@ def decode_cmip5_name(file: Union[Path, str]) -> dict:
     facets["experiment"] = decode_file[3]
     facets["ensemble"] = decode_file[4]
 
-    logging.info(
-        "{}: Deciphered the following from {}: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file, facets.items()
-        )
-    )
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
     return facets
 
@@ -140,11 +131,7 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
     facets["experiment"] = data.experiment_id
     facets["ensemble"] = data.parent_experiment_rip
 
-    logging.info(
-        "{}: Deciphered the following from {}: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file, facets.items()
-        )
-    )
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
     return facets
 
@@ -160,11 +147,7 @@ def decode_cordex_name(file: Union[Path, str]) -> dict:
     facets["ensemble"] = decode_file[4]
     facets["variable"] = decode_file[0]
 
-    logging.info(
-        "{}: Deciphered the following from {}: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file, facets.items()
-        )
-    )
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
     return facets
 
@@ -202,11 +185,7 @@ def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
             facets["co2_forcing"] = facets["soc_forcing"]
             facets["soc_forcing"] = "NAsoc"
 
-    logging.info(
-        "{}: Deciphered the following from {}: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file, facets.items()
-        )
-    )
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
     return facets
 
@@ -227,11 +206,7 @@ def decode_isimip_ft_netcdf(file):
     facets["ensemble"] = data.driving_model_ensemble_member
     facets["realm"] = data.modeling_realm
 
-    logging.info(
-        "{}: Deciphered the following from {}: {}".format(
-            dt.now().strftime("%Y-%m-%d %X"), file, facets.items()
-        )
-    )
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
     return facets
 

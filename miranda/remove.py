@@ -1,6 +1,5 @@
 import logging
 from datetime import date
-from datetime import datetime as dt
 from getpass import getpass
 from pathlib import Path
 from types import GeneratorType
@@ -15,6 +14,7 @@ from miranda.utils import creation_date
 
 def file_emptier(files: List[str or Path]) -> None:
     for f in files:
+        logging.warning("Overwriting {}".format(f))
         open(f, "w").close()
 
 
@@ -51,9 +51,7 @@ def delete_by_date(
     for file in nc_files:
         if creation_date(file) == date_selected:
             freed_space += Path(file).stat().st_size
-            logging.info(
-                "{}: Deleting {}".format(dt.now().strftime("%Y-%m-%d %X"), file.name)
-            )
+            logging.info("Deleting {}".format(file.name))
             if server:
                 context.remove(file)
             else:
@@ -93,19 +91,13 @@ def delete_duplicates(
     nc_file_duplicates = []
     for f in nc_files_target:
         if f.name in nc_files_source:
-            logging.info(
-                "{}: Duplicate found: {}".format(
-                    dt.now().strftime("%Y-%m-%d %X"), f.name
-                )
-            )
+            logging.info("Duplicate found: {}".format(f.name))
             nc_file_duplicates.append(f)
 
     nc_file_duplicates.sort()
     logging.info(
-        "{}: Found {} files totalling {}".format(
-            dt.now().strftime("%Y-%m-%d %X"),
-            len(nc_file_duplicates),
-            report_file_size(nc_file_duplicates),
+        "Found {} files totalling {}".format(
+            len(nc_file_duplicates), report_file_size(nc_file_duplicates)
         )
     )
 
@@ -115,17 +107,13 @@ def delete_duplicates(
         with connection as context:
             for dup in nc_file_duplicates:
                 freed_space += Path(dup).stat().st_size
-                logging.info(
-                    "{}: Deleting {}".format(dt.now().strftime("%Y-%m-%d %X"), dup.name)
-                )
+                logging.info("Deleting {}".format(dup.name))
                 context.remove(dup)
                 deleted_files += 1
 
     logging.info(
-        "{}: Removed {} files totalling {}".format(
-            dt.now().strftime("%Y-%m-%d %X"),
-            deleted_files,
-            report_file_size(freed_space),
+        "Removed {} files totalling {}".format(
+            deleted_files, report_file_size(freed_space)
         )
     )
     return
@@ -162,10 +150,8 @@ def delete_by_variable(
         nc_files.sort()
 
         logging.info(
-            "{}: Found {} files totalling {}".format(
-                dt.now().strftime("%Y-%m-%d %X"),
-                len(nc_files),
-                report_file_size(nc_files),
+            "Found {} files totalling {}".format(
+                len(nc_files), report_file_size(nc_files)
             )
         )
 
@@ -174,18 +160,12 @@ def delete_by_variable(
                 freed_space += Path(file).stat().st_size
                 deleted_files += 1
                 if delete:
-                    logging.info(
-                        "{}: Deleting file {}".format(
-                            dt.now().strftime("%Y-%m-%d %X"), file.stem
-                        )
-                    )
+                    logging.info("Deleting file {}".format(file.stem))
                     context.remove(file)
 
     logging.info(
-        "{}: Removed {} files totalling {}".format(
-            dt.now().strftime("%Y-%m-%d %X"),
-            deleted_files,
-            report_file_size(freed_space),
+        "Removed {} files totalling {}".format(
+            deleted_files, report_file_size(freed_space)
         )
     )
     return

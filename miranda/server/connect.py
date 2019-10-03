@@ -9,7 +9,7 @@ from scp import SCPClient
 __all__ = ["Connection"]
 
 
-class Connection(object):
+class Connection:
     def __init__(
         self,
         username: Union[str, Path] = None,

@@ -87,16 +87,10 @@ def archive_database(
                             if transfer.is_file():
                                 if not overwrite:
                                     logging.info(
-                                        "{}: {} exists. Skipping file.".format(
-                                            dt.now().strftime("%Y-%m-%d %X"), transfer
-                                        )
+                                        "{} exists. Skipping file.".format(transfer)
                                     )
                                     continue
-                                logging.info(
-                                    "{}: {} exists. Overwriting.".format(
-                                        dt.now().strftime("%Y-%m-%d %X"), transfer
-                                    )
-                                )
+                                logging.info("{} exists. Overwriting.".format(transfer))
 
                             if transfer_file(archive_file, transfer, transport=ctx):
                                 successful_transfers.append(archive_file)
@@ -118,15 +112,13 @@ def archive_database(
                             if transfer.is_file():
                                 if not overwrite:
                                     logging.info(
-                                        "{}: {} exists. Skipping file.".format(
-                                            dt.now().strftime("%Y-%m-%d %X"), transfer
+                                        'File "{}" exists. Skipping file.'.format(
+                                            transfer
                                         )
                                     )
                                     continue
                                 logging.info(
-                                    "{}: {} exists. Overwriting.".format(
-                                        dt.now().strftime("%Y-%m-%d %X"), transfer
-                                    )
+                                    'File "{}" exists. Overwriting.'.format(transfer)
                                 )
 
                             with working_directory(source_path):
@@ -142,18 +134,15 @@ def archive_database(
                         raise FileNotFoundError("No files found in grouping.")
 
         logging.info(
-            "Transferred {} of {} files totalling {} at {}.".format(
+            "Transferred {} of {} files totalling {}.".format(
                 len(successful_transfers),
                 len([f for f in file_list]),
                 report_file_size(successful_transfers),
-                dt.now().strftime("%Y-%m-%d %X"),
             )
         )
 
     except Exception as e:
-        msg = "{}: {} Failed to transfer files.".format(
-            dt.now().strftime("%Y-%m-%d %X"), e
-        )
+        msg = "{}: Failed to transfer files.".format(e)
         logging.error(msg)
         raise RuntimeError(msg) from e
 
