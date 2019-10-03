@@ -131,7 +131,7 @@ class StorageState:
 
 
 #
-def total_size(file_list):
+def total_size(file_list: Union[str, FileMeta, Path]):
     """Total size of files.
 
     Parameters

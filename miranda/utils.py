@@ -21,8 +21,7 @@ GiB = int(pow(2, 30))
 def creation_date(path_to_file: Union[Path, str]) -> float or date:
     """
     Try to get the date that a file was created, falling back to when it was
-    last modified if that isn't possible.
-    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+      last modified if that isn't possible. See http://stackoverflow.com/a/39501288/1709587 for explanation.
     """
     if platform.system() == "Windows":
         return Path(path_to_file).stat().st_ctime
@@ -37,7 +36,18 @@ def creation_date(path_to_file: Union[Path, str]) -> float or date:
 
 
 def read_privileges(location: Union[Path, str]) -> bool:
+    """
+    Determine whether a user has read privileges to a specific file
 
+    Parameters
+    ----------
+    location
+
+    Returns
+    -------
+    bool
+      Whether or not the current user shell has read privileges
+    """
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
@@ -87,6 +97,19 @@ def find_filepaths(
     file_suffixes: List[str] = None,
     **_
 ) -> List[Path]:
+    """
+
+    Parameters
+    ----------
+    source
+    recursive
+    file_suffixes
+    _
+
+    Returns
+    -------
+
+    """
 
     if file_suffixes is None:
         file_suffixes = list().append(["*", ".*"])
@@ -260,7 +283,17 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List
 
 
 def eccc_hourly_variable_metadata(variable_name: str) -> dict:
-    """fonction qui retourne differentes informations en fonction de la variable voulue"""
+    """
+    Un fonction qui retourne differentes informations en fonction de la variable voulue
+
+    Parameters
+    ----------
+    variable_name
+
+    Returns
+    -------
+
+    """
 
     if variable_name == "wind_speed":
         var_code = 76
@@ -306,6 +339,16 @@ def eccc_hourly_variable_metadata(variable_name: str) -> dict:
 
 
 def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
+    """
+
+    Parameters
+    ----------
+    variable_code
+
+    Returns
+    -------
+
+    """
     ec_hourly_variables = {
         "076": {
             "nc_units": "m s-1",
@@ -513,6 +556,16 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
 
 
 def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
+    """
+
+    Parameters
+    ----------
+    variable_code
+
+    Returns
+    -------
+
+    """
     ec_daily_variables = {
         "001": {
             "nc_units": "K",
