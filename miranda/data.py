@@ -49,11 +49,11 @@ class DataBase(object):
         if destination is not None:
             self._destination = Path(destination)
         else:
-            self.destination = Path().cwd()
+            self._destination = Path().cwd()
 
         self.project_name = str(project_name)
         if not self.project_name:
-            self.project_name = str(self.destination.name)
+            self.project_name = self._destination.stem
 
         if not file_pattern:
             self.file_suffixes = ["*"]
@@ -82,8 +82,25 @@ class DataBase(object):
         )
 
     def __str__(self):
-        prepr = "[%s]" % ", ".join(['{}: "{}"'.format(k, v) for k, v in self.items()])
+        prepr = "[%s]" % ", ".join(
+            ['{}: "{}"'.format(k, v) for k, v in self.__dict__.items()]
+        )
         return "{}({})".format(self.__class__.__name__, prepr)
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
+    def __delitem__(self, key):
+        del self.__dict__[key]
+
+    def __contains__(self, key):
+        return key in self.__dict__
+
+    def __len__(self):
+        return len(self._files)
 
     def _scrape(self, source) -> List[Path]:
         if source is None:
@@ -101,7 +118,7 @@ class DataBase(object):
         return {
             key: value
             for key, value in self.__dict__.items()
-            if not key.startswith("__") and not callable(key)
+            if not key.startswith("_") and not callable(key)
         }
 
     def items(self):
@@ -133,7 +150,7 @@ class DataBase(object):
         pass
 
     def target(self, target: Union[Path, str]):
-        self.destination = target
+        self._destination = target
         self._is_server = self._url_validate(target=target)
 
     @staticmethod
