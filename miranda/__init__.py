@@ -8,5 +8,6 @@ from .server import Connection
 from .storage import FileMeta
 from .storage import StorageState
 import miranda.archive
+import miranda.gis
 import miranda.server
 import miranda.subset
