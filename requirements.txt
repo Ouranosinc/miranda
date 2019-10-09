@@ -7,5 +7,9 @@ requests
 netCDF4
 xarray
 dask
+fiona
+rasterio
+shapely
+pyproj
 pandas
 geopandas
