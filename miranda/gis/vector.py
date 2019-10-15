@@ -2,7 +2,6 @@ import inspect
 import json
 import logging.config
 from functools import partial
-from functools import wraps
 from pathlib import Path
 from typing import Optional
 from typing import Union
@@ -126,20 +125,33 @@ def _layer_operation(func):
 
 
 def _feature_operation(func):
-    @wraps(func)
-    def wrapper(**kwargs):
-        vector = kwargs["vector"]
-        output = kwargs["output"]
-        source_crs = None
-        target_crs = None
-        if "source_crs" in kwargs:
-            source_crs = kwargs["source_crs"]
-        if "target_crs" in kwargs:
-            target_crs = kwargs["target_crs"]
+    @doc_inherit(parent=func, style="numpy_napoleon")
+    def wrapper(
+        vector,
+        output,
+        source_crs: Optional[Union[str, CRS]] = None,
+        target_crs: Optional[Union[str, CRS]] = None,
+        **kwargs
+    ):
+        """Parameters
+        ----------
+        vector : Union[str, Path]
+          Path to a file containing a valid vector layer.
+        output: Union[str, Path]
+          Path to a folder to be written to.
+        source_crs : Union[str, CRS]
+          Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
+        target_crs : Union[str, CRS]
+          Projection identifier (proj4) for the target geometry.
 
+        Returns
+        -------
+        None
+        """
         if target_crs is None:
             msg = "No target CRS is defined. No vector transform will occur"
             logging.warning(msg)
+
         if not isinstance(output, Path):
             output = Path(output)
         output.mkdir(parents=True, exist_ok=True)
@@ -183,37 +195,18 @@ def _feature_operation(func):
                             )
                             logging.exception(msg)
                         sink.write("{}".format(json.dumps(outfile)))
-        func.__signature__ = inspect.signature(wrapper)
-        return func
 
+        return
+
+    sig = inspect.signature(wrapper)
+    sig = sig.replace(parameters=tuple(sig.parameters.values())[:-1])
+    wrapper.__signature__ = sig
     return wrapper
 
 
 @_feature_operation
-def feature_convex_hull(
-    *,
-    vector,
-    output: Union[str, Path],
-    source_crs: Union[str, CRS] = None,
-    target_crs: Union[str, CRS] = None,
-    **kwargs
-):
+def feature_convex_hull(**kwargs):
     """Create convex hulls for all features within a single-layer vector file and return multiple GeoJSON files.
-
-    Parameters
-    ----------
-    vector : Union[str, Path]
-      Path to a file containing a valid vector layer.
-    output: Union[str, Path]
-      Path to a folder to be written to.
-    source_crs : Union[str, CRS]
-      Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
-    target_crs : Union[str, CRS]
-      Projection identifier (proj4) for the target geometry.
-
-    Returns
-    -------
-    None
     """
     geom, prop = kwargs["geom"], kwargs["prop"]
     if isinstance(geom, geo.Polygon):
@@ -221,30 +214,8 @@ def feature_convex_hull(
 
 
 @_feature_operation
-def feature_envelope(
-    *,
-    vector,
-    output: Union[str, Path],
-    source_crs: Union[str, CRS] = None,
-    target_crs: Union[str, CRS] = None,
-    **kwargs
-):
+def feature_envelope(**kwargs):
     """Create envelopes for all features within a single-layer vector file and return multiple GeoJSON files.
-
-    Parameters
-    ----------
-    vector : Union[str, Path]
-      Path to a file containing a valid vector layer.
-    output: Union[str, Path]
-      Path to a folder to be written to.
-    source_crs : Union[str, CRS]
-      Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
-    target_crs : Union[str, CRS]
-      Projection identifier (proj4) for the target geometry.
-
-    Returns
-    -------
-    None
     """
     geom, prop = kwargs["geom"], kwargs["prop"]
     if isinstance(geom, geo.Polygon):
@@ -252,15 +223,10 @@ def feature_envelope(
 
 
 @_layer_operation
-def layer_envelope(geom=None, prop=None, stuff="blah", **kwargs):
+def layer_envelope(**kwargs):
     """Creates envelopes for all layers within a vector file and returns a layer GeoJSON.
-
-    Parameters
-    ----------
-    stuff: str
-      blah blah blah
-
     """
+    geom, prop = kwargs["geom"], kwargs["prop"]
     if isinstance(geom, geo.Polygon):
         return geom.envelope, prop
 
@@ -273,6 +239,8 @@ if __name__ == "__main__":
 
     # feature_convex_hull(vector=vec, output=output_folder)
     feature_envelope(vector=vec, output=output_folder)
+    print(feature_envelope.__doc__, "\n")
+    print(inspect.signature(feature_envelope))
     layer_envelope(vector=vec, output=output_file)
-    print(layer_envelope.__doc__)
+    print(layer_envelope.__doc__, "\n")
     print(inspect.signature(layer_envelope))
