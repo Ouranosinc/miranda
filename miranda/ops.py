@@ -1,9 +1,12 @@
 import logging
+import re
 import tarfile
 import tempfile
 import time
 from pathlib import Path
 from typing import List
+from typing import Match
+from typing import Optional
 from typing import Union
 
 import fabric
@@ -13,19 +16,51 @@ from paramiko import SSHException
 from scp import SCPClient
 from scp import SCPException
 
-from miranda.server import Connection
+from .connect import Connection
 
-# from functools import singledispatch
+__all__ = ["create_archive", "create_remote_directory", "transfer_file", "url_validate"]
 
-__all__ = ["create_archive", "create_remote_directory", "transfer_file"]
+
+def url_validate(target: str) -> Optional[Match[str]]:
+    """
+    Validates whether a supplied URL is reliably written
+    see: https://stackoverflow.com/a/7160778/7322852
+
+    Parameters
+    ----------
+    target : str
+
+    """
+    regex = re.compile(
+        r"^(?:http|ftp)s?://"  # http:// or https://
+        # domain...
+        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"
+        r"localhost|"  # localhost...
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+        r"(?::\d+)?"  # optional port
+        r"(?:/?|[/?]\S+)$",
+        re.IGNORECASE,
+    )
+    return re.match(regex, target)
 
 
 def create_remote_directory(
-    directory, transport: Union[SSHClient, fabric.Connection, Connection]
-):
+    directory: Union[str, Path],
+    transport: Union[SSHClient, fabric.Connection, Connection],
+) -> None:
     """
-    This calls a function to create a folder structure over SFTP/SSH and waits
-     for confirmation before continuing
+    This calls a "mkdir -p" function to create a folder structure over SFTP/SSH and waits
+    for confirmation before continuing
+
+    Parameters
+    ----------
+    directory : Union[str, Path]
+    transport : Union[SSHClient, fabric.Connection, Connection]
+
+    Returns
+    -------
+    None
+
     """
     logging.info("Creating remote path: {}".format(directory))
 
@@ -54,6 +89,22 @@ def create_archive(
     compression: bool = False,
     recursive: bool = True,
 ) -> None:
+    """
+
+    Parameters
+    ----------
+    source_files: List[Union[Path, str]]
+    destination: Union[Path, str]
+    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection]
+    delete: bool
+    compression: bool = False
+    recursive: bool = True
+
+    Returns
+    -------
+    None
+
+    """
     if compression:
         write = "w:gz"
     elif not compression:
@@ -81,6 +132,19 @@ def transfer_file(
     destination_file: Union[Path, str],
     transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection] = None,
 ) -> bool:
+    """
+
+    Parameters
+    ----------
+    source_file: Union[Path, str]
+    destination_file: Union[Path, str]
+    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection]
+
+    Returns
+    -------
+    bool
+
+    """
 
     source_file = Path(source_file)
     destination_file = Path(destination_file)

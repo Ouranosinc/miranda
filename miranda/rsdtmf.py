@@ -30,6 +30,7 @@ The python trick to convert is::
    >>> str(path_string).replace('/','.').lstrip('.')
 
 """
+import logging
 import os
 import subprocess
 import threading
@@ -37,17 +38,17 @@ import time
 from pathlib import Path
 from typing import List
 
-from miranda.archive import transfer_file
-from miranda.storage import DiskSpaceError
-from miranda.storage import FileMeta
-from miranda.storage import size_division
-from miranda.storage import StorageState
-from miranda.storage import total_size
-from miranda.utils import find_filepaths
-from miranda.utils import GiB
-from miranda.utils import make_local_dirs
-from miranda.utils import verbose_fn
-from miranda.utils import yesno_prompt
+from .ops import transfer_file
+from .storage import DiskSpaceError
+from .storage import FileMeta
+from .storage import size_division
+from .storage import size_evaluation
+from .storage import StorageState
+from .utils import find_filepaths
+from .utils import GiB
+from .utils import make_local_dirs
+from .utils import verbose_fn
+from .utils import yesno_prompt
 
 DiskSpaceEvent = threading.Event()
 
@@ -65,7 +66,7 @@ def rstdmf_rename(file_list: List[str], restore_path: str):
     Parameters
     ----------
     file_list : List[str]
-        list of files to restore.
+      list of files to restore.
     restore_path : str
 
     Notes
@@ -134,8 +135,10 @@ def local_storage_for_rstdmf(
             files_on_disk.append(renamed_path)
         elif os.path.isdir(renamed_path):
             files_within = find_filepaths(renamed_path)
-            files_on_disk.append([FileMeta(renamed_path), total_size(files_within)])
-    size_on_disk = total_size(files_on_disk)
+            files_on_disk.append(
+                [FileMeta(renamed_path), size_evaluation(files_within)]
+            )
+    size_on_disk = size_evaluation(files_on_disk)
     # create a local storage object
     return StorageState(
         restore_path, max_size_on_disk, size_on_disk, max_size_on_disk - size_on_disk
@@ -199,7 +202,7 @@ def rstdmf_divisions(
         # If a directory is given, create its associated FileMeta object
         if os.path.isdir(file_to_restore):
             files_within = find_filepaths(file_to_restore)
-            file_to_restore = FileMeta(file_to_restore, total_size(files_within))
+            file_to_restore = FileMeta(file_to_restore, size_evaluation(files_within))
         # If just a file name is given, convert it to a FileMeta object
         elif not isinstance(file_to_restore, FileMeta):
             file_to_restore = FileMeta(file_to_restore)
@@ -236,7 +239,7 @@ def rstdmf_divisions(
     except DiskSpaceError:
         storage = StorageState(restore_path, 0, 0, 0)
     if verbose:
-        size_of_files = total_size(files_for_rstdmf)
+        size_of_files = size_evaluation(files_for_rstdmf)
         print(
             "Disk space: {} GB, Restoration size: {} GiB, ".format(
                 str(float(storage.free_space) / GiB), str(size_of_files / GiB)
@@ -247,7 +250,7 @@ def rstdmf_divisions(
             return
 
     for division in divisions:
-        size_of_files = total_size(division)
+        size_of_files = size_evaluation(division)
         list_of_path = [filemeta.path for filemeta in division]
         # If we can't get disk space, disregard it in the process
         try:

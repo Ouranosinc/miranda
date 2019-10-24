@@ -6,17 +6,17 @@ from pathlib import Path
 from typing import List
 from typing import Union
 
-from .groupings import group_by_deciphered_date
-from .groupings import group_by_size
-from .groupings import group_by_subdirectories
-from .remote import create_archive
-from .remote import create_remote_directory
-from .remote import transfer_file
-from miranda.server import Connection
-from miranda.storage import report_file_size
-from miranda.utils import find_filepaths
-from miranda.utils import single_item_list
-from miranda.utils import working_directory
+from .archive.groupings import group_by_deciphered_date
+from .archive.groupings import group_by_size
+from .archive.groupings import group_by_subdirectories
+from .connect import Connection
+from .ops import create_archive
+from .ops import create_remote_directory
+from .ops import transfer_file
+from .storage import report_file_size
+from .utils import find_filepaths
+from .utils import single_item_list
+from .utils import working_directory
 
 __all__ = ["archive_database"]
 

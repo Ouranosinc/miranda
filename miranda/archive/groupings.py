@@ -2,7 +2,6 @@
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
 from typing import List
@@ -10,6 +9,7 @@ from typing import Mapping
 from typing import Union
 
 from miranda.storage import report_file_size
+from miranda.utils import _ingest
 
 Nested_List = List[List[Path]]
 PathDict = Mapping[str, List[Path]]
@@ -22,13 +22,6 @@ __all__ = [
     "group_by_size",
     "group_by_subdirectories",
 ]
-
-
-def _ingest(files: Union[GeneratorType, List]) -> List:
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
-    files.sort()
-    return files
 
 
 def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested_List:

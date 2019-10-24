@@ -15,6 +15,7 @@ Functions:
  * :func:`size_division` - divide files based on number and size restrictions.
 
 """
+import logging
 import os
 from functools import reduce
 from pathlib import Path
@@ -37,7 +38,7 @@ class FileMeta:
         "size": ["IntegerField", "null=True", "blank=True"],
     }
 
-    def __init__(self, path, size=-1):
+    def __init__(self, path: str, size: int = -1):
         """Initialize file meta.
 
         Parameters
@@ -131,17 +132,17 @@ class StorageState:
 
 
 #
-def total_size(file_list: Union[str, FileMeta, Path]):
+def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
     """Total size of files.
 
     Parameters
     ----------
-    file_list : Union[str, FileMeta, Path]
+    file_list : Union[str, Path, FileMeta]
 
     Returns
     -------
-    out : int
-        total size of files in bytes.
+    int
+      total size of files in bytes.
 
     """
 
@@ -227,9 +228,40 @@ def size_division(
     return divisions
 
 
-#
+def file_size(
+    file_path_or_bytes: Union[Path, str, int, List[Union[str, Path]], GeneratorType]
+) -> int:
+    """
+
+    Parameters
+    ----------
+    file_path_or_bytes : Union[Path, str, int, List, GeneratorType]
+
+    Returns
+    -------
+    int
+    """
+    try:
+        if isinstance(file_path_or_bytes, int):
+            total = file_path_or_bytes
+        elif hasattr(file_path_or_bytes, "__iter__"):
+            total = reduce(
+                (lambda x, y: x + y),
+                map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
+            )
+        elif Path(file_path_or_bytes).is_file():
+            total = Path(file_path_or_bytes).stat().st_size
+        else:
+            raise FileNotFoundError
+    except FileNotFoundError:
+        logging.exception("Unable to parse file_size")
+        raise
+
+    return total
+
+
 def report_file_size(
-    file_path_or_bytes: Union[Path, str, int, List, GeneratorType],
+    file_path_or_bytes: Union[Path, str, int, List[Union[str, Path]], GeneratorType],
     use_binary: bool = True,
     significant_digits: int = 2,
 ) -> str or None:
@@ -238,34 +270,19 @@ def report_file_size(
     size in bytes of a file or a list of files in pretty formatted text.
     """
 
-    if isinstance(file_path_or_bytes, int):
-        return size_formatter(
-            file_path_or_bytes, binary=use_binary, precision=significant_digits
-        )
-    elif isinstance(file_path_or_bytes, (list, GeneratorType)):
-        sizes = reduce(
-            (lambda x, y: x + y),
-            map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
-        )
-        total = sizes
-    elif Path(file_path_or_bytes).is_file():
-        total = Path(file_path_or_bytes).stat().st_size
-    else:
-        return
+    def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
+        """
+        This function will format byte size into an appropriate nomenclature for prettier printing.
+        """
+        import math
 
-    return size_formatter(total, binary=use_binary, precision=significant_digits)
+        base = 1024 if binary else 1000
+        if i == 0:
+            return "0 B"
+        multiple = math.trunc(math.log2(i) / math.log2(base))
+        value = i / math.pow(base, multiple)
+        suffix = _CONVERSIONS[multiple].format("i" if binary else "")
+        return "{value:.{precision}f} {suffix}".format(**locals())
 
-
-def size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
-    """
-    This function will format byte size into an appropriate nomenclature for prettier printing.
-    """
-    import math
-
-    base = 1024 if binary else 1000
-    if i == 0:
-        return "0 B"
-    multiple = math.trunc(math.log2(i) / math.log2(base))
-    value = i / math.pow(base, multiple)
-    suffix = _CONVERSIONS[multiple].format("i" if binary else "")
-    return "{value:.{precision}f} {suffix}".format(**locals())
+    total = file_size(file_path_or_bytes)
+    return _size_formatter(total, binary=use_binary, precision=significant_digits)
