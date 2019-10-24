@@ -11,7 +11,9 @@
 # "Max Temp (°C)" is renamed "tasmax" and converted to °K.
 #
 #####################################################################
+import logging
 from pathlib import Path
+from typing import List
 from typing import Tuple
 from typing import Union
 
@@ -25,18 +27,21 @@ __all__ = ["find_and_extract_dly", "dly_to_netcdf"]
 # Searches a location for the station data, then calls the needed scripts to read and assembles the data using pandas
 def find_and_extract_dly(
     path_station: Union[Path, str], rm_flags: bool = False, file_suffix: str = ".csv"
-):
+) -> dict:
     """
 
     Parameters
     ----------
     path_station : Union[Path, str]
+      PathLike or str to the station's folder containing the csv files.
     rm_flags : bool
+      Removes the 'Flag' and 'Quality' columns of the ECCC files.
     file_suffix : str
-
+      File suffixes used by the tabular data. Default: ".csv".
     Returns
     -------
-
+    dict
+      dict containing the station metadata, as well as the data stored within a pandas Dataframe.
     """
 
     # REQUIRED PARAMETERS
@@ -51,7 +56,7 @@ def find_and_extract_dly(
     # Find the CSV files
     if "*" not in file_suffix:
         file_suffix = "*{}".format(file_suffix)
-    station_files = Path(path_station).rglob(file_suffix)
+    station_files = [f for f in Path(path_station).rglob(file_suffix)]
 
     # extract the .csv data
     station = _read_multiple_eccc_dly(station_files, rm_flags=rm_flags)
@@ -60,11 +65,19 @@ def find_and_extract_dly(
 
 
 # Uses xarray to transform the 'station' from find_and_extract_dly into a CF-Convention netCDF file
-def dly_to_netcdf(station, path_output):
-    # REQUIRED PARAMETERS
-    # station: dict created by using find_and_extract_dly
-    # path_output: string  ---  path where to save the data
+def dly_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
+    """
 
+    Parameters
+    ----------
+    station : dict
+      dict created by using find_and_extract_dly
+    path_output: Union[Path, str]
+
+    Returns
+    -------
+
+    """
     # first, transform the Date/Time to a 'days since' format
     time = station["data"]["Date/Time"] - np.array(
         "1950-01-01T00:00", dtype="datetime64"
@@ -72,6 +85,11 @@ def dly_to_netcdf(station, path_output):
     time = time.astype("timedelta64[s]").astype(float) / 86400
 
     # we use expand_dims twice to 'add' longitude and latitude dimensions to the station data
+    logging.info(
+        "Reading data for station {} (ID: {}) now.".format(
+            station["name"], station["ID"]
+        )
+    )
     da = xr.DataArray(
         np.expand_dims(
             np.expand_dims(station["data"]["Mean Temp (°C)"] + 273.15, axis=1), axis=2
@@ -328,7 +346,8 @@ def dly_to_netcdf(station, path_output):
     ds.attrs["Institution"] = "Environment and Climate Change Canada"
 
     # save the data
-    ds.to_netcdf(path_output + ds.attrs["Station Name"] + ".nc")
+    output_file = Path(path_output).joinpath("{}.nc".format(ds.attrs["Station Name"]))
+    ds.to_netcdf(output_file)
 
 
 ##########################################
@@ -337,10 +356,22 @@ def dly_to_netcdf(station, path_output):
 
 
 # This calls _read_single_eccc_dly and appends the data in a single Dict
-def _read_multiple_eccc_dly(files, rm_flags):
-    # REQUIRED PARAMETERS
-    # files: a list of all the files to append
-    # rm_flags: boolean  ---  removes all the 'Flag' and 'Quality' columns of the ECCC files
+def _read_multiple_eccc_dly(
+    files: List[Union[str, Path]], rm_flags: bool = False
+) -> dict:
+    """
+
+    Parameters
+    ----------
+    files : List[Union[str, Path]]
+      A list of all the files to append.
+    rm_flags : bool
+      Removes all the 'Flag' and 'Quality' columns of the ECCC files. Default: False.
+
+    Returns
+    -------
+    dict
+    """
 
     # Extract the data for each files
     station_meta = None
@@ -374,10 +405,17 @@ def _read_multiple_eccc_dly(files, rm_flags):
 
 # This is the script that actually reads the CSV files.
 # The metadata are saved in a Dict, while the data is returned as a pandas Dataframe.
-def _read_single_eccc_dly(file) -> Tuple[dict, pd.DataFrame]:
-    # REQUIRED PARAMETERS
-    # file: a string containing the file to be read
+def _read_single_eccc_dly(file: Union[Path, str]) -> Tuple[dict, pd.DataFrame]:
+    """
 
+    Parameters
+    ----------
+    file : Union[Path, str]
+
+    Returns
+    -------
+    Tuple[dict, pd.DataFrame]
+    """
     # Read the whole file
     with open(file, "r") as fi:
         lines = fi.readlines()
@@ -429,6 +467,10 @@ def _read_single_eccc_dly(file) -> Tuple[dict, pd.DataFrame]:
     data = pd.read_csv(file, header=search_header[8] - 2)
     # Makes sure that the data starts on Jan 1st
     if data.values[0, 2] != 1 | data.values[0, 3] != 1:
-        print("Data is not starting on January 1st. Make sure this is what you want!")
+        logging.warning(
+            "Data for file {} is not starting on January 1st. Make sure this is what you want!".format(
+                file.name
+            )
+        )
 
     return station_meta, data
