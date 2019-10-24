@@ -15,8 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import os
-import re
-from functools import reduce
 from pathlib import Path
 from types import GeneratorType
 from typing import List
@@ -24,8 +22,11 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from .ops import url_validate
 from .utils import find_filepaths
-from miranda.utils import GiB
+from .utils import GiB
+
+# from functools import reduce
 
 __all__ = ["DataBase"]
 
@@ -155,20 +156,7 @@ class DataBase(object):
 
     @staticmethod
     def _url_validate(target):
-        """
-        see: https://stackoverflow.com/a/7160778/7322852
-        """
-        regex = re.compile(
-            r"^(?:http|ftp)s?://"  # http:// or https://
-            # domain...
-            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"
-            r"localhost|"  # localhost...
-            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
-            r"(?::\d+)?"  # optional port
-            r"(?:/?|[/?]\S+)$",
-            re.IGNORECASE,
-        )
-        return re.match(regex, target)
+        return url_validate(target=target)
 
     def archive(self):
         pass

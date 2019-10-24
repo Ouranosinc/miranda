@@ -10,6 +10,7 @@ from types import GeneratorType
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Sequence
 from typing import Union
 
@@ -18,10 +19,25 @@ MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
 
-def creation_date(path_to_file: Union[Path, str]) -> float or date:
+def _ingest(files: Union[GeneratorType, List]) -> List:
+    if isinstance(files, GeneratorType):
+        files = [f for f in files]
+    files.sort()
+    return files
+
+
+def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
     """
-    Try to get the date that a file was created, falling back to when it was
-      last modified if that isn't possible. See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+
+    Parameters
+    ----------
+    path_to_file: Union[Path, str]
+
+    Returns
+    -------
+    Union[float, date]
     """
     if platform.system() == "Windows":
         return Path(path_to_file).stat().st_ctime
@@ -41,7 +57,7 @@ def read_privileges(location: Union[Path, str]) -> bool:
 
     Parameters
     ----------
-    location
+    location: Union[Path, str]
 
     Returns
     -------
@@ -72,11 +88,19 @@ def read_privileges(location: Union[Path, str]) -> bool:
 
 
 @contextmanager
-def working_directory(directory: Union[str, Path]):
+def working_directory(directory: Union[str, Path]) -> None:
     """
-    This function momentarily changes the working directory within the
-     context and reverts to the file working directory when the code block
-     it is acting upon exits
+    This function momentarily changes the working directory within the context and reverts to the file working directory
+    when the code block it is acting upon exits
+
+    Parameters
+    ----------
+    directory: Union[str, Path]
+
+    Returns
+    -------
+    None
+
     """
     owd = os.getcwd()
 
@@ -94,25 +118,26 @@ def working_directory(directory: Union[str, Path]):
 def find_filepaths(
     source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
     recursive: bool = True,
-    file_suffixes: List[str] = None,
+    file_suffixes: Optional[Union[str, List[str]]] = None,
     **_
 ) -> List[Path]:
     """
 
     Parameters
     ----------
-    source
-    recursive
-    file_suffixes
-    _
+    source : Union[Path, str, GeneratorType, List[Union[Path, str]]]
+    recursive : bool
+    file_suffixes: List[str]
 
     Returns
     -------
-
+    List[Path]
     """
 
     if file_suffixes is None:
         file_suffixes = list().append(["*", ".*"])
+    elif isinstance(file_suffixes, str):
+        file_suffixes = [file_suffixes]
 
     found = list()
     if isinstance(source, (Path, str)):
@@ -120,6 +145,8 @@ def find_filepaths(
 
     for location in source:
         for pattern in file_suffixes:
+            if "*" not in pattern:
+                pattern = "*{}".format(pattern)
             if recursive:
                 found.extend([f for f in Path(location).expanduser().rglob(pattern)])
             elif not recursive:
@@ -136,6 +163,15 @@ def find_filepaths(
 def single_item_list(iterable: Iterable) -> bool:
     """
     See: https://stackoverflow.com/a/16801605/7322852
+
+    Parameters
+    ----------
+    iterable: Iterable
+
+    Returns
+    -------
+    bool
+
     """
     iterator = iter(iterable)
     has_true = any(iterator)  # consume from "i" until first true or it's exhausted
@@ -145,13 +181,18 @@ def single_item_list(iterable: Iterable) -> bool:
     return has_true and not has_another_true  # True if exactly one true found
 
 
-def make_local_dirs(pathway: Union[str, Path], mode: int = 0o777) -> None:
+def make_local_dirs(pathway: Union[str, Path], mode: Union[int, bytes] = 0o777) -> None:
     """Create directories recursively, unless they already exist.
+
     Parameters
     ----------
     pathway : Union[Path, str]
       Path of folders to create.
-    mode : int
+    mode : Union[int, bytes]
+
+    Returns
+    -------
+    None
     """
 
     pathway = Path(pathway)
@@ -172,6 +213,7 @@ def set_comparisons(set1: Sequence, set2: Sequence) -> bool:
       First sequence of objects.
     set2 : Sequence
       Second sequence of objects.
+
     Returns
     -------
     out : bool
@@ -288,11 +330,11 @@ def eccc_hourly_variable_metadata(variable_name: str) -> dict:
 
     Parameters
     ----------
-    variable_name
+    variable_name: str
 
     Returns
     -------
-
+    dict
     """
 
     if variable_name == "wind_speed":
@@ -343,11 +385,11 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
 
     Parameters
     ----------
-    variable_code
+    variable_code: Union[int, str]
 
     Returns
     -------
-
+    dict
     """
     ec_hourly_variables = {
         "076": {
@@ -560,11 +602,11 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
 
     Parameters
     ----------
-    variable_code
+    variable_code: Union[int, str]
 
     Returns
     -------
-
+    dict
     """
     ec_daily_variables = {
         "001": {
