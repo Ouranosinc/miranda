@@ -8,6 +8,7 @@ from typing import Union
 from netCDF4 import Dataset
 
 __all__ = [
+    "decode_dimsvar",
     "decode_cmip5_name",
     "decode_cmip5_netcdf",
     "decode_cmip6_name",
@@ -81,6 +82,27 @@ CMIP6_INSTITUTES = {
 
 CMIP5_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP5_INSTITUTES.items() for i in ids}
 CMIP6_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP6_INSTITUTES.items() for i in ids}
+
+
+def decode_dimsvar(file: Union[Path, str]) -> dict:
+    """
+    see: https://gist.github.com/guziy/8543562
+
+    Parameters
+    ----------
+    file: Union[Path, str]
+
+    Returns
+    -------
+    dict
+    """
+    _, data = _from_netcdf(file=file)
+
+    dimsvar_dict = dict()
+    for var_name, varin in data.variables.items():
+        dimsvar_dict[var_name] = {k: varin.getncattr(k) for k in varin.ncattrs()}
+
+    return dimsvar_dict
 
 
 def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
