@@ -1,5 +1,5 @@
-from miranda.eccc import aggregate_hourly_nc_files
-from miranda.eccc import convert_hourly_ec_files
+from miranda.eccc import aggregate_nc_files
+from miranda.eccc import convert_flat_files
 
 if __name__ == "__main__":
     # indique quelle valeurs est gardee lorsqu'on a des fichiers avec plusieurs
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
     source_data = "/home/tjs/Desktop/ec_data/eccc_all"
 
-    aggregate_hourly_nc_files(
+    aggregate_nc_files(
         source_files=source_data,
         output_file=source_data,
         variable_name=var_name,
@@ -19,6 +19,6 @@ if __name__ == "__main__":
         station_inventory=station_file,
     )
 
-    convert_hourly_ec_files(
+    convert_flat_files(
         source_files=source_data, output_folder=source_data, variable_name=var_name
     )

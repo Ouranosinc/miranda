@@ -13,6 +13,8 @@
 #####################################################################
 import logging
 from pathlib import Path
+from types import GeneratorType
+from typing import Generator
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -44,19 +46,10 @@ def find_and_extract_dly(
       dict containing the station metadata, as well as the data stored within a pandas Dataframe.
     """
 
-    # REQUIRED PARAMETERS
-    # path_station: String   ---   path to the station's folder containing the csv files
-    #
-    # OPTIONAL PARAMETERS
-    # rm_flags: boolean  ---  removes the 'Flag' and 'Quality' columns of the ECCC files
-    #
-    # RETURNS
-    # station: 'dict' containing the station metadata, as well as the data stored within a pandas Dataframe
-
     # Find the CSV files
     if "*" not in file_suffix:
         file_suffix = "*{}".format(file_suffix)
-    station_files = [f for f in Path(path_station).rglob(file_suffix)]
+    station_files = Path(path_station).rglob(file_suffix)
 
     # extract the .csv data
     station = _read_multiple_eccc_dly(station_files, rm_flags=rm_flags)
@@ -76,7 +69,7 @@ def dly_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
 
     Returns
     -------
-
+    None
     """
     # first, transform the Date/Time to a 'days since' format
     time = station["data"]["Date/Time"] - np.array(
@@ -357,7 +350,8 @@ def dly_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
 
 # This calls _read_single_eccc_dly and appends the data in a single Dict
 def _read_multiple_eccc_dly(
-    files: List[Union[str, Path]], rm_flags: bool = False
+    files: Union[List[Union[str, Path]], Generator[Path, None, None]],
+    rm_flags: bool = False,
 ) -> dict:
     """
 
@@ -376,6 +370,9 @@ def _read_multiple_eccc_dly(
     # Extract the data for each files
     station_meta = None
     datafull = None
+
+    if isinstance(files, GeneratorType):
+        files = [f for f in files]
 
     for i, f in enumerate(files):
         station_meta, data = _read_single_eccc_dly(f)
