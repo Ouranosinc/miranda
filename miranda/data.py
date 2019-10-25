@@ -112,8 +112,7 @@ class DataBase(object):
             self._files = files
             self._common_path = common_path
             return files
-        else:
-            raise ValueError("Source must be an iterable of strings or Paths.")
+        raise ValueError("Source must be an iterable of strings or Paths.")
 
     def _as_dict(self):
         return {

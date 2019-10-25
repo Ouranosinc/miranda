@@ -10,4 +10,5 @@ Development Lead
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca>
+* Sebastien Biner <biner.sebastien@ouranos.ca>
