@@ -59,7 +59,7 @@ def archive_database(
         file_groups = group_by_subdirectories(file_list, within=common_path)
 
     else:
-        file_groups = defaultdict(lambda: list())
+        file_groups = defaultdict(list)
         for f in file_list:
             file_groups["."].append(f)
 
