@@ -8,8 +8,6 @@ dist: xenial
 matrix:
     fast_finish: true
     include:
-      - env: TOXENV=py35
-        python: 3.5
       - env: TOXENV=py36
         python: 3.6
       - env: TOXENV=py37
@@ -26,16 +24,7 @@ matrix:
         python: 3.7
       - env: TOXENV=docs
         python: 3.6
-      - env: TOXENV=pypy3
-        python: "pypy3"
-        addons:
-            apt:
-                packages:
-                    - libhdf5-serial-dev
-                    - netcdf-bin
-                    - libnetcdf-dev
     allow_failures:
-      - env: TOXENV=pypy3
       - env: TOXENV=py38-dev
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors

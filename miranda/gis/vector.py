@@ -158,7 +158,7 @@ def _feature_operation(func):
         None
         """
         if target_crs is None:
-            msg = "No target CRS is defined. No vector transform will occur"
+            msg = "No target CRS is defined. No vector transform will occur."
             logging.warning(msg)
 
         if not isinstance(output, Path):
