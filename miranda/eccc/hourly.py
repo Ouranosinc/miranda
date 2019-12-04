@@ -196,7 +196,7 @@ def convert_flat_files(
 def aggregate_nc_files(
     source_files: Union[str, Path],
     output_file: Union[str, Path],
-    variables: str,
+    variables: Union[str, List[str]],
     station_inventory: Union[str, Path] = None,
     include_flags: bool = True,
     double_handling: str = "first",
@@ -229,6 +229,9 @@ def aggregate_nc_files(
     if isinstance(variables, str):
         variables = [variables]
 
+    if isinstance(source_files, str):
+        source_files = Path(source_files)
+
     for variable_name in variables:
         info = eccc_hourly_variable_metadata(variable_name)
 
@@ -260,8 +263,8 @@ def aggregate_nc_files(
             files = Path(source_files).rglob("{}_{}*.nc".format(s, variable_name))
             files = [f.name for f in files]
             list_files_to_combine += files
-        list_start_years = [int(f.split("_")[-2]) for f in list_files_to_combine]
-        list_end_years = [int(f.split("_")[-1][:4]) for f in list_files_to_combine]
+        list_start_years = [int(str(f).split("_")[-2]) for f in list_files_to_combine]
+        list_end_years = [int(str(f).split("_")[-1][:4]) for f in list_files_to_combine]
         year_start = np.min(list_start_years)
         year_end = np.max(list_end_years)
 

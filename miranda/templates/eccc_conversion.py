@@ -7,18 +7,18 @@ if __name__ == "__main__":
     keep_double = "first"
     # keep_double = "last"
 
-    var_name = "hourly_rainfall"  # "dry_bulb_temperature"  # "precipitation_amount"
+    var_names = ["hourly_rainfall", "dry_bulb_temperature", "precipitation_amount"]
     station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
     source_data = "/home/tjs/Desktop/ec_data/eccc_all"
+
+    convert_flat_files(
+        source_files=source_data, output_folder=source_data, variables=var_names
+    )
 
     aggregate_nc_files(
         source_files=source_data,
         output_file=source_data,
-        variable_name=var_name,
+        variables=var_names,
         double_handling=keep_double,
         station_inventory=station_file,
-    )
-
-    convert_flat_files(
-        source_files=source_data, output_folder=source_data, variable_name=var_name
     )
