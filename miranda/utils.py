@@ -353,6 +353,14 @@ def eccc_hourly_variable_metadata(variable_name: str) -> dict:
         var_code = 80
         unites = "%"
         fact_mlt = 1
+    elif variable_name == "freezing_rain":
+        var_code = 89
+        unites = "1"
+        fact_mlt = 1
+    elif variable_name == "ice_pellet_presence":
+        var_code = 94
+        unites = "1"
+        fact_mlt = 1
     elif variable_name == "hourly_rainfall":
         var_code = 123
         unites = "mm"
@@ -431,6 +439,22 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Rainfall",
             "standard_name": "rainfall_amount",
             "nc_name": "rainfall",
+        },
+        "089": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Freezing Rain",
+            "standard_name": "freezing_rain",
+            "nc_name": "freezerain",
+        },
+        "094": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Ice Pellets",
+            "standard_name": "ice_pellet_presence",
+            "nc_name": "icepellets",
         },
         "123": {
             "nc_units": "%",

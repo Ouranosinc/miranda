@@ -285,11 +285,15 @@ def aggregate_nc_files(
 
         # Copie/adaptation de ce qui est fait dans ec_netcdf.create_station_netcdf_file
         # des scripts utilises par Bruno Fang (et qui viennent de Blaise je pense)
+        if not Path(output_file).exists():
+            Path(output_file).mkdir()
+
         file_out = Path(output_file).joinpath(
             "{}_hourly_{}.nc".format(variable_name, double_handling)
         )
         if file_out.exists():
             file_out.unlink()
+
         ds = nc.Dataset(file_out, "w", format="NETCDF4")
         ds.createDimension("time", None)
         ds.createDimension("station", valid_stations_count)
@@ -380,8 +384,19 @@ def aggregate_nc_files(
                     single_year_files.append(file)
 
             # traitement des fichiers annuels
+
             if len(single_year_files) > 0:
-                ds_single = xr.open_mfdataset(single_year_files, combine="by_coords")
+                try:
+                    ds_single = xr.open_mfdataset(
+                        single_year_files, combine="by_coords"
+                    )
+                except ValueError as e:
+                    logging.warning(
+                        "{}: Unable to read by coords. Skipping station: {}".format(
+                            e, station
+                        )
+                    )
+                    continue
                 df_tot[variable_name] = ds_single[variable_name].to_dataframe()
 
                 if include_flags:
