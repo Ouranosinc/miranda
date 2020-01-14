@@ -1,3 +1,5 @@
+import pathlib
+import sys
 from datetime import datetime as dt
 
 from .utils import MiB
@@ -5,6 +7,7 @@ from .utils import MiB
 _CONSOLE_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _LOGFILE_FORMAT = "%(asctime)s: [%(levelname)s]: %(filename)s(%(funcName)s:%(lineno)s) >>> %(message)s"
 
+__all__ = ["LOGGING_CONFIG"]
 
 LOGGING_CONFIG = {
     "version": 1,
@@ -23,14 +26,18 @@ LOGGING_CONFIG = {
         "rotated_file": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "logfile",
-            "filename": "{}_miranda.log".format(dt.now().strftime("%Y%m%d")),
+            "filename": "{}_{}.log".format(
+                dt.now().strftime("%Y%m%d"), pathlib.Path(sys.argv[0]).stem
+            ),
             "maxBytes": 2 * MiB,
             "backupCount": 10,
         },
         "standard_file": {
             "class": "logging.FileHandler",
             "formatter": "logfile",
-            "filename": "{}_miranda.log".format(dt.now().strftime("%Y%m%d")),
+            "filename": "{}_{}.log".format(
+                dt.now().strftime("%Y%m%d"), pathlib.Path(sys.argv[0]).stem
+            ),
         },
     },
     "loggers": {

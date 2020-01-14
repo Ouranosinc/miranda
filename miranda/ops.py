@@ -3,6 +3,7 @@ import re
 import tarfile
 import tempfile
 import time
+from logging import config
 from pathlib import Path
 from typing import List
 from typing import Match
@@ -17,7 +18,9 @@ from scp import SCPClient
 from scp import SCPException
 
 from .connect import Connection
+from .scripting import LOGGING_CONFIG
 
+logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["create_archive", "create_remote_directory", "transfer_file", "url_validate"]
 
 

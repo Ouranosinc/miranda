@@ -1,6 +1,7 @@
 import logging
 from datetime import date
 from getpass import getpass
+from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import List
@@ -9,9 +10,12 @@ from typing import Union
 
 import fabric
 
+from .scripting import LOGGING_CONFIG
 from .storage import report_file_size
 from .utils import _ingest
 from .utils import creation_date
+
+config.dictConfig(LOGGING_CONFIG)
 
 
 def file_emptier(*, file_list: List[Union[str, Path]]) -> None:

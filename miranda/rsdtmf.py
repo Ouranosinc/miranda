@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """
 =================
 rstdmf Operations
@@ -35,10 +34,12 @@ import os
 import subprocess
 import threading
 import time
+from logging import config
 from pathlib import Path
 from typing import List
 
 from .ops import transfer_file
+from .scripting import LOGGING_CONFIG
 from .storage import DiskSpaceError
 from .storage import FileMeta
 from .storage import size_division
@@ -51,6 +52,8 @@ from .utils import verbose_fn
 from .utils import yesno_prompt
 
 DiskSpaceEvent = threading.Event()
+
+config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "local_storage_for_rstdmf",
@@ -240,7 +243,7 @@ def rstdmf_divisions(
         storage = StorageState(restore_path, 0, 0, 0)
     if verbose:
         size_of_files = size_evaluation(files_for_rstdmf)
-        print(
+        logging.warning(
             "Disk space: {} GB, Restoration size: {} GiB, ".format(
                 str(float(storage.free_space) / GiB), str(size_of_files / GiB)
             )

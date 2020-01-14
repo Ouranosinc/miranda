@@ -16,7 +16,7 @@ REQUIRES_PYTHON = ">=3.5.0"
 LICENSE = "Apache Software License 2.0"
 
 if sys.argv[-1] == "publish":
-    os.system("python setup.py sdist upload")
+    os.system("python setup.py sdist bdist_wheel upload")
     sys.exit()
 
 requirements = list()
@@ -44,6 +44,7 @@ setup(
     version=VERSION,
     description=DESCRIPTION,
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
+    long_description_content_type="text/x-rst",
     author=AUTHOR,
     author_email=AUTHOR,
     url=URL,
@@ -64,5 +65,6 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 )

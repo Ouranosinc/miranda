@@ -1,16 +1,18 @@
-#!/bin/env python3
 import logging
 import re
 from collections import defaultdict
+from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import List
 from typing import Mapping
 from typing import Union
 
+from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 from miranda.utils import _ingest
 
+config.dictConfig(LOGGING_CONFIG)
 Nested_List = List[List[Path]]
 PathDict = Mapping[str, List[Path]]
 

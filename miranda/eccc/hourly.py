@@ -14,12 +14,13 @@
 import logging.config
 import time
 from datetime import datetime as dt
+from logging import config
 from pathlib import Path
 from typing import List
 from typing import Union
 
 import cftime
-import netCDF4 as nc
+import netCDF4
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -28,8 +29,7 @@ from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import eccc_hourly_variable_metadata
 from miranda.utils import make_local_dirs
 
-logging.config.dictConfig(LOGGING_CONFIG)
-
+config.dictConfig(LOGGING_CONFIG)
 __all__ = ["aggregate_nc_files", "convert_flat_files"]
 
 
@@ -294,7 +294,7 @@ def aggregate_nc_files(
         if file_out.exists():
             file_out.unlink()
 
-        ds = nc.Dataset(file_out, "w", format="NETCDF4")
+        ds = netCDF4.Dataset(file_out, "w", format="NETCDF4")
         ds.createDimension("time", None)
         ds.createDimension("station", valid_stations_count)
 

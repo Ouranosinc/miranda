@@ -18,11 +18,15 @@ Functions:
 import logging
 import os
 from functools import reduce
+from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import List
 from typing import Union
 
+from .scripting import LOGGING_CONFIG
+
+config.dictConfig(LOGGING_CONFIG)
 _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
 

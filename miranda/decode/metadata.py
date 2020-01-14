@@ -1,11 +1,17 @@
 #!/bin/env python3
 import logging
+import sys
 from collections import defaultdict
+from logging import config
 from pathlib import Path
 from typing import List
 from typing import Union
 
 from netCDF4 import Dataset
+
+from miranda.scripting import LOGGING_CONFIG
+
+config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "decode_dimsvar",

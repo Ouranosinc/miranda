@@ -1,4 +1,3 @@
-#!/bin/env python3
 """
 Copyright 2019 Trevor James Smith
 
@@ -15,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import os
+from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import List
@@ -23,10 +23,15 @@ from typing import Tuple
 from typing import Union
 
 from .ops import url_validate
+from .scripting import LOGGING_CONFIG
 from .utils import find_filepaths
 from .utils import GiB
 
+# import logging
+
 # from functools import reduce
+
+config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["DataBase"]
 

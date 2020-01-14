@@ -12,6 +12,7 @@
 #
 #####################################################################
 import logging
+from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import Generator
@@ -23,6 +24,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from miranda.scripting import LOGGING_CONFIG
+
+config.dictConfig(LOGGING_CONFIG)
 __all__ = ["find_and_extract_dly", "dly_to_netcdf"]
 
 

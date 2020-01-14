@@ -2,6 +2,7 @@
 import logging
 from collections import defaultdict
 from datetime import datetime as dt
+from logging import config
 from pathlib import Path
 from typing import List
 from typing import Union
@@ -13,11 +14,13 @@ from .connect import Connection
 from .ops import create_archive
 from .ops import create_remote_directory
 from .ops import transfer_file
+from .scripting import LOGGING_CONFIG
 from .storage import report_file_size
 from .utils import find_filepaths
 from .utils import single_item_list
 from .utils import working_directory
 
+config.dictConfig(LOGGING_CONFIG)
 __all__ = ["archive_database"]
 
 

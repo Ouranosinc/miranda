@@ -1,11 +1,15 @@
 #!/bin/env python3
 import datetime
 import logging
+from logging import config
 from pathlib import Path
 
 import geopandas as gpd
 import xarray as xr
 
+from miranda.scripting import LOGGING_CONFIG
+
+config.dictConfig(LOGGING_CONFIG)
 
 try:
     import dask

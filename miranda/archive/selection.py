@@ -1,14 +1,18 @@
 import logging
 from datetime import date
 from datetime import datetime as dt
+from logging import config
 from pathlib import Path
 from typing import List
 from typing import Union
 
+from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import creation_date
 from miranda.utils import find_filepaths
 
 __all__ = ["select_by_date_modified"]
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 
 def select_by_date_modified(
