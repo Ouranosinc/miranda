@@ -80,12 +80,12 @@ def convert_flat_files(
         for fichier in list_files:
             logging.info("Processing file: {}.".format(fichier))
 
-            # on converti le fichier en dataframe
+            # Create a dataframe from the files
             df = pd.read_fwf(
                 fichier, widths=[7, 4, 2, 2, 3] + [6, 1] * 24, names=titre_colonnes
             )
 
-            # boucle sur les eccc
+            # Loop through the station codes
             l_codes = df["code"].unique()
             for code in l_codes:
                 df_code = df[df["code"] == code]
@@ -96,7 +96,7 @@ def convert_flat_files(
 
                 # on fait le traitement
                 logging.info(
-                    "Traitement de {} pour station {}".format(variable_name, code)
+                    "Converting {} for station code: {}".format(variable_name, code)
                 )
 
                 # on va chercher le dataframe de la variable
@@ -155,11 +155,20 @@ def convert_flat_files(
                 ds["flag"] = da_flag
 
                 # sauvegarde en fichier netcdf
-                an_d = ds.time.dt.year.values[0]
-                an_f = ds.time.dt.year.values[-1]
-                f_nc = "{c}_{v}_{ad}_{af}.nc".format(
-                    c=code, v=variable_name, ad=an_d, af=an_f
-                )
+                start_year = ds.time.dt.year.values[0]
+                end_year = ds.time.dt.year.values[-1]
+                if start_year == end_year:
+                    f_nc = "{c}_{vc}_{v}_{ad}.nc".format(
+                        c=code, vc=variable_code, v=variable_name, ad=start_year
+                    )
+                else:
+                    f_nc = "{c}_{vc}_{v}_{ad}_{af}.nc".format(
+                        c=code,
+                        vc=variable_code,
+                        v=variable_name,
+                        ad=start_year,
+                        af=end_year,
+                    )
 
                 ds.attrs["Conventions"] = "CF-1.5"
 
