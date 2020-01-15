@@ -119,7 +119,7 @@ def find_filepaths(
     source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
     recursive: bool = True,
     file_suffixes: Optional[Union[str, List[str]]] = None,
-    **_
+    **_,
 ) -> List[Path]:
     """
 
@@ -618,7 +618,12 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
         },
     }
     code = str(variable_code).zfill(3)
-    return ec_hourly_variables[code]
+    try:
+        variable = ec_hourly_variables[code]
+    except KeyError:
+        logging.error("Hourly variable `{}` not supported".format(code))
+        raise
+    return variable
 
 
 def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
@@ -691,4 +696,9 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
         },
     }
     code = str(variable_code).zfill(3)
-    return ec_daily_variables[code]
+    try:
+        variable = ec_daily_variables[code]
+    except KeyError:
+        logging.error("Daily variable `{}` not supported".format(code))
+        raise
+    return variable

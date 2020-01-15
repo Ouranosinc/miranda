@@ -26,14 +26,19 @@ import pandas as pd
 import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.utils import eccc_cf_daily_metadata
 from miranda.utils import eccc_hourly_variable_metadata
 from miranda.utils import make_local_dirs
 
 config.dictConfig(LOGGING_CONFIG)
-__all__ = ["aggregate_nc_files", "convert_flat_files"]
+__all__ = [
+    "aggregate_nc_files",
+    "convert_hourly_flat_files",
+    "convert_daily_flat_files",
+]
 
 
-def convert_flat_files(
+def convert_hourly_flat_files(
     source_files: Union[str, Path],
     output_folder: Union[str, Path],
     variables: Union[str, List[str]],
@@ -72,7 +77,7 @@ def convert_flat_files(
         make_local_dirs(rep_nc)
 
         # boucle sur les fichiers
-        if variable_code == 262:
+        if 262 < int(variable_code) <= 280:
             list_files = Path(source_files).rglob("HLY*RCS*.gz")
         else:
             list_files = Path(source_files).rglob("HLY*.gz")
@@ -142,6 +147,158 @@ def convert_flat_files(
                 for index, row in df_var.iterrows():
                     for h in range(0, 24):
                         dates.append(dt(int(row.year), int(row.month), int(row.day), h))
+
+                ds = xr.Dataset()
+                da_val = xr.DataArray(val.flatten(), coords=[dates], dims=["time"])
+                da_val = da_val.rename(variable_name)
+                da_val.attrs["unites"] = info["unites"]
+                da_val.attrs["id"] = code
+                da_val.attrs["num_element"] = variable_code
+
+                da_flag = xr.DataArray(flag.flatten(), coords=[dates], dims=["time"])
+                ds[variable_name] = da_val
+                ds["flag"] = da_flag
+
+                # sauvegarde en fichier netcdf
+                start_year = ds.time.dt.year.values[0]
+                end_year = ds.time.dt.year.values[-1]
+                if start_year == end_year:
+                    f_nc = "{c}_{vc}_{v}_{ad}.nc".format(
+                        c=code, vc=variable_code, v=variable_name, ad=start_year
+                    )
+                else:
+                    f_nc = "{c}_{vc}_{v}_{ad}_{af}.nc".format(
+                        c=code,
+                        vc=variable_code,
+                        v=variable_name,
+                        ad=start_year,
+                        af=end_year,
+                    )
+
+                ds.attrs["Conventions"] = "CF-1.5"
+
+                ds.attrs[
+                    "title"
+                ] = "Environment and Climate Change Canada (ECCC) weather eccc"
+                ds.attrs[
+                    "history"
+                ] = "{}: Merged from multiple individual station files to n-dimensional array.".format(
+                    dt.now().strftime("%Y-%m-%d %X")
+                )
+                ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%M"))
+                ds.attrs["institution"] = "Environment and Climate Change Canada (ECCC)"
+                ds.attrs[
+                    "source"
+                ] = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
+                ds.attrs[
+                    "references"
+                ] = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
+                ds.attrs[
+                    "comment"
+                ] = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
+                ds.attrs[
+                    "redistribution"
+                ] = "Redistribution policy unknown. For internal use only."
+
+                ds.to_netcdf(rep_nc.joinpath(f_nc))
+
+    logging.warning(
+        "Process completed in {:.2f} seconds".format(time.time() - func_time)
+    )
+
+
+def convert_daily_flat_files(
+    source_files: Union[str, Path],
+    output_folder: Union[str, Path],
+    variables: Union[str, int, List[Union[str, int]]],
+    missing_value: int = -9999,
+) -> None:
+    """
+
+    Parameters
+    ----------
+    source_files : Union[str, Path]
+    output_folder : Union[str, Path]
+    variables : Union[str, List[str]
+      Variable codes (001, 002, 103, etc.)
+    missing_value : int
+
+    Returns
+    -------
+    None
+    """
+    func_time = time.time()
+
+    if isinstance(variables, str):
+        variables = [variables]
+
+    for variable_code in variables:
+        info = eccc_cf_daily_metadata(variable_code)
+        variable_code = str(variable_code).zfill(3)
+        variable_name = info["standard_name"]
+
+        # on prepare l'extraction des donnees
+        titre_colonnes = "code year month day code_var ".split()
+        for i in range(1, 25):
+            titre_colonnes.append("D{:0n}".format(i))
+            titre_colonnes.append("F{:0n}".format(i))
+
+        # preparation du repertoire de sortie
+        rep_nc = Path(output_folder).joinpath(variable_name)
+        make_local_dirs(rep_nc)
+
+        # boucle sur les fichiers
+        list_files = Path(source_files).rglob("DLY*.gz")
+
+        for fichier in list_files:
+            logging.info("Processing file: {}.".format(fichier))
+
+            # Create a dataframe from the files
+            df = pd.read_fwf(
+                fichier, widths=[7, 4, 2, 3] + [6, 1] * 31, names=titre_colonnes
+            )
+
+            # Loop through the station codes
+            l_codes = df["code"].unique()
+            for code in l_codes:
+                df_code = df[df["code"] == code]
+
+                # on arrete si la variable n'est pas presente
+                if variable_code not in df_code["code_var"].unique():
+                    continue
+
+                # on fait le traitement
+                logging.info(
+                    "Converting {} for station code: {}".format(variable_name, code)
+                )
+
+                # on va chercher le dataframe de la variable
+                df_var = df_code[df_code["code_var"] == variable_code].copy()
+
+                # application du masque selon la valeur manquante
+                df_var = df_var.replace(missing_value, np.nan)
+
+                # decodage des valeurs et flags
+                dfd = df_var.loc[:, ["D{:0n}".format(i) for i in range(1, 32)]]
+                dff = df_var.loc[:, ["F{:0n}".format(i) for i in range(1, 32)]]
+
+                # enleve flag == nan
+                dff = dff.fillna("")
+
+                # utilise flag pour masquer valeurs
+                val = np.asfarray(dfd.values)
+                flag = dff.values
+                mask = np.isin(flag, info["flag_manquants"])
+                val[mask] = np.nan
+
+                # traitement des unites
+                val = val * info["fact_mlt"] + info["fact_add"]
+
+                # on bati le dataarray
+                dates = []
+                for index, row in df_var.iterrows():
+                    for d in range(0, 31):
+                        dates.append(dt(int(row.year), int(row.month), d))
 
                 ds = xr.Dataset()
                 da_val = xr.DataArray(val.flatten(), coords=[dates], dims=["time"])
