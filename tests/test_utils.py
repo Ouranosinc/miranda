@@ -77,13 +77,13 @@ class TestReadPrivileges:
         allowed = utils.read_privileges(here)
         assert allowed
 
-    def test_nonexistent_folder(self):
+    def test_nonexistent_folder_strict(self):
         mythical_folder = Path("/here/there/everwyhere")
-        allowed = utils.read_privileges(mythical_folder)
-        assert not allowed
+        with pytest.raises(OSError):
+            utils.read_privileges(mythical_folder, strict=True)
 
-    def test_forbidden_folder(self):
+    def test_forbidden_folder_lax(self):
         root_folder = Path(Path.cwd().root).joinpath("root")
-        allowed = utils.read_privileges(root_folder)
+        allowed = utils.read_privileges(root_folder, strict=False)
 
         assert not allowed

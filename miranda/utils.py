@@ -19,6 +19,23 @@ MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
 
+__all__ = [
+    "creation_date",
+    "eccc_cf_daily_metadata",
+    "eccc_cd_hourly_metadata",
+    "eccc_hourly_variable_metadata",
+    "find_filepaths",
+    "list_paths_with_elements",
+    "make_local_dirs",
+    "read_privileges",
+    "set_comparisons",
+    "single_item_list",
+    "verbose_fn",
+    "working_directory",
+    "yesno_prompt",
+]
+
+
 def _ingest(files: Union[GeneratorType, List]) -> List:
     if isinstance(files, GeneratorType):
         files = [f for f in files]
@@ -51,13 +68,14 @@ def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
             return date.fromtimestamp(stat.st_mtime)
 
 
-def read_privileges(location: Union[Path, str]) -> bool:
+def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     """
     Determine whether a user has read privileges to a specific file
 
     Parameters
     ----------
     location: Union[Path, str]
+    strict: bool
 
     Returns
     -------
@@ -67,24 +85,29 @@ def read_privileges(location: Union[Path, str]) -> bool:
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
+    msg = ""
+
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
-                logging.info(
-                    "{} is read OK!".format(dt.now().strftime("%Y-%m-%d %X"), location)
+                msg = "{} is read OK!".format(
+                    dt.now().strftime("%Y-%m-%d %X"), location
                 )
+                logging.info(msg)
                 return True
             else:
                 msg = "Ensure read privileges."
-                logging.error(msg)
-                return False
+                raise OSError
         else:
-            logging.error("{} is an invalid path.")
-            return False
+            msg = "{} is an invalid path.".format(location)
+            raise OSError
+
     except OSError:
-        msg = "Ensure read privileges."
         logging.exception(msg)
-        return False
+        if strict:
+            raise
+        else:
+            return False
 
 
 @contextmanager
