@@ -13,6 +13,7 @@
 #######################################################################
 import logging.config
 import time
+from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
@@ -107,21 +108,21 @@ def convert_hourly_flat_files(
                 # on va chercher le dataframe de la variable
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
 
-                # patch pour dealer avec les bugs dans les donnees
-                if (
-                    (fichier == str(Path(source_files).joinpath("HLYCA_123.gz")))
-                    and (variable_name == "rainfall")
-                    and (code == "7077571")
-                ):
-                    # on corrige la donnees du 6 juin 2014 a 1h
-                    ind_ligne = df_var[
-                        (df_var["year"] == 2014)
-                        & (df_var["month"] == 6)
-                        & (df_var["day"] == 14)
-                    ].index
-
-                    df_var.loc[ind_ligne, "D2"] = missing_value
-                    df_var.loc[ind_ligne, "F2"] = "M"
+                # # patch pour dealer avec les bugs dans les donnees
+                # if (
+                #     (fichier == str(Path(source_files).joinpath("HLYCA_123.gz")))
+                #     and (variable_name == "rainfall")
+                #     and (code == "7077571")
+                # ):
+                #     # on corrige la donnees du 6 juin 2014 a 1h
+                #     ind_ligne = df_var[
+                #         (df_var["year"] == 2014)
+                #         & (df_var["month"] == 6)
+                #         & (df_var["day"] == 14)
+                #     ].index
+                #
+                #     df_var.loc[ind_ligne, "D2"] = missing_value
+                #     df_var.loc[ind_ligne, "F2"] = "M"
 
                 # application du masque selon la valeur manquante
                 df_var = df_var.replace(missing_value, np.nan)
@@ -143,19 +144,21 @@ def convert_hourly_flat_files(
                 val = val * info["fact_mlt"] + info["fact_add"]
 
                 # on bati le dataarray
-                dates = []
+                dates = dict(time=list())
                 for index, row in df_var.iterrows():
                     for h in range(0, 24):
-                        dates.append(dt(int(row.year), int(row.month), int(row.day), h))
+                        dates["list"].append(
+                            dt(int(row.year), int(row.month), int(row.day), h)
+                        )
 
                 ds = xr.Dataset()
-                da_val = xr.DataArray(val.flatten(), coords=[dates], dims=["time"])
+                da_val = xr.DataArray(val.flatten(), coords=dates, dims=["time"])
                 da_val = da_val.rename(variable_name)
                 da_val.attrs["unites"] = info["unites"]
                 da_val.attrs["id"] = code
-                da_val.attrs["num_element"] = variable_code
+                da_val.attrs["element_number"] = variable_code
 
-                da_flag = xr.DataArray(flag.flatten(), coords=[dates], dims=["time"])
+                da_flag = xr.DataArray(flag.flatten(), coords=dates, dims=["time"])
                 ds[variable_name] = da_val
                 ds["flag"] = da_flag
 
@@ -163,16 +166,16 @@ def convert_hourly_flat_files(
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
                 if start_year == end_year:
-                    f_nc = "{c}_{vc}_{v}_{ad}.nc".format(
-                        c=code, vc=variable_code, v=variable_name, ad=start_year
+                    f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
+                        c=code, vc=variable_code, v=variable_name, sy=start_year
                     )
                 else:
-                    f_nc = "{c}_{vc}_{v}_{ad}_{af}.nc".format(
+                    f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
                         c=code,
                         vc=variable_code,
                         v=variable_name,
-                        ad=start_year,
-                        af=end_year,
+                        sy=start_year,
+                        ey=end_year,
                     )
 
                 ds.attrs["Conventions"] = "CF-1.5"
@@ -185,7 +188,7 @@ def convert_hourly_flat_files(
                 ] = "{}: Merged from multiple individual station files to n-dimensional array.".format(
                     dt.now().strftime("%Y-%m-%d %X")
                 )
-                ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%M"))
+                ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%m"))
                 ds.attrs["institution"] = "Environment and Climate Change Canada (ECCC)"
                 ds.attrs[
                     "source"
@@ -302,40 +305,50 @@ def convert_daily_flat_files(
                 # traitement des unites
                 val = val * info["scale_factor"] + info["add_offset"]
 
-                # Create the dataarray
-                dates = []
-                for index, row in df_var.iterrows():
-                    for d in range(0, 31):
-                        dates.append(dt(int(row.year), int(row.month), d))
+                # Create the dataarray and concatenate values and flags based on day-length of months
+                date_range = dict(time=list())
+                value_days = list()
+                flag_days = list()
+                for i, (index, row) in enumerate(df_var.iterrows()):
+                    period = pd.Period(year=row.year, month=row.month, freq="M")
+                    dates = pd.Series(
+                        pd.date_range(
+                            start=period.start_time, end=period.end_time, freq="D"
+                        )
+                    )
+                    date_range["time"].extend(dates)
+
+                    value_days.extend(val[i][range(monthrange(row.year, row.month)[1])])
+                    flag_days.extend(flag[i][range(monthrange(row.year, row.month)[1])])
 
                 ds = xr.Dataset()
-                da_val = xr.DataArray(val.flatten(), coords=[dates], dims=["time"])
+                da_val = xr.DataArray(value_days, coords=date_range, dims=["time"])
                 da_val = da_val.rename(variable_name)
-                da_val.attrs["unites"] = info["unites"]
+                da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
-                da_val.attrs["num_element"] = variable_code
+                da_val.attrs["element_number"] = variable_code
 
-                da_flag = xr.DataArray(flag.flatten(), coords=[dates], dims=["time"])
+                da_flag = xr.DataArray(flag_days, coords=date_range, dims=["time"])
                 ds[variable_name] = da_val
                 ds["flag"] = da_flag
 
-                # sauvegarde en fichier netcdf
+                # save as a NetCDF file
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
                 if start_year == end_year:
-                    f_nc = "{c}_{vc}_{v}_{ad}.nc".format(
-                        c=code, vc=variable_code, v=variable_name, ad=start_year
+                    f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
+                        c=code, vc=variable_code, v=variable_name, sy=start_year
                     )
                 else:
-                    f_nc = "{c}_{vc}_{v}_{ad}_{af}.nc".format(
+                    f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
                         c=code,
                         vc=variable_code,
                         v=variable_name,
-                        ad=start_year,
-                        af=end_year,
+                        sy=start_year,
+                        ey=end_year,
                     )
 
-                ds.attrs["Conventions"] = "CF-1.5"
+                ds.attrs["Conventions"] = "CF-1.7"
 
                 ds.attrs[
                     "title"
@@ -345,7 +358,7 @@ def convert_daily_flat_files(
                 ] = "{}: Merged from multiple individual station files to n-dimensional array.".format(
                     dt.now().strftime("%Y-%m-%d %X")
                 )
-                ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%M"))
+                ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%m"))
                 ds.attrs["institution"] = "Environment and Climate Change Canada (ECCC)"
                 ds.attrs[
                     "source"

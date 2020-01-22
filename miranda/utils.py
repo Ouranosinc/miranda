@@ -22,7 +22,7 @@ GiB = int(pow(2, 30))
 __all__ = [
     "creation_date",
     "eccc_cf_daily_metadata",
-    "eccc_cd_hourly_metadata",
+    "eccc_cf_hourly_metadata",
     "eccc_hourly_variable_metadata",
     "find_filepaths",
     "list_paths_with_elements",
@@ -411,7 +411,7 @@ def eccc_hourly_variable_metadata(variable_name: str) -> dict:
     )
 
 
-def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
+def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     """
 
     Parameters
@@ -430,7 +430,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Speed (U2A)",
             "standard_name": "wind_speed",
             "nc_name": "windspeed",
-            "missing_flags": "M",
         },
         "077": {
             "nc_units": "Pa",
@@ -439,7 +438,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Station Pressure",
             "standard_name": "pressure",
             "nc_name": "pressure",
-            "missing_flags": "M",
         },
         "078": {
             "nc_units": "K",
@@ -448,7 +446,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Dry Bulb Temperature",
             "standard_name": "dry_bulb_temperature",
             "nc_name": "tas_dry",
-            "missing_flags": "M",
         },
         "079": {
             "nc_units": "K",
@@ -457,7 +454,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wet Bulb temperature",
             "standard_name": "wet_bulb_temperature",
             "nc_name": "tas_wet",
-            "missing_flags": "M",
         },
         "080": {
             "nc_units": "kg m-2 s-1",
@@ -466,7 +462,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Rainfall",
             "standard_name": "rainfall_amount",
             "nc_name": "rainfall",
-            "missing_flags": "M",
         },
         "089": {
             "nc_units": "1",
@@ -475,7 +470,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Freezing Rain",
             "standard_name": "freezing_rain",
             "nc_name": "freezerain",
-            "missing_flags": "M",
         },
         "094": {
             "nc_units": "1",
@@ -484,7 +478,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Ice Pellets",
             "standard_name": "ice_pellet_presence",
             "nc_name": "icepellets",
-            "missing_flags": "M",
         },
         "123": {
             "nc_units": "%",
@@ -493,7 +486,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Relative Humidity",
             "standard_name": "relative_humidity",
             "nc_name": "hur",
-            "missing_flags": "M",
         },
         "262": {
             "nc_units": "kg m-2 s-1",
@@ -502,7 +494,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Precipitation (minutes 00-60)",
             "standard_name": "precipitation_flux",
             "nc_name": "precipitation_hourly",
-            "missing_flags": "M",
         },
         "263": {
             "nc_units": "kg m-2 s-1",
@@ -511,7 +502,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Precipitation (minutes 00-15)",
             "standard_name": "precipitation_flux",
             "nc_name": "precipitation_q1",
-            "missing_flags": "M",
         },
         "264": {
             "nc_units": "kg m-2 s-1",
@@ -520,7 +510,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Precipitation (minutes 15-30)",
             "standard_name": "precipitation_flux",
             "nc_name": "precipitation_q2",
-            "missing_flags": "M",
         },
         "265": {
             "nc_units": "kg m-2 s-1",
@@ -529,7 +518,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Precipitation (minutes 30-45)",
             "standard_name": "precipitation_flux",
             "nc_name": "precipitation_q3",
-            "missing_flags": "M",
         },
         "266": {
             "nc_units": "kg m-2 s-1",
@@ -538,7 +526,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Total Precipitation (minutes 45-60)",
             "standard_name": "precipitation_flux",
             "nc_name": "precipitation_q4",
-            "missing_flags": "M",
         },
         "267": {
             "nc_units": "kg m-2",
@@ -547,10 +534,9 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 15)",
             "standard_name": "precipitation_amount",
             "nc_name": "precip_weight_q1",
-            "missing_flags": "M",
         },
         "268": {
-            "nc_units": "mk m-2",
+            "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
@@ -559,22 +545,20 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "missing_flags": "M",
         },
         "269": {
-            "nc_units": "m",
+            "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 45)",
             "standard_name": "precipitation_amount",
             "nc_name": "precip_weight_q3",
-            "missing_flags": "M",
         },
         "270": {
-            "nc_units": "m",
+            "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 60)",
             "standard_name": "precipitation_amount",
             "nc_name": "precip_weight_q4",
-            "missing_flags": "M",
         },
         "271": {
             "nc_units": "m s-1",
@@ -583,7 +567,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Speed at 2 m (minutes 00-15)",
             "standard_name": "wind_speed",
             "nc_name": "windspeed_q1",
-            "missing_flags": "M",
         },
         "272": {
             "nc_units": "m s-1",
@@ -592,7 +575,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Speed at 2 m (minutes 15-30)",
             "standard_name": "wind_speed",
             "nc_name": "windpseed_q2",
-            "missing_flags": "M",
         },
         "273": {
             "nc_units": "m s-1",
@@ -601,7 +583,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Speed at 2 m (minutes 30-45)",
             "standard_name": "wind_speed",
             "nc_name": "windspeed_q3",
-            "missing_flags": "M",
         },
         "274": {
             "nc_units": "m s-1",
@@ -610,7 +591,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Speed at 2 m (minutes 45-60)",
             "standard_name": "wind_speed",
             "nc_name": "windspeed_q4",
-            "missing_flags": "M",
         },
         "275": {
             "nc_units": "m",
@@ -619,7 +599,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Snow Depth (at minute 60)",
             "standard_name": "surface_snow_thickness",
             "nc_name": "snd",
-            "missing_flags": "M",
         },
         "276": {
             "nc_units": "m",
@@ -628,7 +607,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Snow Depth (at minute 15)",
             "standard_name": "surface_snow_thickness",
             "nc_name": "snd_q1",
-            "missing_flags": "M",
         },
         "277": {
             "nc_units": "m",
@@ -637,7 +615,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Snow Depth (at minute 30)",
             "standard_name": "surface_snow_thickness",
             "nc_name": "snd_q2",
-            "missing_flags": "M",
         },
         "278": {
             "nc_units": "m",
@@ -646,7 +623,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Snow Depth (at minute 45)",
             "standard_name": "surface_snow_thickness",
             "nc_name": "snd_q4",
-            "missing_flags": "M",
         },
         "279": {
             "nc_units": "degree",
@@ -655,7 +631,6 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Direction at 2 m (minutes 50-60)",
             "standard_name": "wind_direction",
             "nc_name": "wind_dir",
-            "missing_flags": "M",
         },
         "280": {
             "nc_units": "m s-1",
@@ -664,12 +639,12 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Wind Speed at 2 m (minutes 50-60)",
             "standard_name": "wind_speed",
             "nc_name": "wnd",
-            "missing_flags": "M",
         },
     }
     code = str(variable_code).zfill(3)
     try:
         variable = ec_hourly_variables[code]
+        variable["missing_flags"] = "M"
     except KeyError:
         logging.error("Hourly variable `{}` not supported".format(code))
         raise
@@ -711,7 +686,6 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Daily Mean Temperature",
             "standard_name": "air_temperature",
             "nc_name": "tas",
-            "missing_flags": "M",
         },
         "010": {
             "nc_units": "mm",
@@ -745,10 +719,107 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "standard_name": "surface_snow_thickness",
             "nc_name": "snd",
         },
+        "014": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Thunderstorms",
+            "standard_name": "thunderstorm_presence",
+            "nc_name": "thunder",
+        },
+        "015": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Freezing rain or drizzle",
+            "standard_name": "freeze_rain_drizzle_presence",
+            "nc_name": "freezing_rain_drizzle",
+        },
+        "016": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Hail",
+            "standard_name": "hail_presence",
+            "nc_name": "hail",
+        },
+        "017": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Fog or Ice Fog",
+            "standard_name": "fog_ice_fog_presence",
+            "nc_name": "fog_ice_fog",
+        },
+        "018": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Smoke or Haze",
+            "standard_name": "smoke_haze_presence",
+            "nc_name": "smoke_haze",
+        },
+        "019": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Blowing Dust or Sand",
+            "standard_name": "blowing_dust_sand_presence",
+            "nc_name": "blowing_dust_sand",
+        },
+        "020": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Blowing snow",
+            "standard_name": "blowing_snow",
+            "nc_name": "blow_snow",
+        },
+        "021": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Wind speed >= 28 Knots",
+            "standard_name": "wind_exceeding_28_knots",
+            "nc_name": "wind_28kt",
+        },
+        "022": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Wind speed >= 34 Knots",
+            "standard_name": "wind_exceeding_34_knots",
+            "nc_name": "wind_34kt",
+        },
+        "023": {
+            "nc_units": "deg",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Direction of extreme gust (16 pts) to December 1976",
+            "standard_name": "extreme_gust_direction",
+            "nc_name": "gust_direction",
+        },
+        "024": {
+            "nc_units": "km h-1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Speed of extreme gust",
+            "standard_name": "extreme_gust_speed",
+            "nc_name": "gust_speed",
+        },
+        "025": {
+            "nc_units": "h",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "UTC hour of extreme gust",
+            "standard_name": "extreme_gust_hour",
+            "nc_name": "gust_hour",
+        },
     }
     code = str(variable_code).zfill(3)
     try:
         variable = ec_daily_variables[code]
+        variable["missing_flags"] = "M"
     except KeyError:
         logging.error("Daily variable `{}` not supported".format(code))
         raise
