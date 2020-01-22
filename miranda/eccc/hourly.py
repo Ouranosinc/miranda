@@ -136,7 +136,7 @@ def convert_hourly_flat_files(
                 # utilise flag pour masquer valeurs
                 val = np.asfarray(dfd.values)
                 flag = dff.values
-                mask = np.isin(flag, info["flag_manquants"])
+                mask = np.isin(flag, info["missing_flags"])
                 val[mask] = np.nan
 
                 # traitement des unites
@@ -238,8 +238,8 @@ def convert_daily_flat_files(
         variable_name = info["standard_name"]
 
         # on prepare l'extraction des donnees
-        titre_colonnes = "code year month day code_var ".split()
-        for i in range(1, 25):
+        titre_colonnes = "code year month code_var".split()
+        for i in range(1, 32):
             titre_colonnes.append("D{:0n}".format(i))
             titre_colonnes.append("F{:0n}".format(i))
 
@@ -248,14 +248,22 @@ def convert_daily_flat_files(
         make_local_dirs(rep_nc)
 
         # boucle sur les fichiers
-        list_files = Path(source_files).rglob("DLY*.gz")
+        list_files = list()
+
+        if isinstance(source_files, list) or Path(source_files).is_file():
+            list_files.append(source_files)
+        else:
+            list_files.extend(Path(source_files).rglob("*DLY*"))
 
         for fichier in list_files:
             logging.info("Processing file: {}.".format(fichier))
 
             # Create a dataframe from the files
             df = pd.read_fwf(
-                fichier, widths=[7, 4, 2, 3] + [6, 1] * 31, names=titre_colonnes
+                fichier,
+                widths=[7, 4, 2, 3] + [6, 1] * 31,
+                names=titre_colonnes,
+                dtype={"year": int, "month": int, "code_var": str},
             )
 
             # Loop through the station codes
@@ -288,13 +296,13 @@ def convert_daily_flat_files(
                 # utilise flag pour masquer valeurs
                 val = np.asfarray(dfd.values)
                 flag = dff.values
-                mask = np.isin(flag, info["flag_manquants"])
+                mask = np.isin(flag, info["missing_flags"])
                 val[mask] = np.nan
 
                 # traitement des unites
-                val = val * info["fact_mlt"] + info["fact_add"]
+                val = val * info["scale_factor"] + info["add_offset"]
 
-                # on bati le dataarray
+                # Create the dataarray
                 dates = []
                 for index, row in df_var.iterrows():
                     for d in range(0, 31):
