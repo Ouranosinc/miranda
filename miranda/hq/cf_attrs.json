@@ -1,0 +1,96 @@
+{
+    "Header": {
+        "data_specs_version": "00.00.01",
+        "cmor_version": "3.5",
+        "table_id": "HQ",
+        "realm": "atmos",
+        "table_date": "21 January 2020",
+        "missing_value": "1e20",
+        "int_missing_value": "-999",
+        "product": "station-obs",
+        "Conventions": "CF-1.7 CMIP-6.2"
+    },
+    "variable_entry": {
+        "prsn": {
+            "frequency": "day",
+            "standard_name": "snowfall_flux",
+            "units": "kg m-2 s-1",
+            "cell_methods": "time: mean",
+            "long_name": "Snowfall Flux",
+            "comment": "At surface; includes precipitation of all forms of water in the solid phase.",
+            "out_name": "prsn",
+            "type": "real"
+        },
+        "prlp": {
+            "frequency": "day",
+            "standard_name": "rainfall_flux",
+            "units": "kg m-2 s-1",
+            "cell_methods": "time: mean",
+            "long_name": "Rainfall Flux",
+            "comment": "At surface; includes precipitation of all forms of water in the liquid phase.",
+            "out_name": "prlp",
+            "type": "real"
+        },
+        "tasmin": {
+            "frequency": "day",
+            "standard_name": "air_temperature",
+            "units": "K",
+            "cell_methods": "time: minimum",
+            "long_name": "Daily Minimum Near-Surface Air Temperature",
+            "comment": "Minimum near-surface (usually, 2 meter) air temperature.",
+            "out_name": "tasmin",
+            "type": "real"
+        },
+        "tasmax": {
+            "frequency": "day",
+            "standard_name": "air_temperature",
+            "units": "K",
+            "cell_methods": "time: maximum",
+            "long_name": "Daily Maximum Near-Surface Air Temperature",
+            "comment": "Maximum near-surface (usually, 2 meter) air temperature.",
+            "out_name": "tasmax",
+            "type": "real"
+        },
+        "hurs": {
+            "frequency": "1h",
+            "standard_name": "relative_humidity",
+            "units": "%",
+            "cell_methods": "time: mean",
+            "long_name": "Near-Surface Relative Humidity",
+            "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+            "out_name": "hurs",
+            "type": "real"
+        },
+        "sfcWind": {
+            "frequency": "1h",
+            "standard_name": "wind_speed",
+            "units": "m s-1",
+            "cell_methods": "time: mean",
+            "long_name": "Daily-Mean Near-Surface Wind Speed",
+            "comment": "Near-surface (usually, 10 meters) wind speed.",
+            "out_name": "sfcWind",
+            "type": "real"
+        },
+        "sfcWindAz": {
+            "frequency": "1h",
+            "standard_name": "wind_direction",
+            "units": "degree",
+            "cell_methods": "time: mean",
+            "long_name": "Daily-Mean Near-Surface Wind Direction",
+            "comment": "Near-surface (usually, 10 meters) direction from which wind originates.",
+            "out_name": "sfcWindAz",
+            "type": "real"
+        },
+
+        "snd": {
+            "frequency": "1h",
+            "standard_name": "surface_snow_thickness",
+            "units": "m",
+            "cell_methods": "time: mean",
+            "long_name": "Snow Depth",
+            "comment": "The mean thickness of snow.",
+            "out_name": "snd",
+            "type": "real"
+        }
+    }
+}
