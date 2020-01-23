@@ -25,6 +25,7 @@ import pandas as pd
 import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
@@ -375,8 +376,7 @@ def _read_multiple_daily_summaries(
     station_meta = None
     datafull = None
 
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
+    files = ingest(files)
 
     for i, f in enumerate(files):
         station_meta, data = _read_single_daily_summaries(f)
