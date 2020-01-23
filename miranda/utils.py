@@ -416,7 +416,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 10,
             "add_offset": 0,
             "long_name": "Station Pressure",
-            "standard_name": "pressure",
+            "standard_name": "atmospheric_pressure",
             "nc_name": "pressure",
         },
         "078": {
@@ -449,7 +449,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Freezing Rain",
             "standard_name": "freezing_rain",
-            "nc_name": "freezerain",
+            "nc_name": "freeze_rain",
         },
         "094": {
             "nc_units": "1",
@@ -457,7 +457,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Ice Pellets",
             "standard_name": "ice_pellet_presence",
-            "nc_name": "icepellets",
+            "nc_name": "ice_pellets",
         },
         "123": {
             "nc_units": "%",
@@ -513,7 +513,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 15)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q1",
+            "nc_name": "precipitation_weight_q1",
         },
         "268": {
             "nc_units": "kg m-2",
@@ -521,7 +521,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q2",
+            "nc_name": "precipitation_weight_q2",
             "missing_flags": "M",
         },
         "269": {
@@ -530,7 +530,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 45)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q3",
+            "nc_name": "precipitation_weight_q3",
         },
         "270": {
             "nc_units": "kg m-2",
@@ -538,7 +538,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 60)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q4",
+            "nc_name": "precipitation_weight_q4",
         },
         "271": {
             "nc_units": "m s-1",
@@ -625,6 +625,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     try:
         variable = ec_hourly_variables[code]
         variable["missing_flags"] = "M"
+        variable["least_significant_digit"] = None
     except KeyError:
         logging.error("Hourly variable `{}` not supported".format(code))
         raise
@@ -800,6 +801,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
     try:
         variable = ec_daily_variables[code]
         variable["missing_flags"] = "M"
+        variable["least_significant_digit"] = None
     except KeyError:
         logging.error("Daily variable `{}` not supported".format(code))
         raise
