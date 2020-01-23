@@ -1,6 +1,5 @@
 import logging
 import os
-import platform
 import sys
 from contextlib import contextmanager
 from datetime import date
@@ -59,7 +58,7 @@ def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
     -------
     Union[float, date]
     """
-    if platform.system() == "Windows":
+    if os.name == "nt":
         return Path(path_to_file).stat().st_ctime
     else:
         stat = Path(path_to_file).stat()
