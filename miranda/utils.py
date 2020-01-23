@@ -99,10 +99,10 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
                 logging.info(msg)
                 return True
             else:
-                msg = "Ensure read privileges."
+                msg = "Ensure read privileges for `{}`.".format(location)
                 raise OSError
         else:
-            msg = "{} is an invalid path.".format(location)
+            msg = "`{}` is an invalid path.".format(location)
             raise OSError
 
     except OSError:
