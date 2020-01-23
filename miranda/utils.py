@@ -25,8 +25,11 @@ __all__ = [
     "eccc_cf_hourly_metadata",
     "eccc_hourly_variable_metadata",
     "find_filepaths",
+    "GiB",
+    "ingest",
+    "KiB",
     "list_paths_with_elements",
-    "make_local_dirs",
+    "MiB",
     "read_privileges",
     "set_comparisons",
     "single_item_list",
@@ -36,7 +39,7 @@ __all__ = [
 ]
 
 
-def _ingest(files: Union[GeneratorType, List]) -> List:
+def ingest(files: Union[GeneratorType, List]) -> List:
     if isinstance(files, GeneratorType):
         files = [f for f in files]
     files.sort()
@@ -202,29 +205,6 @@ def single_item_list(iterable: Iterable) -> bool:
         iterator
     )  # carry on consuming until another true value / exhausted
     return has_true and not has_another_true  # True if exactly one true found
-
-
-def make_local_dirs(pathway: Union[str, Path], mode: Union[int, bytes] = 0o777) -> None:
-    """Create directories recursively, unless they already exist.
-
-    Parameters
-    ----------
-    pathway : Union[Path, str]
-      Path of folders to create.
-    mode : Union[int, bytes]
-
-    Returns
-    -------
-    None
-    """
-
-    pathway = Path(pathway)
-
-    if not pathway.exists():
-        try:
-            pathway.mkdir(parents=True, mode=mode)
-        except OSError:
-            raise
 
 
 def set_comparisons(set1: Sequence, set2: Sequence) -> bool:

@@ -12,8 +12,8 @@ import fabric
 
 from .scripting import LOGGING_CONFIG
 from .storage import report_file_size
-from .utils import _ingest
 from .utils import creation_date
+from .utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -32,7 +32,7 @@ def file_emptier(*, file_list: List[Union[str, Path]]) -> None:
     None
     """
 
-    file_list = _ingest(file_list)
+    file_list = ingest(file_list)
 
     logging.info(
         "Found {} files totalling {}".format(

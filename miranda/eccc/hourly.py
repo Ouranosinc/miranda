@@ -67,17 +67,16 @@ def convert_hourly_flat_files(
         info = eccc_hourly_variable_metadata(variable_name)
         variable_code = info["code_var"]
 
-        # on prepare l'extraction des donnees
+        # preparing the data extraction
         titre_colonnes = "code year month day code_var ".split()
         for i in range(1, 25):
             titre_colonnes.append("D{:0n}".format(i))
             titre_colonnes.append("F{:0n}".format(i))
 
-        # preparation du repertoire de sortie
         rep_nc = Path(output_folder).joinpath(variable_name)
         make_local_dirs(rep_nc)
 
-        # boucle sur les fichiers
+        # Loop on the files
         if 262 < int(variable_code) <= 280:
             list_files = Path(source_files).rglob("HLY*RCS*.gz")
         else:
@@ -108,22 +107,6 @@ def convert_hourly_flat_files(
                 # on va chercher le dataframe de la variable
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
 
-                # # patch pour dealer avec les bugs dans les donnees
-                # if (
-                #     (fichier == str(Path(source_files).joinpath("HLYCA_123.gz")))
-                #     and (variable_name == "rainfall")
-                #     and (code == "7077571")
-                # ):
-                #     # on corrige la donnees du 6 juin 2014 a 1h
-                #     ind_ligne = df_var[
-                #         (df_var["year"] == 2014)
-                #         & (df_var["month"] == 6)
-                #         & (df_var["day"] == 14)
-                #     ].index
-                #
-                #     df_var.loc[ind_ligne, "D2"] = missing_value
-                #     df_var.loc[ind_ligne, "F2"] = "M"
-
                 # application du masque selon la valeur manquante
                 df_var = df_var.replace(missing_value, np.nan)
 
@@ -141,9 +124,9 @@ def convert_hourly_flat_files(
                 val[mask] = np.nan
 
                 # traitement des unites
-                val = val * info["fact_mlt"] + info["fact_add"]
+                val = val * info["scale_factor"] + info["add_offset"]
 
-                # on bati le dataarray
+                # Create the DataArray
                 dates = dict(time=list())
                 for index, row in df_var.iterrows():
                     for h in range(0, 24):
@@ -162,7 +145,7 @@ def convert_hourly_flat_files(
                 ds[variable_name] = da_val
                 ds["flag"] = da_flag
 
-                # sauvegarde en fichier netcdf
+                # save the file in NetCDF format
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
                 if start_year == end_year:
@@ -289,7 +272,7 @@ def convert_daily_flat_files(
                 # application du masque selon la valeur manquante
                 df_var = df_var.replace(missing_value, np.nan)
 
-                # decodage des valeurs et flags
+                # Decoding the values and flags
                 dfd = df_var.loc[:, ["D{:0n}".format(i) for i in range(1, 32)]]
                 dff = df_var.loc[:, ["F{:0n}".format(i) for i in range(1, 32)]]
 
@@ -302,10 +285,10 @@ def convert_daily_flat_files(
                 mask = np.isin(flag, info["missing_flags"])
                 val[mask] = np.nan
 
-                # traitement des unites
+                # Adjust units
                 val = val * info["scale_factor"] + info["add_offset"]
 
-                # Create the dataarray and concatenate values and flags based on day-length of months
+                # Create the DataArray and concatenate values and flags based on day-length of months
                 date_range = dict(time=list())
                 value_days = list()
                 flag_days = list()
@@ -380,10 +363,12 @@ def convert_daily_flat_files(
     )
 
 
+# TODO: Adjust this function to allow for hourly and daily data aggregation
 def aggregate_nc_files(
     source_files: Union[str, Path],
     output_file: Union[str, Path],
     variables: Union[str, List[str]],
+    time_step: str = "h",
     station_inventory: Union[str, Path] = None,
     include_flags: bool = True,
     double_handling: str = "first",
@@ -395,6 +380,7 @@ def aggregate_nc_files(
     source_files: Union[str, Path]
     output_file: Union[str, Path]
     variables: Union[str, List[str]]
+    time_step: str
     station_inventory: Union[str, Path]
     include_flags: bool
     double_handling: str
@@ -419,8 +405,18 @@ def aggregate_nc_files(
     if isinstance(source_files, str):
         source_files = Path(source_files)
 
+    if time_step.lower() in ["h", "hour", "hourly"]:
+        hourly = True
+    elif time_step.lower() in ["d", "day", "daily"]:
+        hourly = False
+    else:
+        raise ValueError("Time step must be `hourly` or `daily`.")
+
     for variable_name in variables:
-        info = eccc_hourly_variable_metadata(variable_name)
+        if hourly:
+            info = eccc_hourly_variable_metadata(variable_name)
+        else:
+            info = eccc_cf_daily_metadata(variable_name)
 
         # On dresse la liste des eccc pour lesquelles on a des metadonnees
         df_inv = pd.read_csv(station_inventory, header=3)
@@ -447,22 +443,22 @@ def aggregate_nc_files(
         # On va chercher les limites temporelles des fichiers
         list_files_to_combine = []
         for s in valid_stations:
-            files = Path(source_files).rglob("{}_{}*.nc".format(s, variable_name))
-            files = [f.name for f in files]
+            files = [
+                f.name
+                for f in Path(source_files).rglob("{}_{}*.nc".format(s, variable_name))
+            ]
             list_files_to_combine += files
-        list_start_years = [int(str(f).split("_")[-2]) for f in list_files_to_combine]
-        list_end_years = [int(str(f).split("_")[-1][:4]) for f in list_files_to_combine]
-        year_start = np.min(list_start_years)
-        year_end = np.max(list_end_years)
+        list_start_years = [int(f.split("_")[-2]) for f in list_files_to_combine]
+        list_end_years = [int(f.split("_")[-1][:4]) for f in list_files_to_combine]
+        year_start, year_end = np.min(list_start_years), np.max(list_end_years)
 
-        # calcul des dimensions du fichier de sortie
+        # Calculate the dimensions of the output NetCDF
         time_index = pd.date_range(
             start="{}-01-01".format(year_start),
             end="{}-01-01".format(year_end + 1),
-            freq="H",
+            freq=["H" if hourly else "D"],
         )[:-1]
 
-        # preparation du fichier de sortie
         logging.info("Preparing the NetCDF.")
         logging.info(
             "Number of eccc: {}, time steps: {}.".format(
@@ -476,7 +472,9 @@ def aggregate_nc_files(
             Path(output_file).mkdir()
 
         file_out = Path(output_file).joinpath(
-            "{}_hourly_{}.nc".format(variable_name, double_handling)
+            "{}_{}_{}.nc".format(
+                variable_name, "hourly" if hourly else "daily", double_handling
+            )
         )
         if file_out.exists():
             file_out.unlink()
@@ -489,13 +487,13 @@ def aggregate_nc_files(
         least_significant_digit = info["least_significant_digit"]
         nc_var = ds.createVariable(
             variable_name,
-            "f4",
+            "f4",  # TODO: create a mapping of the data type for floats, int and bools to nc_datatypes
             dimensions=("time", "station"),
             zlib=True,
             least_significant_digit=least_significant_digit,
             chunksizes=(100000, 1),
         )
-        nc_var.units = info["unites"]
+        nc_var.units = info["nc_units"]
 
         nc_flag = None
         if include_flags:
@@ -510,7 +508,7 @@ def aggregate_nc_files(
             nc_flag.long_name = "data flag"
             nc_flag.note = "See ECCC technical documentation for details"
 
-        # Creation de la variable time
+        # Create the time variable
         nc_time = ds.createVariable("time", "f8", dimensions="time")
         tunits = time_index[0].strftime("days since %Y-%m-%d %H:%M:%S")
         nc_time.units = tunits
@@ -518,7 +516,7 @@ def aggregate_nc_files(
         nc_time[:] = time_num
         ds.sync()
 
-        # Creation des variables/coords des metadonnees des eccc
+        # Write out the appropriate ECCC metadata
         nc_name = ds.createVariable("name", "str", dimensions="station")
         nc_lon = ds.createVariable("lon", "f8", dimensions="station")
         nc_lon.units = "decimal degrees"
@@ -533,7 +531,7 @@ def aggregate_nc_files(
         nc_tc_id = ds.createVariable("tc_id", "str", dimensions="station")
         ds.sync()
 
-        # On utilise les DataFrame pour aligner les donnees
+        # Use a Pandas DataFrame to align the data
         df_tot = pd.DataFrame(index=time_index)
 
         # On remplit les donnees pour chaques eccc
@@ -577,11 +575,9 @@ def aggregate_nc_files(
                     ds_single = xr.open_mfdataset(
                         single_year_files, combine="by_coords"
                     )
-                except ValueError as e:
-                    logging.warning(
-                        "{}: Unable to read by coords. Skipping station: {}".format(
-                            e, station
-                        )
+                except ValueError:
+                    logging.exception(
+                        "Unable to read by coords. Skipping station: {}".format(station)
                     )
                     continue
                 df_tot[variable_name] = ds_single[variable_name].to_dataframe()
@@ -651,7 +647,7 @@ def aggregate_nc_files(
                 "Transaction duration: {:.2f} seconds.".format(time.time() - t00)
             )
 
-        ds.Conventions = "CF-1.5"
+        ds.Conventions = "CF-1.7"
 
         ds.title = "Environment and Climate Change Canada (ECCC) weather eccc"
         ds.history = "{}: Merged from multiple individual station files to n-dimensional array.".format(

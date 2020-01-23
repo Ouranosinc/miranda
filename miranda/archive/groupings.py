@@ -10,7 +10,7 @@ from typing import Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
-from miranda.utils import _ingest
+from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
 Nested_List = List[List[Path]]
@@ -32,7 +32,7 @@ def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested
     """
     logging.info("Creating groups of {} files".format(size))
 
-    files = _ingest(files)
+    files = ingest(files)
     grouped_list = list()
     group = list()
     for i, f in enumerate(files):
@@ -60,7 +60,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
         r"(?P<year>[0-9]{4})-?(?P<month>[0-9]{2})-?(?P<day>[0-9]{2})?.*\.(?P<suffix>nc)$"
     )
 
-    files = _ingest(files)
+    files = ingest(files)
     dates = defaultdict(lambda: list())
     total = 0
     for f in files:
@@ -103,7 +103,7 @@ def group_by_size(
         )
     )
 
-    files = _ingest(files)
+    files = ingest(files)
     grouped_list = list()
     group = list()
     total = 0
@@ -134,7 +134,7 @@ def group_by_subdirectories(
     if not within:
         within = Path.cwd()
 
-    files = _ingest(files)
+    files = ingest(files)
     groups = defaultdict(list)
     for f in files:
         group_name = Path(f).relative_to(within).parent

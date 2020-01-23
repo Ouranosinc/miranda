@@ -34,7 +34,7 @@ class TestEnvCanVariables:
             variables[key] = utils.eccc_hourly_variable_metadata(key)
             codes.append(variables[key]["code_var"])
             assert variables[key]["fact_add"] == 0
-            assert variables[key]["flag_manquants"] == ["M"]
+            assert variables[key]["missing_flags"] == ["M"]
             assert variables[key]["least_significant_digit"] is None
 
         assert codes == [76, 77, 78, 80, 123, 262]
@@ -52,25 +52,6 @@ class TestCreationDate:
         testfile.unlink()
 
 
-class TestFolderOperations:
-    def test_local_folder_creation(self):
-        foldername = "testfolder"
-        testfolder = Path.cwd().joinpath(foldername)
-
-        utils.make_local_dirs(testfolder)
-        assert testfolder.exists()
-        assert testfolder.stat().st_mode == 0o40775
-        testfolder.rmdir()
-
-    def test_make_forbidden_folder(self):
-        foldername = "testfolder"
-        root_drive = Path.cwd().root
-        testfolder = Path(root_drive).joinpath(foldername)
-
-        with pytest.raises(OSError):
-            utils.make_local_dirs(testfolder)
-
-
 class TestReadPrivileges:
     def test_allowed_folder(self):
         here = Path.cwd()
@@ -78,7 +59,7 @@ class TestReadPrivileges:
         assert allowed
 
     def test_nonexistent_folder_strict(self):
-        mythical_folder = Path("/here/there/everwyhere")
+        mythical_folder = Path("/here/there/everywhere")
         with pytest.raises(OSError):
             utils.read_privileges(mythical_folder, strict=True)
 
