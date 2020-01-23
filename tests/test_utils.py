@@ -1,4 +1,4 @@
-import sys
+import os
 from datetime import date
 from pathlib import Path
 
@@ -88,7 +88,7 @@ class TestReadPrivileges:
         with pytest.raises(OSError):
             utils.read_privileges(mythical_folder, strict=True)
 
-    @pytest.mark.skipif(hasattr(sys, "getwindowsversion"), reason="not Windows")
+    @pytest.mark.skipif(os.name != "posix", reason="not Windows")
     def test_forbidden_folder_lax(self):
         root_folder = Path(Path.cwd().root).joinpath("root")
         allowed = utils.read_privileges(root_folder, strict=False)
