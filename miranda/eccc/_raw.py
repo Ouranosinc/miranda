@@ -29,7 +29,6 @@ import xarray as xr
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import eccc_cf_daily_metadata
 from miranda.utils import eccc_hourly_variable_metadata
-from miranda.utils import make_local_dirs
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = [
@@ -74,7 +73,7 @@ def convert_hourly_flat_files(
             titre_colonnes.append("F{:0n}".format(i))
 
         rep_nc = Path(output_folder).joinpath(variable_name)
-        make_local_dirs(rep_nc)
+        rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
         if 262 < int(variable_code) <= 280:
@@ -231,7 +230,7 @@ def convert_daily_flat_files(
 
         # preparation du repertoire de sortie
         rep_nc = Path(output_folder).joinpath(variable_name)
-        make_local_dirs(rep_nc)
+        rep_nc.mkdir(parents=True, exist_ok=True)
 
         # boucle sur les fichiers
         list_files = list()
