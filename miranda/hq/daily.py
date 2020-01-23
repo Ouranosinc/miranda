@@ -1,12 +1,16 @@
-import re
 import csv
-import numpy as np
 import datetime as dt
-import pandas as pd
-import xarray as xr
-from pathlib import Path
 import json
+import re
+from pathlib import Path
+from typing import Optional
+from typing import Tuple
+from typing import Union
+
+import numpy as np
+import pandas as pd
 import pint
+import xarray as xr
 
 
 def units():
@@ -49,7 +53,7 @@ def units():
     return u
 
 
-u = units()
+unites = units()
 
 # CMOR-like attributes
 cmor = json.load(open(Path(__file__).parent / "cf_attrs.json"))["variable_entry"]
@@ -96,8 +100,11 @@ converters = {
 }
 
 
-def guess_variable(meta):
+def guess_variable(meta, cf_table: Optional[dict]) -> str:
     """Return the corresponding CMOR variable."""
+    if cf_table is None:
+        cf_table = cmor
+
     v = meta["variable"]
 
     corr = {
@@ -109,6 +116,7 @@ def guess_variable(meta):
         "Humidité relative 2 mètres": "hurs",
     }
 
+    name = str()
     if v in corr:
         name = corr[v]
     else:
@@ -118,7 +126,7 @@ def guess_variable(meta):
             elif meta["mesure"] == "Minimum":
                 name = "tasmin"
 
-    if meta["pas"] != cmor[name]["frequency"]:
+    if meta["pas"] != cf_table[name]["frequency"]:
         raise ValueError("Unexpected frequency.")
 
     return name
@@ -126,15 +134,10 @@ def guess_variable(meta):
 
 cf_units = {"°C": "celsius", "mm": "mmday"}
 cf_frequency = {"Fin du pas journalier": "day", "Instantanée du pas horaire": "1h"}
-cf_attrs_names = {
-    "x": "lon",
-    "y": "lat",
-    "z": "elevation",
-    "nom": "site",
-}
+cf_attrs_names = {"x": "lon", "y": "lat", "z": "elevation", "nom": "site"}
 
 
-def extract_dly(path):
+def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
     """Extract data and metadata from HQ meteo file."""
 
     with open(path, encoding="latin1") as fh:
@@ -143,7 +146,7 @@ def extract_dly(path):
 
     sections = iter(re.split(section_patterns, meta)[1:])
 
-    m = {}
+    m = dict()
     for sec in sections:
         if sec in meta_patterns:
             content = next(sections)
@@ -172,17 +175,22 @@ def extract_dly(path):
     return m, d
 
 
-def to_cf(meta, data):
+def to_cf(
+    meta: dict, data: pd.DataFrame, cf_table: Optional[dict] = None
+) -> xr.DataArray:
     """Return CF-compliant metadata."""
 
+    if dict is None:
+        cf_table = cmor
+
     # Convert meta values
-    m = {}
+    m = dict()
     for key, val in meta.items():
         m[key] = converters.get(key, lambda x: x)(val)
 
     # Get default variable attributes
-    name = guess_variable(m)
-    attrs = cmor[name]
+    name = guess_variable(m, cf_table)
+    attrs = cf_table[name]
 
     # Add custom HQ attributes
     for key, val in cf_attrs_names.items():
@@ -193,31 +201,33 @@ def to_cf(meta, data):
 
     # Convert units
     if attrs["units"] != m["unité"]:
-        x = u.convert(x, m["unité"], units2pint(attrs["units"]))
+        x = unites.convert(x, m["unité"], units2pint(attrs["units"]))
 
     coords = {k: attrs.pop(k, np.nan) for k in ["lon", "lat", "elevation", "site"]}
     coords["time"] = data.index.values
-    da = xr.DataArray(data=x, dims=("time"), coords=coords, name=name, attrs=attrs)
-    return da
+    cf_corrected = xr.DataArray(
+        data=x, dims="time", coords=coords, name=name, attrs=attrs
+    )
+    return cf_corrected
 
 
-def open_csv(path):
+def open_csv(path: Union[str, Path], cf_table: Optional[dict] = None) -> xr.DataArray:
     """Extract daily HQ meteo data and convert to xr.DataArray with CF-Convention attributes."""
-    meta, data = extract_dly(path)
-    return to_cf(meta, data)
+    meta, data = extract_daily(path)
+    return to_cf(meta, data, cf_table)
 
 
-def units2pint(value):
+def units2pint(value: str) -> pint.Quantity:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : string
+    value : str
       Unit expression.
 
     Returns
     -------
-    pint.Unit
+    pint.Quantity
       Pint compatible units.
 
     """
@@ -228,14 +238,17 @@ def units2pint(value):
 
     value = value.replace("%", "pct")
     try:  # Pint compatible
-        return u.parse_expression(value).units
+        return unites.parse_expression(value).units
     except (
         pint.UndefinedUnitError,
         pint.DimensionalityError,
     ):  # Convert from CF-units to pint-compatible
-        return u.parse_expression(_transform(value)).units
+        return unites.parse_expression(_transform(value)).units
 
 
-fns = list(Path("/home/david/projects/ForestFires/data/HQ/LG_Tmin").glob("*.csv"))[:4]
-das = [open_csv(fn) for fn in fns]
-da = xr.concat(das, dim="site")
+# if __name__ == "__main__":
+#     fns = list(Path("/home/david/projects/ForestFires/data/HQ/LG_Tmin").glob("*.csv"))[
+#         :4
+#     ]
+#     das = [open_csv(fn) for fn in fns]
+#     da = xr.concat(das, dim="site")
