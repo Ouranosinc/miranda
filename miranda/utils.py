@@ -87,8 +87,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
-    msg = ""
-
+    msg = str()
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
@@ -98,10 +97,9 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
                 logging.info(msg)
                 return True
             msg = "Ensure read privileges for `{}`.".format(location)
-            raise OSError
         else:
             msg = "`{}` is an invalid path.".format(location)
-            raise OSError
+        raise OSError
 
     except OSError:
         logging.exception(msg)
@@ -135,7 +133,6 @@ def working_directory(directory: Union[str, Path]) -> None:
         yield directory
     finally:
         os.chdir(owd)
-    return
 
 
 def find_filepaths(
