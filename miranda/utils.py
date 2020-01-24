@@ -60,14 +60,14 @@ def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
     """
     if os.name == "nt":
         return Path(path_to_file).stat().st_ctime
-    else:
-        stat = Path(path_to_file).stat()
-        try:
-            return date.fromtimestamp(stat.st_ctime)
-        except AttributeError:
-            # We're probably on Linux. No easy way to get creation dates here,
-            # so we'll settle for when its content was last modified.
-            return date.fromtimestamp(stat.st_mtime)
+
+    stat = Path(path_to_file).stat()
+    try:
+        return date.fromtimestamp(stat.st_ctime)
+    except AttributeError:
+        # We're probably on Linux. No easy way to get creation dates here,
+        # so we'll settle for when its content was last modified.
+        return date.fromtimestamp(stat.st_mtime)
 
 
 def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
@@ -97,9 +97,8 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
                 )
                 logging.info(msg)
                 return True
-            else:
-                msg = "Ensure read privileges for `{}`.".format(location)
-                raise OSError
+            msg = "Ensure read privileges for `{}`.".format(location)
+            raise OSError
         else:
             msg = "`{}` is an invalid path.".format(location)
             raise OSError
@@ -108,8 +107,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
         logging.exception(msg)
         if strict:
             raise
-        else:
-            return False
+        return False
 
 
 @contextmanager
@@ -250,10 +248,9 @@ def yesno_prompt(query: str) -> bool:
     user_input = input("{} (y/n) ".format(query))
     if user_input.lower() == "y":
         return True
-    elif user_input.lower() == "n":
+    if user_input.lower() == "n":
         return False
-    else:
-        raise ValueError("{} not in (y, n)".format(user_input))
+    raise ValueError("{} not in (y, n)".format(user_input))
 
 
 def verbose_fn(message: str, verbose=True) -> None:

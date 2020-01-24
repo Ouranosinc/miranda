@@ -11,7 +11,7 @@
 #
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
-import logging.config
+import logging
 import time
 from calendar import monthrange
 from datetime import datetime as dt
