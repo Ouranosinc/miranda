@@ -7,10 +7,12 @@ numpy
 requests
 netCDF4
 xarray
+rioxarray
 dask
 fiona
 rasterio
 shapely
 pyproj
+geojson
 pandas
 geopandas
