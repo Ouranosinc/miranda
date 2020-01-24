@@ -1,6 +1,5 @@
 import logging
 import os
-import platform
 import sys
 from contextlib import contextmanager
 from datetime import date
@@ -19,7 +18,27 @@ MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
 
-def _ingest(files: Union[GeneratorType, List]) -> List:
+__all__ = [
+    "creation_date",
+    "eccc_cf_daily_metadata",
+    "eccc_cf_hourly_metadata",
+    "eccc_hourly_variable_metadata",
+    "find_filepaths",
+    "GiB",
+    "ingest",
+    "KiB",
+    "list_paths_with_elements",
+    "MiB",
+    "read_privileges",
+    "set_comparisons",
+    "single_item_list",
+    "verbose_fn",
+    "working_directory",
+    "yesno_prompt",
+]
+
+
+def ingest(files: Union[GeneratorType, List]) -> List:
     if isinstance(files, GeneratorType):
         files = [f for f in files]
     files.sort()
@@ -39,25 +58,26 @@ def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
     -------
     Union[float, date]
     """
-    if platform.system() == "Windows":
+    if os.name == "nt":
         return Path(path_to_file).stat().st_ctime
-    else:
-        stat = Path(path_to_file).stat()
-        try:
-            return date.fromtimestamp(stat.st_ctime)
-        except AttributeError:
-            # We're probably on Linux. No easy way to get creation dates here,
-            # so we'll settle for when its content was last modified.
-            return date.fromtimestamp(stat.st_mtime)
+
+    stat = Path(path_to_file).stat()
+    try:
+        return date.fromtimestamp(stat.st_ctime)
+    except AttributeError:
+        # We're probably on Linux. No easy way to get creation dates here,
+        # so we'll settle for when its content was last modified.
+        return date.fromtimestamp(stat.st_mtime)
 
 
-def read_privileges(location: Union[Path, str]) -> bool:
+def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     """
     Determine whether a user has read privileges to a specific file
 
     Parameters
     ----------
     location: Union[Path, str]
+    strict: bool
 
     Returns
     -------
@@ -67,23 +87,24 @@ def read_privileges(location: Union[Path, str]) -> bool:
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
+    msg = str()
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
-                logging.info(
-                    "{} is read OK!".format(dt.now().strftime("%Y-%m-%d %X"), location)
+                msg = "{} is read OK!".format(
+                    dt.now().strftime("%Y-%m-%d %X"), location
                 )
+                logging.info(msg)
                 return True
-            else:
-                msg = "Ensure read privileges."
-                logging.error(msg)
-                return False
+            msg = "Ensure read privileges for `{}`.".format(location)
         else:
-            logging.error("{} is an invalid path.")
-            return False
+            msg = "`{}` is an invalid path.".format(location)
+        raise OSError
+
     except OSError:
-        msg = "Ensure read privileges."
         logging.exception(msg)
+        if strict:
+            raise
         return False
 
 
@@ -112,14 +133,13 @@ def working_directory(directory: Union[str, Path]) -> None:
         yield directory
     finally:
         os.chdir(owd)
-    return
 
 
 def find_filepaths(
     source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
     recursive: bool = True,
     file_suffixes: Optional[Union[str, List[str]]] = None,
-    **_
+    **_,
 ) -> List[Path]:
     """
 
@@ -181,29 +201,6 @@ def single_item_list(iterable: Iterable) -> bool:
     return has_true and not has_another_true  # True if exactly one true found
 
 
-def make_local_dirs(pathway: Union[str, Path], mode: Union[int, bytes] = 0o777) -> None:
-    """Create directories recursively, unless they already exist.
-
-    Parameters
-    ----------
-    pathway : Union[Path, str]
-      Path of folders to create.
-    mode : Union[int, bytes]
-
-    Returns
-    -------
-    None
-    """
-
-    pathway = Path(pathway)
-
-    if not pathway.exists():
-        try:
-            pathway.mkdir(parents=True, mode=mode)
-        except OSError:
-            raise
-
-
 def set_comparisons(set1: Sequence, set2: Sequence) -> bool:
     """Compare two sequences of non hashable objects as if they were sets.
 
@@ -248,10 +245,9 @@ def yesno_prompt(query: str) -> bool:
     user_input = input("{} (y/n) ".format(query))
     if user_input.lower() == "y":
         return True
-    elif user_input.lower() == "n":
+    if user_input.lower() == "n":
         return False
-    else:
-        raise ValueError("{} not in (y, n)".format(user_input))
+    raise ValueError("{} not in (y, n)".format(user_input))
 
 
 def verbose_fn(message: str, verbose=True) -> None:
@@ -383,12 +379,12 @@ def eccc_hourly_variable_metadata(variable_name: str) -> dict:
         unites=unites,
         fact_mlt=fact_mlt,
         fact_add=fact_add,
-        flag_manquants=missing_flags,
+        missing_flags=missing_flags,
         least_significant_digit=least_sig_digit,
     )
 
 
-def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
+def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     """
 
     Parameters
@@ -413,7 +409,7 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 10,
             "add_offset": 0,
             "long_name": "Station Pressure",
-            "standard_name": "pressure",
+            "standard_name": "atmospheric_pressure",
             "nc_name": "pressure",
         },
         "078": {
@@ -446,7 +442,7 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Freezing Rain",
             "standard_name": "freezing_rain",
-            "nc_name": "freezerain",
+            "nc_name": "freeze_rain",
         },
         "094": {
             "nc_units": "1",
@@ -454,7 +450,7 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Ice Pellets",
             "standard_name": "ice_pellet_presence",
-            "nc_name": "icepellets",
+            "nc_name": "ice_pellets",
         },
         "123": {
             "nc_units": "%",
@@ -510,31 +506,32 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 15)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q1",
+            "nc_name": "precipitation_weight_q1",
         },
         "268": {
-            "nc_units": "mk m-2",
+            "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q2",
+            "nc_name": "precipitation_weight_q2",
+            "missing_flags": "M",
         },
         "269": {
-            "nc_units": "m",
+            "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 45)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q3",
+            "nc_name": "precipitation_weight_q3",
         },
         "270": {
-            "nc_units": "m",
+            "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 60)",
             "standard_name": "precipitation_amount",
-            "nc_name": "precip_weight_q4",
+            "nc_name": "precipitation_weight_q4",
         },
         "271": {
             "nc_units": "m s-1",
@@ -618,7 +615,14 @@ def eccc_cd_hourly_metadata(variable_code: Union[int, str]) -> dict:
         },
     }
     code = str(variable_code).zfill(3)
-    return ec_hourly_variables[code]
+    try:
+        variable = ec_hourly_variables[code]
+        variable["missing_flags"] = "M"
+        variable["least_significant_digit"] = None
+    except KeyError:
+        logging.error("Hourly variable `{}` not supported".format(code))
+        raise
+    return variable
 
 
 def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
@@ -689,6 +693,109 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "standard_name": "surface_snow_thickness",
             "nc_name": "snd",
         },
+        "014": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Thunderstorms",
+            "standard_name": "thunderstorm_presence",
+            "nc_name": "thunder",
+        },
+        "015": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Freezing rain or drizzle",
+            "standard_name": "freeze_rain_drizzle_presence",
+            "nc_name": "freezing_rain_drizzle",
+        },
+        "016": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Hail",
+            "standard_name": "hail_presence",
+            "nc_name": "hail",
+        },
+        "017": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Fog or Ice Fog",
+            "standard_name": "fog_ice_fog_presence",
+            "nc_name": "fog_ice_fog",
+        },
+        "018": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Smoke or Haze",
+            "standard_name": "smoke_haze_presence",
+            "nc_name": "smoke_haze",
+        },
+        "019": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Blowing Dust or Sand",
+            "standard_name": "blowing_dust_sand_presence",
+            "nc_name": "blowing_dust_sand",
+        },
+        "020": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Blowing snow",
+            "standard_name": "blowing_snow",
+            "nc_name": "blow_snow",
+        },
+        "021": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Wind speed >= 28 Knots",
+            "standard_name": "wind_exceeding_28_knots",
+            "nc_name": "wind_28kt",
+        },
+        "022": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Wind speed >= 34 Knots",
+            "standard_name": "wind_exceeding_34_knots",
+            "nc_name": "wind_34kt",
+        },
+        "023": {
+            "nc_units": "deg",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Direction of extreme gust (16 pts) to December 1976",
+            "standard_name": "extreme_gust_direction",
+            "nc_name": "gust_direction",
+        },
+        "024": {
+            "nc_units": "km h-1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Speed of extreme gust",
+            "standard_name": "extreme_gust_speed",
+            "nc_name": "gust_speed",
+        },
+        "025": {
+            "nc_units": "h",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "UTC hour of extreme gust",
+            "standard_name": "extreme_gust_hour",
+            "nc_name": "gust_hour",
+        },
     }
     code = str(variable_code).zfill(3)
-    return ec_daily_variables[code]
+    try:
+        variable = ec_daily_variables[code]
+        variable["missing_flags"] = "M"
+        variable["least_significant_digit"] = None
+    except KeyError:
+        logging.error("Daily variable `{}` not supported".format(code))
+        raise
+    return variable

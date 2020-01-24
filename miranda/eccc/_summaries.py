@@ -25,13 +25,14 @@ import pandas as pd
 import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
-__all__ = ["find_and_extract_dly", "dly_to_netcdf"]
+__all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
 
 
 # Searches a location for the station data, then calls the needed scripts to read and assembles the data using pandas
-def find_and_extract_dly(
+def extract_daily_summaries(
     path_station: Union[Path, str], rm_flags: bool = False, file_suffix: str = ".csv"
 ) -> dict:
     """
@@ -56,13 +57,13 @@ def find_and_extract_dly(
     station_files = Path(path_station).rglob(file_suffix)
 
     # extract the .csv data
-    station = _read_multiple_eccc_dly(station_files, rm_flags=rm_flags)
+    station = _read_multiple_daily_summaries(station_files, rm_flags=rm_flags)
 
     return station
 
 
 # Uses xarray to transform the 'station' from find_and_extract_dly into a CF-Convention netCDF file
-def dly_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
+def daily_summaries_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
     """
 
     Parameters
@@ -353,7 +354,7 @@ def dly_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
 
 
 # This calls _read_single_eccc_dly and appends the data in a single Dict
-def _read_multiple_eccc_dly(
+def _read_multiple_daily_summaries(
     files: Union[List[Union[str, Path]], Generator[Path, None, None]],
     rm_flags: bool = False,
 ) -> dict:
@@ -375,11 +376,10 @@ def _read_multiple_eccc_dly(
     station_meta = None
     datafull = None
 
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
+    files = ingest(files)
 
     for i, f in enumerate(files):
-        station_meta, data = _read_single_eccc_dly(f)
+        station_meta, data = _read_single_daily_summaries(f)
         if i == 0:
             datafull = data
         else:
@@ -406,7 +406,7 @@ def _read_multiple_eccc_dly(
 
 # This is the script that actually reads the CSV files.
 # The metadata are saved in a Dict, while the data is returned as a pandas Dataframe.
-def _read_single_eccc_dly(file: Union[Path, str]) -> Tuple[dict, pd.DataFrame]:
+def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataFrame]:
     """
 
     Parameters

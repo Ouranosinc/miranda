@@ -47,7 +47,6 @@ from .storage import size_evaluation
 from .storage import StorageState
 from .utils import find_filepaths
 from .utils import GiB
-from .utils import make_local_dirs
 from .utils import verbose_fn
 from .utils import yesno_prompt
 
@@ -86,7 +85,7 @@ def rstdmf_rename(file_list: List[str], restore_path: str):
     restore_path = Path(restore_path).absolute()
     # Create output directory, if necessary
     try:
-        make_local_dirs(restore_path)
+        Path(restore_path).mkdir(parents=True, exist_ok=True)
     except OSError:
         raise RstdmfError("Cannot create restore path {}.".format(restore_path))
     # Create string with list of files

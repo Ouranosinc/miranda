@@ -1,3 +1,4 @@
+import os
 from datetime import date
 from pathlib import Path
 
@@ -34,10 +35,34 @@ class TestEnvCanVariables:
             variables[key] = utils.eccc_hourly_variable_metadata(key)
             codes.append(variables[key]["code_var"])
             assert variables[key]["fact_add"] == 0
-            assert variables[key]["flag_manquants"] == ["M"]
+            assert variables[key]["missing_flags"] == ["M"]
             assert variables[key]["least_significant_digit"] is None
 
         assert codes == [76, 77, 78, 80, 123, 262]
+
+    def test_hourly_cf_dictionaries(self):
+        keys = [76, 77, 78, 80, 123, 262]
+
+        codes = list()
+        variables = dict()
+        for key in keys:
+            variables[key] = utils.eccc_cf_hourly_metadata(key)
+            codes.append(variables[key]["standard_name"])
+            if variables[key]["standard_name"] == "dry_bulb_temperature":
+                assert variables[key]["add_offset"] == 273.15
+            else:
+                assert variables[key]["add_offset"] == 0
+            assert variables[key]["missing_flags"] == "M"
+            assert variables[key]["least_significant_digit"] is None
+
+        assert set(codes) == {
+            "wind_speed",
+            "atmospheric_pressure",
+            "dry_bulb_temperature",
+            "relative_humidity",
+            "rainfall_amount",
+            "precipitation_flux",
+        }
 
 
 class TestCreationDate:
@@ -52,38 +77,20 @@ class TestCreationDate:
         testfile.unlink()
 
 
-class TestFolderOperations:
-    def test_local_folder_creation(self):
-        foldername = "testfolder"
-        testfolder = Path.cwd().joinpath(foldername)
-
-        utils.make_local_dirs(testfolder)
-        assert testfolder.exists()
-        assert testfolder.stat().st_mode == 0o40775
-        testfolder.rmdir()
-
-    def test_make_forbidden_folder(self):
-        foldername = "testfolder"
-        root_drive = Path.cwd().root
-        testfolder = Path(root_drive).joinpath(foldername)
-
-        with pytest.raises(OSError):
-            utils.make_local_dirs(testfolder)
-
-
 class TestReadPrivileges:
     def test_allowed_folder(self):
         here = Path.cwd()
         allowed = utils.read_privileges(here)
         assert allowed
 
-    def test_nonexistent_folder(self):
-        mythical_folder = Path("/here/there/everwyhere")
-        allowed = utils.read_privileges(mythical_folder)
-        assert not allowed
+    def test_nonexistent_folder_strict(self):
+        mythical_folder = Path("/here/there/everywhere")
+        with pytest.raises(OSError):
+            utils.read_privileges(mythical_folder, strict=True)
 
-    def test_forbidden_folder(self):
+    @pytest.mark.skipif(os.name != "posix", reason="not Windows")
+    def test_forbidden_folder_lax(self):
         root_folder = Path(Path.cwd().root).joinpath("root")
-        allowed = utils.read_privileges(root_folder)
+        allowed = utils.read_privileges(root_folder, strict=False)
 
         assert not allowed
