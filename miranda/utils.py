@@ -22,7 +22,7 @@ __all__ = [
     "creation_date",
     "eccc_cf_daily_metadata",
     "eccc_cf_hourly_metadata",
-    "eccc_hourly_variable_metadata",
+    # "eccc_hourly_variable_metadata",
     "find_filepaths",
     "GiB",
     "ingest",
@@ -320,68 +320,68 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List
     return paths_elements
 
 
-def eccc_hourly_variable_metadata(variable_name: str) -> dict:
-    """
-    Un fonction qui retourne differentes informations en fonction de la variable voulue
-
-    Parameters
-    ----------
-    variable_name: str
-
-    Returns
-    -------
-    dict
-    """
-
-    if variable_name == "wind_speed":
-        var_code = 76
-        unites = "km h-1"
-        fact_mlt = 1
-    elif variable_name == "station_pressure":
-        var_code = 77
-        unites = "kPa"
-        fact_mlt = 0.01
-    elif variable_name == "dry_bulb_temperature":
-        var_code = 78
-        unites = "degC"
-        fact_mlt = 0.1
-    elif variable_name == "relative_humidity":
-        var_code = 80
-        unites = "%"
-        fact_mlt = 1
-    elif variable_name == "freezing_rain":
-        var_code = 89
-        unites = "1"
-        fact_mlt = 1
-    elif variable_name == "ice_pellet_presence":
-        var_code = 94
-        unites = "1"
-        fact_mlt = 1
-    elif variable_name == "hourly_rainfall":
-        var_code = 123
-        unites = "mm"
-        fact_mlt = 0.1
-    elif variable_name == "precipitation_amount":
-        var_code = 262
-        unites = "mm"
-        fact_mlt = 0.1
-    else:
-        msg = 'Variable name "{}" not recognized'.format(variable_name)
-        logging.error(msg)
-        raise RuntimeError(msg)
-
-    fact_add = 0.0
-    missing_flags = ["M"]
-    least_sig_digit = None
-
-    return dict(
-        code_var=var_code,
-        unites=unites,
-        fact_mlt=fact_mlt,
-        fact_add=fact_add,
-        missing_flags=missing_flags,
-        least_significant_digit=least_sig_digit,
-    )
+# def eccc_hourly_variable_metadata(variable_name: str) -> dict:
+#     """
+#     Un fonction qui retourne differentes informations en fonction de la variable voulue
+#
+#     Parameters
+#     ----------
+#     variable_name: str
+#
+#     Returns
+#     -------
+#     dict
+#     """
+#
+#     if variable_name == "wind_speed":
+#         var_code = 76
+#         unites = "km h-1"
+#         fact_mlt = 1
+#     elif variable_name == "station_pressure":
+#         var_code = 77
+#         unites = "kPa"
+#         fact_mlt = 0.01
+#     elif variable_name == "dry_bulb_temperature":
+#         var_code = 78
+#         unites = "degC"
+#         fact_mlt = 0.1
+#     elif variable_name == "relative_humidity":
+#         var_code = 80
+#         unites = "%"
+#         fact_mlt = 1
+#     elif variable_name == "freezing_rain":
+#         var_code = 89
+#         unites = "1"
+#         fact_mlt = 1
+#     elif variable_name == "ice_pellet_presence":
+#         var_code = 94
+#         unites = "1"
+#         fact_mlt = 1
+#     elif variable_name == "hourly_rainfall":
+#         var_code = 123
+#         unites = "mm"
+#         fact_mlt = 0.1
+#     elif variable_name == "precipitation_amount":
+#         var_code = 262
+#         unites = "mm"
+#         fact_mlt = 0.1
+#     else:
+#         msg = 'Variable name "{}" not recognized'.format(variable_name)
+#         logging.error(msg)
+#         raise RuntimeError(msg)
+#
+#     fact_add = 0.0
+#     missing_flags = ["M"]
+#     least_sig_digit = None
+#
+#     return dict(
+#         code_var=var_code,
+#         unites=unites,
+#         fact_mlt=fact_mlt,
+#         fact_add=fact_add,
+#         missing_flags=missing_flags,
+#         least_significant_digit=least_sig_digit,
+#     )
 
 
 def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:

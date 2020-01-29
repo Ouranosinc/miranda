@@ -19,26 +19,26 @@ class TestWorkingDirectory:
 
 
 class TestEnvCanVariables:
-    def test_variable_dictionaries(self):
-        keys = [
-            "wind_speed",
-            "station_pressure",
-            "dry_bulb_temperature",
-            "relative_humidity",
-            "hourly_rainfall",
-            "precipitation_amount",
-        ]
-
-        codes = list()
-        variables = dict()
-        for key in keys:
-            variables[key] = utils.eccc_hourly_variable_metadata(key)
-            codes.append(variables[key]["code_var"])
-            assert variables[key]["fact_add"] == 0
-            assert variables[key]["missing_flags"] == ["M"]
-            assert variables[key]["least_significant_digit"] is None
-
-        assert codes == [76, 77, 78, 80, 123, 262]
+    # def test_variable_dictionaries(self):
+    #     keys = [
+    #         "wind_speed",
+    #         "station_pressure",
+    #         "dry_bulb_temperature",
+    #         "relative_humidity",
+    #         "hourly_rainfall",
+    #         "precipitation_amount",
+    #     ]
+    #
+    #     codes = list()
+    #     variables = dict()
+    #     for key in keys:
+    #         variables[key] = utils.eccc_hourly_variable_metadata(key)
+    #         codes.append(variables[key]["code_var"])
+    #         assert variables[key]["fact_add"] == 0
+    #         assert variables[key]["missing_flags"] == ["M"]
+    #         assert variables[key]["least_significant_digit"] is None
+    #
+    #     assert codes == [76, 77, 78, 80, 123, 262]
 
     def test_hourly_cf_dictionaries(self):
         keys = [76, 77, 78, 80, 123, 262]
@@ -62,6 +62,35 @@ class TestEnvCanVariables:
             "relative_humidity",
             "rainfall_amount",
             "precipitation_flux",
+        }
+
+    def test_daily_cf_dictionaries(self):
+        keys = [
+            1,
+            2,
+            3,
+            10,
+            11,
+            12,
+        ]
+
+        codes = list()
+        variables = dict()
+        for key in keys:
+            variables[key] = utils.eccc_cf_daily_metadata(key)
+            codes.append(variables[key]["standard_name"])
+            if variables[key]["standard_name"] == "air_temperature":
+                assert variables[key]["add_offset"] == 273.15
+            else:
+                assert variables[key]["add_offset"] == 0
+            assert variables[key]["missing_flags"] == "M"
+            assert variables[key]["least_significant_digit"] is None
+
+        assert set(codes) == {
+            "air_temperature",
+            "precipitation_accumulation",
+            "rainfall_accumulation",
+            "snowfall_accumulation",
         }
 
 

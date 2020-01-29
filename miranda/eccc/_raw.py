@@ -28,7 +28,7 @@ import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import eccc_cf_daily_metadata
-from miranda.utils import eccc_hourly_variable_metadata
+from miranda.utils import eccc_cf_hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = [
@@ -62,9 +62,10 @@ def convert_hourly_flat_files(
     if isinstance(variables, str):
         variables = [variables]
 
-    for variable_name in variables:
-        info = eccc_hourly_variable_metadata(variable_name)
-        variable_code = info["code_var"]
+    for variable_code in variables:
+        info = eccc_cf_hourly_metadata(variable_code)
+        variable_code = str(variable_code).zfill(3)
+        variable_name = info["standard_name"]
 
         # preparing the data extraction
         titre_colonnes = "code year month day code_var ".split()
@@ -85,9 +86,18 @@ def convert_hourly_flat_files(
             logging.info("Processing file: {}.".format(fichier))
 
             # Create a dataframe from the files
-            df = pd.read_fwf(
-                fichier, widths=[7, 4, 2, 2, 3] + [6, 1] * 24, names=titre_colonnes
-            )
+            try:
+                df = pd.read_fwf(
+                    fichier,
+                    widths=[7, 4, 2, 2, 3] + [6, 1] * 24,
+                    names=titre_colonnes,
+                    dtype={"year": int, "month": int, "day": int, "code_var": str},
+                )
+            except ValueError:
+                logging.error(
+                    f"File {fichier} was unable to be read. This is probably an issue with the file."
+                )
+                continue
 
             # Loop through the station codes
             l_codes = df["code"].unique()
@@ -96,6 +106,9 @@ def convert_hourly_flat_files(
 
                 # on arrete si la variable n'est pas presente
                 if variable_code not in df_code["code_var"].unique():
+                    logging.info(
+                        f"Variable `{variable_name}` not found in {fichier}. Continuing..."
+                    )
                     continue
 
                 # on fait le traitement
@@ -129,14 +142,14 @@ def convert_hourly_flat_files(
                 dates = dict(time=list())
                 for index, row in df_var.iterrows():
                     for h in range(0, 24):
-                        dates["list"].append(
+                        dates["time"].append(
                             dt(int(row.year), int(row.month), int(row.day), h)
                         )
 
                 ds = xr.Dataset()
                 da_val = xr.DataArray(val.flatten(), coords=dates, dims=["time"])
                 da_val = da_val.rename(variable_name)
-                da_val.attrs["unites"] = info["unites"]
+                da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
                 da_val.attrs["element_number"] = variable_code
 
@@ -160,7 +173,7 @@ def convert_hourly_flat_files(
                         ey=end_year,
                     )
 
-                ds.attrs["Conventions"] = "CF-1.5"
+                ds.attrs["Conventions"] = "CF-1.7"
 
                 ds.attrs[
                     "title"
@@ -244,12 +257,18 @@ def convert_daily_flat_files(
             logging.info("Processing file: {}.".format(fichier))
 
             # Create a dataframe from the files
-            df = pd.read_fwf(
-                fichier,
-                widths=[7, 4, 2, 3] + [6, 1] * 31,
-                names=titre_colonnes,
-                dtype={"year": int, "month": int, "code_var": str},
-            )
+            try:
+                df = pd.read_fwf(
+                    fichier,
+                    widths=[7, 4, 2, 3] + [6, 1] * 31,
+                    names=titre_colonnes,
+                    dtype={"year": int, "month": int, "code_var": str},
+                )
+            except ValueError:
+                logging.error(
+                    f"File {fichier} was unable to be read. This is probably an issue with the file."
+                )
+                continue
 
             # Loop through the station codes
             l_codes = df["code"].unique()
@@ -258,6 +277,9 @@ def convert_daily_flat_files(
 
                 # on arrete si la variable n'est pas presente
                 if variable_code not in df_code["code_var"].unique():
+                    logging.info(
+                        f"Variable `{variable_name}` not found for station {code}. Continuing..."
+                    )
                     continue
 
                 # on fait le traitement
@@ -411,11 +433,12 @@ def aggregate_nc_files(
     else:
         raise ValueError("Time step must be `hourly` or `daily`.")
 
-    for variable_name in variables:
+    for variable_code in variables:
         if hourly:
-            info = eccc_hourly_variable_metadata(variable_name)
+            info = eccc_cf_hourly_metadata(variable_code)
         else:
-            info = eccc_cf_daily_metadata(variable_name)
+            info = eccc_cf_daily_metadata(variable_code)
+        variable_name = info["nc_name"]
 
         # On dresse la liste des eccc pour lesquelles on a des metadonnees
         df_inv = pd.read_csv(station_inventory, header=3)
