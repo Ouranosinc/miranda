@@ -31,6 +31,7 @@ from miranda.utils import eccc_cf_daily_metadata
 from miranda.utils import eccc_cf_hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
+
 __all__ = [
     "aggregate_nc_files",
     "convert_hourly_flat_files",
@@ -239,6 +240,7 @@ def convert_daily_flat_files(
     for variable_code in variables:
         info = eccc_cf_daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
+        nc_name = info["nc_name"]
         variable_name = info["standard_name"]
 
         # Prepare the data extraction
@@ -248,7 +250,7 @@ def convert_daily_flat_files(
             titre_colonnes.append("F{:0n}".format(i))
 
         # Create the output directory
-        rep_nc = Path(output_folder).joinpath(variable_name)
+        rep_nc = Path(output_folder).joinpath(nc_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
@@ -288,15 +290,13 @@ def convert_daily_flat_files(
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
                         "Variable `{}` not found for station `{}` in file {}. Continuing...".format(
-                            variable_name, code, fichier
+                            nc_name, code, fichier
                         )
                     )
                     continue
 
                 # Perform the data treatment
-                logging.info(
-                    "Converting {} for station code: {}".format(variable_name, code)
-                )
+                logging.info("Converting {} for station code: {}".format(nc_name, code))
 
                 # Dump the values into a DataFrame
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
@@ -352,15 +352,11 @@ def convert_daily_flat_files(
                 end_year = ds.time.dt.year.values[-1]
                 if start_year == end_year:
                     f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
-                        c=code, vc=variable_code, v=variable_name, sy=start_year
+                        c=code, vc=variable_code, v=nc_name, sy=start_year
                     )
                 else:
                     f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
-                        c=code,
-                        vc=variable_code,
-                        v=variable_name,
-                        sy=start_year,
-                        ey=end_year,
+                        c=code, vc=variable_code, v=nc_name, sy=start_year, ey=end_year,
                     )
 
                 ds.attrs["Conventions"] = "CF-1.7"
@@ -399,7 +395,7 @@ def convert_daily_flat_files(
 def aggregate_nc_files(
     source_files: Union[str, Path],
     output_file: Union[str, Path],
-    variables: Union[str, List[str]],
+    variables: Union[str, int, List[str], ],
     time_step: str = "h",
     station_inventory: Union[str, Path] = None,
     include_flags: bool = True,
@@ -431,7 +427,7 @@ def aggregate_nc_files(
     if double_handling not in ["first", "last"]:
         raise ValueError
 
-    if isinstance(variables, str):
+    if isinstance(variables, (str, int)):
         variables = [variables]
 
     if isinstance(source_files, str):
@@ -449,19 +445,29 @@ def aggregate_nc_files(
             info = eccc_cf_hourly_metadata(variable_code)
         else:
             info = eccc_cf_daily_metadata(variable_code)
-        variable_name = info["nc_name"]
+        variable_file_name = info["nc_name"]
+        variable_name = info["standard_name"]
 
         # On dresse la liste des eccc pour lesquelles on a des metadonnees
         df_inv = pd.read_csv(station_inventory, header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
         # On limite le travail aux donnees et metadonnees disponibles
-        rep_nc = source_files.joinpath(variable_name).rglob("*.nc")
+        rep_nc = source_files.joinpath(variable_file_name).rglob("*.nc")
         station_file_codes = {f.name.split("_")[0] for f in rep_nc}
         stations_to_keep = set(station_file_codes).intersection(set(station_inventory))
         rejected_stations = set(station_file_codes).difference(set(station_inventory))
         valid_stations = list(sorted(stations_to_keep))
         valid_stations_count = len(valid_stations)
+
+        if len(station_file_codes) == 0:
+            logging.error(
+                "No stations were found containing variable filename `{}`. Exiting.".format(
+                    variable_file_name
+                )
+            )
+            return
+
         logging.warning(
             "Files exist for {} ECCC stations. Metadata found for {} stations. Rejecting {} stations.".format(
                 len(station_file_codes), valid_stations_count, len(rejected_stations)
@@ -475,21 +481,23 @@ def aggregate_nc_files(
 
         # Find the time dimensions for all the files
         list_files_to_combine = []
-        for s in valid_stations:
+        for i, s in enumerate(valid_stations):
             files = [
                 f.name
-                for f in Path(source_files).rglob("{}_{}*.nc".format(s, variable_name))
+                for f in Path(source_files).rglob(
+                    "{}*{}*{}*.nc".format(s, variable_code, variable_file_name)
+                )
             ]
             list_files_to_combine += files
-        list_start_years = [int(f.split("_")[-2]) for f in list_files_to_combine]
-        list_end_years = [int(f.split("_")[-1][:4]) for f in list_files_to_combine]
-        year_start, year_end = np.min(list_start_years), np.max(list_end_years)
+
+        list_years = [int(Path(f).stem.split("_")[-1]) for f in list_files_to_combine]
+        year_start, year_end = np.min(list_years), np.max(list_years)
 
         # Calculate the dimensions of the output NetCDF
         time_index = pd.date_range(
             start="{}-01-01".format(year_start),
             end="{}-01-01".format(year_end + 1),
-            freq=["H" if hourly else "D"],
+            freq="H" if hourly else "D",
         )[:-1]
 
         logging.info("Preparing the NetCDF.")
@@ -503,7 +511,7 @@ def aggregate_nc_files(
 
         file_out = Path(output_file).joinpath(
             "{}_{}_{}.nc".format(
-                variable_name, "hourly" if hourly else "daily", double_handling
+                variable_file_name, "hourly" if hourly else "daily", double_handling
             )
         )
         if file_out.exists():
@@ -585,23 +593,25 @@ def aggregate_nc_files(
             # Open files with special handling for multi-year data
             list_station_files = [
                 f
-                for f in source_files.rglob("{}_{}*.nc".format(station, variable_name))
+                for f in source_files.rglob(
+                    "{}*{}*{}*.nc".format(station, variable_code, variable_file_name)
+                )
             ]
-            single_year_files = []
-            multi_year_files = []
-            for file in list_station_files:
-                a1 = file.name.split("_")[-2]
-                a2 = file.name.split("_")[-1][:4]
-                if a1 != a2:
-                    multi_year_files.append(file)
-                else:
-                    single_year_files.append(file)
+            # single_year_files = []
+            # multi_year_files = []
+            # for file in list_station_files:
+            #     a1 = file.name.split("_")[-2]
+            #     a2 = file.name.split("_")[-1][:4]
+            #     if a1 != a2:
+            #         multi_year_files.append(file)
+            #     else:
+            #         single_year_files.append(file)
 
             # Annual data treatment
-            if len(single_year_files) > 0:
+            if len(list_station_files) > 0:
                 try:
                     ds_single = xr.open_mfdataset(
-                        single_year_files, combine="by_coords"
+                        list_station_files, combine="by_coords"
                     )
                 except ValueError:
                     logging.exception(
@@ -614,34 +624,51 @@ def aggregate_nc_files(
                 if include_flags:
                     df_tot["flag"] = ds_single["flag"].to_dataframe()
 
+            #
+            # if len(single_year_files) > 0:
+            #     try:
+            #         ds_single = xr.open_mfdataset(
+            #             single_year_files, combine="by_coords"
+            #         )
+            #     except ValueError:
+            #         logging.exception(
+            #             "Unable to read by coords. Skipping station: {}".format(station)
+            #         )
+            #         continue
+            #
+            #     df_tot[variable_name] = ds_single[variable_name].to_dataframe()
+            #
+            #     if include_flags:
+            #         df_tot["flag"] = ds_single["flag"].to_dataframe()
+            #
             # Add multi-annual data
-            for fichier in multi_year_files:
-                logging.info(
-                    "Special handling for multi-year data file: {}".format(fichier)
-                )
-                # Read data into a dataframe and keep valid entries only
-                df = xr.open_dataset(fichier).to_dataframe()
-                df_valid = df.loc[~df[variable_name].isnull()]
-
-                # Traitement special pour les donnees en double
-                #
-                # Dans les fichiers multi-annuels, il arrive qu'il y ait plusieurs
-                # entrees pour les memes dates/eccc
-                #
-                # *** CA NE DEVRAIT PAS ARRIVER ***
-                #
-                if not df_valid.index.is_unique:
-                    logging.warning("Donnees en double ... on applique une patch ...")
-                    # Pour les temps ou on a plus d'une donnee valide, on garde la derniere
-                    df_valid = df_valid[
-                        not df_valid.index.duplicated(keep=double_handling)
-                    ]
-                    assert df_valid.index.is_unique
-
-                if df_valid.index.size != 0:
-                    df_tot.loc[df_valid.index, variable_name] = df_valid[variable_name]
-                    if include_flags:
-                        df_tot.loc[df_valid.index, "flag"] = df_valid["flag"]
+            # for fichier in multi_year_files:
+            #     logging.info(
+            #         "Special handling for multi-year data file: {}".format(fichier)
+            #     )
+            #     # Read data into a dataframe and keep valid entries only
+            #     df = xr.open_dataset(fichier).to_dataframe()
+            #     df_valid = df.loc[~df[variable_name].isnull()]
+            #
+            #     # Traitement special pour les donnees en double
+            #     #
+            #     # Dans les fichiers multi-annuels, il arrive qu'il y ait plusieurs
+            #     # entrees pour les memes dates/eccc
+            #     #
+            #     # *** CA NE DEVRAIT PAS ARRIVER ***
+            #     #
+            #     if not df_valid.index.is_unique:
+            #         logging.warning("Donnees en double ... on applique une patch ...")
+            #         # Pour les temps ou on a plus d'une donnee valide, on garde la derniere
+            #         df_valid = df_valid[
+            #             not df_valid.index.duplicated(keep=double_handling)
+            #         ]
+            #         assert df_valid.index.is_unique
+            #
+            #     if df_valid.index.size != 0:
+            #         df_tot.loc[df_valid.index, variable_name] = df_valid[variable_name]
+            #         if include_flags:
+            #             df_tot.loc[df_valid.index, "flag"] = df_valid["flag"]
 
             # Dump the data into the output container
             nc_var[:, iter_station] = df_tot[variable_name].values

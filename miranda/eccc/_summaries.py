@@ -92,217 +92,45 @@ def daily_summaries_to_netcdf(station: dict, path_output: Union[Path, str]) -> N
             station["name"], station["ID"]
         )
     )
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Mean Temp (°C)"] + 273.15, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "tas"
-    da.attrs["standard_name"] = "air_temperature"
-    da.attrs["long_name"] = "Near-Surface Air Temperature"
-    da.attrs["units"] = "K"
-    da.attrs[
-        "grid_mapping"
-    ] = "regular_lon_lat"  # TODO: There is probably a better CF Convention for point-based data
-    da.attrs["comments"] = "station data converted from Mean Temp (°C)"
 
-    # for the first variable, we simply create a dataset from it
-    ds = da.to_dataset()
+    ds = None
 
-    # import the other variables
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Max Temp (°C)"] + 273.15, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "tasmax"
-    da.attrs["standard_name"] = "air_temperature maximum"
-    da.attrs["long_name"] = "Daily Maximum Near-Surface Temperature maximum"
-    da.attrs["units"] = "K"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs["comments"] = "station data converted from Max Temp (°C)"
-    ds["tasmax"] = da
+    variables = eccc_metadata["variable_entry"]
+    for var in variables.keys():
+        original_field = variables[var]["original_field"]
+        add_offset = variables[var]["add_offset"]
+        scale_factor = variables[var]["scale_factor"]
 
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Min Temp (°C)"] + 273.15, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "tasmin"
-    da.attrs["standard_name"] = "air_temperature minimum"
-    da.attrs["long_name"] = "Daily Maximum Near-Surface Temperature minimum"
-    da.attrs["units"] = "K"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs["comments"] = "station data converted from Min Temp (°C)"
-    ds["tasmin"] = da
+        da = xr.DataArray(
+            np.expand_dims(
+                np.expand_dims(
+                    station["data"][original_field] * scale_factor + add_offset, axis=1
+                ),
+                axis=2,
+            ),
+            [
+                ("time", time),
+                ("lat", [station["latitude"]]),
+                ("lon", [station["longitude"]]),
+            ],
+        )
 
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Heat Deg Days (°C)"], axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "hdd"
-    da.attrs["standard_name"] = "heating_degree_days"
-    da.attrs[
-        "long_name"
-    ] = "Number of Degrees Celsius Under a Mean Temperature of 18 °C"
-    da.attrs["units"] = "C"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    ds["hdd"] = da
+        da.name = var
+        for field in [
+            "standard_name",
+            "long_name",
+            "units",
+            "grid_mapping",
+            "comments",
+            "frequency",
+        ]:
+            da.attrs[field] = variables[var][field]
 
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Cool Deg Days (°C)"], axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "cdd"
-    da.attrs["standard_name"] = "cooling_degree_days"
-    da.attrs["long_name"] = "Number of Degrees Celsius Over a Mean Temperature of 18 °C"
-    da.attrs["units"] = "C"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    ds["cdd"] = da
-
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Total Rain (mm)"] / 86400, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "prlp"
-    da.attrs["standard_name"] = "rainfall_flux"
-    da.attrs["long_name"] = "Liquid Precipitation"
-    da.attrs["units"] = "kg m-2 s-1"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs[
-        "comments"
-    ] = "station data converted from Total Rain (mm) using a density of 1000 kg/m³"
-    ds["prlp"] = da
-
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Total Snow (cm)"] / 86400, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "prsn"
-    da.attrs["standard_name"] = "snowfall_flux"
-    da.attrs["long_name"] = "Snowfall Flux"
-    da.attrs["units"] = "kg m-2 s-1"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs[
-        "comments"
-    ] = "station data converted from Total Snow (cm) using a density of 100 kg/m³"
-    ds["prsn"] = da
-
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Total Precip (mm)"] / 86400, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "pr"
-    da.attrs["standard_name"] = "precipitation_flux"
-    da.attrs["long_name"] = "Precipitation"
-    da.attrs["units"] = "kg m-2 s-1"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs[
-        "comments"
-    ] = "station data converted from Total Precip (mm) using a density of 1000 kg/m³"
-    ds["pr"] = da
-
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Snow on Grnd (cm)"] / 100, axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "snd"
-    da.attrs["standard_name"] = "surface_snow_thickness"
-    da.attrs["long_name"] = "Snow Depth"
-    da.attrs["units"] = "m"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs["comments"] = "station data converted from Snow on Grnd (cm)"
-    ds["snd"] = da
-
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Dir of Max Gust (10s deg)"], axis=1), axis=2
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "sfcWindmax_dir"
-    da.attrs["standard_name"] = "wind_gust_from_direction maximum"
-    da.attrs[
-        "long_name"
-    ] = "Direction from which the Daily Maximum Near-Surface Gust Wind Speed maximum Blows"
-    da.attrs["units"] = "degree"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs["comments"] = "station data converted from Dir of Max Gust (10s deg)"
-    ds["sfcWindmax_dir"] = da
-
-    da = xr.DataArray(
-        np.expand_dims(
-            np.expand_dims(station["data"]["Spd of Max Gust (km/h)"] / 3.6, axis=1),
-            axis=2,
-        ),
-        [
-            ("time", time),
-            ("lat", [station["latitude"]]),
-            ("lon", [station["longitude"]]),
-        ],
-    )
-    da.name = "sfcWindmax"
-    da.attrs["standard_name"] = "wind_speed_of_gust maximum"
-    da.attrs["long_name"] = "Daily Maximum Near-Surface Gust Wind Speed maximum"
-    da.attrs["units"] = "m s-1"
-    da.attrs["grid_mapping"] = "regular_lon_lat"
-    da.attrs["comments"] = "station data converted from Spd of Max Gust (km/h)"
-    ds["sfcWindmax"] = da
+        # for the first variable, we simply create a dataset from it
+        if ds is None:
+            ds = da.to_dataset()
+        else:
+            ds[var] = da
 
     # add attributes to lon, lat, time, elevation, and the grid
     # TODO: There is probably a better CF Convention for point-based data
@@ -410,6 +238,7 @@ def _read_multiple_daily_summaries(
 
 # This is the script that actually reads the CSV files.
 # The metadata are saved in a Dict, while the data is returned as a pandas Dataframe.
+# FIXME: Climate Services Canada has changed the way they store metadata -- No longer in CSV heading
 def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataFrame]:
     """
 
@@ -422,7 +251,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     Tuple[dict, pd.DataFrame]
     """
     # Read the whole file
-    with open(file, "r") as fi:
+    with open(file, "r", encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
     # Find each elements in the header
