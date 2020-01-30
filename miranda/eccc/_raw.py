@@ -67,7 +67,7 @@ def convert_hourly_flat_files(
         variable_code = str(variable_code).zfill(3)
         variable_name = info["standard_name"]
 
-        # preparing the data extraction
+        # Preparing the data extraction
         titre_colonnes = "code year month day code_var ".split()
         for i in range(1, 25):
             titre_colonnes.append("D{:0n}".format(i))
@@ -82,6 +82,7 @@ def convert_hourly_flat_files(
         else:
             list_files = Path(source_files).rglob("HLY*.gz")
 
+        errored_files = list()
         for fichier in list_files:
             logging.info("Processing file: {}.".format(fichier))
 
@@ -95,8 +96,11 @@ def convert_hourly_flat_files(
                 )
             except ValueError:
                 logging.error(
-                    f"File {fichier} was unable to be read. This is probably an issue with the file."
+                    "File {} was unable to be read. This is probably an issue with the file.".format(
+                        fichier
+                    )
                 )
+                errored_files.append(fichier)
                 continue
 
             # Loop through the station codes
@@ -104,38 +108,40 @@ def convert_hourly_flat_files(
             for code in l_codes:
                 df_code = df[df["code"] == code]
 
-                # on arrete si la variable n'est pas presente
+                # Abort if the variable is not found
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        f"Variable `{variable_name}` not found in {fichier}. Continuing..."
+                        "Variable `{}` not found in {}. Continuing...".format(
+                            variable_name, fichier
+                        )
                     )
                     continue
 
-                # on fait le traitement
+                # Treat the data
                 logging.info(
-                    "Converting {} for station code: {}".format(variable_name, code)
+                    "Converting `{}` for station code: {}".format(variable_name, code)
                 )
 
-                # on va chercher le dataframe de la variable
+                # Dump the data into a DataFrame
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
 
-                # application du masque selon la valeur manquante
+                # Mask the data according to the missing values flag
                 df_var = df_var.replace(missing_value, np.nan)
 
-                # decodage des valeurs et flags
+                # Decode the values and flags
                 dfd = df_var.loc[:, ["D{:0n}".format(i) for i in range(1, 25)]]
                 dff = df_var.loc[:, ["F{:0n}".format(i) for i in range(1, 25)]]
 
-                # enleve flag == nan
+                # Remove the "NaN" flag
                 dff = dff.fillna("")
 
-                # utilise flag pour masquer valeurs
+                # Use the flag to mask the values
                 val = np.asfarray(dfd.values)
                 flag = dff.values
                 mask = np.isin(flag, info["missing_flags"])
                 val[mask] = np.nan
 
-                # traitement des unites
+                # Treat according to units conversions
                 val = val * info["scale_factor"] + info["add_offset"]
 
                 # Create the DataArray
@@ -235,28 +241,28 @@ def convert_daily_flat_files(
         variable_code = str(variable_code).zfill(3)
         variable_name = info["standard_name"]
 
-        # on prepare l'extraction des donnees
+        # Prepare the data extraction
         titre_colonnes = "code year month code_var".split()
         for i in range(1, 32):
             titre_colonnes.append("D{:0n}".format(i))
             titre_colonnes.append("F{:0n}".format(i))
 
-        # preparation du repertoire de sortie
+        # Create the output directory
         rep_nc = Path(output_folder).joinpath(variable_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
 
-        # boucle sur les fichiers
+        # Loop on the files
         list_files = list()
-
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         else:
             list_files.extend(Path(source_files).rglob("*DLY*"))
 
+        errored_files = list()
         for fichier in list_files:
             logging.info("Processing file: {}.".format(fichier))
 
-            # Create a dataframe from the files
+            # Create a Pandas DataFrame from the files
             try:
                 df = pd.read_fwf(
                     fichier,
@@ -266,8 +272,11 @@ def convert_daily_flat_files(
                 )
             except ValueError:
                 logging.error(
-                    f"File {fichier} was unable to be read. This is probably an issue with the file."
+                    "File {} was unable to be read. This is probably an issue with the file.".format(
+                        fichier
+                    )
                 )
+                errored_files.append(fichier)
                 continue
 
             # Loop through the station codes
@@ -275,32 +284,34 @@ def convert_daily_flat_files(
             for code in l_codes:
                 df_code = df[df["code"] == code]
 
-                # on arrete si la variable n'est pas presente
+                # Abort if the variable is not present
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        f"Variable `{variable_name}` not found for station {code}. Continuing..."
+                        "Variable `{}` not found for station `{}` in file {}. Continuing...".format(
+                            variable_name, code, fichier
+                        )
                     )
                     continue
 
-                # on fait le traitement
+                # Perform the data treatment
                 logging.info(
                     "Converting {} for station code: {}".format(variable_name, code)
                 )
 
-                # on va chercher le dataframe de la variable
+                # Dump the values into a DataFrame
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
 
-                # application du masque selon la valeur manquante
+                # Apply the mask according to the NaN value
                 df_var = df_var.replace(missing_value, np.nan)
 
                 # Decoding the values and flags
                 dfd = df_var.loc[:, ["D{:0n}".format(i) for i in range(1, 32)]]
                 dff = df_var.loc[:, ["F{:0n}".format(i) for i in range(1, 32)]]
 
-                # enleve flag == nan
+                # Remove the "NaN" flag
                 dff = dff.fillna("")
 
-                # utilise flag pour masquer valeurs
+                # Use the flag to mask the values
                 val = np.asfarray(dfd.values)
                 flag = dff.values
                 mask = np.isin(flag, info["missing_flags"])
@@ -336,7 +347,7 @@ def convert_daily_flat_files(
                 ds[variable_name] = da_val
                 ds["flag"] = da_flag
 
-                # save as a NetCDF file
+                # Save as a NetCDF file
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
                 if start_year == end_year:
@@ -462,7 +473,7 @@ def aggregate_nc_files(
             )
         )
 
-        # On va chercher les limites temporelles des fichiers
+        # Find the time dimensions for all the files
         list_files_to_combine = []
         for s in valid_stations:
             files = [
@@ -488,10 +499,7 @@ def aggregate_nc_files(
             )
         )
 
-        # Copie/adaptation de ce qui est fait dans ec_netcdf.create_station_netcdf_file
-        # des scripts utilises par Bruno Fang (et qui viennent de Blaise je pense)
-        if not Path(output_file).exists():
-            Path(output_file).mkdir()
+        Path(output_file).mkdir(parents=True, exist_ok=True)
 
         file_out = Path(output_file).joinpath(
             "{}_{}_{}.nc".format(
@@ -519,7 +527,7 @@ def aggregate_nc_files(
 
         nc_flag = None
         if include_flags:
-            # creation de la variable flag
+            # Create variable for the flags
             nc_flag = ds.createVariable(
                 "flag",
                 "c",
@@ -556,7 +564,7 @@ def aggregate_nc_files(
         # Use a Pandas DataFrame to align the data
         df_tot = pd.DataFrame(index=time_index)
 
-        # On remplit les donnees pour chaques eccc
+        # Grab ECCC station metadata for entry
         for iter_station, station in enumerate(valid_stations):
             t00 = time.time()
             logging.info(
@@ -564,10 +572,9 @@ def aggregate_nc_files(
                     iter_station + 1, valid_stations_count, station
                 )
             )
-
-            # On lit les donnees et les metadata pour la station
             df_stat = df_inv.loc[df_inv["Climate ID"] == station]
-            # On s'assure de ne trouver qu'une metadonnee par station
+
+            # Only take one metadata entry per station
             if df_stat.shape[0] != 1:
                 logging.warning(
                     "Duplicate metadata found for station {}. Skipping.".format(station)
@@ -575,7 +582,7 @@ def aggregate_nc_files(
                 continue
             df_stat = df_stat.iloc[0]
 
-            # On ouvre les fichiers sources avec un traitement special pour les fichiers multi-annuels
+            # Open files with special handling for multi-year data
             list_station_files = [
                 f
                 for f in source_files.rglob("{}_{}*.nc".format(station, variable_name))
@@ -590,8 +597,7 @@ def aggregate_nc_files(
                 else:
                     single_year_files.append(file)
 
-            # traitement des fichiers annuels
-
+            # Annual data treatment
             if len(single_year_files) > 0:
                 try:
                     ds_single = xr.open_mfdataset(
@@ -602,20 +608,19 @@ def aggregate_nc_files(
                         "Unable to read by coords. Skipping station: {}".format(station)
                     )
                     continue
+
                 df_tot[variable_name] = ds_single[variable_name].to_dataframe()
 
                 if include_flags:
                     df_tot["flag"] = ds_single["flag"].to_dataframe()
 
-            # ajout des fichiers multi annuels
+            # Add multi-annual data
             for fichier in multi_year_files:
                 logging.info(
                     "Special handling for multi-year data file: {}".format(fichier)
                 )
-                # Lecture des donnees et conversion en dataframe
+                # Read data into a dataframe and keep valid entries only
                 df = xr.open_dataset(fichier).to_dataframe()
-
-                # On ne garde que les donnees valides
                 df_valid = df.loc[~df[variable_name].isnull()]
 
                 # Traitement special pour les donnees en double
@@ -638,7 +643,7 @@ def aggregate_nc_files(
                     if include_flags:
                         df_tot.loc[df_valid.index, "flag"] = df_valid["flag"]
 
-            # on copie les donnees dans le fichier de sortie
+            # Dump the data into the output container
             nc_var[:, iter_station] = df_tot[variable_name].values
 
             if include_flags:
@@ -648,12 +653,12 @@ def aggregate_nc_files(
                 "Added {:} data entries.".format(df_tot[variable_name].count())
             )
 
-            # on enleve les donnees de df_tot
+            # Remove the df_tot values
             df_tot.drop(columns=[variable_name])
             if include_flags:
                 df_tot.drop(columns=["flag"])
 
-            # on ajoute les meta donnees
+            # Add the metadata to the file
             nc_name[iter_station] = df_stat["Name"]
             nc_province[iter_station] = df_stat["Province"]
             nc_lat[iter_station] = df_stat["Latitude (Decimal Degrees)"]

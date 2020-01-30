@@ -11,10 +11,10 @@
 # "Max Temp (°C)" is renamed "tasmax" and converted to °K.
 #
 #####################################################################
+import json
 import logging
 from logging import config
 from pathlib import Path
-from types import GeneratorType
 from typing import Generator
 from typing import List
 from typing import Tuple
@@ -29,6 +29,10 @@ from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
+
+eccc_metadata = json.load(open(Path(__file__).parent / "eccc_summary_cf_attrs.json"))[
+    "variable_entry"
+]
 
 
 # Searches a location for the station data, then calls the needed scripts to read and assembles the data using pandas

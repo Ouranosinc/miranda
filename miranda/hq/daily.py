@@ -10,11 +10,13 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import xarray as xr
-from miranda.units import u, units2pint
+
+from miranda.units import u
+from miranda.units import units2pint
 
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "cf_attrs.json"))["variable_entry"]
+cmor = json.load(open(Path(__file__).parent / "hq_cf_attrs.json"))["variable_entry"]
 
 fp = r"[-+]?\d*,\d+|\d+"
 
