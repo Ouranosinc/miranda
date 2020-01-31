@@ -457,19 +457,37 @@ def aggregate_nc_files(
         variable_file_name = info["nc_name"]
         variable_name = info["standard_name"]
 
-        # On dresse la liste des eccc pour lesquelles on a des metadonnees
-        df_inv = pd.read_csv(station_inventory, header=3)
+        # Examine the available metadata entries
+        df_inv = pd.read_csv(
+            station_inventory,
+            header=3,
+            # dtype={
+            #     "Name": "|S80",
+            #     "Province": "|S80",
+            #     "Climate ID": "|S10",
+            #     "Station ID": "|S20",
+            #     "WMO ID": float,
+            #     "TC ID": "|S10",
+            #     "Latitude (Decimal Degrees)": float,
+            #     "Longitude (Decimal Degrees": float,
+            #     "Elevation (m)": float,
+            # },
+        )
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on vaailable data with corresponding metadata
         rep_nc = source_files.joinpath(variable_file_name).rglob("*.nc")
-        station_file_codes = {f.name.split("_")[0] for f in rep_nc}
-        stations_to_keep = set(station_file_codes).intersection(set(station_inventory))
-        rejected_stations = set(station_file_codes).difference(set(station_inventory))
+        station_file_climate_ids = {f.name.split("_")[0] for f in rep_nc}
+        stations_to_keep = set(station_file_climate_ids).intersection(
+            set(station_inventory)
+        )
+        rejected_stations = set(station_file_climate_ids).difference(
+            set(station_inventory)
+        )
         valid_stations = list(sorted(stations_to_keep))
         valid_stations_count = len(valid_stations)
 
-        if len(station_file_codes) == 0:
+        if valid_stations_count == 0:
             logging.error(
                 "No stations were found containing variable filename `{}`. Exiting.".format(
                     variable_file_name
@@ -479,22 +497,27 @@ def aggregate_nc_files(
 
         logging.warning(
             "Files exist for {} ECCC stations. Metadata found for {} stations. Rejecting {} stations.".format(
-                len(station_file_codes), valid_stations_count, len(rejected_stations)
+                len(station_file_climate_ids),
+                valid_stations_count,
+                len(rejected_stations),
             )
         )
-        logging.warning(
-            "Rejected station codes are the following: {}.".format(
-                ", ".join(rejected_stations)
+        if rejected_stations:
+            logging.warning(
+                "Rejected station codes are the following: {}.".format(
+                    ", ".join(rejected_stations)
+                )
             )
-        )
 
         # Find the time dimensions for all the files
         list_files_to_combine = []
-        for i, s in enumerate(valid_stations):
+        for i, station_code in enumerate(valid_stations):
             files = [
                 f.name
                 for f in Path(source_files).rglob(
-                    "{}*{}*{}*.nc".format(s, variable_code, variable_file_name)
+                    "{}*{}*{}*.nc".format(
+                        station_code, variable_code, variable_file_name
+                    )
                 )
             ]
             list_files_to_combine += files
