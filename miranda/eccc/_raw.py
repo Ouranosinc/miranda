@@ -224,7 +224,7 @@ def convert_daily_flat_files(
     ----------
     source_files : Union[str, Path]
     output_folder : Union[str, Path]
-    variables : Union[str, List[str]
+    variables : Union[str, int, List[Union[str, int]]
       Variable codes (001, 002, 103, etc.)
     missing_value : int
 
@@ -234,7 +234,7 @@ def convert_daily_flat_files(
     """
     func_time = time.time()
 
-    if isinstance(variables, str):
+    if isinstance(variables, (str, int)):
         variables = [variables]
 
     for variable_code in variables:
@@ -395,7 +395,7 @@ def convert_daily_flat_files(
 def aggregate_nc_files(
     source_files: Union[str, Path],
     output_file: Union[str, Path],
-    variables: Union[str, int, List[str], ],
+    variables: Union[str, int, List[Union[str, int]]],
     time_step: str = "h",
     station_inventory: Union[str, Path] = None,
     include_flags: bool = True,

@@ -1,0 +1,20 @@
+{
+    "template": "https://github.com/Ouranosinc/cookiecutter-pypackage-ouranos/",
+    "commit": "134ecf2a8f6cc1c573480318bdf988eb8e95af14",
+    "context": {
+        "cookiecutter": {
+            "full_name": "Trevor James Smith",
+            "email": "smith.trevorj@ouranos.ca",
+            "github_username": "Zeitsperre",
+            "github_organization": "Ouranosinc",
+            "project_name": "miranda",
+            "repo_name": "miranda",
+            "project_short_description": "Python utilities for climate data collection and management",
+            "project_keywords": "climate meteorology archiving collection NetCDF",
+            "release_date": "2020-01-01",
+            "year": "2020",
+            "version": "0.1.0-beta",
+            "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage-ouranos/"
+        }
+    }
+}
