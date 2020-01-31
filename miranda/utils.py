@@ -598,27 +598,27 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
         },
         "010": {
             "nc_units": "mm",
-            "scale_factor": 0.1,
+            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
             "add_offset": 0,
             "long_name": "Total Rainfall",
-            "standard_name": "rainfall_accumulation",
-            "nc_name": "rainfall",
+            "standard_name": "liquid_precipitation_flux",
+            "nc_name": "prlp",
         },
         "011": {
             "nc_units": "cm",
-            "scale_factor": 0.1,
+            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
             "add_offset": 0,
             "long_name": "Total Snowfall",
-            "standard_name": "snowfall_accumulation",
-            "nc_name": "snowfall",
+            "standard_name": "solid_precipitation_flux",
+            "nc_name": "prsn",
         },
         "012": {
             "nc_units": "mm",
-            "scale_factor": 0.1,
+            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
             "add_offset": 0,
             "long_name": "Total Precipitation",
-            "standard_name": "precipitation_accumulation",
-            "nc_name": "precipitation",
+            "standard_name": "precipitation_flux",
+            "nc_name": "prcptot",
         },
         "013": {
             "nc_units": "m",
@@ -681,7 +681,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 1,
             "add_offset": 0,
             "long_name": "Blowing snow",
-            "standard_name": "blowing_snow",
+            "standard_name": "blowing_snow_presence",
             "nc_name": "blow_snow",
         },
         "021": {
@@ -701,19 +701,19 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "wind_34kt",
         },
         "023": {
-            "nc_units": "deg",
+            "nc_units": "degree",
             "scale_factor": 10,
             "add_offset": 0,
             "long_name": "Direction of extreme gust (16 pts) to December 1976",
-            "standard_name": "extreme_gust_direction",
-            "nc_name": "gust_direction",
+            "standard_name": "wind_to_direction",
+            "nc_name": "gust_dir",
         },
         "024": {
-            "nc_units": "km h-1",
-            "scale_factor": 1,
+            "nc_units": "m s-1",
+            "scale_factor": 0.2777778,
             "add_offset": 0,
             "long_name": "Speed of extreme gust",
-            "standard_name": "extreme_gust_speed",
+            "standard_name": "wind_speed_of_gust",
             "nc_name": "gust_speed",
         },
         "025": {
@@ -721,7 +721,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 1,
             "add_offset": 0,
             "long_name": "UTC hour of extreme gust",
-            "standard_name": "extreme_gust_hour",
+            "standard_name": "hour_of_extreme_gust",
             "nc_name": "gust_hour",
         },
     }
@@ -734,6 +734,3 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
         logging.error("Daily variable `{}` not supported".format(code))
         raise
     return variable
-
-
-Path().home()

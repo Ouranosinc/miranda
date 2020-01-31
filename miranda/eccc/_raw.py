@@ -159,8 +159,13 @@ def convert_hourly_flat_files(
                 da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
                 da_val.attrs["element_number"] = variable_code
+                da_val.attrs["standard_name"] = info["standard_name"]
+                da_val.attrs["long_name"] = info["long_name"]
 
                 da_flag = xr.DataArray(flag.flatten(), coords=dates, dims=["time"])
+                da_flag.attrs["long_name"] = "data flag"
+                da_flag.attrs["note"] = "See ECCC technical documentation for details"
+
                 ds[variable_name] = da_val
                 ds["flag"] = da_flag
 
@@ -241,7 +246,6 @@ def convert_daily_flat_files(
         info = eccc_cf_daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         nc_name = info["nc_name"]
-        variable_name = info["standard_name"]
 
         # Prepare the data extraction
         titre_colonnes = "code year month code_var".split()
@@ -338,13 +342,18 @@ def convert_daily_flat_files(
 
                 ds = xr.Dataset()
                 da_val = xr.DataArray(value_days, coords=date_range, dims=["time"])
-                da_val = da_val.rename(variable_name)
+                da_val = da_val.rename(nc_name)
                 da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
                 da_val.attrs["element_number"] = variable_code
+                da_val.attrs["standard_name"] = info["standard_name"]
+                da_val.attrs["long_name"] = info["long_name"]
 
                 da_flag = xr.DataArray(flag_days, coords=date_range, dims=["time"])
-                ds[variable_name] = da_val
+                da_flag.attrs["long_name"] = "data flag"
+                da_flag.attrs["note"] = "See ECCC technical documentation for details"
+
+                ds[nc_name] = da_val
                 ds["flag"] = da_flag
 
                 # Save as a NetCDF file
@@ -395,7 +404,7 @@ def convert_daily_flat_files(
 def aggregate_nc_files(
     source_files: Union[str, Path],
     output_file: Union[str, Path],
-    variables: Union[str, int, List[str], ],
+    variables: Union[str, int, List[Union[str, int]]],
     time_step: str = "h",
     station_inventory: Union[str, Path] = None,
     include_flags: bool = True,
@@ -438,7 +447,7 @@ def aggregate_nc_files(
     elif time_step.lower() in ["d", "day", "daily"]:
         hourly = False
     else:
-        raise ValueError("Time step must be `hourly` or `daily`.")
+        raise ValueError("Time step must be `h` / `hourly` or `d` / `daily`.")
 
     for variable_code in variables:
         if hourly:
@@ -452,7 +461,7 @@ def aggregate_nc_files(
         df_inv = pd.read_csv(station_inventory, header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
-        # On limite le travail aux donnees et metadonnees disponibles
+        # Only perform aggregation on vaailable data with corresponding metadata
         rep_nc = source_files.joinpath(variable_file_name).rglob("*.nc")
         station_file_codes = {f.name.split("_")[0] for f in rep_nc}
         stations_to_keep = set(station_file_codes).intersection(set(station_inventory))
@@ -525,7 +534,7 @@ def aggregate_nc_files(
         least_significant_digit = info["least_significant_digit"]
         nc_var = ds.createVariable(
             variable_name,
-            "f4",  # TODO: create a mapping of the data type for floats, int and bools to nc_datatypes
+            datatype="f4",
             dimensions=("time", "station"),
             zlib=True,
             least_significant_digit=least_significant_digit,
@@ -538,7 +547,7 @@ def aggregate_nc_files(
             # Create variable for the flags
             nc_flag = ds.createVariable(
                 "flag",
-                "c",
+                datatype="S1",
                 dimensions=("time", "station"),
                 zlib=True,
                 chunksizes=(100000, 1),
@@ -550,23 +559,36 @@ def aggregate_nc_files(
         nc_time = ds.createVariable("time", "f8", dimensions="time")
         tunits = time_index[0].strftime("days since %Y-%m-%d %H:%M:%S")
         nc_time.units = tunits
+        nc_time.calendar = "proleptic_gregorian"
         time_num = cftime.date2num(time_index.to_pydatetime(), tunits)
         nc_time[:] = time_num
         ds.sync()
 
         # Write out the appropriate ECCC metadata
         nc_name = ds.createVariable("name", "str", dimensions="station")
+        nc_name.long_name = "Name"
         nc_lon = ds.createVariable("lon", "f8", dimensions="station")
-        nc_lon.units = "decimal degrees"
+        nc_lon.units = "degrees"
+        nc_lon.long_name = "Longitude (Decimal Degrees)"
+        nc_lon.standard_name = "longitude"
         nc_lat = ds.createVariable("lat", "f8", dimensions="station")
-        nc_lat.units = "decimal degrees"
+        nc_lat.units = "degrees"
+        nc_lat.long_name = "Latitude (Decimal Degrees)"
+        nc_lat.standard_name = "latitude"
         nc_province = ds.createVariable("province", "str", dimensions="station")
+        nc_province.long_name = "Province"
         nc_elevation = ds.createVariable("elevation", "f", dimensions="station")
         nc_elevation.units = "m"
+        nc_elevation.long_name = "Elevation"
+        nc_elevation.standard_name = "height"
         nc_climate_id = ds.createVariable("climate_id", "str", dimensions="station")
+        nc_climate_id.long_name = "Climate ID"
         nc_station_id = ds.createVariable("station_id", "str", dimensions="station")
+        nc_station_id.long_name = "Station ID"
         nc_wmo_id = ds.createVariable("wmo_id", "str", dimensions="station")
+        nc_wmo_id.long_name = "WMO ID"
         nc_tc_id = ds.createVariable("tc_id", "str", dimensions="station")
+        nc_tc_id.long_name = "TC ID"
         ds.sync()
 
         # Use a Pandas DataFrame to align the data
