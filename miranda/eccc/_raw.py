@@ -18,6 +18,7 @@ from datetime import datetime as dt
 from logging import config
 from pathlib import Path
 from typing import List
+from typing import Optional
 from typing import Union
 
 import cftime
@@ -41,7 +42,7 @@ __all__ = [
 
 def convert_hourly_flat_files(
     source_files: Union[str, Path],
-    output_folder: Union[str, Path],
+    output_folder: Union[str, Path, List[Union[str, int]]],
     variables: Union[str, List[str]],
     missing_value: int = -9999,
 ) -> None:
@@ -60,7 +61,7 @@ def convert_hourly_flat_files(
     """
     func_time = time.time()
 
-    if isinstance(variables, str):
+    if isinstance(variables, (str, int)):
         variables = [variables]
 
     for variable_code in variables:
@@ -172,6 +173,10 @@ def convert_hourly_flat_files(
                 # save the file in NetCDF format
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
+
+                station_folder = rep_nc.joinpath(code)
+                station_folder.mkdir(parents=True, exist_ok=True)
+
                 if start_year == end_year:
                     f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
                         c=code, vc=variable_code, v=variable_name, sy=start_year
@@ -210,7 +215,7 @@ def convert_hourly_flat_files(
                     "redistribution"
                 ] = "Redistribution policy unknown. For internal use only."
 
-                ds.to_netcdf(rep_nc.joinpath(f_nc))
+                ds.to_netcdf(station_folder.joinpath(f_nc))
 
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
@@ -359,6 +364,10 @@ def convert_daily_flat_files(
                 # Save as a NetCDF file
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
+
+                station_folder = rep_nc.joinpath(code)
+                station_folder.mkdir(parents=True, exist_ok=True)
+
                 if start_year == end_year:
                     f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
                         c=code, vc=variable_code, v=nc_name, sy=start_year
@@ -393,7 +402,7 @@ def convert_daily_flat_files(
                     "redistribution"
                 ] = "Redistribution policy unknown. For internal use only."
 
-                ds.to_netcdf(rep_nc.joinpath(f_nc))
+                ds.to_netcdf(station_folder.joinpath(f_nc))
 
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
@@ -403,24 +412,22 @@ def convert_daily_flat_files(
 # TODO: Adjust this function to allow for hourly and daily data aggregation
 def aggregate_nc_files(
     source_files: Union[str, Path],
-    output_file: Union[str, Path],
-    variables: Union[str, int, List[Union[str, int]]],
+    output_folder: Union[str, Path],
+    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     time_step: str = "h",
     station_inventory: Union[str, Path] = None,
     include_flags: bool = True,
-    double_handling: str = "first",
 ) -> None:
     """
 
     Parameters
     ----------
     source_files: Union[str, Path]
-    output_file: Union[str, Path]
-    variables: Union[str, List[str]]
+    output_folder: Union[str, Path]
+    variables: Optional[Union[str, int, List[Union[str, int]]]]
     time_step: str
     station_inventory: Union[str, Path]
     include_flags: bool
-    double_handling: str
 
     Returns
     -------
@@ -433,11 +440,6 @@ def aggregate_nc_files(
             "Download the data from ECCC's Google Drive at:\n"
             "https://drive.google.com/open?id=1egfzGgzUb0RFu_EE5AYFZtsyXPfZ11y2"
         )
-    if double_handling not in ["first", "last"]:
-        raise ValueError
-
-    if isinstance(variables, (str, int)):
-        variables = [variables]
 
     if isinstance(source_files, str):
         source_files = Path(source_files)
@@ -449,6 +451,25 @@ def aggregate_nc_files(
     else:
         raise ValueError("Time step must be `h` / `hourly` or `d` / `daily`.")
 
+    if isinstance(variables, (str, int)):
+        variables = [variables]
+    elif variables is None:
+        if hourly:
+            variables = [
+                76,
+                77,
+                78,
+                79,
+                80,
+                89,
+                94,
+                123,
+            ]
+            variables.extend(range(262, 281))
+        else:
+            variables = [1, 2, 3]
+            variables.extend(range(10, 26))
+
     for variable_code in variables:
         if hourly:
             info = eccc_cf_hourly_metadata(variable_code)
@@ -457,11 +478,11 @@ def aggregate_nc_files(
         variable_file_name = info["nc_name"]
         variable_name = info["standard_name"]
 
-        # On dresse la liste des eccc pour lesquelles on a des metadonnees
+        # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(station_inventory, header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
-        # Only perform aggregation on vaailable data with corresponding metadata
+        # Only perform aggregation on available data with corresponding metadata
         rep_nc = source_files.joinpath(variable_file_name).rglob("*.nc")
         station_file_codes = {f.name.split("_")[0] for f in rep_nc}
         stations_to_keep = set(station_file_codes).intersection(set(station_inventory))
@@ -516,11 +537,14 @@ def aggregate_nc_files(
             )
         )
 
-        Path(output_file).mkdir(parents=True, exist_ok=True)
+        output_folder = output_folder.joinpath("merged")
+        Path(output_folder).mkdir(parents=True, exist_ok=True)
 
-        file_out = Path(output_file).joinpath(
+        file_out = Path(output_folder).joinpath(
             "{}_{}_{}.nc".format(
-                variable_file_name, "hourly" if hourly else "daily", double_handling
+                variable_file_name,
+                "hourly" if hourly else "daily",
+                dt.now().strftime("%Y%m%D"),
             )
         )
         if file_out.exists():
@@ -646,23 +670,6 @@ def aggregate_nc_files(
                 if include_flags:
                     df_tot["flag"] = ds_single["flag"].to_dataframe()
 
-            #
-            # if len(single_year_files) > 0:
-            #     try:
-            #         ds_single = xr.open_mfdataset(
-            #             single_year_files, combine="by_coords"
-            #         )
-            #     except ValueError:
-            #         logging.exception(
-            #             "Unable to read by coords. Skipping station: {}".format(station)
-            #         )
-            #         continue
-            #
-            #     df_tot[variable_name] = ds_single[variable_name].to_dataframe()
-            #
-            #     if include_flags:
-            #         df_tot["flag"] = ds_single["flag"].to_dataframe()
-            #
             # Add multi-annual data
             # for fichier in multi_year_files:
             #     logging.info(

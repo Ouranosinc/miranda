@@ -1,5 +1,4 @@
 import logging
-from datetime import date
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
@@ -45,15 +44,15 @@ if __name__ == "__main__":
     # convert_daily_flat_files(
     #     source_files=source_data, output_folder=source_data, variables=var_codes
     # )
-
+    #
     for var in var_codes:
         var_name = eccc_cf_daily_metadata(var)["nc_name"]
-        out_file = source_data.joinpath(
-            "eccc_daily_{}".format(date.today().strftime("%Y%m%d"))
-        )
+        # out_file = source_data.joinpath(
+        #     "eccc_daily_{}".format(date.today().strftime("%Y%m%d"))
+        # )
         aggregate_nc_files(
             source_files=source_data,
-            output_file=out_file,
+            output_folder=source_data,
             variables=var,
             station_inventory=station_file,
             time_step="daily",
