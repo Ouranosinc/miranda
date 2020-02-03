@@ -9,6 +9,7 @@ from miranda.utils import eccc_cf_daily_metadata
 
 if __name__ == "__main__":
 
+    time_step = "daily"
     var_codes = [
         1,
         2,
@@ -33,10 +34,10 @@ if __name__ == "__main__":
     station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
     source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
 
+    p = Pool()
+
     func = partial(convert_daily_flat_files, source_data, source_data)
     logging.info(func)
-
-    p = Pool()
     p.map(func, var_codes)
     p.close()
     p.join()
@@ -45,15 +46,25 @@ if __name__ == "__main__":
     #     source_files=source_data, output_folder=source_data, variables=var_codes
     # )
     #
-    for var in var_codes:
-        var_name = eccc_cf_daily_metadata(var)["nc_name"]
-        # out_file = source_data.joinpath(
-        #     "eccc_daily_{}".format(date.today().strftime("%Y%m%d"))
-        # )
-        aggregate_nc_files(
-            source_files=source_data,
-            output_folder=source_data,
-            variables=var,
-            station_inventory=station_file,
-            time_step="daily",
-        )
+    q = Pool()
+    func = partial(
+        aggregate_nc_files, source_data, source_data, station_file, time_step
+    )
+    logging.info(func)
+    var_names = [eccc_cf_daily_metadata(var)["nc_name"] for var in var_codes]
+    q.map(func, var_names)
+    q.close()
+    q.join()
+
+    # for var in var_codes:
+    #     var_name = eccc_cf_daily_metadata(var)["nc_name"]
+    #     # out_file = source_data.joinpath(
+    #     #     "eccc_daily_{}".format(date.today().strftime("%Y%m%d"))
+    #     # )
+    #     aggregate_nc_files(
+    #         source_files=source_data,
+    #         output_folder=source_data,
+    #         variables=var,
+    #         station_inventory=station_file,
+    #         time_step="daily",
+    #     )

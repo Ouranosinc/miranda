@@ -174,7 +174,7 @@ def convert_hourly_flat_files(
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
 
-                station_folder = rep_nc.joinpath(code)
+                station_folder = rep_nc.joinpath(str(code))
                 station_folder.mkdir(parents=True, exist_ok=True)
 
                 if start_year == end_year:
@@ -365,7 +365,7 @@ def convert_daily_flat_files(
                 start_year = ds.time.dt.year.values[0]
                 end_year = ds.time.dt.year.values[-1]
 
-                station_folder = rep_nc.joinpath(code)
+                station_folder = rep_nc.joinpath(str(code))
                 station_folder.mkdir(parents=True, exist_ok=True)
 
                 if start_year == end_year:
@@ -411,11 +411,11 @@ def convert_daily_flat_files(
 
 # TODO: Adjust this function to allow for hourly and daily data aggregation
 def aggregate_nc_files(
-    source_files: Union[str, Path],
-    output_folder: Union[str, Path],
-    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
-    time_step: str = "h",
+    source_files: Optional[Union[str, Path]] = None,
+    output_folder: Optional[Union[str, Path]] = None,
     station_inventory: Union[str, Path] = None,
+    time_step: str = "h",
+    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
 ) -> None:
     """
