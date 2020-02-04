@@ -5,7 +5,6 @@ from pathlib import Path
 
 from miranda.eccc import aggregate_nc_files
 from miranda.eccc import convert_daily_flat_files
-from miranda.utils import eccc_cf_daily_metadata
 
 if __name__ == "__main__":
 
@@ -35,7 +34,6 @@ if __name__ == "__main__":
     source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
 
     p = Pool()
-
     func = partial(convert_daily_flat_files, source_data, source_data)
     logging.info(func)
     p.map(func, var_codes)
@@ -51,8 +49,7 @@ if __name__ == "__main__":
         aggregate_nc_files, source_data, source_data, station_file, time_step
     )
     logging.info(func)
-    var_names = [eccc_cf_daily_metadata(var)["nc_name"] for var in var_codes]
-    q.map(func, var_names)
+    q.map(func, var_codes)
     q.close()
     q.join()
 

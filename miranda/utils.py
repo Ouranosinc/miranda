@@ -401,7 +401,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 00-60)",
             "standard_name": "precipitation_flux",
-            "nc_name": "precipitation_hourly",
+            "nc_name": "precipitation",
         },
         "263": {
             "nc_units": "kg m-2 s-1",
@@ -450,7 +450,6 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
             "standard_name": "precipitation_amount",
             "nc_name": "precipitation_weight_q2",
-            "missing_flags": "M",
         },
         "269": {
             "nc_units": "kg m-2",
@@ -546,7 +545,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 50-60)",
             "standard_name": "wind_speed",
-            "nc_name": "wnd",
+            "nc_name": "wind_speed",
         },
     }
     code = str(variable_code).zfill(3)
@@ -577,7 +576,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 0.1,
             "add_offset": 273.15,
             "long_name": "Daily Maximum Temperature",
-            "standard_name": "air_temperature",
+            "standard_name": "air_temperature_maximum",
             "nc_name": "tasmax",
         },
         "002": {
@@ -585,7 +584,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 0.1,
             "add_offset": 273.15,
             "long_name": "Daily Minimum Temperature",
-            "standard_name": "air_temperature",
+            "standard_name": "air_temperature_minimum",
             "nc_name": "tasmin",
         },
         "003": {
@@ -602,7 +601,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Total Rainfall",
             "standard_name": "liquid_precipitation_flux",
-            "nc_name": "prlp",
+            "nc_name": "prlptot",
         },
         "011": {
             "nc_units": "cm",
@@ -610,7 +609,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Total Snowfall",
             "standard_name": "solid_precipitation_flux",
-            "nc_name": "prsn",
+            "nc_name": "prsntot",
         },
         "012": {
             "nc_units": "mm",
@@ -626,7 +625,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Snow on the Ground",
             "standard_name": "surface_snow_thickness",
-            "nc_name": "snd",
+            "nc_name": "sndtot",
         },
         "014": {
             "nc_units": "1",
@@ -690,7 +689,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind speed >= 28 Knots",
             "standard_name": "wind_exceeding_28_knots",
-            "nc_name": "wind_28kt",
+            "nc_name": "wind_gt_28kt",
         },
         "022": {
             "nc_units": "1",
@@ -698,7 +697,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind speed >= 34 Knots",
             "standard_name": "wind_exceeding_34_knots",
-            "nc_name": "wind_34kt",
+            "nc_name": "wind_gt_34kt",
         },
         "023": {
             "nc_units": "degree",

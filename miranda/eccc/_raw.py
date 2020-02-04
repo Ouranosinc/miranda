@@ -68,6 +68,7 @@ def convert_hourly_flat_files(
         info = eccc_cf_hourly_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         variable_name = info["standard_name"]
+        variable_file_name = info["nc_name"]
 
         # Preparing the data extraction
         titre_colonnes = "code year month day code_var ".split()
@@ -75,7 +76,7 @@ def convert_hourly_flat_files(
             titre_colonnes.append("D{:0n}".format(i))
             titre_colonnes.append("F{:0n}".format(i))
 
-        rep_nc = Path(output_folder).joinpath(variable_name)
+        rep_nc = Path(output_folder).joinpath(variable_file_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
@@ -114,14 +115,16 @@ def convert_hourly_flat_files(
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
                         "Variable `{}` not found in {}. Continuing...".format(
-                            variable_name, fichier
+                            variable_file_name, fichier
                         )
                     )
                     continue
 
                 # Treat the data
                 logging.info(
-                    "Converting `{}` for station code: {}".format(variable_name, code)
+                    "Converting `{}` for station code: {}".format(
+                        variable_file_name, code
+                    )
                 )
 
                 # Dump the data into a DataFrame
@@ -156,18 +159,18 @@ def convert_hourly_flat_files(
 
                 ds = xr.Dataset()
                 da_val = xr.DataArray(val.flatten(), coords=dates, dims=["time"])
-                da_val = da_val.rename(variable_name)
+                da_val = da_val.rename(variable_file_name)
                 da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
                 da_val.attrs["element_number"] = variable_code
-                da_val.attrs["standard_name"] = info["standard_name"]
+                da_val.attrs["standard_name"] = variable_name
                 da_val.attrs["long_name"] = info["long_name"]
 
                 da_flag = xr.DataArray(flag.flatten(), coords=dates, dims=["time"])
                 da_flag.attrs["long_name"] = "data flag"
                 da_flag.attrs["note"] = "See ECCC technical documentation for details"
 
-                ds[variable_name] = da_val
+                ds[variable_file_name] = da_val
                 ds["flag"] = da_flag
 
                 # save the file in NetCDF format
@@ -179,13 +182,13 @@ def convert_hourly_flat_files(
 
                 if start_year == end_year:
                     f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
-                        c=code, vc=variable_code, v=variable_name, sy=start_year
+                        c=code, vc=variable_code, v=variable_file_name, sy=start_year
                     )
                 else:
                     f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
                         c=code,
                         vc=variable_code,
-                        v=variable_name,
+                        v=variable_file_name,
                         sy=start_year,
                         ey=end_year,
                     )
@@ -456,15 +459,11 @@ def aggregate_nc_files(
     elif variables is None:
         if hourly:
             variables = [
-                76,
-                77,
-                78,
-                79,
-                80,
                 89,
                 94,
                 123,
             ]
+            variables.extend(range(76, 81))
             variables.extend(range(262, 281))
         else:
             variables = [1, 2, 3]
@@ -475,25 +474,25 @@ def aggregate_nc_files(
             info = eccc_cf_hourly_metadata(variable_code)
         else:
             info = eccc_cf_daily_metadata(variable_code)
-        variable_file_name = info["nc_name"]
-        variable_name = info["standard_name"]
+        variable_name = info["nc_name"]
 
         # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(station_inventory, header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
-        rep_nc = source_files.joinpath(variable_file_name).rglob("*.nc")
+        rep_nc = source_files.joinpath(variable_name).rglob("*.nc")
         station_file_codes = {f.name.split("_")[0] for f in rep_nc}
         stations_to_keep = set(station_file_codes).intersection(set(station_inventory))
         rejected_stations = set(station_file_codes).difference(set(station_inventory))
         valid_stations = list(sorted(stations_to_keep))
         valid_stations_count = len(valid_stations)
+        logging.info("Processing stations for variable `{}`.".format(variable_name))
 
         if len(station_file_codes) == 0:
             logging.error(
                 "No stations were found containing variable filename `{}`. Exiting.".format(
-                    variable_file_name
+                    variable_name
                 )
             )
             return
@@ -510,25 +509,31 @@ def aggregate_nc_files(
         )
 
         # Find the time dimensions for all the files
-        list_files_to_combine = []
-        for i, s in enumerate(valid_stations):
-            files = [
-                f.name
-                for f in Path(source_files).rglob(
-                    "{}*{}*{}*.nc".format(s, variable_code, variable_file_name)
-                )
-            ]
-            list_files_to_combine += files
+        list_years = set()
 
-        list_years = [int(Path(f).stem.split("_")[-1]) for f in list_files_to_combine]
-        year_start, year_end = np.min(list_years), np.max(list_years)
+        if hourly:
+            for i, s in enumerate(valid_stations):
+                files = [
+                    int(Path(f).stem.split("_")[-1])
+                    for f in Path(source_files).rglob(
+                        "{}*{}*{}*.nc".format(s, variable_code, variable_name)
+                    )
+                ]
+                list_years.update(files)
 
-        # Calculate the dimensions of the output NetCDF
-        time_index = pd.date_range(
-            start="{}-01-01".format(year_start),
-            end="{}-01-01".format(year_end + 1),
-            freq="H" if hourly else "D",
-        )[:-1]
+            # list_years = [int(Path(f).stem.split("_")[-1]) for f in list_files_to_combine]
+            year_start, year_end = min(list_years), max(list_years)
+
+            # Calculate the dimensions of the output NetCDF
+            time_index = pd.date_range(
+                start="{}-01-01".format(year_start),
+                end="{}-01-01".format(year_end + 1),
+                freq="H",
+            )[:-1]
+        else:
+            time_index = pd.date_range(
+                start="1840-01-01", end="{}-01-01".format(dt.today().year), freq="H"
+            )
 
         logging.info("Preparing the NetCDF.")
         logging.info(
@@ -538,13 +543,13 @@ def aggregate_nc_files(
         )
 
         output_folder = output_folder.joinpath("merged")
-        Path(output_folder).mkdir(parents=True, exist_ok=True)
+        output_folder.mkdir(parents=True, exist_ok=True)
 
         file_out = Path(output_folder).joinpath(
-            "{}_{}_{}.nc".format(
-                variable_file_name,
+            "{}_eccc_{}_{}.nc".format(
+                variable_name,
                 "hourly" if hourly else "daily",
-                dt.now().strftime("%Y%m%D"),
+                dt.now().strftime("%Y%m%d"),
             )
         )
         if file_out.exists():
@@ -616,7 +621,8 @@ def aggregate_nc_files(
         ds.sync()
 
         # Use a Pandas DataFrame to align the data
-        df_tot = pd.DataFrame(index=time_index)
+        # df_tot = pd.DataFrame(index=time_index)
+        # df_tot = xr.Dataset(coords=dict(time=time_index))
 
         # Grab ECCC station metadata for entry
         for iter_station, station in enumerate(valid_stations):
@@ -640,7 +646,7 @@ def aggregate_nc_files(
             list_station_files = [
                 f
                 for f in source_files.rglob(
-                    "{}*{}*{}*.nc".format(station, variable_code, variable_file_name)
+                    "{}*{}*{}*.nc".format(station, variable_code, variable_name)
                 )
             ]
             # single_year_files = []
@@ -661,14 +667,18 @@ def aggregate_nc_files(
                     )
                 except ValueError:
                     logging.exception(
-                        "Unable to read by coords. Skipping station: {}".format(station)
+                        "Unable to read by coordinates. Skipping station: {}".format(
+                            station
+                        )
                     )
                     continue
-
-                df_tot[variable_name] = ds_single[variable_name].to_dataframe()
-
-                if include_flags:
-                    df_tot["flag"] = ds_single["flag"].to_dataframe()
+            else:
+                continue
+                #
+                # df_tot[variable_name] = ds_single[variable_name].to_dataframe()
+                #
+                # if include_flags:
+                #     df_tot["flag"] = ds_single["flag"].to_dataframe()
 
             # Add multi-annual data
             # for fichier in multi_year_files:
@@ -700,19 +710,22 @@ def aggregate_nc_files(
             #             df_tot.loc[df_valid.index, "flag"] = df_valid["flag"]
 
             # Dump the data into the output container
-            nc_var[:, iter_station] = df_tot[variable_name].values
+            # nc_var[:, iter_station] = df_tot[variable_name].values
+
+            nc_var[:, iter_station] = ds_single[variable_name].values
 
             if include_flags:
-                nc_flag[:, iter_station] = df_tot["flag"].values
+                # nc_flag[:, iter_station] = df_tot["flag"].values
+                nc_flag[:, iter_station] = ds_single["flag"].values
 
             logging.info(
-                "Added {:} data entries.".format(df_tot[variable_name].count())
+                "Added {:} data entries.".format(int(ds_single[variable_name].count()))
             )
 
-            # Remove the df_tot values
-            df_tot.drop(columns=[variable_name])
-            if include_flags:
-                df_tot.drop(columns=["flag"])
+            # # Remove the df_tot values
+            # df_tot.drop(columns=[variable_name])
+            # if include_flags:
+            #     df_tot.drop(columns=["flag"])
 
             # Add the metadata to the file
             nc_name[iter_station] = df_stat["Name"]
