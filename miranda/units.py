@@ -14,7 +14,7 @@ u.define("h = hour")  # Not the Planck constant...
 u.define("[speed] = [length] / [time]")
 
 u.define("[precipitation] = [mass] / [length] ** 2 / [time]")
-u.define("mmday = 1000 kg / meter ** 2 / day")
+u.define("mmday = 1 kg / meter ** 2 / day")
 u.define("[discharge] = [length] ** 3 / [time]")
 u.define("cms = meter ** 3 / second")
 
