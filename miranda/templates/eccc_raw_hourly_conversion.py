@@ -41,17 +41,16 @@ if __name__ == "__main__":
     station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
     source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
 
-    p = Pool()
-    func = partial(convert_hourly_flat_files, source_data, source_data)
-    logging.info(func)
-    p.map(func, var_codes)
-    p.close()
-    p.join()
+    #p = Pool()
+    #func = partial(convert_hourly_flat_files, source_data, source_data)
+    #logging.info(func)
+    #p.map(func, var_codes)
+    #p.close()
+    #p.join()
 
-    # convert_hourly_flat_files(
-    #     source_files=source_data, output_folder=source_data, variables=var_codes
-    # )
-    #
+    #convert_hourly_flat_files(
+    #    source_files=source_data, output_folder=source_data, variables=var_codes
+    #)
 
     q = Pool()
     func = partial(
@@ -62,14 +61,15 @@ if __name__ == "__main__":
     q.close()
     q.join()
 
-    # for var in var_codes:
-    #     # var_name = eccc_cf_hourly_metadata(var)["nc_name"]
-    #     # out_file = source_data.joinpath(
-    #     #     "{}_eccc_hourly_{}".format(var_name, date.today().strftime("%Y%m%d"))
-    #     # )
-    #     aggregate_nc_files(
-    #         source_files=source_data,
-    #         output_folder=source_data,
-    #         variables=var,
-    #         station_inventory=station_file,
-    #     )
+    for var in var_codes:
+        var_name = eccc_cf_hourly_metadata(var)["nc_name"]
+        out_file = source_data.joinpath(
+            "{}_eccc_hourly_{}".format(var_name, date.today().strftime("%Y%m%d"))
+        )
+
+        aggregate_nc_files(
+            source_files=source_data,
+            output_folder=source_data,
+            variables=var,
+            station_inventory=station_file,
+        )

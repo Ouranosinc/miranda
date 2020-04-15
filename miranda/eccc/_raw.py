@@ -114,8 +114,8 @@ def convert_hourly_flat_files(
                 # Abort if the variable is not found
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        "Variable `{}` not found in {}. Continuing...".format(
-                            variable_file_name, fichier
+                        "Variable `{}` not found for station code: {}. Continuing...".format(
+                            variable_file_name, code
                         )
                     )
                     continue
@@ -537,7 +537,7 @@ def aggregate_nc_files(
 
         logging.info("Preparing the NetCDF.")
         logging.info(
-            "Number of eccc: {}, time steps: {}.".format(
+            "Number of ECCC stations: {}, time steps: {}.".format(
                 valid_stations_count, time_index.size
             )
         )
@@ -711,8 +711,9 @@ def aggregate_nc_files(
 
             # Dump the data into the output container
             # nc_var[:, iter_station] = df_tot[variable_name].values
-
+            logging.info("Or maybe it's over here?")
             nc_var[:, iter_station] = ds_single[variable_name].values
+            logging.info("It could be this?")
 
             if include_flags:
                 # nc_flag[:, iter_station] = df_tot["flag"].values
