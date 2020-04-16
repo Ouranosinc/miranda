@@ -30,8 +30,8 @@ if __name__ == "__main__":
         24,
         25,
     ]
-    station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
-    source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
+    station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
+    source_data = Path("/media/sf_VMshare/Trevor/data")
 
     # p = Pool()
     # func = partial(convert_daily_flat_files, source_data, source_data)
@@ -64,4 +64,5 @@ if __name__ == "__main__":
             variables=var,
             station_inventory=station_file,
             time_step="daily",
+            mf_dataset_freq=None,
         )
