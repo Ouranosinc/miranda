@@ -13,6 +13,7 @@
 #######################################################################
 import logging
 import time
+from dask.diagnostics import ProgressBar
 from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
@@ -420,6 +421,7 @@ def aggregate_nc_files(
     time_step: str = "h",
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
+    mf_dataset_freq: Optional[str] = None,
 ) -> None:
     """
 
@@ -431,6 +433,7 @@ def aggregate_nc_files(
     time_step: str
     station_inventory: Union[str, Path]
     include_flags: bool
+    mf_dataset_freq: Optional[str] : resample frequency for creating output multifile dataset. E.g. 'YS': 1 year per file, '5YS': 5 y per file
 
     Returns
     -------
@@ -481,12 +484,34 @@ def aggregate_nc_files(
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
-        rep_nc = source_files.joinpath(variable_name).rglob("*.nc")
-        station_file_codes = {f.name.split("_")[0] for f in rep_nc}
-        stations_to_keep = set(station_file_codes).intersection(set(station_inventory))
+        nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
+        station_file_codes = [f.name.split("_")[0] for f in nclist]
+        stations_to_keep = list(
+            set(station_file_codes).intersection(set(station_inventory))
+        )
+        ds = xr.open_mfdataset(nclist, combine="nested", concat_dim="station")
+        ds = ds.assign_coords(
+            station_id=xr.DataArray(station_file_codes, dims="station")
+        )
+
         rejected_stations = set(station_file_codes).difference(set(station_inventory))
+        for r in rejected_stations:
+            ds = ds.isel(station=(ds.station_id != r))
+        # make sure data is in order to add metadata
+        ds = ds.sortby(ds.station_id)
+
+        # filter metadata for station_ids in dataset
+        meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id)]
+
+        # for s in ds.station_id:
+        #     print(s)
+        #     meta.append( df_inv.loc[df_inv["Climate ID"] == s])
+        meta = meta.to_xarray()
+        meta.sel(index=(meta["Climate ID"] == ds.station_id))
+
         valid_stations = list(sorted(stations_to_keep))
         valid_stations_count = len(valid_stations)
+
         logging.info("Processing stations for variable `{}`.".format(variable_name))
 
         if len(station_file_codes) == 0:
@@ -530,9 +555,10 @@ def aggregate_nc_files(
                 end="{}-01-01".format(year_end + 1),
                 freq="H",
             )[:-1]
+
         else:
             time_index = pd.date_range(
-                start="1840-01-01", end="{}-01-01".format(dt.today().year), freq="H"
+                start="1840-01-01", end="{}-01-01".format(dt.today().year), freq="D"
             )
 
         logging.info("Preparing the NetCDF.")
@@ -542,222 +568,258 @@ def aggregate_nc_files(
             )
         )
 
+        dsOut = xr.Dataset(
+            coords={
+                "time": time_index,
+                "station": ds.station,
+                "station_id": ds.station_id,
+            },
+            attrs=ds.attrs,
+        )
+
+        for vv in ds.data_vars:
+            dsOut[vv] = ds[
+                vv
+            ]  # assign data varaibles to output datasset ... will align with time coords
+
         output_folder = output_folder.joinpath("merged")
         output_folder.mkdir(parents=True, exist_ok=True)
 
         file_out = Path(output_folder).joinpath(
-            "{}_eccc_{}_{}.nc".format(
-                variable_name,
-                "hourly" if hourly else "daily",
-                dt.now().strftime("%Y%m%d"),
-            )
+            "{}_eccc_{}".format(variable_name, "hourly" if hourly else "daily",)
         )
-        if file_out.exists():
-            file_out.unlink()
 
-        ds = netCDF4.Dataset(file_out, "w", format="NETCDF4")
-        ds.createDimension("time", None)
-        ds.createDimension("station", valid_stations_count)
+        if mf_dataset_freq is not None:
+            _, datasets = zip(
+                *dsOut.resample(time=mf_dataset_freq)
+            )  # output mf_dataseset using resampling frequency
+        else:
+            datasets = [dsOut]
 
-        # creation de la variable
-        least_significant_digit = info["least_significant_digit"]
-        nc_var = ds.createVariable(
-            variable_name,
-            datatype="f4",
-            dimensions=("time", "station"),
-            zlib=True,
-            least_significant_digit=least_significant_digit,
-            chunksizes=(100000, 1),
-        )
-        nc_var.units = info["nc_units"]
+        paths = [
+            f'{file_out}_{dd.time.dt.year.min().values}-{dd.time.dt.year.max().values}_created{dt.now().strftime("%Y%m%d")}.nc'
+            for dd in datasets
+        ]
 
-        nc_flag = None
-        if include_flags:
-            # Create variable for the flags
-            nc_flag = ds.createVariable(
-                "flag",
-                datatype="S1",
-                dimensions=("time", "station"),
-                zlib=True,
-                chunksizes=(100000, 1),
-            )
-            nc_flag.long_name = "data flag"
-            nc_flag.note = "See ECCC technical documentation for details"
+        comp = dict(zlib=True, complevel=5)
+        encoding = {var: comp for var in datasets[0].data_vars}
 
-        # Create the time variable
-        nc_time = ds.createVariable("time", "f8", dimensions="time")
-        tunits = time_index[0].strftime("days since %Y-%m-%d %H:%M:%S")
-        nc_time.units = tunits
-        nc_time.calendar = "proleptic_gregorian"
-        time_num = cftime.date2num(time_index.to_pydatetime(), tunits)
-        nc_time[:] = time_num
-        ds.sync()
-
-        # Write out the appropriate ECCC metadata
-        nc_name = ds.createVariable("name", "str", dimensions="station")
-        nc_name.long_name = "Name"
-        nc_lon = ds.createVariable("lon", "f8", dimensions="station")
-        nc_lon.units = "degrees"
-        nc_lon.long_name = "Longitude (Decimal Degrees)"
-        nc_lon.standard_name = "longitude"
-        nc_lat = ds.createVariable("lat", "f8", dimensions="station")
-        nc_lat.units = "degrees"
-        nc_lat.long_name = "Latitude (Decimal Degrees)"
-        nc_lat.standard_name = "latitude"
-        nc_province = ds.createVariable("province", "str", dimensions="station")
-        nc_province.long_name = "Province"
-        nc_elevation = ds.createVariable("elevation", "f", dimensions="station")
-        nc_elevation.units = "m"
-        nc_elevation.long_name = "Elevation"
-        nc_elevation.standard_name = "height"
-        nc_climate_id = ds.createVariable("climate_id", "str", dimensions="station")
-        nc_climate_id.long_name = "Climate ID"
-        nc_station_id = ds.createVariable("station_id", "str", dimensions="station")
-        nc_station_id.long_name = "Station ID"
-        nc_wmo_id = ds.createVariable("wmo_id", "str", dimensions="station")
-        nc_wmo_id.long_name = "WMO ID"
-        nc_tc_id = ds.createVariable("tc_id", "str", dimensions="station")
-        nc_tc_id.long_name = "TC ID"
-        ds.sync()
-
-        # Use a Pandas DataFrame to align the data
-        # df_tot = pd.DataFrame(index=time_index)
-        # df_tot = xr.Dataset(coords=dict(time=time_index))
-
-        # Grab ECCC station metadata for entry
-        for iter_station, station in enumerate(valid_stations):
-            t00 = time.time()
-            logging.info(
-                "Collecting data from station {}/{}: Station ID {}.".format(
-                    iter_station + 1, valid_stations_count, station
+        with ProgressBar():
+            for ii in zip(datasets, paths):
+                dd, path = ii
+                dd.to_netcdf(
+                    path, engine="h5netcdf", format="NETCDF4", encoding=encoding
                 )
-            )
-            df_stat = df_inv.loc[df_inv["Climate ID"] == station]
 
-            # Only take one metadata entry per station
-            if df_stat.shape[0] != 1:
-                logging.warning(
-                    "Duplicate metadata found for station {}. Skipping.".format(station)
-                )
-                continue
-            df_stat = df_stat.iloc[0]
-
-            # Open files with special handling for multi-year data
-            list_station_files = [
-                f
-                for f in source_files.rglob(
-                    "{}*{}*{}*.nc".format(station, variable_code, variable_name)
-                )
-            ]
-            # single_year_files = []
-            # multi_year_files = []
-            # for file in list_station_files:
-            #     a1 = file.name.split("_")[-2]
-            #     a2 = file.name.split("_")[-1][:4]
-            #     if a1 != a2:
-            #         multi_year_files.append(file)
-            #     else:
-            #         single_year_files.append(file)
-
-            # Annual data treatment
-            if len(list_station_files) > 0:
-                try:
-                    ds_single = xr.open_mfdataset(
-                        list_station_files, combine="by_coords"
-                    )
-                except ValueError:
-                    logging.exception(
-                        "Unable to read by coordinates. Skipping station: {}".format(
-                            station
-                        )
-                    )
-                    continue
-            else:
-                continue
-                #
-                # df_tot[variable_name] = ds_single[variable_name].to_dataframe()
-                #
-                # if include_flags:
-                #     df_tot["flag"] = ds_single["flag"].to_dataframe()
-
-            # Add multi-annual data
-            # for fichier in multi_year_files:
-            #     logging.info(
-            #         "Special handling for multi-year data file: {}".format(fichier)
-            #     )
-            #     # Read data into a dataframe and keep valid entries only
-            #     df = xr.open_dataset(fichier).to_dataframe()
-            #     df_valid = df.loc[~df[variable_name].isnull()]
-            #
-            #     # Traitement special pour les donnees en double
-            #     #
-            #     # Dans les fichiers multi-annuels, il arrive qu'il y ait plusieurs
-            #     # entrees pour les memes dates/eccc
-            #     #
-            #     # *** CA NE DEVRAIT PAS ARRIVER ***
-            #     #
-            #     if not df_valid.index.is_unique:
-            #         logging.warning("Donnees en double ... on applique une patch ...")
-            #         # Pour les temps ou on a plus d'une donnee valide, on garde la derniere
-            #         df_valid = df_valid[
-            #             not df_valid.index.duplicated(keep=double_handling)
-            #         ]
-            #         assert df_valid.index.is_unique
-            #
-            #     if df_valid.index.size != 0:
-            #         df_tot.loc[df_valid.index, variable_name] = df_valid[variable_name]
-            #         if include_flags:
-            #             df_tot.loc[df_valid.index, "flag"] = df_valid["flag"]
-
-            # Dump the data into the output container
-            # nc_var[:, iter_station] = df_tot[variable_name].values
-            logging.info("Or maybe it's over here?")
-            nc_var[:, iter_station] = ds_single[variable_name].values
-            logging.info("It could be this?")
-
-            if include_flags:
-                # nc_flag[:, iter_station] = df_tot["flag"].values
-                nc_flag[:, iter_station] = ds_single["flag"].values
-
-            logging.info(
-                "Added {:} data entries.".format(int(ds_single[variable_name].count()))
-            )
-
-            # # Remove the df_tot values
-            # df_tot.drop(columns=[variable_name])
-            # if include_flags:
-            #     df_tot.drop(columns=["flag"])
-
-            # Add the metadata to the file
-            nc_name[iter_station] = df_stat["Name"]
-            nc_province[iter_station] = df_stat["Province"]
-            nc_lat[iter_station] = df_stat["Latitude (Decimal Degrees)"]
-            nc_lon[iter_station] = df_stat["Longitude (Decimal Degrees)"]
-            nc_elevation[iter_station] = df_stat["Elevation (m)"]
-            nc_climate_id[iter_station] = str(df_stat["Climate ID"])
-            nc_station_id[iter_station] = str(df_stat["Station ID"])
-            nc_wmo_id[iter_station] = str(df_stat["WMO ID"])
-            nc_tc_id[iter_station] = str(df_stat["TC ID"])
-            ds.sync()
-
-            logging.info(
-                "Transaction duration: {:.2f} seconds.".format(time.time() - t00)
-            )
-
-        ds.Conventions = "CF-1.7"
-
-        ds.title = "Environment and Climate Change Canada (ECCC) weather eccc"
-        ds.history = "{}: Merged from multiple individual station files to n-dimensional array.".format(
-            dt.now().strftime("%Y-%m-%d %X")
-        )
-        ds.version = "v{}".format(dt.now().strftime("%Y.%m"))
-        ds.institution = "Environment and Climate Change Canada (ECCC)"
-        ds.source = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
-        ds.references = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
-        ds.comment = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
-        ds.redistribution = "Redistribution policy unknown. For internal use only."
-
-        ds.close()
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
     )
+
+    #     if file_out.exists():
+    #         file_out.unlink()
+    #
+    #     ds = netCDF4.Dataset(file_out, "w", format="NETCDF4")
+    #     ds.createDimension("time", None)
+    #     ds.createDimension("station", valid_stations_count)
+    #
+    #     # creation de la variable
+    #     least_significant_digit = info["least_significant_digit"]
+    #     nc_var = ds.createVariable(
+    #         variable_name,
+    #         datatype="f4",
+    #         dimensions=("time", "station"),
+    #         zlib=True,
+    #         least_significant_digit=least_significant_digit,
+    #         chunksizes=(100000, 1),
+    #     )
+    #     nc_var.units = info["nc_units"]
+    #
+    #     nc_flag = None
+    #     if include_flags:
+    #         # Create variable for the flags
+    #         nc_flag = ds.createVariable(
+    #             "flag",
+    #             datatype="S1",
+    #             dimensions=("time", "station"),
+    #             zlib=True,
+    #             chunksizes=(100000, 1),
+    #         )
+    #         nc_flag.long_name = "data flag"
+    #         nc_flag.note = "See ECCC technical documentation for details"
+    #
+    #     # Create the time variable
+    #     nc_time = ds.createVariable("time", "f8", dimensions="time")
+    #     tunits = time_index[0].strftime("days since %Y-%m-%d %H:%M:%S")
+    #     nc_time.units = tunits
+    #     nc_time.calendar = "proleptic_gregorian"
+    #     time_num = cftime.date2num(time_index.to_pydatetime(), tunits)
+    #     nc_time[:] = time_num
+    #     ds.sync()
+    #
+    #     # Write out the appropriate ECCC metadata
+    #     nc_name = ds.createVariable("name", "str", dimensions="station")
+    #     nc_name.long_name = "Name"
+    #     nc_lon = ds.createVariable("lon", "f8", dimensions="station")
+    #     nc_lon.units = "degrees"
+    #     nc_lon.long_name = "Longitude (Decimal Degrees)"
+    #     nc_lon.standard_name = "longitude"
+    #     nc_lat = ds.createVariable("lat", "f8", dimensions="station")
+    #     nc_lat.units = "degrees"
+    #     nc_lat.long_name = "Latitude (Decimal Degrees)"
+    #     nc_lat.standard_name = "latitude"
+    #     nc_province = ds.createVariable("province", "str", dimensions="station")
+    #     nc_province.long_name = "Province"
+    #     nc_elevation = ds.createVariable("elevation", "f", dimensions="station")
+    #     nc_elevation.units = "m"
+    #     nc_elevation.long_name = "Elevation"
+    #     nc_elevation.standard_name = "height"
+    #     nc_climate_id = ds.createVariable("climate_id", "str", dimensions="station")
+    #     nc_climate_id.long_name = "Climate ID"
+    #     nc_station_id = ds.createVariable("station_id", "str", dimensions="station")
+    #     nc_station_id.long_name = "Station ID"
+    #     nc_wmo_id = ds.createVariable("wmo_id", "str", dimensions="station")
+    #     nc_wmo_id.long_name = "WMO ID"
+    #     nc_tc_id = ds.createVariable("tc_id", "str", dimensions="station")
+    #     nc_tc_id.long_name = "TC ID"
+    #     ds.sync()
+    #
+    #     # Use a Pandas DataFrame to align the data
+    #     # df_tot = pd.DataFrame(index=time_index)
+    #     # df_tot = xr.Dataset(coords=dict(time=time_index))
+    #
+    #     # Grab ECCC station metadata for entry
+    #     for iter_station, station in enumerate(valid_stations):
+    #         t00 = time.time()
+    #         logging.info(
+    #             "Collecting data from station {}/{}: Station ID {}.".format(
+    #                 iter_station + 1, valid_stations_count, station
+    #             )
+    #         )
+    #         df_stat = df_inv.loc[df_inv["Climate ID"] == station]
+    #
+    #         # Only take one metadata entry per station
+    #         if df_stat.shape[0] != 1:
+    #             logging.warning(
+    #                 "Duplicate metadata found for station {}. Skipping.".format(station)
+    #             )
+    #             continue
+    #         df_stat = df_stat.iloc[0]
+    #
+    #         # Open files with special handling for multi-year data
+    #         list_station_files = [
+    #             f
+    #             for f in source_files.rglob(
+    #                 "{}*{}*{}*.nc".format(station, variable_code, variable_name)
+    #             )
+    #         ]
+    #         # single_year_files = []
+    #         # multi_year_files = []
+    #         # for file in list_station_files:
+    #         #     a1 = file.name.split("_")[-2]
+    #         #     a2 = file.name.split("_")[-1][:4]
+    #         #     if a1 != a2:
+    #         #         multi_year_files.append(file)
+    #         #     else:
+    #         #         single_year_files.append(file)
+    #
+    #         # Annual data treatment
+    #         if len(list_station_files) > 0:
+    #             try:
+    #                 ds_single = xr.open_mfdataset(
+    #                     list_station_files, combine="by_coords"
+    #                 )
+    #             except ValueError:
+    #                 logging.exception(
+    #                     "Unable to read by coordinates. Skipping station: {}".format(
+    #                         station
+    #                     )
+    #                 )
+    #                 continue
+    #         else:
+    #             continue
+    #             #
+    #             # df_tot[variable_name] = ds_single[variable_name].to_dataframe()
+    #             #
+    #             # if include_flags:
+    #             #     df_tot["flag"] = ds_single["flag"].to_dataframe()
+    #
+    #         # Add multi-annual data
+    #         # for fichier in multi_year_files:
+    #         #     logging.info(
+    #         #         "Special handling for multi-year data file: {}".format(fichier)
+    #         #     )
+    #         #     # Read data into a dataframe and keep valid entries only
+    #         #     df = xr.open_dataset(fichier).to_dataframe()
+    #         #     df_valid = df.loc[~df[variable_name].isnull()]
+    #         #
+    #         #     # Traitement special pour les donnees en double
+    #         #     #
+    #         #     # Dans les fichiers multi-annuels, il arrive qu'il y ait plusieurs
+    #         #     # entrees pour les memes dates/eccc
+    #         #     #
+    #         #     # *** CA NE DEVRAIT PAS ARRIVER ***
+    #         #     #
+    #         #     if not df_valid.index.is_unique:
+    #         #         logging.warning("Donnees en double ... on applique une patch ...")
+    #         #         # Pour les temps ou on a plus d'une donnee valide, on garde la derniere
+    #         #         df_valid = df_valid[
+    #         #             not df_valid.index.duplicated(keep=double_handling)
+    #         #         ]
+    #         #         assert df_valid.index.is_unique
+    #         #
+    #         #     if df_valid.index.size != 0:
+    #         #         df_tot.loc[df_valid.index, variable_name] = df_valid[variable_name]
+    #         #         if include_flags:
+    #         #             df_tot.loc[df_valid.index, "flag"] = df_valid["flag"]
+    #
+    #         # Dump the data into the output container
+    #         # nc_var[:, iter_station] = df_tot[variable_name].values
+    #         logging.info("Or maybe it's over here?")
+    #         nc_var[:, iter_station] = ds_single[variable_name].values
+    #         logging.info("It could be this?")
+    #
+    #         if include_flags:
+    #             # nc_flag[:, iter_station] = df_tot["flag"].values
+    #             nc_flag[:, iter_station] = ds_single["flag"].values
+    #
+    #         logging.info(
+    #             "Added {:} data entries.".format(int(ds_single[variable_name].count()))
+    #         )
+    #
+    #         # # Remove the df_tot values
+    #         # df_tot.drop(columns=[variable_name])
+    #         # if include_flags:
+    #         #     df_tot.drop(columns=["flag"])
+    #
+    #         # Add the metadata to the file
+    #         nc_name[iter_station] = df_stat["Name"]
+    #         nc_province[iter_station] = df_stat["Province"]
+    #         nc_lat[iter_station] = df_stat["Latitude (Decimal Degrees)"]
+    #         nc_lon[iter_station] = df_stat["Longitude (Decimal Degrees)"]
+    #         nc_elevation[iter_station] = df_stat["Elevation (m)"]
+    #         nc_climate_id[iter_station] = str(df_stat["Climate ID"])
+    #         nc_station_id[iter_station] = str(df_stat["Station ID"])
+    #         nc_wmo_id[iter_station] = str(df_stat["WMO ID"])
+    #         nc_tc_id[iter_station] = str(df_stat["TC ID"])
+    #         ds.sync()
+    #
+    #         logging.info(
+    #             "Transaction duration: {:.2f} seconds.".format(time.time() - t00)
+    #         )
+    #
+    #     ds.Conventions = "CF-1.7"
+    #
+    #     ds.title = "Environment and Climate Change Canada (ECCC) weather eccc"
+    #     ds.history = "{}: Merged from multiple individual station files to n-dimensional array.".format(
+    #         dt.now().strftime("%Y-%m-%d %X")
+    #     )
+    #     ds.version = "v{}".format(dt.now().strftime("%Y.%m"))
+    #     ds.institution = "Environment and Climate Change Canada (ECCC)"
+    #     ds.source = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
+    #     ds.references = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
+    #     ds.comment = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
+    #     ds.redistribution = "Redistribution policy unknown. For internal use only."
+    #
+    #     ds.close()
+
+    # )
