@@ -13,7 +13,6 @@
 #######################################################################
 import logging
 import time
-from dask.diagnostics import ProgressBar
 from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
@@ -22,11 +21,10 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-import cftime
-import netCDF4
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics import ProgressBar
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import eccc_cf_daily_metadata
@@ -494,25 +492,41 @@ def aggregate_nc_files(
         rejected_stations = set(station_file_codes).difference(set(station_inventory))
         for r in rejected_stations:
             ds = ds.isel(station=(ds.station_id != r))
+        if not include_flags:
+            drop_vars = [vv for vv in ds.data_vars if 'flag' in vv]
+            ds = ds.drop_vars(drop_vars)
+
         # make sure data is in order to add metadata
         ds = ds.sortby(ds.station_id)
-
+        attrs1  = ds.attrs
         # filter metadata for station_ids in dataset
         meta = df_inv.loc[df_inv['Climate ID'].isin(ds.station_id.values)]
+        # rearrange column order to have lon, lat, elev first
+        cols = meta.columns.tolist()
+        for rr in ['Latitude (Decimal Degrees)', 'Longitude (Decimal Degrees)', 'Elevation (m)']:
+            cols.remove(rr)
+        cols1 = ['Latitude (Decimal Degrees)', 'Longitude (Decimal Degrees)', 'Elevation (m)']
+        cols1.extend(cols)
+        meta = meta[cols1]
         meta.index.rename('station', inplace=True)
         meta = meta.to_xarray()
         meta.sortby(meta['Climate ID'])
         meta = meta.assign({'station': ds.station.values})
+
+        meta = meta.drop(
+            ['Longitude', 'Latitude'])  # these values are projected x,y values Need to know prj to potentially rename
         np.testing.assert_array_equal(meta['Climate ID'].values, ds.station_id.values)
-        ds = xr.merge([ds,meta])
+        ds = xr.merge([ds, meta])
+        ds.attrs = attrs1
+        del attrs1
 
-
-
+        # TODO rename Longitude / Latitude DD
+        rename = {'Latitude (Decimal Degrees)': 'lat', 'Longitude (Decimal Degrees)': 'lon'}
+        for i in rename.items():
+            ds = ds.rename({i[0]: i[1]})
 
         valid_stations = list(sorted(stations_to_keep))
         valid_stations_count = len(valid_stations)
-
-
 
         logging.info("Processing stations for variable `{}`.".format(variable_name))
 
@@ -563,7 +577,6 @@ def aggregate_nc_files(
                 start="1840-01-01", end="{}-01-01".format(dt.today().year), freq="D"
             )
 
-
         logging.info("Preparing the NetCDF.")
         logging.info(
             "Number of ECCC stations: {}, time steps: {}.".format(
@@ -571,11 +584,12 @@ def aggregate_nc_files(
             )
         )
 
-        dsOut = xr.Dataset(coords={'time':time_index,'station':ds.station, 'station_id':ds.station_id}, attrs=ds.attrs)
+        dsOut = xr.Dataset(coords={'time': time_index, 'station': ds.station, 'station_id': ds.station_id},
+                           attrs=ds.attrs)
+
 
         for vv in ds.data_vars:
-            dsOut[vv] = ds[vv] # assign data varaibles to output datasset ... will align with time coords
-
+            dsOut[vv] = ds[vv]  # assign data varaibles to output datasset ... will align with time coords
 
         output_folder = output_folder.joinpath("merged")
         output_folder.mkdir(parents=True, exist_ok=True)
@@ -588,9 +602,8 @@ def aggregate_nc_files(
             )
         )
 
-
         if mf_dataset_freq is not None:
-            _, datasets = zip(*dsOut.resample(time=mf_dataset_freq)) #output mf_dataseset using resampling frequency
+            _, datasets = zip(*dsOut.resample(time=mf_dataset_freq))  # output mf_dataseset using resampling frequency
         else:
             datasets = [dsOut]
 
@@ -602,12 +615,9 @@ def aggregate_nc_files(
         encoding = {var: comp for var in datasets[0].data_vars}
 
         with ProgressBar():
-            for ii in zip(datasets,paths):
+            for ii in zip(datasets, paths):
                 dd, path = ii
-                dd.to_netcdf(path, engine = 'h5netcdf', format='NETCDF4', encoding=encoding)
-
-
-
+                dd.to_netcdf(path, engine='h5netcdf', format='NETCDF4', encoding=encoding)
 
     #     if file_out.exists():
     #         file_out.unlink()
