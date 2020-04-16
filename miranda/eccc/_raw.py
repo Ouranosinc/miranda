@@ -498,13 +498,15 @@ def aggregate_nc_files(
         ds = ds.sortby(ds.station_id)
 
         # filter metadata for station_ids in dataset
-        meta = df_inv.loc[df_inv['Climate ID'].isin(ds.station_id)]
-
-        # for s in ds.station_id:
-        #     print(s)
-        #     meta.append( df_inv.loc[df_inv["Climate ID"] == s])
+        meta = df_inv.loc[df_inv['Climate ID'].isin(ds.station_id.values)]
+        meta.index.rename('station', inplace=True)
         meta = meta.to_xarray()
-        meta.sel(index=(meta['Climate ID'] == ds.station_id))
+        meta.sortby(meta['Climate ID'])
+        meta = meta.assign({'station': ds.station.values})
+        np.testing.assert_array_equal(meta['Climate ID'].values, ds.station_id.values)
+        ds = xr.merge([ds,meta])
+
+
 
 
         valid_stations = list(sorted(stations_to_keep))
