@@ -554,17 +554,19 @@ def aggregate_nc_files(
             list_years = set()
 
             if hourly:
-                for i, s in enumerate(valid_stations):
-                    files = [
-                        int(Path(f).stem.split("_")[-1])
-                        for f in Path(source_files).rglob(
-                            "{}*{}*{}*.nc".format(s, variable_code, variable_name)
-                        )
-                    ]
-                    list_years.update(files)
+                # for i, s in enumerate(valid_stations):
+                #     files = [
+                #         int(Path(f).stem.split("_")[-1])
+                #         for f in Path(source_files).rglob(
+                #             "{}*{}*{}*.nc".format(s, variable_code, variable_name)
+                #         )
+                #     ]
+                #     list_years.update(files)
 
                 # list_years = [int(Path(f).stem.split("_")[-1]) for f in list_files_to_combine]
-                year_start, year_end = min(list_years), max(list_years)
+                year_start = ds.time.dt.year.min().values
+                year_end = ds.time.dt.year.max().values
+                #year_start, year_end = min(list_years), max(list_years)
 
                 # Calculate the dimensions of the output NetCDF
                 time_index = pd.date_range(
