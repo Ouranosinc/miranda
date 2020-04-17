@@ -30,8 +30,8 @@ if __name__ == "__main__":
         24,
         25,
     ]
-    station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
-    source_data = Path("/media/sf_VMshare/Trevor/data")
+    station_file = "/home/tjs/Desktop/ec/Station Inventory EN.csv"
+    source_data = Path("/home/tjs/Desktop/ec/")
 
     p = Pool()
     func = partial(convert_daily_flat_files, source_data, source_data)
@@ -40,25 +40,25 @@ if __name__ == "__main__":
     p.close()
     p.join()
 
-    convert_daily_flat_files(
-        source_files=source_data, output_folder=source_data, variables=var_codes
-    )
+    # convert_daily_flat_files(
+    #     source_files=source_data, output_folder=source_data, variables=var_codes
+    # )
 
-    q = Pool()
-    func = partial(
-        aggregate_nc_files, source_data, source_data, station_file, time_step
-    )
-    logging.info(func)
-    q.map(func, var_codes)
-    q.close()
-    q.join()
+    # q = Pool()
+    # func = partial(
+    #     aggregate_nc_files, source_data, source_data, station_file, time_step
+    # )
+    # logging.info(func)
+    # q.map(func, var_codes)
+    # q.close()
+    # q.join()
 
-    # for var in var_codes:
-    #     aggregate_nc_files(
-    #         source_files=source_data,
-    #         output_folder=source_data,
-    #         variables=var,
-    #         station_inventory=station_file,
-    #         time_step="daily",
-    #         mf_dataset_freq=None,
-    #     )
+    for var in var_codes:
+        aggregate_nc_files(
+            source_files=source_data,
+            output_folder=source_data,
+            variables=var,
+            station_inventory=station_file,
+            time_step="daily",
+            mf_dataset_freq=None,
+        )
