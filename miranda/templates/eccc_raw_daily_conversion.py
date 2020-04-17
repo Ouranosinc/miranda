@@ -33,36 +33,32 @@ if __name__ == "__main__":
     station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
     source_data = Path("/media/sf_VMshare/Trevor/data")
 
-    # p = Pool()
-    # func = partial(convert_daily_flat_files, source_data, source_data)
-    # logging.info(func)
-    # p.map(func, var_codes)
-    # p.close()
-    # p.join()
+    p = Pool()
+    func = partial(convert_daily_flat_files, source_data, source_data)
+    logging.info(func)
+    p.map(func, var_codes)
+    p.close()
+    p.join()
 
-    # convert_daily_flat_files(
-    #     source_files=source_data, output_folder=source_data, variables=var_codes
-    # )
+    convert_daily_flat_files(
+        source_files=source_data, output_folder=source_data, variables=var_codes
+    )
 
-    # q = Pool()
-    # func = partial(
-    #     aggregate_nc_files, source_data, source_data, station_file, time_step
-    # )
-    # logging.info(func)
-    # q.map(func, var_codes)
-    # q.close()
-    # q.join()
+    q = Pool()
+    func = partial(
+        aggregate_nc_files, source_data, source_data, station_file, time_step
+    )
+    logging.info(func)
+    q.map(func, var_codes)
+    q.close()
+    q.join()
 
-    for var in var_codes:
-        # var_name = eccc_cf_daily_metadata(var)["nc_name"]
-        # out_file = source_data.joinpath(
-        #     "eccc_daily_{}".format(date.today().strftime("%Y%m%d"))
-        # )
-        aggregate_nc_files(
-            source_files=source_data,
-            output_folder=source_data,
-            variables=var,
-            station_inventory=station_file,
-            time_step="daily",
-            mf_dataset_freq=None,
-        )
+    # for var in var_codes:
+    #     aggregate_nc_files(
+    #         source_files=source_data,
+    #         output_folder=source_data,
+    #         variables=var,
+    #         station_inventory=station_file,
+    #         time_step="daily",
+    #         mf_dataset_freq=None,
+    #     )
