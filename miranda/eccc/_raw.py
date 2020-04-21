@@ -476,17 +476,20 @@ def aggregate_nc_files(
         else:
             info = eccc_cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
+        logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
         # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(station_inventory, header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
+        logging.info("Performing glob and sort.")
         nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
         station_file_codes = [f.name.split("_")[0] for f in nclist]
         stations_to_keep = list(
             set(station_file_codes).intersection(set(station_inventory))
         )
+        logging.info(f"{len(stations_to_keep)} stations found and sorted.")
         if len(nclist) > 0:
             ds = xr.open_mfdataset(nclist, combine="nested", concat_dim="station")
             ds = ds.assign_coords(
@@ -496,6 +499,7 @@ def aggregate_nc_files(
             rejected_stations = set(station_file_codes).difference(
                 set(station_inventory)
             )
+            logging.info(f"{len(rejected_stations)} rejected due to missing metadata.")
             for r in rejected_stations:
                 ds = ds.isel(station=(ds.station_id != r))
             if not include_flags:
@@ -506,6 +510,7 @@ def aggregate_nc_files(
             ds = ds.sortby(ds.station_id)
             attrs1 = ds.attrs
             # filter metadata for station_ids in dataset
+            logging.info("Writing metdata.")
             meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id.values)]
             # rearrange column order to have lon, lat, elev first
             cols = meta.columns.tolist()
@@ -548,13 +553,11 @@ def aggregate_nc_files(
             valid_stations = list(sorted(stations_to_keep))
             valid_stations_count = len(valid_stations)
 
-            logging.info("Processing stations for variable `{}`.".format(variable_name))
+            logging.info(f"Processing stations for variable `{variable_name}`.")
 
             if len(station_file_codes) == 0:
                 logging.error(
-                    "No stations were found containing variable filename `{}`. Exiting.".format(
-                        variable_name
-                    )
+                    "No stations were found containing variable filename `{variable_name}`. Exiting."
                 )
                 return
 
@@ -572,7 +575,7 @@ def aggregate_nc_files(
             )
 
             # Find the time dimensions for all the files
-            list_years = set()
+            # list_years = set()
 
             if hourly:
                 # for i, s in enumerate(valid_stations):
@@ -587,7 +590,7 @@ def aggregate_nc_files(
                 # list_years = [int(Path(f).stem.split("_")[-1]) for f in list_files_to_combine]
                 year_start = ds.time.dt.year.min().values
                 year_end = ds.time.dt.year.max().values
-                #year_start, year_end = min(list_years), max(list_years)
+                # year_start, year_end = min(list_years), max(list_years)
 
                 # Calculate the dimensions of the output NetCDF
                 time_index = pd.date_range(
