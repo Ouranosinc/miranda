@@ -20,7 +20,9 @@ from pathlib import Path
 from typing import List
 from typing import Optional
 from typing import Union
-
+import tempfile
+import shutil
+from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -482,22 +484,34 @@ def aggregate_nc_files(
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
+        #nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
+        ds = None
         nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
-        station_file_codes = [f.name.split("_")[0] for f in nclist]
-        stations_to_keep = list(
-            set(station_file_codes).intersection(set(station_inventory))
-        )
-        if len(nclist) > 0:
-            ds = xr.open_mfdataset(nclist, combine="nested", concat_dim="station")
-            ds = ds.assign_coords(
-                station_id=xr.DataArray(station_file_codes, dims="station")
-            )
+        nclists = np.array_split(nclist, 5)
+        ds=None
+        #tmpdir = '/media/sf_VMshare/Trevor/data/netcdf/tmpv7r7rjyd'
+        tmpdir = tempfile.mkdtemp(dir=source_files, prefix='tmp')
+        combs = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
 
+        # TODO memory use seems ok here .. could try using Pool() to increase perf
+
+        for c in combs:
+            ii, nc, tmpdir = c
+            _tmp_nc(ii, nc, tmpdir)
+
+
+        ds = xr.open_mfdataset(sorted(list( Path(tmpdir).glob('*.nc'))), combine='nested', concat_dim='station')
+        # dask gives warnings about export 'object' datatypes
+        ds['station_id'] = ds['station_id'].astype(str)
+        if ds:
+            station_file_codes = [x.name.split("_")[0] for x in nclist]
             rejected_stations = set(station_file_codes).difference(
                 set(station_inventory)
             )
+            r_all = np.zeros(ds.station_id.shape) == 0
             for r in rejected_stations:
-                ds = ds.isel(station=(ds.station_id != r))
+                r_all[ds.station_id == r] = False
+            ds = ds.isel(station=r_all)
             if not include_flags:
                 drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
                 ds = ds.drop_vars(drop_vars)
@@ -545,7 +559,7 @@ def aggregate_nc_files(
             for i in rename.items():
                 ds = ds.rename({i[0]: i[1]})
 
-            valid_stations = list(sorted(stations_to_keep))
+            valid_stations = list(sorted(ds.station_id.values))
             valid_stations_count = len(valid_stations)
 
             logging.info("Processing stations for variable `{}`.".format(variable_name))
@@ -642,20 +656,79 @@ def aggregate_nc_files(
             ]
 
             comp = dict(zlib=True, complevel=5)
-            encoding = {var: comp for var in datasets[0].data_vars}
+
 
             with ProgressBar():
                 for ii in zip(datasets, paths):
                     dd, path = ii
-                    dd.to_netcdf(
-                        path, engine="h5netcdf", format="NETCDF4", encoding=encoding
-                    )
+                    vari = list(dd.data_vars)
+                    if 'flag' in vari:
+                        #put flag at the end
+                        vari.remove('flag')
+                        vari.insert(vari.index(variable_name)+1,'flag')
+                    for iii, vv in enumerate(vari):
+                        encoding = {vv: comp}
+                        if iii == 0:
+                            mode='w'
+                            dtmp = xr.Dataset(data_vars=None, attrs=dd.attrs)
+                            dtmp[vv] = dd[vv]
+                            dtmp.to_netcdf(
+                                path, mode=mode, engine="h5netcdf", format="NETCDF4", encoding=encoding
+                            )
+                            del dtmp
+                        else:
+                            mode = 'a'
+                            if vv == 'flag':
+                                dd[vv].astype(str).to_netcdf(
+                                    path, mode=mode, engine="h5netcdf", format="NETCDF4", encoding=encoding
+                                )
+                            else:
+                                dd[vv].to_netcdf(
+                                    path, mode=mode, engine="h5netcdf", format="NETCDF4", encoding=encoding
+                                )
+
+
         else:
             logging.info("No files found for variable `{}`.".format(variable_name))
 
+        shutil.rmtree(Path(tmpdir))
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
     )
+def _tmp_nc(ii, nc, tmpdir):
+    #ii, nc, tmpdir = args
+    print(ii)
+    station_file_codes = [x.name.split("_")[0] for x in nc]
+
+    ds = xr.open_mfdataset(nc, combine='nested', concat_dim='station')
+    ds = ds.assign_coords(
+        station_id=xr.DataArray(station_file_codes, dims="station").astype(str)
+    )
+    if 'flag' in ds.data_vars:
+        ds1 = ds.drop_vars('flag').copy(deep=True)
+        ds1['flag'] = ds.flag.astype(str)
+
+    comp = dict(zlib=True, complevel=5)
+    encoding = {var: comp for var in ds1.data_vars}
+    #return ds1
+    with ProgressBar():
+        ds1.load().to_netcdf(Path(tmpdir).joinpath(f'{str(ii).zfill(3)}.nc'), engine="h5netcdf", format="NETCDF4",
+                      encoding=encoding)
+
+def _combine_years(args):
+    inrep, outrep = args
+    print(inrep.name)
+    ncfiles = sorted(list(inrep.glob('*.nc')))
+    ds = xr.open_mfdataset(ncfiles,parallel=True, combine='by_coords')
+
+    outfile = Path(outrep).joinpath(
+        f'{ncfiles[0].name.split("_tas_")[0]}_tas_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc')
+    if not Path(outfile).exists():
+        comp = dict(zlib=True, complevel=5)
+        encoding = {var: comp for var in ds.data_vars}
+        encoding["time"] = {"dtype": "single"}
+        with ProgressBar():
+            ds.to_netcdf(outfile, encoding=encoding)
 
     #     if file_out.exists():
     #         file_out.unlink()
