@@ -79,6 +79,6 @@ if __name__ == "__main__":
             variables=var,
             station_inventory=station_file,
             time_step="daily",
-            mf_dataset_freq=None,
+            mf_dataset_freq='25YS',
 
         )
