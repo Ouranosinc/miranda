@@ -29,8 +29,7 @@ if __name__ == "__main__":
         25,
     ]
     station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
-    source_data = Path("/media/sf_VMshare/Trevor/data/netcdf")
-
+    source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
     # p = Pool()
     # func = partial(convert_daily_flat_files, source_data, source_data)
     # logging.info(func)
@@ -79,5 +78,4 @@ if __name__ == "__main__":
             station_inventory=station_file,
             time_step="daily",
             mf_dataset_freq='25YS',
-
         )
