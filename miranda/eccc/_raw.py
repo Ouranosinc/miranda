@@ -487,22 +487,23 @@ def aggregate_nc_files(
         # nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
         ds = None
         nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
-        nclists = np.array_split(nclist, 5)
-        ds = None
-        # tmpdir = '/media/sf_VMshare/Trevor/data/netcdf/tmp0f3l0lt1'
-        tmpdir = tempfile.mkdtemp(dir=source_files, prefix='tmp')
-        combs = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
+        if nclist != []:
+            nclists = np.array_split(nclist, 5)
+            ds = None
+            # tmpdir = '/media/sf_VMshare/Trevor/data/netcdf/tmp0f3l0lt1'
+            tmpdir = tempfile.mkdtemp(dir=source_files, prefix='tmp')
+            combs = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
 
-        # TODO memory use seems ok here .. could try using Pool() to increase perf
+            # TODO memory use seems ok here .. could try using Pool() to increase perf
 
-        for c in combs:
-            ii, nc, tmpdir = c
-            _tmp_nc(ii, nc, tmpdir)
+            for c in combs:
+                ii, nc, tmpdir = c
+                _tmp_nc(ii, nc, tmpdir)
 
-        ds = xr.open_mfdataset(sorted(list(Path(tmpdir).glob('*.nc'))), combine='nested', concat_dim='station',
-                               chunks=dict(time=365))
-        # dask gives warnings about export 'object' datatypes
-        ds['station_id'] = ds['station_id'].astype(str)
+            ds = xr.open_mfdataset(sorted(list(Path(tmpdir).glob('*.nc'))), combine='nested', concat_dim='station',
+                                   chunks=dict(time=365))
+            # dask gives warnings about export 'object' datatypes
+            ds['station_id'] = ds['station_id'].astype(str)
         if ds:
             station_file_codes = [x.name.split("_")[0] for x in nclist]
             rejected_stations = set(station_file_codes).difference(
@@ -664,11 +665,16 @@ def aggregate_nc_files(
                     dd.to_netcdf(
                         path, engine="h5netcdf", format="NETCDF4", encoding=encoding
                     )
+                    dd.close()
+                    del dd
+            ds.close()
+            dsOut.close()
+            del ds, dd, datasets, dsOut
+            shutil.rmtree(Path(tmpdir))
         else:
             logging.info("No files found for variable `{}`.".format(variable_name))
 
-        del ds, dd, dsOut
-        shutil.rmtree(Path(tmpdir))
+
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
     )
@@ -696,13 +702,13 @@ def _tmp_nc(ii, nc, tmpdir):
 
 
 def _combine_years(args):
-    inrep, outrep = args
+    variable, inrep, outrep = args
     print(inrep.name)
     ncfiles = sorted(list(inrep.glob('*.nc')))
     ds = xr.open_mfdataset(ncfiles, parallel=True, combine='by_coords')
 
     outfile = Path(outrep).joinpath(
-        f'{ncfiles[0].name.split("_tas_")[0]}_tas_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc')
+        f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc')
     if not Path(outfile).exists():
         comp = dict(zlib=True, complevel=5)
         encoding = {var: comp for var in ds.data_vars}

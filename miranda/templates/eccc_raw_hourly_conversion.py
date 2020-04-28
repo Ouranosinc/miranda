@@ -2,10 +2,10 @@ import logging
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-
+import itertools as it
 from miranda.eccc import aggregate_nc_files
 from miranda.eccc import convert_hourly_flat_files
-
+from miranda.eccc._raw import _combine_years
 if __name__ == "__main__":
 
     time_step = "hourly"
@@ -38,29 +38,47 @@ if __name__ == "__main__":
         279,
         280,
     ]
-    station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
-    source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
+    #station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
+    station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
+    source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
 
-    p = Pool()
-    func = partial(convert_hourly_flat_files, source_data, source_data)
-    logging.info(func)
-    p.map(func, var_codes)
-    p.close()
-    p.join()
+    # p = Pool()
+    # func = partial(convert_hourly_flat_files, source_data, source_data)
+    # logging.info(func)
+    # p.map(func, var_codes)
+    # p.close()
+    # p.join()
+    #
+    # convert_hourly_flat_files(
+    #    source_files=source_data, output_folder=source_data, variables=var_codes
+    # )
+    #
+    # q = Pool()
+    # func = partial(
+    #     aggregate_nc_files, source_data, source_data, station_file, time_step
+    # )
+    # logging.info(func)
+    # q.map(func, var_codes)
+    # q.close()
+    # q.join()
 
-    convert_hourly_flat_files(
-       source_files=source_data, output_folder=source_data, variables=var_codes
-    )
+    variable = 'precipitation'
+    outrep = Path("/media/sf_VMshare/Trevor/data/netcdf").joinpath(variable)
+    Path(outrep).mkdir(parents=True, exist_ok=True)
 
-    q = Pool()
-    func = partial(
-        aggregate_nc_files, source_data, source_data, station_file, time_step
-    )
-    logging.info(func)
-    q.map(func, var_codes)
-    q.close()
-    q.join()
+    station_dirs = [x for x in Path(source_data).joinpath(variable).iterdir() if x.is_dir()]
 
+    # stats = [s for s in stats if len(list(Path(outrep).glob(f'{s.name}_*.nc')))==0]
+    #
+    # combs = list(it.product(*[[variable],station_dirs, [outrep]]))
+    #
+    # for c in combs:
+    #     _combine_years(c)
+    # q = Pool(16)
+    # q.map(_combine_years,combs)
+    # q.close()
+    # q.join()
+    source_data = outrep.parent
     for var in var_codes:
         aggregate_nc_files(
             source_files=source_data,

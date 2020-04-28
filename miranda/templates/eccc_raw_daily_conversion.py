@@ -57,21 +57,23 @@ if __name__ == "__main__":
 
     #TODO add loop on all variables - Do this here or elsewhere??
     # Reduce file number : Combine all years for each station - do for tas as a test
-    inrep = '/home/travis/doris_home/logan/scen3/smith/eccc/tas'
-    outrep = "/media/sf_VMshare/Trevor/data/netcdf/tas"
-    Path(outrep).mkdir(parents=True,exist_ok=True)
-    station_dirs= [x for x in Path(inrep).iterdir() if x.is_dir()]
-    # stats = [s for s in stats if len(list(Path(outrep).glob(f'{s.name}_*.nc')))==0]
-    #
-    # combs = list(it.product(*[station_dirs, [outrep]]))
-    # for c in combs:
-    #     _combine_years(c)
+
+    variable = 'tas'
+    outrep = Path("/media/sf_VMshare/Trevor/data/netcdf").joinpath(variable)
+    Path(outrep).mkdir(parents=True, exist_ok=True)
+    station_dirs = [x for x in Path(source_data).joinpath(variable).iterdir() if x.is_dir()]
+
+    #stats = [s for s in stats if len(list(Path(outrep).glob(f'{s.name}_*.nc')))==0]
+
+    combs = list(it.product(*[[variable],station_dirs, [outrep]]))
+    for c in combs:
+        _combine_years(c)
     # q = Pool(16)
     # q.map(_combine_years, combs)
     # q.close()
     # q.join()
 
-
+    source_data = outrep.parent
     for var in var_codes:
         aggregate_nc_files(
             source_files=source_data,
