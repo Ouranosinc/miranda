@@ -9,6 +9,7 @@ netCDF4
 xarray
 rioxarray
 dask
+distributed
 fiona
 rasterio
 shapely
@@ -17,3 +18,4 @@ geojson
 pandas
 geopandas
 pint
+h5netcdf
