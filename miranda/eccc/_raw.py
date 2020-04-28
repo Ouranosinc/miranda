@@ -667,6 +667,7 @@ def aggregate_nc_files(
         else:
             logging.info("No files found for variable `{}`.".format(variable_name))
 
+        del ds, dd, dsOut
         shutil.rmtree(Path(tmpdir))
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
