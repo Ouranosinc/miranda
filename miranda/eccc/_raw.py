@@ -12,7 +12,6 @@
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
 import logging
-import shutil
 import tempfile
 import time
 from calendar import monthrange
@@ -491,7 +490,8 @@ def aggregate_nc_files(
             nclists = np.array_split(nclist, 5)
             ds = None
             # tmpdir = '/media/sf_VMshare/Trevor/data/netcdf/tmp0f3l0lt1'
-            tmpdir = tempfile.mkdtemp(dir=source_files, prefix='tmp')
+            source_files.joinpath('tmp').mkdir(parents=True, exist_ok=True)
+            tmpdir = tempfile.mkdtemp(dir=source_files.joinpath('tmp'), prefix='tmp')
             combs = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
 
             # TODO memory use seems ok here .. could try using Pool() to increase perf
@@ -663,17 +663,16 @@ def aggregate_nc_files(
                     dd, path = ii
                     encoding = {var: comp for var in dsOut.data_vars}
                     dd.to_netcdf(
-                        path, engine="h5netcdf", format="NETCDF4", encoding=encoding
+                        path, engine="h5netcdf", format="NETCDF4", encoding=encoding,
                     )
                     dd.close()
                     del dd
             ds.close()
             dsOut.close()
-            del ds, dd, datasets, dsOut
-            shutil.rmtree(Path(tmpdir))
+
+            # shutil.rmtree(Path(tmpdir))
         else:
             logging.info("No files found for variable `{}`.".format(variable_name))
-
 
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
@@ -699,6 +698,7 @@ def _tmp_nc(ii, nc, tmpdir):
     with ProgressBar():
         ds1.load().to_netcdf(Path(tmpdir).joinpath(f'{str(ii).zfill(3)}.nc'), engine="h5netcdf", format="NETCDF4",
                              encoding=encoding)
+        del ds1
 
 
 def _combine_years(args):

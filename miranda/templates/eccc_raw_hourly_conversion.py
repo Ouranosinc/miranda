@@ -1,11 +1,9 @@
-import logging
-from functools import partial
-from multiprocessing import Pool
 from pathlib import Path
-import itertools as it
 from miranda.eccc import aggregate_nc_files
-from miranda.eccc import convert_hourly_flat_files
-from miranda.eccc._raw import _combine_years
+from pathlib import Path
+
+from miranda.eccc import aggregate_nc_files
+
 if __name__ == "__main__":
 
     time_step = "hourly"
@@ -38,7 +36,7 @@ if __name__ == "__main__":
         279,
         280,
     ]
-    #station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
+    # station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
     station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
     source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
 
@@ -79,6 +77,7 @@ if __name__ == "__main__":
     # q.close()
     # q.join()
     source_data = outrep.parent
+
     for var in var_codes:
         aggregate_nc_files(
             source_files=source_data,
