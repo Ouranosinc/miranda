@@ -486,24 +486,28 @@ def aggregate_nc_files(
         # nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
         ds = None
         nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
-        if nclist != []:
+
+        if nclist != list():
             nclists = np.array_split(nclist, 5)
             ds = None
-            # tmpdir = '/media/sf_VMshare/Trevor/data/netcdf/tmp0f3l0lt1'
-            source_files.joinpath('tmp').mkdir(parents=True, exist_ok=True)
-            tmpdir = tempfile.mkdtemp(dir=source_files.joinpath('tmp'), prefix='tmp')
+
+            source_files.joinpath("tmp").mkdir(parents=True, exist_ok=True)
+            tmpdir = tempfile.mkdtemp(dir=source_files.joinpath("tmp"), prefix="tmp")
             combs = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
 
-            # TODO memory use seems ok here .. could try using Pool() to increase perf
-
+            # TODO memory use seems ok here .. could try using Pool() to increase performance
             for c in combs:
                 ii, nc, tmpdir = c
                 _tmp_nc(ii, nc, tmpdir)
 
-            ds = xr.open_mfdataset(sorted(list(Path(tmpdir).glob('*.nc'))), combine='nested', concat_dim='station',
-                                   chunks=dict(time=365))
+            ds = xr.open_mfdataset(
+                sorted(list(Path(tmpdir).glob("*.nc"))),
+                combine="nested",
+                concat_dim="station",
+                chunks=dict(time=365),
+            )
             # dask gives warnings about export 'object' datatypes
-            ds['station_id'] = ds['station_id'].astype(str)
+            ds["station_id"] = ds["station_id"].astype(str)
         if ds:
             station_file_codes = [x.name.split("_")[0] for x in nclist]
             rejected_stations = set(station_file_codes).difference(
@@ -517,12 +521,12 @@ def aggregate_nc_files(
                 drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
                 ds = ds.drop_vars(drop_vars)
 
-            # make sure data is in order to add metadata
+            # Ensure data is in order to add metadata
             ds = ds.sortby(ds.station_id)
-            attrs1 = ds.attrs
-            # filter metadata for station_ids in dataset
+            attrs1 = ds.attrs.copy()
+            # Filter metadata for station_ids in dataset
             meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id.values)]
-            # rearrange column order to have lon, lat, elev first
+            # Rearrange column order to have lon, lat, elev first
             cols = meta.columns.tolist()
             for rr in [
                 "Latitude (Decimal Degrees)",
@@ -550,7 +554,6 @@ def aggregate_nc_files(
             )
             ds = xr.merge([ds, meta])
             ds.attrs = attrs1
-            del attrs1
 
             # TODO rename Longitude / Latitude DD
             rename = {
@@ -586,44 +589,25 @@ def aggregate_nc_files(
                 )
             )
 
-            # Find the time dimensions for all the files
-            list_years = set()
+            logging.info("Preparing the NetCDF time period.")
+            # Create the time period timestamps
+            year_start = ds.time.dt.year.min().values
+            year_end = ds.time.dt.year.max().values
 
-            if hourly:
-                # for i, s in enumerate(valid_stations):
-                #     files = [
-                #         int(Path(f).stem.split("_")[-1])
-                #         for f in Path(source_files).rglob(
-                #             "{}*{}*{}*.nc".format(s, variable_code, variable_name)
-                #         )
-                #     ]
-                #     list_years.update(files)
+            # Calculate the time index dimensions of the output NetCDF
+            time_index = pd.date_range(
+                start="{}-01-01".format(year_start),
+                end="{}-01-01".format(year_end + 1),
+                freq="H",
+            )[:-1]
 
-                # list_years = [int(Path(f).stem.split("_")[-1]) for f in list_files_to_combine]
-                year_start = ds.time.dt.year.min().values
-                year_end = ds.time.dt.year.max().values
-                # year_start, year_end = min(list_years), max(list_years)
-
-                # Calculate the dimensions of the output NetCDF
-                time_index = pd.date_range(
-                    start="{}-01-01".format(year_start),
-                    end="{}-01-01".format(year_end + 1),
-                    freq="H",
-                )[:-1]
-
-            else:
-                time_index = pd.date_range(
-                    start="1840-01-01", end="{}-01-01".format(dt.today().year), freq="D"
-                )
-
-            logging.info("Preparing the NetCDF.")
             logging.info(
                 "Number of ECCC stations: {}, time steps: {}.".format(
                     valid_stations_count, time_index.size
                 )
             )
 
-            dsOut = xr.Dataset(
+            ds_out = xr.Dataset(
                 coords={
                     "time": time_index,
                     "station": ds.station,
@@ -633,7 +617,7 @@ def aggregate_nc_files(
             )
 
             for vv in ds.data_vars:
-                dsOut[vv] = ds[
+                ds_out[vv] = ds[
                     vv
                 ]  # assign data variables to output dataset ... will align with time coords
 
@@ -641,15 +625,15 @@ def aggregate_nc_files(
             output_folder.mkdir(parents=True, exist_ok=True)
 
             file_out = Path(output_folder).joinpath(
-                "{}_eccc_{}".format(variable_name, "hourly" if hourly else "daily", )
+                "{}_eccc_{}".format(variable_name, "hourly" if hourly else "daily",)
             )
 
             if mf_dataset_freq is not None:
                 _, datasets = zip(
-                    *dsOut.resample(time=mf_dataset_freq)
+                    *ds_out.resample(time=mf_dataset_freq)
                 )  # output mf_dataseset using resampling frequency
             else:
-                datasets = [dsOut]
+                datasets = [ds_out]
 
             paths = [
                 f'{file_out}_{dd.time.dt.year.min().values}-{dd.time.dt.year.max().values}_created{dt.now().strftime("%Y%m%d")}.nc'
@@ -661,16 +645,15 @@ def aggregate_nc_files(
             with ProgressBar():
                 for ii in zip(datasets, paths):
                     dd, path = ii
-                    encoding = {var: comp for var in dsOut.data_vars}
+                    encoding = {var: comp for var in ds_out.data_vars}
                     dd.to_netcdf(
                         path, engine="h5netcdf", format="NETCDF4", encoding=encoding,
                     )
                     dd.close()
                     del dd
             ds.close()
-            dsOut.close()
+            ds_out.close()
 
-            # shutil.rmtree(Path(tmpdir))
         else:
             logging.info("No files found for variable `{}`.".format(variable_name))
 
@@ -680,35 +663,39 @@ def aggregate_nc_files(
 
 
 def _tmp_nc(ii, nc, tmpdir):
-    # ii, nc, tmpdir = args
-    print(ii)
+    logging.info(f"{ii}")
     station_file_codes = [x.name.split("_")[0] for x in nc]
 
-    ds = xr.open_mfdataset(nc, combine='nested', concat_dim='station')
+    ds = xr.open_mfdataset(nc, combine="nested", concat_dim="station")
     ds = ds.assign_coords(
         station_id=xr.DataArray(station_file_codes, dims="station").astype(str)
     )
-    if 'flag' in ds.data_vars:
-        ds1 = ds.drop_vars('flag').copy(deep=True)
-        ds1['flag'] = ds.flag.astype(str)
+    if "flag" in ds.data_vars:
+        ds1 = ds.drop_vars("flag").copy(deep=True)
+        ds1["flag"] = ds.flag.astype(str)
 
     comp = dict(zlib=True, complevel=5)
     encoding = {var: comp for var in ds1.data_vars}
-    # return ds1
+
     with ProgressBar():
-        ds1.load().to_netcdf(Path(tmpdir).joinpath(f'{str(ii).zfill(3)}.nc'), engine="h5netcdf", format="NETCDF4",
-                             encoding=encoding)
+        ds1.load().to_netcdf(
+            Path(tmpdir).joinpath(f"{str(ii).zfill(3)}.nc"),
+            engine="h5netcdf",
+            format="NETCDF4",
+            encoding=encoding,
+        )
         del ds1
 
 
 def _combine_years(args):
     variable, inrep, outrep = args
-    print(inrep.name)
-    ncfiles = sorted(list(inrep.glob('*.nc')))
-    ds = xr.open_mfdataset(ncfiles, parallel=True, combine='by_coords')
+    logging.info(f"{inrep.name}")
+    ncfiles = sorted(list(inrep.glob("*.nc")))
+    ds = xr.open_mfdataset(ncfiles, parallel=True, combine="by_coords")
 
     outfile = Path(outrep).joinpath(
-        f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc')
+        f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc'
+    )
     if not Path(outfile).exists():
         comp = dict(zlib=True, complevel=5)
         encoding = {var: comp for var in ds.data_vars}

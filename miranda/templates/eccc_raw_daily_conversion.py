@@ -1,4 +1,4 @@
-import itertools as it
+import itertools
 from pathlib import Path
 
 from miranda.eccc import aggregate_nc_files
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     # stats = [s for s in stats if len(list(Path(outrep).glob(f'{s.name}_*.nc')))==0]
 
-    combs = list(it.product(*[[variable], station_dirs, [outrep]]))
+    combs = list(itertools.product(*[[variable], station_dirs, [outrep]]))
     for c in combs:
         _combine_years(c)
     # q = Pool(16)
