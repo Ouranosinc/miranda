@@ -36,9 +36,10 @@ if __name__ == "__main__":
         279,
         280,
     ]
-    # station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
-    station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
-    source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
+    # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
+    # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
+    source_data = Path("/home/tjs/Desktop/ec/")
+    station_file = source_data.joinpath("Station Inventory EN.csv")
 
     # p = Pool()
     # func = partial(convert_hourly_flat_files, source_data, source_data)
@@ -62,14 +63,11 @@ if __name__ == "__main__":
 
     variable = 'precipitation'
     outrep = Path("/media/sf_VMshare/Trevor/data/netcdf").joinpath(variable)
-    Path(outrep).mkdir(parents=True, exist_ok=True)
+    outrep.mkdir(parents=True, exist_ok=True)
 
-    station_dirs = [x for x in Path(source_data).joinpath(variable).iterdir() if x.is_dir()]
+    station_dirs = [x for x in source_data.joinpath(variable).iterdir() if x.is_dir()]
 
-    # stats = [s for s in stats if len(list(Path(outrep).glob(f'{s.name}_*.nc'))) == 0]
-
-    combs = list(itertools.product(*[[variable],station_dirs, [outrep]]))
-
+    combs = list(itertools.product(*[[variable], station_dirs, [outrep]]))
     for c in combs:
         _combine_years(c)
     # q = Pool(16)

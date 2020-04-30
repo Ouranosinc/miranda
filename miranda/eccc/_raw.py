@@ -20,6 +20,7 @@ from logging import config
 from pathlib import Path
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import numpy as np
@@ -419,6 +420,7 @@ def aggregate_nc_files(
     time_step: str = "h",
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
+    groups: int = 5,
     mf_dataset_freq: Optional[str] = None,
 ) -> None:
     """
@@ -431,8 +433,10 @@ def aggregate_nc_files(
     time_step: str
     station_inventory: Union[str, Path]
     include_flags: bool
+    groups: int
+      The number of file groupings used for converting to multi-file Datasets.
     mf_dataset_freq: Optional[str]
-      Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 y per file
+      Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
 
     Returns
     -------
@@ -483,31 +487,28 @@ def aggregate_nc_files(
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
-        # nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
-        ds = None
         nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
-
+        ds = None
         if nclist != list():
-            nclists = np.array_split(nclist, 5)
-            ds = None
+            nclists = np.array_split(nclist, groups)
 
-            source_files.joinpath("tmp").mkdir(parents=True, exist_ok=True)
-            tmpdir = tempfile.mkdtemp(dir=source_files.joinpath("tmp"), prefix="tmp")
-            combs = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
+            with tempfile.TemporaryDirectory(prefix="eccc") as tmpdir:
+                combinations = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
 
-            # TODO memory use seems ok here .. could try using Pool() to increase performance
-            for c in combs:
-                ii, nc, tmpdir = c
-                _tmp_nc(ii, nc, tmpdir)
+                # TODO memory use seems ok here .. could try using Pool() to increase performance
+                for combo in combinations:
+                    ii, nc, tmpdir = combo
+                    _tmp_nc(ii, nc, tmpdir, groups)
 
-            ds = xr.open_mfdataset(
-                sorted(list(Path(tmpdir).glob("*.nc"))),
-                combine="nested",
-                concat_dim="station",
-                chunks=dict(time=365),
-            )
-            # dask gives warnings about export 'object' datatypes
-            ds["station_id"] = ds["station_id"].astype(str)
+                ds = xr.open_mfdataset(
+                    sorted(list(Path(tmpdir).glob("*.nc"))),
+                    combine="nested",
+                    concat_dim="station",
+                    chunks=dict(time=365),
+                )
+
+                # dask gives warnings about export 'object' datatypes
+                ds["station_id"] = ds["station_id"].astype(str)
         if ds:
             station_file_codes = [x.name.split("_")[0] for x in nclist]
             rejected_stations = set(station_file_codes).difference(
@@ -528,17 +529,13 @@ def aggregate_nc_files(
             meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id.values)]
             # Rearrange column order to have lon, lat, elev first
             cols = meta.columns.tolist()
-            for rr in [
-                "Latitude (Decimal Degrees)",
-                "Longitude (Decimal Degrees)",
-                "Elevation (m)",
-            ]:
-                cols.remove(rr)
             cols1 = [
                 "Latitude (Decimal Degrees)",
                 "Longitude (Decimal Degrees)",
                 "Elevation (m)",
             ]
+            for rr in cols1:
+                cols.remove(rr)
             cols1.extend(cols)
             meta = meta[cols1]
             meta.index.rename("station", inplace=True)
@@ -566,13 +563,11 @@ def aggregate_nc_files(
             valid_stations = list(sorted(ds.station_id.values))
             valid_stations_count = len(valid_stations)
 
-            logging.info("Processing stations for variable `{}`.".format(variable_name))
+            logging.info(f"Processing stations for variable `{variable_name}`.")
 
             if len(station_file_codes) == 0:
                 logging.error(
-                    "No stations were found containing variable filename `{}`. Exiting.".format(
-                        variable_name
-                    )
+                    f"No stations were found containing variable filename `{variable_name}`. Exiting."
                 )
                 return
 
@@ -583,11 +578,10 @@ def aggregate_nc_files(
                     len(rejected_stations),
                 )
             )
-            logging.warning(
-                "Rejected station codes are the following: {}.".format(
-                    ", ".join(rejected_stations)
+            if rejected_stations:
+                logging.warning(
+                    f"Rejected station codes are the following: {', '.join(rejected_stations)}."
                 )
-            )
 
             logging.info("Preparing the NetCDF time period.")
             # Create the time period timestamps
@@ -662,8 +656,10 @@ def aggregate_nc_files(
     )
 
 
-def _tmp_nc(ii, nc, tmpdir):
-    logging.info(f"{ii}")
+def _tmp_nc(ii: int, nc: Union[str, Path], tempdir: Union[str, Path], batches: Optional[int] = None):
+    if batches is None:
+        batches = "X"
+    logging.info(f"Processing batch of files {ii} of {batches}")
     station_file_codes = [x.name.split("_")[0] for x in nc]
 
     ds = xr.open_mfdataset(nc, combine="nested", concat_dim="station")
@@ -679,7 +675,7 @@ def _tmp_nc(ii, nc, tmpdir):
 
     with ProgressBar():
         ds1.load().to_netcdf(
-            Path(tmpdir).joinpath(f"{str(ii).zfill(3)}.nc"),
+            Path(tempdir).joinpath(f"{str(ii).zfill(3)}.nc"),
             engine="h5netcdf",
             format="NETCDF4",
             encoding=encoding,
@@ -687,16 +683,21 @@ def _tmp_nc(ii, nc, tmpdir):
         del ds1
 
 
-def _combine_years(args):
+def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
     variable, inrep, outrep = args
+    if isinstance(inrep, str):
+        inrep = Path(inrep)
+    if isinstance(outrep, str):
+        outrep = Path(outrep)
+
     logging.info(f"{inrep.name}")
     ncfiles = sorted(list(inrep.glob("*.nc")))
     ds = xr.open_mfdataset(ncfiles, parallel=True, combine="by_coords")
 
-    outfile = Path(outrep).joinpath(
+    outfile = outrep.joinpath(
         f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc'
     )
-    if not Path(outfile).exists():
+    if not outfile.exists():
         comp = dict(zlib=True, complevel=5)
         encoding = {var: comp for var in ds.data_vars}
         encoding["time"] = {"dtype": "single"}
