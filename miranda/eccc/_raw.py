@@ -592,7 +592,7 @@ def aggregate_nc_files(
             time_index = pd.date_range(
                 start="{}-01-01".format(year_start),
                 end="{}-01-01".format(year_end + 1),
-                freq="H",
+                freq="H" if hourly else "D",
             )[:-1]
 
             logging.info(

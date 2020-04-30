@@ -41,10 +41,10 @@ if __name__ == "__main__":
     # p.close()
     # p.join()
     #
-    convert_daily_flat_files(
-        source_files=source_data, output_folder=source_data, variables=var_codes
-    )
-    #
+    # convert_daily_flat_files(
+    #     source_files=source_data, output_folder=source_data, variables=var_codes
+    # )
+    # #
     # q = Pool()
     # func = partial(
     #     aggregate_nc_files, source_data, source_data, station_file, time_step
