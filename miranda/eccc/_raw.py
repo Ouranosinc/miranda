@@ -11,6 +11,7 @@
 #
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
+import itertools
 import logging
 import tempfile
 import time
@@ -35,9 +36,10 @@ from miranda.utils import eccc_cf_hourly_metadata
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "aggregate_nc_files",
+    "aggregate_stations",
     "convert_hourly_flat_files",
     "convert_daily_flat_files",
+    "merge_converted_variables",
 ]
 
 
@@ -413,7 +415,7 @@ def convert_daily_flat_files(
     )
 
 
-def aggregate_nc_files(
+def aggregate_stations(
     source_files: Optional[Union[str, Path]] = None,
     output_folder: Optional[Union[str, Path]] = None,
     station_inventory: Union[str, Path] = None,
@@ -492,16 +494,16 @@ def aggregate_nc_files(
         if nclist != list():
             nclists = np.array_split(nclist, groups)
 
-            with tempfile.TemporaryDirectory(prefix="eccc") as tmpdir:
-                combinations = [(ii, nc, tmpdir) for ii, nc in enumerate(nclists)]
+            with tempfile.TemporaryDirectory(prefix="eccc") as temp_dir:
+                combinations = [(ii, nc, temp_dir) for ii, nc in enumerate(nclists)]
 
                 # TODO memory use seems ok here .. could try using Pool() to increase performance
                 for combo in combinations:
-                    ii, nc, tmpdir = combo
-                    _tmp_nc(ii, nc, tmpdir, groups)
+                    ii, nc, temp_dir = combo
+                    _tmp_nc(ii, nc, temp_dir, groups)
 
                 ds = xr.open_mfdataset(
-                    sorted(list(Path(tmpdir).glob("*.nc"))),
+                    sorted(list(Path(temp_dir).glob("*.nc"))),
                     combine="nested",
                     concat_dim="station",
                     chunks=dict(time=365),
@@ -625,41 +627,46 @@ def aggregate_nc_files(
             if mf_dataset_freq is not None:
                 _, datasets = zip(
                     *ds_out.resample(time=mf_dataset_freq)
-                )  # output mf_dataseset using resampling frequency
+                )  # output mf_dataset using resampling frequency
             else:
                 datasets = [ds_out]
 
             paths = [
-                f'{file_out}_{dd.time.dt.year.min().values}-{dd.time.dt.year.max().values}_created{dt.now().strftime("%Y%m%d")}.nc'
+                f"{file_out}_{dd.time.dt.year.min().values}-{dd.time.dt.year.max().values}_"
+                f'created{dt.now().strftime("%Y%m%d")}.nc'
                 for dd in datasets
             ]
 
             comp = dict(zlib=True, complevel=5)
 
             with ProgressBar():
-                for ii in zip(datasets, paths):
-                    dd, path = ii
+                for dataset, path in zip(datasets, paths):
                     encoding = {var: comp for var in ds_out.data_vars}
-                    dd.to_netcdf(
+                    dataset.to_netcdf(
                         path, engine="h5netcdf", format="NETCDF4", encoding=encoding,
                     )
-                    dd.close()
-                    del dd
+                    dataset.close()
+                    del dataset
             ds.close()
             ds_out.close()
 
         else:
-            logging.info("No files found for variable `{}`.".format(variable_name))
+            logging.info("No files found for variable: `{}`.".format(variable_name))
 
     logging.warning(
         "Process completed in {:.2f} seconds".format(time.time() - func_time)
     )
 
 
-def _tmp_nc(ii: int, nc: Union[str, Path], tempdir: Union[str, Path], batches: Optional[int] = None):
+def _tmp_nc(
+    ii: int,
+    nc: Union[str, Path],
+    tempdir: Union[str, Path],
+    batches: Optional[int] = None,
+) -> None:
     if batches is None:
         batches = "X"
-    logging.info(f"Processing batch of files {ii} of {batches}")
+    logging.info(f"Processing batch of files {ii + 1} of {batches}")
     station_file_codes = [x.name.split("_")[0] for x in nc]
 
     ds = xr.open_mfdataset(nc, combine="nested", concat_dim="station")
@@ -683,26 +690,55 @@ def _tmp_nc(ii: int, nc: Union[str, Path], tempdir: Union[str, Path], batches: O
         del ds1
 
 
-def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
-    variable, inrep, outrep = args
-    if isinstance(inrep, str):
-        inrep = Path(inrep)
-    if isinstance(outrep, str):
-        outrep = Path(outrep)
+def merge_converted_variables(
+    source: Union[str, Path], destination: Union[str, Path]
+) -> None:
+    """
+    Parameters
+    ----------
+    source: Union[str, Path]
+    destination: Union[str. Path]
 
-    logging.info(f"{inrep.name}")
-    ncfiles = sorted(list(inrep.glob("*.nc")))
-    ds = xr.open_mfdataset(ncfiles, parallel=True, combine="by_coords")
+    Returns
+    -------
+    None
+    """
 
-    outfile = outrep.joinpath(
-        f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc'
-    )
-    if not outfile.exists():
-        comp = dict(zlib=True, complevel=5)
-        encoding = {var: comp for var in ds.data_vars}
-        encoding["time"] = {"dtype": "single"}
-        with ProgressBar():
-            ds.to_netcdf(outfile, encoding=encoding)
+    def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
+        var, input_folder, output_folder = args
+
+        ncfiles = sorted(list(input_folder.glob("*.nc")))
+        logging.info(
+            f"Found {len(ncfiles)} files for station code {input_folder.name}."
+        )
+        ds = xr.open_mfdataset(ncfiles, parallel=True, combine="by_coords")
+
+        outfile = output_folder.joinpath(
+            f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_'
+            f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
+        )
+        logging.info(f"Merging to {outfile.name}")
+        if not outfile.exists():
+            comp = dict(zlib=True, complevel=5)
+            encoding = {var: comp for var in ds.data_vars}
+            encoding["time"] = {"dtype": "single"}
+            with ProgressBar():
+                ds.to_netcdf(outfile, encoding=encoding)
+
+    if isinstance(source, str):
+        source = Path(source)
+    if isinstance(destination, str):
+        destination = Path(destination)
+
+    variables = [x.name for x in source.iterdir() if x.is_dir()]
+    for variable in variables:
+        station_dirs = [x for x in source.joinpath(variable).iterdir() if x.is_dir()]
+        outrep = destination.joinpath(variable)
+
+        Path(outrep).mkdir(parents=True, exist_ok=True)
+        combs = list(itertools.product(*[[variable], station_dirs, [outrep]]))
+        for c in combs:
+            _combine_years(c)
 
     #     if file_out.exists():
     #         file_out.unlink()

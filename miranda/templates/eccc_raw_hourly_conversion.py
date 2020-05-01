@@ -1,8 +1,8 @@
 from pathlib import Path
-import itertools
 
-from miranda.eccc import aggregate_nc_files
-from miranda.eccc._raw import _combine_years
+from miranda.eccc import aggregate_stations
+from miranda.eccc import convert_hourly_flat_files
+from miranda.eccc import merge_converted_variables
 
 if __name__ == "__main__":
 
@@ -41,46 +41,27 @@ if __name__ == "__main__":
     source_data = Path("/home/tjs/Desktop/ec/")
     station_file = source_data.joinpath("Station Inventory EN.csv")
 
-    # p = Pool()
-    # func = partial(convert_hourly_flat_files, source_data, source_data)
-    # logging.info(func)
-    # p.map(func, var_codes)
-    # p.close()
-    # p.join()
-    #
-    # convert_hourly_flat_files(
-    #    source_files=source_data, output_folder=source_data, variables=var_codes
-    # )
-    #
-    # q = Pool()
-    # func = partial(
-    #     aggregate_nc_files, source_data, source_data, station_file, time_step
-    # )
-    # logging.info(func)
-    # q.map(func, var_codes)
-    # q.close()
-    # q.join()
+    source_data = Path("/home/tjs/Desktop/ec_data/ec")
+    hourly = source_data.joinpath("hourly")
 
-    variable = 'precipitation'
-    outrep = Path("/media/sf_VMshare/Trevor/data/netcdf").joinpath(variable)
-    outrep.mkdir(parents=True, exist_ok=True)
+    output_data = hourly.joinpath("netcdf")
+    output_data.mkdir(parents=True, exist_ok=True)
+    merged = hourly.joinpath("merged")
+    merged.mkdir(parents=True, exist_ok=True)
+    final = hourly.joinpath("final")
+    final.mkdir(parents=True, exist_ok=True)
 
-    station_dirs = [x for x in source_data.joinpath(variable).iterdir() if x.is_dir()]
+    convert_hourly_flat_files(
+        source_files=source_data, output_folder=source_data, variables=var_codes
+    )
 
-    combs = list(itertools.product(*[[variable], station_dirs, [outrep]]))
-    for c in combs:
-        _combine_years(c)
-    # q = Pool(16)
-    # q.map(_combine_years,combs)
-    # q.close()
-    # q.join()
+    merge_converted_variables(output_data, merged)
 
-    source_data = outrep.parent
-
-    for var in var_codes:
-        aggregate_nc_files(
-            source_files=source_data,
-            output_folder=source_data,
-            variables=var,
-            station_inventory=station_file,
-        )
+    aggregate_stations(
+        source_files=merged,
+        output_folder=final,
+        variables=var_codes,
+        station_inventory=station_file,
+        time_step="hourly",
+        mf_dataset_freq="10YS",
+    )
