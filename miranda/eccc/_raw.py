@@ -483,13 +483,16 @@ def aggregate_stations(
         else:
             info = eccc_cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
+        logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
         # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(station_inventory, header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
+        logging.info("Performing glob and sort.")
         nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
+
         ds = None
         if nclist != list():
             nclists = np.array_split(nclist, groups)
@@ -509,6 +512,7 @@ def aggregate_stations(
                     chunks=dict(time=365),
                 )
 
+
                 # dask gives warnings about export 'object' datatypes
                 ds["station_id"] = ds["station_id"].astype(str)
         if ds:
@@ -516,7 +520,10 @@ def aggregate_stations(
             rejected_stations = set(station_file_codes).difference(
                 set(station_inventory)
             )
+
+            logging.info(f"{len(rejected_stations)} rejected due to missing metadata.")
             r_all = np.zeros(ds.station_id.shape) == 0
+
             for r in rejected_stations:
                 r_all[ds.station_id == r] = False
             ds = ds.isel(station=r_all)
@@ -526,8 +533,11 @@ def aggregate_stations(
 
             # Ensure data is in order to add metadata
             ds = ds.sortby(ds.station_id)
-            attrs1 = ds.attrs.copy()
-            # Filter metadata for station_ids in dataset
+
+            attrs1 = ds.attrs
+            # filter metadata for station_ids in dataset
+            logging.info("Writing metdata.")
+
             meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id.values)]
             # Rearrange column order to have lon, lat, elev first
             cols = meta.columns.tolist()
@@ -569,7 +579,9 @@ def aggregate_stations(
 
             if len(station_file_codes) == 0:
                 logging.error(
+
                     f"No stations were found containing variable filename `{variable_name}`. Exiting."
+
                 )
                 return
 
@@ -585,10 +597,12 @@ def aggregate_stations(
                     f"Rejected station codes are the following: {', '.join(rejected_stations)}."
                 )
 
+
             logging.info("Preparing the NetCDF time period.")
             # Create the time period timestamps
             year_start = ds.time.dt.year.min().values
             year_end = ds.time.dt.year.max().values
+
 
             # Calculate the time index dimensions of the output NetCDF
             time_index = pd.date_range(

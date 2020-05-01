@@ -5,8 +5,6 @@ branches:
     only:
         - master
 
-sudo: false
-
 dist: xenial
 
 matrix:

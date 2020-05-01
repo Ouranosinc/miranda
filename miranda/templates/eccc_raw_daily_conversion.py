@@ -33,6 +33,7 @@ if __name__ == "__main__":
     source_data = Path("/home/tjs/Desktop/ec_data/ec")
     station_file = source_data.joinpath("Station Inventory EN.csv")
 
+
     output_data = source_data.joinpath("netcdf")
     output_data.mkdir(parents=True, exist_ok=True)
     merged = source_data.joinpath("merged")
@@ -54,3 +55,4 @@ if __name__ == "__main__":
         time_step="daily",
         mf_dataset_freq="10YS",
     )
+
