@@ -46,7 +46,7 @@ __all__ = [
 def convert_hourly_flat_files(
     source_files: Union[str, Path],
     output_folder: Union[str, Path, List[Union[str, int]]],
-    variables: Union[str, List[str]],
+    variables: Union[str, int, List[Union[str, int]]],
     missing_value: int = -9999,
 ) -> None:
     """
@@ -84,9 +84,9 @@ def convert_hourly_flat_files(
 
         # Loop on the files
         if 262 < int(variable_code) <= 280:
-            list_files = Path(source_files).rglob("HLY*RCS*.gz")
+            list_files = Path(source_files).rglob("HLY*RCS*")
         else:
-            list_files = Path(source_files).rglob("HLY*.gz")
+            list_files = Path(source_files).rglob("HLY*")
 
         errored_files = list()
         for fichier in list_files:
@@ -144,7 +144,11 @@ def convert_hourly_flat_files(
                 dff = dff.fillna("")
 
                 # Use the flag to mask the values
-                val = np.asfarray(dfd.values)
+                try:
+                    val = np.asfarray(dfd.values)
+                except ValueError as e:
+                    logging.error(f"{e} raised from {dfd}, continuing...")
+                    continue
                 flag = dff.values
                 mask = np.isin(flag, info["missing_flags"])
                 val[mask] = np.nan
@@ -418,7 +422,7 @@ def convert_daily_flat_files(
 def aggregate_stations(
     source_files: Optional[Union[str, Path]] = None,
     output_folder: Optional[Union[str, Path]] = None,
-    station_inventory: Union[str, Path] = None,
+    station_metadata: Union[str, Path] = None,
     time_step: str = "h",
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
@@ -433,7 +437,7 @@ def aggregate_stations(
     output_folder: Union[str, Path]
     variables: Optional[Union[str, int, List[Union[str, int]]]]
     time_step: str
-    station_inventory: Union[str, Path]
+    station_metadata: Union[str, Path]
     include_flags: bool
     groups: int
       The number of file groupings used for converting to multi-file Datasets.
@@ -446,7 +450,7 @@ def aggregate_stations(
     """
     func_time = time.time()
 
-    if not station_inventory:
+    if not station_metadata:
         raise RuntimeError(
             "Download the data from ECCC's Google Drive at:\n"
             "https://drive.google.com/open?id=1egfzGgzUb0RFu_EE5AYFZtsyXPfZ11y2"
@@ -486,7 +490,7 @@ def aggregate_stations(
         logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
         # Find the ECCC stations where we have available metadata
-        df_inv = pd.read_csv(station_inventory, header=3)
+        df_inv = pd.read_csv(str(station_metadata), header=3)
         station_inventory = list(df_inv["Climate ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
@@ -511,7 +515,6 @@ def aggregate_stations(
                     concat_dim="station",
                     chunks=dict(time=365),
                 )
-
 
                 # dask gives warnings about export 'object' datatypes
                 ds["station_id"] = ds["station_id"].astype(str)
@@ -579,9 +582,7 @@ def aggregate_stations(
 
             if len(station_file_codes) == 0:
                 logging.error(
-
                     f"No stations were found containing variable filename `{variable_name}`. Exiting."
-
                 )
                 return
 
@@ -597,12 +598,10 @@ def aggregate_stations(
                     f"Rejected station codes are the following: {', '.join(rejected_stations)}."
                 )
 
-
             logging.info("Preparing the NetCDF time period.")
             # Create the time period timestamps
             year_start = ds.time.dt.year.min().values
             year_end = ds.time.dt.year.max().values
-
 
             # Calculate the time index dimensions of the output NetCDF
             time_index = pd.date_range(
@@ -690,18 +689,19 @@ def _tmp_nc(
     if "flag" in ds.data_vars:
         ds1 = ds.drop_vars("flag").copy(deep=True)
         ds1["flag"] = ds.flag.astype(str)
+        ds = ds1
 
     comp = dict(zlib=True, complevel=5)
-    encoding = {var: comp for var in ds1.data_vars}
+    encoding = {var: comp for var in ds.data_vars}
 
     with ProgressBar():
-        ds1.load().to_netcdf(
+        ds.load().to_netcdf(
             Path(tempdir).joinpath(f"{str(ii).zfill(3)}.nc"),
             engine="h5netcdf",
             format="NETCDF4",
             encoding=encoding,
         )
-        del ds1
+        del ds
 
 
 def merge_converted_variables(
@@ -725,19 +725,23 @@ def merge_converted_variables(
         logging.info(
             f"Found {len(ncfiles)} files for station code {input_folder.name}."
         )
-        ds = xr.open_mfdataset(ncfiles, parallel=True, combine="by_coords")
+        ds = xr.open_mfdataset(
+            ncfiles, parallel=True, combine="by_coords", concat_dim={"time"}
+        )
 
         outfile = output_folder.joinpath(
             f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_'
             f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
         )
-        logging.info(f"Merging to {outfile.name}")
         if not outfile.exists():
+            logging.info(f"Merging to {outfile.name}")
             comp = dict(zlib=True, complevel=5)
             encoding = {var: comp for var in ds.data_vars}
             encoding["time"] = {"dtype": "single"}
             with ProgressBar():
                 ds.to_netcdf(outfile, encoding=encoding)
+        else:
+            logging.info(f"Files exist for {outfile.name}. Continuing...")
 
     if isinstance(source, str):
         source = Path(source)
@@ -752,7 +756,12 @@ def merge_converted_variables(
         Path(outrep).mkdir(parents=True, exist_ok=True)
         combs = list(itertools.product(*[[variable], station_dirs, [outrep]]))
         for c in combs:
-            _combine_years(c)
+            try:
+                _combine_years(c)
+            except ValueError as e:
+                logging.error(
+                    f"`{e}` encountered for station `{c[1].name}`. Continuing..."
+                )
 
     #     if file_out.exists():
     #         file_out.unlink()

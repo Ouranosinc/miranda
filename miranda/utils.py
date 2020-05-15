@@ -90,9 +90,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
-                msg = "{} is read OK!".format(
-                    dt.now().strftime("%Y-%m-%d %X"), location
-                )
+                msg = "{} is read OK!".format(location)
                 logging.info(msg)
                 return True
             msg = "Ensure read privileges for `{}`.".format(location)
@@ -335,9 +333,9 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_units": "m s-1",
             "scale_factor": 0.277777778,
             "add_offset": 0,
-            "long_name": "Wind Speed (U2A)",
-            "standard_name": "wind_speed",
-            "nc_name": "windspeed",
+            "long_name": "Wind Speed (U2A Anemometer)",
+            "standard_name": "wind_speed_u2a",
+            "nc_name": "wind_speed_u2a",
         },
         "077": {
             "nc_units": "Pa",
@@ -481,7 +479,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 15-30)",
             "standard_name": "wind_speed",
-            "nc_name": "windpseed_q2",
+            "nc_name": "windspeed_q2",
         },
         "273": {
             "nc_units": "m s-1",
