@@ -1,10 +1,8 @@
-import logging
-from functools import partial
-from multiprocessing import Pool
 from pathlib import Path
 
-from miranda.eccc import aggregate_nc_files
+from miranda.eccc import aggregate_stations
 from miranda.eccc import convert_hourly_flat_files
+from miranda.eccc import merge_converted_variables
 
 if __name__ == "__main__":
 
@@ -38,33 +36,31 @@ if __name__ == "__main__":
         279,
         280,
     ]
-    station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
-    source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
+    # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
+    # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
+    source_data = Path("/home/tjs/Desktop/ec_data/ec")
+    station_file = source_data.joinpath("Station Inventory EN.csv")
+    origin_files = source_data.joinpath("source").joinpath("unzipped")
 
-    p = Pool()
-    func = partial(convert_hourly_flat_files, source_data, source_data)
-    logging.info(func)
-    p.map(func, var_codes)
-    p.close()
-    p.join()
+    hourly = source_data.joinpath("hourly")
+    output_data = hourly.joinpath("netcdf")
+    output_data.mkdir(parents=True, exist_ok=True)
+    merged = hourly.joinpath("merged")
+    merged.mkdir(parents=True, exist_ok=True)
+    final = hourly.joinpath("final")
+    final.mkdir(parents=True, exist_ok=True)
 
-    # convert_hourly_flat_files(
-    #    source_files=source_data, output_folder=source_data, variables=var_codes
-    # )
+    convert_hourly_flat_files(
+        source_files=origin_files, output_folder=output_data, variables=var_codes
+    )
 
-    # q = Pool()
-    # func = partial(
-    #     aggregate_nc_files, source_data, source_data, station_file, time_step
-    # )
-    # logging.info(func)
-    # q.map(func, var_codes)
-    # q.close()
-    # q.join()
-
-    for var in var_codes:
-        aggregate_nc_files(
-            source_files=source_data,
-            output_folder=source_data,
-            variables=var,
-            station_inventory=station_file,
-        )
+    merge_converted_variables(output_data, merged)
+    #
+    aggregate_stations(
+        source_files=merged,
+        output_folder=final,
+        variables=var_codes,
+        station_metadata="/home/tjs/Downloads/Station Inventory EN.csv",
+        time_step="hourly",
+        mf_dataset_freq="10YS",
+    )

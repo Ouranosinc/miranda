@@ -1,10 +1,8 @@
-import logging
-from functools import partial
-from multiprocessing import Pool
 from pathlib import Path
 
-from miranda.eccc import aggregate_nc_files
+from miranda.eccc import aggregate_stations
 from miranda.eccc import convert_daily_flat_files
+from miranda.eccc import merge_converted_variables
 
 if __name__ == "__main__":
 
@@ -30,35 +28,31 @@ if __name__ == "__main__":
         24,
         25,
     ]
-    station_file = "/home/tjs/Desktop/ec/Station Inventory EN.csv"
-    source_data = Path("/home/tjs/Desktop/ec/")
+    # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
+    # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
+    source_data = Path("/home/tjs/Desktop/ec_data/ec")
+    station_file = source_data.joinpath("Station Inventory EN.csv")
+    origin_files = source_data.joinpath("source")
 
-    p = Pool()
-    func = partial(convert_daily_flat_files, source_data, source_data)
-    logging.info(func)
-    p.map(func, var_codes)
-    p.close()
-    p.join()
+    daily = source_data.joinpath("daily")
+    output_data = daily.joinpath("netcdf")
+    output_data.mkdir(parents=True, exist_ok=True)
+    merged = daily.joinpath("merged")
+    merged.mkdir(parents=True, exist_ok=True)
+    final = daily.joinpath("final")
+    final.mkdir(parents=True, exist_ok=True)
 
-    # convert_daily_flat_files(
-    #     source_files=source_data, output_folder=source_data, variables=var_codes
-    # )
+    convert_daily_flat_files(
+        source_files=source_data, output_folder=source_data, variables=var_codes
+    )
 
-    # q = Pool()
-    # func = partial(
-    #     aggregate_nc_files, source_data, source_data, station_file, time_step
-    # )
-    # logging.info(func)
-    # q.map(func, var_codes)
-    # q.close()
-    # q.join()
+    merge_converted_variables(source=output_data, destination=merged)
 
-    for var in var_codes:
-        aggregate_nc_files(
-            source_files=source_data,
-            output_folder=source_data,
-            variables=var,
-            station_inventory=station_file,
-            time_step="daily",
-            mf_dataset_freq=None,
-        )
+    aggregate_stations(
+        source_files=merged,
+        output_folder=final,
+        variables=var_codes,
+        station_metadata=station_file,
+        time_step="daily",
+        mf_dataset_freq="10YS",
+    )
