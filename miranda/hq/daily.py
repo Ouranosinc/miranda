@@ -77,6 +77,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
     }
 
     name = str()
+    table_name = None
     if v in corr:
         name = corr[v]
     else:
@@ -86,14 +87,16 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
             elif meta["mesure"] == "Minimum":
                 name = "tasmin"
 
+            table_name = name + "_" + cf_frequency[meta["pas"]]
+
     if meta["pas"] != cf_table[name]["frequency"]:
         raise ValueError("Unexpected frequency.")
 
-    return name
+    return name, table_name or name
 
 
 cf_units = {"°C": "celsius", "mm": "mm/day"}
-cf_frequency = {"Fin du pas journalier": "day", "Instantanée du pas horaire": "1h"}
+cf_frequency = {"Fin du pas journalier": "day", "Instantanée du pas horaire": "1h", "Fin pas horaire": "1h"}
 cf_attrs_names = {"x": "lon", "y": "lat", "z": "elevation", "nom": "site"}
 
 
@@ -146,8 +149,8 @@ def to_cf(
         m[key] = converters.get(key, lambda x: x)(val)
 
     # Get default variable attributes
-    name = guess_variable(m, cf_table)
-    attrs = cf_table.get(name)
+    name, table_name = guess_variable(m, cf_table)
+    attrs = cf_table.get(table_name)
 
     # Add custom HQ attributes
     for key, val in cf_attrs_names.items():
