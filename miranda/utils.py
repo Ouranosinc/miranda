@@ -90,9 +90,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
-                msg = "{} is read OK!".format(
-                    dt.now().strftime("%Y-%m-%d %X"), location
-                )
+                msg = "{} is read OK!".format(location)
                 logging.info(msg)
                 return True
             msg = "Ensure read privileges for `{}`.".format(location)
