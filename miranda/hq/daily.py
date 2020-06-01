@@ -87,7 +87,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
             elif meta["mesure"] == "Minimum":
                 name = "tasmin"
 
-            table_name = name + "_" + cf_frequency[meta["pas"]]
+            table_name = name + "_" + meta["pas"]
 
     if meta["pas"] != cf_table[name]["frequency"]:
         raise ValueError("Unexpected frequency.")
