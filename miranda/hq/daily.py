@@ -96,7 +96,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
 
 
 cf_units = {"°C": "celsius", "mm": "mm/day"}
-cf_frequency = {"Fin du pas journalier": "day", "Instantanée du pas horaire": "1h", "Fin pas horaire": "1h"}
+cf_frequency = {"Fin du pas journalier": "day", "Instantanée du pas horaire": "1h", "Fin du pas horaire": "1h"}
 cf_attrs_names = {"x": "lon", "y": "lat", "z": "elevation", "nom": "site"}
 
 
