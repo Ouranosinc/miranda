@@ -75,7 +75,7 @@
             "frequency": "1h",
             "standard_name": "relative_humidity",
             "units": "%",
-            "cell_methods": "time: mean",
+            "cell_methods": "time: point",
             "long_name": "Near-Surface Relative Humidity",
             "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
             "out_name": "hurs",
@@ -85,8 +85,8 @@
             "frequency": "1h",
             "standard_name": "wind_speed",
             "units": "m s-1",
-            "cell_methods": "time: mean",
-            "long_name": "Daily-Mean Near-Surface Wind Speed",
+            "cell_methods": "time: point",
+            "long_name": "Near-Surface Wind Speed",
             "comment": "Near-surface (usually, 10 meters) wind speed.",
             "out_name": "sfcWind",
             "type": "real"
@@ -95,8 +95,8 @@
             "frequency": "1h",
             "standard_name": "wind_direction",
             "units": "degree",
-            "cell_methods": "time: mean",
-            "long_name": "Daily-Mean Near-Surface Wind Direction",
+            "cell_methods": "time: point",
+            "long_name": "Near-Surface Wind Direction",
             "comment": "Near-surface (usually, 10 meters) direction from which wind originates.",
             "out_name": "sfcWindAz",
             "type": "real"
@@ -106,9 +106,9 @@
             "frequency": "1h",
             "standard_name": "surface_snow_thickness",
             "units": "m",
-            "cell_methods": "time: mean",
+            "cell_methods": "time: point",
             "long_name": "Snow Depth",
-            "comment": "The mean thickness of snow.",
+            "comment": "The thickness of snow.",
             "out_name": "snd",
             "type": "real"
         }
