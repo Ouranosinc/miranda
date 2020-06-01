@@ -31,7 +31,7 @@
             "out_name": "prlp",
             "type": "real"
         },
-        "tasmin": {
+        "tasmin_day": {
             "frequency": "day",
             "standard_name": "air_temperature",
             "units": "K",
@@ -41,12 +41,32 @@
             "out_name": "tasmin",
             "type": "real"
         },
-        "tasmax": {
+        "tasmax_day": {
             "frequency": "day",
             "standard_name": "air_temperature",
             "units": "K",
             "cell_methods": "time: maximum",
             "long_name": "Daily Maximum Near-Surface Air Temperature",
+            "comment": "Maximum near-surface (usually, 2 meter) air temperature.",
+            "out_name": "tasmax",
+            "type": "real"
+        },
+        "tasmin_1h": {
+            "frequency": "1h",
+            "standard_name": "air_temperature",
+            "units": "K",
+            "cell_methods": "time: minimum",
+            "long_name": "Hourly Minimum Near-Surface Air Temperature",
+            "comment": "Minimum near-surface (usually, 2 meter) air temperature.",
+            "out_name": "tasmin",
+            "type": "real"
+        },
+        "tasmax_1h": {
+            "frequency": "1h",
+            "standard_name": "air_temperature",
+            "units": "K",
+            "cell_methods": "time: maximum",
+            "long_name": "Hourly Maximum Near-Surface Air Temperature",
             "comment": "Maximum near-surface (usually, 2 meter) air temperature.",
             "out_name": "tasmax",
             "type": "real"
