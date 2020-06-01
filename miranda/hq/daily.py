@@ -89,7 +89,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
 
             table_name = name + "_" + meta["pas"]
 
-    if meta["pas"] != cf_table[name]["frequency"]:
+    if meta["pas"] != cf_table[table_name or name]["frequency"]:
         raise ValueError("Unexpected frequency.")
 
     return name, table_name or name
