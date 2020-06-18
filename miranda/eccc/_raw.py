@@ -83,10 +83,13 @@ def convert_hourly_flat_files(
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
-        if 262 < int(variable_code) <= 280:
-            list_files = Path(source_files).rglob("HLY*RCS*")
+        list_files = list()
+        if isinstance(source_files, list) or Path(source_files).is_file():
+            list_files.append(source_files)
+        elif 262 < int(variable_code) <= 280:
+            list_files.extend([f for f in Path(source_files).rglob("HLY*RCS*") if f.is_file()])
         else:
-            list_files = Path(source_files).rglob("HLY*")
+            list_files.extend([f for f in Path(source_files).rglob("HLY*") if f.is_file()])
 
         errored_files = list()
         for fichier in list_files:
@@ -277,7 +280,7 @@ def convert_daily_flat_files(
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         else:
-            list_files.extend(Path(source_files).rglob("*DLY*"))
+            list_files.extend([f for f in Path(source_files).rglob("*DLY*") if f.is_file()])
 
         errored_files = list()
         for fichier in list_files:
