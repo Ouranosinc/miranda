@@ -55,7 +55,7 @@ def delete_by_date(
     server: Optional[Union[str, Path]] = None,
     user: Optional[str] = None,
     password: Optional[str] = None,
-    date_object: Optional[date] = None
+    date_object: Optional[date] = None,
 ) -> None:
     """
 
@@ -136,7 +136,7 @@ def delete_duplicates(
     user: str = None,
     password: str = None,
     pattern: str = None,
-    delete_target_duplicates: bool = False
+    delete_target_duplicates: bool = False,
 ) -> None:
     """
 
@@ -206,7 +206,7 @@ def delete_by_variable(
     user: Optional[str] = None,
     password: Optional[str] = None,
     file_suffix: Optional[str] = None,
-    delete: bool = False
+    delete: bool = False,
 ) -> None:
     """
     Given target location(s), a list of variables and a server address, perform a glob search

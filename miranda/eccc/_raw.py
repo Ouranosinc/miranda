@@ -428,7 +428,7 @@ def aggregate_stations(
     include_flags: bool = True,
     groups: int = 5,
     mf_dataset_freq: Optional[str] = None,
-    temp_directory: Optional[Union[str, Path]] = None
+    temp_directory: Optional[Union[str, Path]] = None,
 ) -> None:
     """
 
@@ -504,7 +504,9 @@ def aggregate_stations(
         if nclist != list():
             nclists = np.array_split(nclist, groups)
 
-            with tempfile.TemporaryDirectory(prefix="eccc", dir=temp_directory) as temp_dir:
+            with tempfile.TemporaryDirectory(
+                prefix="eccc", dir=temp_directory
+            ) as temp_dir:
                 combinations = [(ii, nc, temp_dir) for ii, nc in enumerate(nclists)]
 
                 # TODO memory use seems ok here .. could try using Pool() to increase performance

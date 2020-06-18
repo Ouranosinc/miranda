@@ -38,9 +38,10 @@ if __name__ == "__main__":
     ]
     # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
     # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
-    source_data = Path("/home/tjs/Desktop/ec_data/ec")
+    source_data = Path("/scen3/smith/eccc_converted")
+
     station_file = source_data.joinpath("Station Inventory EN.csv")
-    origin_files = source_data.joinpath("source").joinpath("unzipped")
+    origin_files = source_data.parent.joinpath("eccc_source/20200618")
 
     hourly = source_data.joinpath("hourly")
     output_data = hourly.joinpath("netcdf")
@@ -55,12 +56,13 @@ if __name__ == "__main__":
     )
 
     merge_converted_variables(output_data, merged)
-    #
+
     aggregate_stations(
         source_files=merged,
         output_folder=final,
         variables=var_codes,
-        station_metadata="/home/tjs/Downloads/Station Inventory EN.csv",
+        station_metadata=station_file,
         time_step="hourly",
-        mf_dataset_freq="10YS",
+        mf_dataset_freq="5YS",
+        temp_directory=hourly,
     )

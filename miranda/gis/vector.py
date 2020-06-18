@@ -70,7 +70,7 @@ def _layer_operation(func):
         output,
         source_crs: Optional[Union[str, CRS]] = None,
         target_crs: Optional[Union[str, CRS]] = None,
-        **kwargs
+        **kwargs,
     ):
         """Parameters
         ----------
@@ -140,7 +140,7 @@ def _feature_operation(func):
         output,
         source_crs: Optional[Union[str, CRS]] = None,
         target_crs: Optional[Union[str, CRS]] = None,
-        **kwargs
+        **kwargs,
     ):
         """Parameters
         ----------

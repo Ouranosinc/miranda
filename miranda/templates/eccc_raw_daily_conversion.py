@@ -30,9 +30,11 @@ if __name__ == "__main__":
     ]
     # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
     # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
-    source_data = Path("/home/tjs/Desktop/ec_data/ec")
+    # source_data = Path("/home/tjs/Desktop/ec_data/ec")
+    source_data = Path("/scen3/smith/eccc_converted")
+
     station_file = source_data.joinpath("Station Inventory EN.csv")
-    origin_files = source_data.joinpath("source")
+    origin_files = source_data.parent.joinpath("eccc_source/20200618")
 
     daily = source_data.joinpath("daily")
     output_data = daily.joinpath("netcdf")
@@ -43,7 +45,7 @@ if __name__ == "__main__":
     final.mkdir(parents=True, exist_ok=True)
 
     convert_daily_flat_files(
-        source_files=source_data, output_folder=source_data, variables=var_codes
+        source_files=origin_files, output_folder=source_data, variables=var_codes
     )
 
     merge_converted_variables(source=output_data, destination=merged)
@@ -55,4 +57,5 @@ if __name__ == "__main__":
         station_metadata=station_file,
         time_step="daily",
         mf_dataset_freq="10YS",
+        temp_directory=daily,
     )

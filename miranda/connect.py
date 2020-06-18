@@ -16,7 +16,7 @@ class Connection:
         host: Union[str, Path] = None,
         protocol: str = "sftp",
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.user = username or input("Enter username: ")
         self.host = host or input("Enter host URL: ")
