@@ -93,7 +93,7 @@ def convert_hourly_flat_files(
 
         errored_files = list()
         for fichier in list_files:
-            logging.info("Processing file: {}.".format(fichier))
+            logging.info(f"Processing file: {fichier}.")
 
             # Create a dataframe from the files
             try:
@@ -103,11 +103,9 @@ def convert_hourly_flat_files(
                     names=titre_colonnes,
                     dtype={"year": int, "month": int, "day": int, "code_var": str},
                 )
-            except ValueError:
+            except Exception:
                 logging.error(
-                    "File {} was unable to be read. This is probably an issue with the file.".format(
-                        fichier
-                    )
+                    f"File {fichier} was unable to be read. This is probably an issue with the file."
                 )
                 errored_files.append(fichier)
                 continue
@@ -333,11 +331,14 @@ def convert_daily_flat_files(
                 # Remove the "NaN" flag
                 dff = dff.fillna("")
 
-                # Use the flag to mask the values
-                val = np.asfarray(dfd.values)
-                flag = dff.values
-                mask = np.isin(flag, info["missing_flags"])
-                val[mask] = np.nan
+                try:
+                    # Use the flag to mask the values
+                    val = np.asfarray(dfd.values)
+                    flag = dff.values
+                    mask = np.isin(flag, info["missing_flags"])
+                    val[mask] = np.nan
+                except ValueError:
+                    continue
 
                 # Adjust units
                 val = val * info["scale_factor"] + info["add_offset"]
