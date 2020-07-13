@@ -737,7 +737,7 @@ def merge_converted_variables(
         logging.info(f"Opening: {ncfiles}")
 
         ds = xr.open_mfdataset(
-            ncfiles, parallel=True, combine="by_coords", concat_dim={"time"}
+            ncfiles, parallel=False, combine="by_coords", concat_dim={"time"}
         )
 
         outfile = output_folder.joinpath(
