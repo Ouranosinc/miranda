@@ -761,7 +761,9 @@ def merge_converted_variables(
 
     variables = [x.name for x in source.iterdir() if x.is_dir()]
     for variable in variables:
+        logging.info(f"Merging files found for variable: `{variable}`.")
         station_dirs = [x for x in source.joinpath(variable).iterdir() if x.is_dir()]
+        logging.info(f"Number of stations found: {len(station_dirs)}.")
         outrep = destination.joinpath(variable)
 
         Path(outrep).mkdir(parents=True, exist_ok=True)
