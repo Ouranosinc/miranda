@@ -3,15 +3,9 @@ import os
 import sys
 from contextlib import contextmanager
 from datetime import date
-from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
@@ -20,6 +14,7 @@ GiB = int(pow(2, 30))
 
 __all__ = [
     "creation_date",
+    "eccc_cf_ahccd_metadata",
     "eccc_cf_daily_metadata",
     "eccc_cf_hourly_metadata",
     "find_filepaths",
@@ -553,7 +548,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
         variable["missing_flags"] = "M"
         variable["least_significant_digit"] = None
     except KeyError:
-        logging.error("Hourly variable `{}` not supported".format(code))
+        logging.error("Hourly variable `{}` not supported.".format(code))
         raise
     return variable
 
@@ -729,6 +724,125 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
         variable["missing_flags"] = "M"
         variable["least_significant_digit"] = None
     except KeyError:
-        logging.error("Daily variable `{}` not supported".format(code))
+        logging.error("Daily variable `{}` not supported.".format(code))
         raise
     return variable
+
+
+def eccc_cf_ahccd_metadata(code: str) -> (dict, dict, List[Tuple[int, int]], int):
+    """
+
+    Parameters
+    ----------
+    code: str
+
+    Returns
+    -------
+    dict, dict, List[Tuple[(int, int)]], int
+    """
+    ec_ahccd_attrs = dict(
+        dx=dict(
+            variable="tasmax",
+            units="deg C",
+            standard_name="air_temperature",
+            long_name="Near-Surface Maximum Daily Air Temperature",
+            comment="ECCC Second Generation of Adjusted and Homogenized Temperature Data",
+        ),
+        dn=dict(
+            variable="tasmin",
+            units="deg C",
+            standard_name="air_temperature",
+            long_name="Near-Surface Minimum Daily Air Temperature",
+            comment="ECCC Second Generation of Adjusted and Homogenized Temperature Data",
+        ),
+        dm=dict(
+            variable="tas",
+            units="deg C",
+            standard_name="air_temperature",
+            long_name="Near-Surface Daily Mean Air Temperature",
+            comment="ECCC Second Generation of Adjusted and Homogenized Temperature Data",
+        ),
+        dt=dict(
+            variable="pr",
+            units="mm day-1",
+            standard_name="precipitation_flux",
+            long_name="Total Precipitation",
+            comment="ECCC Second Generation of Adjusted and Homogenized Precipitation Data",
+        ),
+        ds=dict(
+            variable="prsn",
+            units="mm day-1",
+            standard_name="snowfall_flux",
+            long_name="Snowfall",
+            comment="ECCC Second Generation of Adjusted and Homogenized Precipitation Data",
+        ),
+        dr=dict(
+            variable="prlp",
+            units="mm day-1",
+            standard_name="rainfall_flux",
+            long_name="Rainfall",
+            comment="ECCC Second Generation of Adjusted and HomogenizedPrecipitation Data",
+        ),
+    )
+    try:
+        variable = ec_ahccd_attrs[code]
+        # variable["missing_flags"] = "M"\
+        variable["least_significant_digit"] = None
+        if variable["variable"].startswith("tas"):
+            variable["NaN_value"] = "-9999.9"
+            column_names = [
+                "Prov",
+                "Station name",
+                "stnid",
+                "beg yr",
+                "beg mon",
+                "end yr",
+                "end mon",
+                "lat (deg)",
+                "long (deg)",
+                "elev (m)",
+                "stns joined",
+                "RCS",
+                "%Miss",
+            ]
+            column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
+            ii = 9
+            for i in range(1, 32):
+                column_spaces.append((ii, ii + 7))
+                ii += 7
+                column_spaces.append((ii, ii + 1))
+                ii += 1
+            header_row = 3
+
+        elif variable["variable"].startswith("pr"):
+            variable["NaN_value"] = "-9999.99"
+            column_names = [
+                "Prov",
+                "Station name",
+                "stnid",
+                "beg yr",
+                "beg mon",
+                "end yr",
+                "end mon",
+                "lat (deg)",
+                "long (deg)",
+                "elev (m)",
+                "stns joined",
+            ]
+            column_spaces = [(0, 4), (4, 5), (5, 7), (7, 8)]
+            ii = 8
+            for i in range(1, 32):
+                column_spaces.append((ii, ii + 8))
+                ii += 8
+                column_spaces.append((ii, ii + 1))
+                ii += 1
+            header_row = 1
+
+        else:
+            raise KeyError
+
+    except KeyError:
+        logging.error("AHCCD variable `{}` not supported.".format(code))
+        raise
+
+    return variable, column_names, column_spaces, header_row
