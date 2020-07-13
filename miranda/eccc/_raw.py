@@ -734,6 +734,8 @@ def merge_converted_variables(
         logging.info(
             f"Found {len(ncfiles)} files for station code {input_folder.name}."
         )
+        logging.info(f"Opening: {ncfiles}")
+
         ds = xr.open_mfdataset(
             ncfiles, parallel=True, combine="by_coords", concat_dim={"time"}
         )

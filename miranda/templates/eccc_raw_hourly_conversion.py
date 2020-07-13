@@ -55,7 +55,7 @@ if __name__ == "__main__":
         source_files=origin_files, output_folder=output_data, variables=var_codes
     )
 
-    merge_converted_variables(output_data, merged)
+    merge_converted_variables(source=output_data, destination=merged)
 
     aggregate_stations(
         source_files=merged,
