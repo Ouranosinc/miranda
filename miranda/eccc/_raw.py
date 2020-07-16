@@ -87,9 +87,13 @@ def convert_hourly_flat_files(
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         elif 262 < int(variable_code) <= 280:
-            list_files.extend([f for f in Path(source_files).rglob("HLY*RCS*") if f.is_file()])
+            list_files.extend(
+                [f for f in Path(source_files).rglob("HLY*RCS*") if f.is_file()]
+            )
         else:
-            list_files.extend([f for f in Path(source_files).rglob("HLY*") if f.is_file()])
+            list_files.extend(
+                [f for f in Path(source_files).rglob("HLY*") if f.is_file()]
+            )
 
         errored_files = list()
         for fichier in list_files:
@@ -278,7 +282,9 @@ def convert_daily_flat_files(
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         else:
-            list_files.extend([f for f in Path(source_files).rglob("*DLY*") if f.is_file()])
+            list_files.extend(
+                [f for f in Path(source_files).rglob("*DLY*") if f.is_file()]
+            )
 
         errored_files = list()
         for fichier in list_files:
@@ -639,7 +645,6 @@ def aggregate_stations(
                     vv
                 ]  # assign data variables to output dataset ... will align with time coords
 
-            output_folder = output_folder.joinpath("merged")
             output_folder.mkdir(parents=True, exist_ok=True)
 
             file_out = Path(output_folder).joinpath(
