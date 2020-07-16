@@ -503,7 +503,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Snow Depth (at minute 60)",
             "standard_name": "surface_snow_thickness",
-            "nc_name": "snd",
+            "nc_name": "snd_q4",
         },
         "276": {
             "nc_units": "m",
@@ -527,7 +527,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Snow Depth (at minute 45)",
             "standard_name": "surface_snow_thickness",
-            "nc_name": "snd_q4",
+            "nc_name": "snd_q3",
         },
         "279": {
             "nc_units": "degree",
