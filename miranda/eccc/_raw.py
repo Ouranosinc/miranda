@@ -719,17 +719,21 @@ def _tmp_nc(
 
 
 def merge_converted_variables(
-    source: Union[str, Path], destination: Union[str, Path]
+    source: Union[str, Path],
+    destination: Union[str, Path],
+    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
 ) -> None:
     """
+
     Parameters
     ----------
-    source: Union[str, Path]
-    destination: Union[str. Path]
+    source : Union[str, Path]
+    destination : Union[str, Path]
+    variables : Optional[Union[str, int, List[Union[str, int]]]]
 
     Returns
     -------
-    None
+
     """
 
     def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
@@ -764,8 +768,25 @@ def merge_converted_variables(
     if isinstance(destination, str):
         destination = Path(destination)
 
-    variables = [x.name for x in source.iterdir() if x.is_dir()]
-    for variable in variables:
+    selected_variables = list()
+    if variables is not None:
+        if not isinstance(variables, list):
+            variables = [variables]
+        for var in variables:
+            try:
+                selected_variables.append(eccc_cf_hourly_metadata(var))
+            except KeyError:
+                selected_variables.append(eccc_cf_hourly_metadata(var))
+
+    variables_found = [x.name for x in source.iterdir() if x.is_dir()]
+    if selected_variables:
+        variables_found = [
+            x
+            for x in variables_found
+            if x in [item["nc_name"] for item in selected_variables]
+        ]
+
+    for variable in variables_found:
         logging.info(f"Merging files found for variable: `{variable}`.")
         station_dirs = [x for x in source.joinpath(variable).iterdir() if x.is_dir()]
         logging.info(f"Number of stations found: {len(station_dirs)}.")
