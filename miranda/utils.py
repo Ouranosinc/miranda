@@ -329,6 +329,8 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     dict
     """
     ec_hourly_variables = {
+        "071": {},
+        "074": {},
         "076": {
             "nc_units": "m s-1",
             "scale_factor": 0.277777778,
@@ -362,12 +364,12 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "tas_wet",
         },
         "080": {
-            "nc_units": "kg m-2 s-1",
-            "scale_factor": 0.1,
+            "nc_units": "%",
+            "scale_factor": 1,
             "add_offset": 0,
-            "long_name": "Total Rainfall",
-            "standard_name": "rainfall_amount",
-            "nc_name": "rainfall",
+            "long_name": "Relative Humidity",
+            "standard_name": "relative_humidity",
+            "nc_name": "hur",
         },
         "089": {
             "nc_units": "1",
@@ -385,13 +387,37 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "standard_name": "ice_pellet_presence",
             "nc_name": "ice_pellets",
         },
-        "123": {
+        "107": {
             "nc_units": "%",
-            "scale_factor": 1,
+            "scale_factor": 10,
             "add_offset": 0,
-            "long_name": "Relative Humidity",
-            "standard_name": "relative_humidity",
-            "nc_name": "hur",
+            "long_name": "Lowest cloud layer opacity",
+            "standard_name": "low_type_cloud_opacity_fraction",
+            "nc_name": "clo",
+        },
+        "108": {
+            "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Lowest cloud layer amount or condition",
+            "standard_name": "low_type_cloud_area_fraction",
+            "nc_name": "clf",
+        },
+        "123": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Rainfall",
+            "standard_name": "rainfall_amount",
+            "nc_name": "rainfall",
+        },
+        "133": {
+            "nc_units": "s",
+            "scale_factor": 3600,
+            "add_offset": 0,
+            "long_name": "Sunshine",
+            "standard_name": "duration_of_sunshine",
+            "nc_name": "sun",
         },
         "262": {
             "nc_units": "kg m-2 s-1",
