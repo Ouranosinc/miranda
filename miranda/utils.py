@@ -329,8 +329,54 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     dict
     """
     ec_hourly_variables = {
-        "071": {},
-        "074": {},
+        "061": {
+            "nc_units": "W s m-2",  # FIXME: Original units are MJ m-2 h-1, how best to convert?
+            "scale_factor": None,  # Not sure how best to proceed here.
+            "add_offset": 0,
+            "long_name": "RF1 Global Solar Radiation",
+            "standard_name": "solar_radiation_flux",
+            "nc_name": "rf1_radiation",
+        },
+        "071": {
+            "nc_units": "m",
+            "scale_factor": 30,
+            "add_offset": 0,
+            "long_name": "Ceiling height of lowest layer of clouds",
+            "standard_name": "ceiling_cloud_height",
+            "nc_name": "ceiling_hgt",
+        },
+        "072": {
+            "nc_units": "m",
+            "scale_factor": 100,
+            "add_offset": 0,
+            "long_name": "Visibility",
+            "standard_name": "visibility_in_air",
+            "nc_name": "visibility",
+        },
+        "073": {
+            "nc_units": "Pa",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Sea Level Pressure",
+            "standard_name": "air_pressure_at_mean_sea_level",
+            "nc_name": "psl",
+        },
+        "074": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Dew Point Temperature",
+            "standard_name": "dew_point_temperature",
+            "nc_name": "tds",
+        },
+        "075": {
+            "nc_units": "degree",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Wind Direction at 2 m (U2A Anemometer) (16 pts)",
+            "standard_name": "wind_direction_u2a",
+            "nc_name": "wind_dir_u2a_16",
+        },
         "076": {
             "nc_units": "m s-1",
             "scale_factor": 0.277777778,
@@ -393,7 +439,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Lowest cloud layer opacity",
             "standard_name": "low_type_cloud_opacity_fraction",
-            "nc_name": "clo",
+            "nc_name": "cloud_opac",
         },
         "108": {
             "nc_units": "%",
@@ -401,7 +447,23 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Lowest cloud layer amount or condition",
             "standard_name": "low_type_cloud_area_fraction",
-            "nc_name": "clf",
+            "nc_name": "cloud_frac",
+        },
+        "109": {
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Lowest cloud layer type",
+            "standard_name": "low_type_cloud_type",
+            "nc_name": "low_cloud_type",
+        },
+        "110": {
+            "nc_units": "m",
+            "scale_factor": 30,
+            "add_offset": 0,
+            "long_name": "Lowest cloud layer height",
+            "standard_name": "low_type_cloud_height",
+            "nc_name": "low_cloud_hgt",
         },
         "123": {
             "nc_units": "kg m-2 s-1",
@@ -418,6 +480,14 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Sunshine",
             "standard_name": "duration_of_sunshine",
             "nc_name": "sun",
+        },
+        "156": {
+            "nc_units": "degree",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Wind Direction at 2 m (U2A Anemometer) (36 pts)",
+            "standard_name": "wind_direction_u2a",
+            "nc_name": "wind_dir_u2a_36",
         },
         "262": {
             "nc_units": "kg m-2 s-1",
@@ -573,6 +643,8 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
         },
     }
     code = str(variable_code).zfill(3)
+    if code in ["061"]:
+        raise NotImplementedError
     try:
         variable = ec_hourly_variables[code]
         variable["missing_flags"] = "M"
