@@ -4,21 +4,18 @@ from collections import defaultdict
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List
-from typing import Union
+from typing import List, Union
 
-from .archive.groupings import group_by_deciphered_date
-from .archive.groupings import group_by_size
-from .archive.groupings import group_by_subdirectories
+from .archive.groupings import (
+    group_by_deciphered_date,
+    group_by_size,
+    group_by_subdirectories,
+)
 from .connect import Connection
-from .ops import create_archive
-from .ops import create_remote_directory
-from .ops import transfer_file
+from .ops import create_archive, create_remote_directory, transfer_file
 from .scripting import LOGGING_CONFIG
 from .storage import report_file_size
-from .utils import find_filepaths
-from .utils import single_item_list
-from .utils import working_directory
+from .utils import find_filepaths, single_item_list, working_directory
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = ["archive_database"]
