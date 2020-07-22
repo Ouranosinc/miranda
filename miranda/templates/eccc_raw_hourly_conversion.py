@@ -15,7 +15,13 @@ if __name__ == "__main__":
         80,
         89,
         94,
+        107,
+        108,
+        109,
+        110,
         123,
+        133,
+        156,
         262,
         263,
         264,
@@ -36,6 +42,9 @@ if __name__ == "__main__":
         279,
         280,
     ]
+
+    var_codes = [107, 108, 109, 110, 133, 156]
+
     # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
     # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
     source_data = Path("/scen3/smith/eccc_converted")
