@@ -1,7 +1,7 @@
 fabric
 paramiko>=2.6.0
 scp
-custom-inherit
+custom-inherit>=2.3.0
 cftime
 numpy
 requests
