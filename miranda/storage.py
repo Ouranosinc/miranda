@@ -251,8 +251,13 @@ def file_size(
         elif Path(file_path_or_bytes).is_file():
             total = Path(file_path_or_bytes).stat().st_size
         elif Path(file_path_or_bytes).is_dir():
-            total = reduce((lambda x, y: x + y), [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")])
-        elif isinstance(file_path_or_bytes, list) or isinstance(file_path_or_bytes, GeneratorType):
+            total = reduce(
+                (lambda x, y: x + y),
+                [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")],
+            )
+        elif isinstance(file_path_or_bytes, list) or isinstance(
+            file_path_or_bytes, GeneratorType
+        ):
             total = reduce(
                 (lambda x, y: x + y),
                 map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
@@ -260,7 +265,9 @@ def file_size(
         else:
             raise FileNotFoundError
     except FileNotFoundError:
-        logging.exception("Unable to parse file_size")
+        logging.error(
+            "File Not Found: Unable to parse file size from %s." % file_path_or_bytes
+        )
         raise
 
     return total
