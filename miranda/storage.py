@@ -239,7 +239,7 @@ def file_size(
 
     Parameters
     ----------
-    file_path_or_bytes : Union[Path, str, int, List, GeneratorType]
+    file_path_or_bytes : Union[Path, str, int, List[Union[str, Path]], GeneratorType]
 
     Returns
     -------
