@@ -425,6 +425,7 @@ def convert_daily_flat_files(
     )
 
 
+
 def aggregate_stations(
     source_files: Optional[Union[str, Path]] = None,
     output_folder: Optional[Union[str, Path]] = None,
@@ -490,6 +491,7 @@ def aggregate_stations(
             variables = [1, 2, 3]
             variables.extend(range(10, 26))
 
+
     for variable_code in variables:
         if hourly:
             info = eccc_cf_hourly_metadata(variable_code)
@@ -526,6 +528,7 @@ def aggregate_stations(
                     concat_dim="station",
                     chunks=dict(time=365),
                 )
+
 
                 # dask gives warnings about export 'object' datatypes
                 ds["station_id"] = ds["station_id"].astype(str)
@@ -596,6 +599,7 @@ def aggregate_stations(
                     f"No stations were found containing variable filename `{variable_name}`. Exiting."
                 )
                 return
+
 
             logging.warning(
                 "Files exist for {} ECCC stations. Metadata found for {} stations. Rejecting {} stations.".format(

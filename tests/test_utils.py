@@ -88,9 +88,9 @@ class TestEnvCanVariables:
 
         assert set(codes) == {
             "air_temperature",
-            "precipitation_accumulation",
-            "rainfall_accumulation",
-            "snowfall_accumulation",
+            "precipitation_flux",
+            "liquid_precipitation_flux",
+            "solid_precipitation_flux",
         }
 
 

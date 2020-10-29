@@ -6,6 +6,10 @@ from miranda.eccc import (
     merge_converted_variables,
 )
 
+# from functools import partial
+# from multiprocessing import Pool
+# from miranda.eccc import convert_daily_flat_files
+
 if __name__ == "__main__":
 
     time_step = "daily"
@@ -30,6 +34,7 @@ if __name__ == "__main__":
         24,
         25,
     ]
+
     # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
     # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
     # source_data = Path("/home/tjs/Desktop/ec_data/ec")
