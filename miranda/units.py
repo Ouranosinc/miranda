@@ -1,5 +1,6 @@
-import pint
 import re
+
+import pint
 
 u = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 

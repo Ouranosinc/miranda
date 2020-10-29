@@ -12,11 +12,11 @@ from miranda.scripting import LOGGING_CONFIG
 config.dictConfig(LOGGING_CONFIG)
 
 try:
+    from multiprocessing.pool import ThreadPool
+
     import dask
     from dask.diagnostics import ProgressBar
     from dask.distributed import Client
-
-    from multiprocessing.pool import ThreadPool
 
     dask.config.set(scheduler="threads", pool=ThreadPool(10))
 

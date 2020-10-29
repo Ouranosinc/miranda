@@ -1,8 +1,7 @@
 from datetime import date
 from pathlib import Path
 
-from miranda.eccc import aggregate_nc_files
-from miranda.eccc import convert_hourly_flat_files
+from miranda.eccc import aggregate_nc_files, convert_hourly_flat_files
 
 if __name__ == "__main__":
 

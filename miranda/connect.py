@@ -1,3 +1,4 @@
+import logging.config
 from getpass import getpass
 from pathlib import Path
 from typing import Union
@@ -5,6 +6,10 @@ from typing import Union
 import fabric
 from paramiko import SSHClient
 from scp import SCPClient
+
+from .scripting import LOGGING_CONFIG
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["Connection"]
 
@@ -16,7 +21,7 @@ class Connection:
         host: Union[str, Path] = None,
         protocol: str = "sftp",
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.user = username or input("Enter username: ")
         self.host = host or input("Enter host URL: ")

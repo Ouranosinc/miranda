@@ -1,11 +1,9 @@
 #!/bin/env python3
 import logging
-import sys
 from collections import defaultdict
 from logging import config
 from pathlib import Path
-from typing import List
-from typing import Union
+from typing import List, Union
 
 from netCDF4 import Dataset
 

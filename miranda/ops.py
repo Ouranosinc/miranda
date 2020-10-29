@@ -5,17 +5,11 @@ import tempfile
 import time
 from logging import config
 from pathlib import Path
-from typing import List
-from typing import Match
-from typing import Optional
-from typing import Union
+from typing import List, Match, Optional, Union
 
 import fabric
-from paramiko import SFTPClient
-from paramiko import SSHClient
-from paramiko import SSHException
-from scp import SCPClient
-from scp import SCPException
+from paramiko import SFTPClient, SSHClient, SSHException
+from scp import SCPClient, SCPException
 
 from .connect import Connection
 from .scripting import LOGGING_CONFIG

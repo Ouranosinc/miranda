@@ -1,4 +1,4 @@
-import logging
+import logging.config
 import os
 import sys
 from contextlib import contextmanager
@@ -7,10 +7,13 @@ from pathlib import Path
 from types import GeneratorType
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
+from . import scripting
+
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
+logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
     "creation_date",
@@ -26,7 +29,6 @@ __all__ = [
     "read_privileges",
     "set_comparisons",
     "single_item_list",
-    "verbose_fn",
     "working_directory",
     "yesno_prompt",
 ]
@@ -147,7 +149,7 @@ def find_filepaths(
     """
 
     if file_suffixes is None:
-        file_suffixes = list().append(["*", ".*"])
+        file_suffixes = ["*", ".*"]
     elif isinstance(file_suffixes, str):
         file_suffixes = [file_suffixes]
 
@@ -158,7 +160,7 @@ def find_filepaths(
     for location in source:
         for pattern in file_suffixes:
             if "*" not in pattern:
-                pattern = "*{}".format(pattern)
+                pattern = "*{}*".format(pattern)
             if recursive:
                 found.extend([f for f in Path(location).expanduser().rglob(pattern)])
             elif not recursive:
@@ -242,20 +244,9 @@ def yesno_prompt(query: str) -> bool:
     raise ValueError("{} not in (y, n)".format(user_input))
 
 
-def verbose_fn(message: str, verbose=True) -> None:
-    """Trigger verbose mode.
-    Parameters
-    ----------
-    message : str
-    verbose : bool
-        flag for whether of not to output the message (default: True).
-    """
-
-    if verbose:
-        print(message)
-
-
-def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List[Dict]:
+def list_paths_with_elements(
+    base_paths: Union[str, List[str]], elements: List[str]
+) -> List[Dict]:
     """List a given path structure.
     Parameters
     ----------
@@ -282,23 +273,24 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List
     """
 
     # Make sure the base_paths input is a list of absolute path
+    paths = list()
     if not hasattr(base_paths, "__iter__"):
-        base_paths = [base_paths]
-    base_paths = map(os.path.abspath, base_paths)
+        paths.append(base_paths)
+    paths = map(os.path.abspath, base_paths)
     # If elements list is empty, return empty list (end of recursion).
     if not elements:
-        return []
-    #
-    paths_elements = []
-    for base_path in base_paths:
+        return list()
+
+    paths_elements = list()
+    for base_path in paths:
         try:
-            path_content = os.listdir(base_path)
+            path_content = [f for f in Path(base_path).iterdir()]
         except NotADirectoryError:
             continue
         path_content.sort()
         next_base_paths = []
         for path_item in path_content:
-            next_base_paths.append(os.path.join(base_path, path_item))
+            next_base_paths.append(base_path.joinpath(path_item))
         next_pe = list_paths_with_elements(next_base_paths, elements[1:])
         if next_pe:
             for i, one_pe in enumerate(next_pe):
@@ -324,13 +316,61 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     dict
     """
     ec_hourly_variables = {
+        "061": {
+            "nc_units": "W s m-2",  # FIXME: Original units are MJ m-2 h-1, how best to convert?
+            "scale_factor": None,  # Not sure how best to proceed here.
+            "add_offset": 0,
+            "long_name": "RF1 Global Solar Radiation",
+            "standard_name": "solar_radiation_flux",
+            "nc_name": "rf1_radiation",
+        },
+        "071": {
+            "nc_units": "m",
+            "scale_factor": 30,
+            "add_offset": 0,
+            "long_name": "Ceiling height of lowest layer of clouds",
+            "standard_name": "ceiling_cloud_height",
+            "nc_name": "ceiling_hgt",
+        },
+        "072": {
+            "nc_units": "m",
+            "scale_factor": 100,
+            "add_offset": 0,
+            "long_name": "Visibility",
+            "standard_name": "visibility_in_air",
+            "nc_name": "visibility",
+        },
+        "073": {
+            "nc_units": "Pa",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Sea Level Pressure",
+            "standard_name": "air_pressure_at_mean_sea_level",
+            "nc_name": "psl",
+        },
+        "074": {
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Dew Point Temperature",
+            "standard_name": "dew_point_temperature",
+            "nc_name": "tds",
+        },
+        "075": {
+            "nc_units": "degree",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Wind Direction at 2 m (U2A Anemometer) (16 pts)",
+            "standard_name": "wind_direction_u2a",
+            "nc_name": "wind_dir_u2a_16",
+        },
         "076": {
             "nc_units": "m s-1",
             "scale_factor": 0.277777778,
             "add_offset": 0,
-            "long_name": "Wind Speed (U2A)",
-            "standard_name": "wind_speed",
-            "nc_name": "windspeed",
+            "long_name": "Wind Speed (U2A Anemometer)",
+            "standard_name": "wind_speed_u2a",
+            "nc_name": "wind_speed_u2a",
         },
         "077": {
             "nc_units": "Pa",
@@ -357,12 +397,12 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "tas_wet",
         },
         "080": {
-            "nc_units": "kg m-2 s-1",
-            "scale_factor": 0.1,
+            "nc_units": "%",
+            "scale_factor": 1,
             "add_offset": 0,
-            "long_name": "Total Rainfall",
-            "standard_name": "rainfall_amount",
-            "nc_name": "rainfall",
+            "long_name": "Relative Humidity",
+            "standard_name": "relative_humidity",
+            "nc_name": "hur",
         },
         "089": {
             "nc_units": "1",
@@ -380,13 +420,61 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "standard_name": "ice_pellet_presence",
             "nc_name": "ice_pellets",
         },
-        "123": {
+        "107": {
             "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Lowest cloud layer opacity",
+            "standard_name": "low_type_cloud_opacity_fraction",
+            "nc_name": "cloud_opac",
+        },
+        "108": {
+            "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Lowest cloud layer amount or condition",
+            "standard_name": "low_type_cloud_area_fraction",
+            "nc_name": "cloud_frac",
+        },
+        "109": {
+            "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
-            "long_name": "Relative Humidity",
-            "standard_name": "relative_humidity",
-            "nc_name": "hur",
+            "long_name": "Lowest cloud layer type",
+            "standard_name": "low_type_cloud_type",
+            "nc_name": "low_cloud_type",
+        },
+        "110": {
+            "nc_units": "m",
+            "scale_factor": 30,
+            "add_offset": 0,
+            "long_name": "Lowest cloud layer height",
+            "standard_name": "low_type_cloud_height",
+            "nc_name": "low_cloud_hgt",
+        },
+        "123": {
+            "nc_units": "kg m-2 s-1",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Total Rainfall",
+            "standard_name": "rainfall_amount",
+            "nc_name": "rainfall",
+        },
+        "133": {
+            "nc_units": "s",
+            "scale_factor": 3600,
+            "add_offset": 0,
+            "long_name": "Sunshine",
+            "standard_name": "duration_of_sunshine",
+            "nc_name": "sun",
+        },
+        "156": {
+            "nc_units": "degree",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Wind Direction at 2 m (U2A Anemometer) (36 pts)",
+            "standard_name": "wind_direction_u2a",
+            "nc_name": "wind_dir_u2a_36",
         },
         "262": {
             "nc_units": "kg m-2 s-1",
@@ -394,7 +482,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 00-60)",
             "standard_name": "precipitation_flux",
-            "nc_name": "precipitation_hourly",
+            "nc_name": "precipitation",
         },
         "263": {
             "nc_units": "kg m-2 s-1",
@@ -443,7 +531,6 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
             "standard_name": "precipitation_amount",
             "nc_name": "precipitation_weight_q2",
-            "missing_flags": "M",
         },
         "269": {
             "nc_units": "kg m-2",
@@ -475,7 +562,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 15-30)",
             "standard_name": "wind_speed",
-            "nc_name": "windpseed_q2",
+            "nc_name": "windspeed_q2",
         },
         "273": {
             "nc_units": "m s-1",
@@ -499,7 +586,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Snow Depth (at minute 60)",
             "standard_name": "surface_snow_thickness",
-            "nc_name": "snd",
+            "nc_name": "snd_q4",
         },
         "276": {
             "nc_units": "m",
@@ -523,7 +610,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Snow Depth (at minute 45)",
             "standard_name": "surface_snow_thickness",
-            "nc_name": "snd_q4",
+            "nc_name": "snd_q3",
         },
         "279": {
             "nc_units": "degree",
@@ -539,10 +626,12 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 50-60)",
             "standard_name": "wind_speed",
-            "nc_name": "wnd",
+            "nc_name": "wind_speed",
         },
     }
     code = str(variable_code).zfill(3)
+    if code in ["061"]:
+        raise NotImplementedError
     try:
         variable = ec_hourly_variables[code]
         variable["missing_flags"] = "M"
@@ -570,7 +659,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 0.1,
             "add_offset": 273.15,
             "long_name": "Daily Maximum Temperature",
-            "standard_name": "air_temperature",
+            "standard_name": "air_temperature_maximum",
             "nc_name": "tasmax",
         },
         "002": {
@@ -578,7 +667,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "scale_factor": 0.1,
             "add_offset": 273.15,
             "long_name": "Daily Minimum Temperature",
-            "standard_name": "air_temperature",
+            "standard_name": "air_temperature_minimum",
             "nc_name": "tasmin",
         },
         "003": {
@@ -595,7 +684,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Total Rainfall",
             "standard_name": "liquid_precipitation_flux",
-            "nc_name": "prlp",
+            "nc_name": "prlptot",
         },
         "011": {
             "nc_units": "cm",
@@ -603,7 +692,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Total Snowfall",
             "standard_name": "solid_precipitation_flux",
-            "nc_name": "prsn",
+            "nc_name": "prsntot",
         },
         "012": {
             "nc_units": "mm",
@@ -619,7 +708,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Snow on the Ground",
             "standard_name": "surface_snow_thickness",
-            "nc_name": "snd",
+            "nc_name": "sndtot",
         },
         "014": {
             "nc_units": "1",
@@ -683,7 +772,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind speed >= 28 Knots",
             "standard_name": "wind_exceeding_28_knots",
-            "nc_name": "wind_28kt",
+            "nc_name": "wind_gt_28kt",
         },
         "022": {
             "nc_units": "1",
@@ -691,7 +780,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind speed >= 34 Knots",
             "standard_name": "wind_exceeding_34_knots",
-            "nc_name": "wind_34kt",
+            "nc_name": "wind_gt_34kt",
         },
         "023": {
             "nc_units": "degree",

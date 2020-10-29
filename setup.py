@@ -2,11 +2,10 @@
 import os
 import sys
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 NAME = "miranda"
-VERSION = "0.1.0-beta"
+VERSION = "0.2.0-beta"
 DESCRIPTION = "Python utilities for climate data collection and management"
 KEYWORDS = "climate meteorology archiving collection NetCDF"
 URL = "https://github.com/Ouranosinc/miranda"
@@ -46,14 +45,14 @@ setup(
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     long_description_content_type="text/x-rst",
     author=AUTHOR,
-    author_email=AUTHOR,
+    author_email=AUTHOR_EMAIL,
     url=URL,
     packages=find_packages(),
     package_dir={"miranda": "miranda"},
     include_package_data=True,
     install_requires=requirements,
     extras_require={"docs": docs_requirements, "dev": dev_requirements},
-    license="MIT",
+    license=LICENSE,
     zip_safe=False,
     keywords="climate meteorology archiving collection NetCDF",
     classifiers=[

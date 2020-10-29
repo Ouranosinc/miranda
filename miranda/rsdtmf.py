@@ -40,15 +40,14 @@ from typing import List
 
 from .ops import transfer_file
 from .scripting import LOGGING_CONFIG
-from .storage import DiskSpaceError
-from .storage import FileMeta
-from .storage import size_division
-from .storage import size_evaluation
-from .storage import StorageState
-from .utils import find_filepaths
-from .utils import GiB
-from .utils import verbose_fn
-from .utils import yesno_prompt
+from .storage import (
+    DiskSpaceError,
+    FileMeta,
+    StorageState,
+    size_division,
+    size_evaluation,
+)
+from .utils import GiB, find_filepaths, verbose_fn, yesno_prompt
 
 DiskSpaceEvent = threading.Event()
 

@@ -1,19 +1,19 @@
 import csv
 import datetime as dt
 import json
+import logging.config
 import re
 from pathlib import Path
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 
-from miranda.units import u
-from miranda.units import units2pint
+from miranda.scripting import LOGGING_CONFIG
+from miranda.units import u, units2pint
 
+logging.config.dictConfig(LOGGING_CONFIG)
 
 # CMOR-like attributes
 cmor = json.load(open(Path(__file__).parent / "hq_cf_attrs.json"))["variable_entry"]
