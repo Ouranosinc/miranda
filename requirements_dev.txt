@@ -8,3 +8,4 @@ flake8
 tox
 pre-commit
 autopep8
+bumpversion
