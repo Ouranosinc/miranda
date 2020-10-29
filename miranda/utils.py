@@ -7,13 +7,13 @@ from pathlib import Path
 from types import GeneratorType
 from typing import Dict, Iterable, List, Optional, Sequence, Union
 
-from .scripting import LOGGING_CONFIG
+from . import scripting
 
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
     "creation_date",
