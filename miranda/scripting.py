@@ -2,7 +2,7 @@ import pathlib
 import sys
 from datetime import datetime as dt
 
-from .utils import MiB
+MiB = int(pow(2, 20))
 
 _CONSOLE_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _LOGFILE_FORMAT = "%(asctime)s: [%(levelname)s]: %(filename)s(%(funcName)s:%(lineno)s) >>> %(message)s"

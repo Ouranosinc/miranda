@@ -1,12 +1,14 @@
-from datetime import date
 from pathlib import Path
 
-from miranda.eccc import aggregate_nc_files
-from miranda.eccc import convert_hourly_flat_files
-from miranda.utils import eccc_cf_hourly_metadata
+from miranda.eccc import (
+    aggregate_stations,
+    convert_hourly_flat_files,
+    merge_converted_variables,
+)
 
 if __name__ == "__main__":
 
+    time_step = "hourly"
     var_codes = [
         76,
         77,
@@ -15,7 +17,13 @@ if __name__ == "__main__":
         80,
         89,
         94,
+        107,
+        108,
+        109,
+        110,
         123,
+        133,
+        156,
         262,
         263,
         264,
@@ -36,21 +44,36 @@ if __name__ == "__main__":
         279,
         280,
     ]
-    station_file = "/home/tjs/Desktop/ec_data/Station Inventory EN.csv"
-    source_data = Path("/home/tjs/Desktop/ec_data/eccc_all")
+
+    var_codes = [107, 108, 109, 110, 133, 156]
+
+    # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
+    # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
+    source_data = Path("/scen3/smith/eccc_converted")
+
+    station_file = source_data.joinpath("Station Inventory EN.csv")
+    origin_files = source_data.parent.joinpath("eccc_source/20200618")
+
+    hourly = source_data.joinpath("hourly")
+    output_data = hourly.joinpath("netcdf")
+    output_data.mkdir(parents=True, exist_ok=True)
+    merged = hourly.joinpath("merged")
+    merged.mkdir(parents=True, exist_ok=True)
+    final = hourly.joinpath("final")
+    final.mkdir(parents=True, exist_ok=True)
 
     convert_hourly_flat_files(
-        source_files=source_data, output_folder=source_data, variables=var_codes
+        source_files=origin_files, output_folder=output_data, variables=var_codes
     )
 
-    for var in var_codes:
-        var_name = eccc_cf_hourly_metadata(var)["nc_name"]
-        out_file = source_data.joinpath(
-            "{}_eccc_hourly_{}".format(var_name, date.today().strftime("%Y%m%d"))
-        )
-        aggregate_nc_files(
-            source_files=source_data,
-            output_file=out_file,
-            variables=var,
-            station_inventory=station_file,
-        )
+    merge_converted_variables(source=output_data, destination=merged)
+
+    aggregate_stations(
+        source_files=merged,
+        output_folder=final,
+        variables=var_codes,
+        station_metadata=station_file,
+        time_step="hourly",
+        mf_dataset_freq="5YS",
+        temp_directory=hourly,
+    )

@@ -4,9 +4,7 @@ from collections import defaultdict
 from logging import config
 from pathlib import Path
 from types import GeneratorType
-from typing import List
-from typing import Mapping
-from typing import Union
+from typing import List, Mapping, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -31,7 +29,6 @@ def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested
     This function groups files by an arbitrary number of file entries
     """
     logging.info("Creating groups of {} files".format(size))
-
     files = ingest(files)
     grouped_list = list()
     group = list()
@@ -41,12 +38,11 @@ def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested
             grouped_list.append(group.copy())
             group.clear()
             continue
-
     if not group:
-        logging.info("The final group is empty. Skipping this set...")
-
+        pass
     else:
         grouped_list.append(group.copy())
+    logging.info("Divided files into %s groups." % len(grouped_list))
     return grouped_list
 
 

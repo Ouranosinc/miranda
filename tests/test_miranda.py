@@ -4,6 +4,7 @@ Tests for `miranda` module.
 from pathlib import Path
 
 import miranda
+
 from .common import test_data
 
 

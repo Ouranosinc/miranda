@@ -16,17 +16,16 @@ Functions:
 
 """
 import logging
+import logging.config
 import os
 from functools import reduce
-from logging import config
 from pathlib import Path
 from types import GeneratorType
-from typing import List
-from typing import Union
+from typing import List, Union
 
 from .scripting import LOGGING_CONFIG
 
-config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
 
@@ -239,7 +238,7 @@ def file_size(
 
     Parameters
     ----------
-    file_path_or_bytes : Union[Path, str, int, List, GeneratorType]
+    file_path_or_bytes : Union[Path, str, int, List[Union[str, Path]], GeneratorType]
 
     Returns
     -------
@@ -248,17 +247,24 @@ def file_size(
     try:
         if isinstance(file_path_or_bytes, int):
             total = file_path_or_bytes
-        elif hasattr(file_path_or_bytes, "__iter__"):
+        elif Path(file_path_or_bytes).is_file():
+            total = Path(file_path_or_bytes).stat().st_size
+        elif Path(file_path_or_bytes).is_dir():
+            total = reduce(
+                (lambda x, y: x + y),
+                [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")],
+            )
+        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
             total = reduce(
                 (lambda x, y: x + y),
                 map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
             )
-        elif Path(file_path_or_bytes).is_file():
-            total = Path(file_path_or_bytes).stat().st_size
         else:
             raise FileNotFoundError
     except FileNotFoundError:
-        logging.exception("Unable to parse file_size")
+        logging.error(
+            "File Not Found: Unable to parse file size from %s." % file_path_or_bytes
+        )
         raise
 
     return total

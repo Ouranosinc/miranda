@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from miranda.eccc import daily_summaries_to_netcdf
-from miranda.eccc import extract_daily_summaries
+from miranda.eccc import daily_summaries_to_netcdf, extract_daily_summaries
 
 if __name__ == "__main__":
 
