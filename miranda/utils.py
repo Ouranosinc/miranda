@@ -1,22 +1,19 @@
-import logging
+import logging.config
 import os
 import sys
 from contextlib import contextmanager
 from datetime import date
-from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Dict, Iterable, List, Optional, Sequence, Union
+
+from .scripting import LOGGING_CONFIG
 
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "creation_date",
@@ -152,7 +149,7 @@ def find_filepaths(
     """
 
     if file_suffixes is None:
-        file_suffixes = list().append(["*", ".*"])
+        file_suffixes = ["*", ".*"]
     elif isinstance(file_suffixes, str):
         file_suffixes = [file_suffixes]
 
@@ -163,7 +160,7 @@ def find_filepaths(
     for location in source:
         for pattern in file_suffixes:
             if "*" not in pattern:
-                pattern = "*{}".format(pattern)
+                pattern = "*{}*".format(pattern)
             if recursive:
                 found.extend([f for f in Path(location).expanduser().rglob(pattern)])
             elif not recursive:
@@ -247,20 +244,9 @@ def yesno_prompt(query: str) -> bool:
     raise ValueError("{} not in (y, n)".format(user_input))
 
 
-def verbose_fn(message: str, verbose=True) -> None:
-    """Trigger verbose mode.
-    Parameters
-    ----------
-    message : str
-    verbose : bool
-        flag for whether of not to output the message (default: True).
-    """
-
-    if verbose:
-        print(message)
-
-
-def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List[Dict]:
+def list_paths_with_elements(
+    base_paths: Union[str, List[str]], elements: List[str]
+) -> List[Dict]:
     """List a given path structure.
     Parameters
     ----------
@@ -287,23 +273,24 @@ def list_paths_with_elements(base_paths: List[str], elements: List[str]) -> List
     """
 
     # Make sure the base_paths input is a list of absolute path
+    paths = list()
     if not hasattr(base_paths, "__iter__"):
-        base_paths = [base_paths]
-    base_paths = map(os.path.abspath, base_paths)
+        paths.append(base_paths)
+    paths = map(os.path.abspath, base_paths)
     # If elements list is empty, return empty list (end of recursion).
     if not elements:
-        return []
-    #
-    paths_elements = []
-    for base_path in base_paths:
+        return list()
+
+    paths_elements = list()
+    for base_path in paths:
         try:
-            path_content = os.listdir(base_path)
+            path_content = [f for f in Path(base_path).iterdir()]
         except NotADirectoryError:
             continue
         path_content.sort()
         next_base_paths = []
         for path_item in path_content:
-            next_base_paths.append(os.path.join(base_path, path_item))
+            next_base_paths.append(base_path.joinpath(path_item))
         next_pe = list_paths_with_elements(next_base_paths, elements[1:])
         if next_pe:
             for i, one_pe in enumerate(next_pe):

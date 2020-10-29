@@ -2,8 +2,7 @@
 import os
 import sys
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 NAME = "miranda"
 VERSION = "0.1.0-beta"

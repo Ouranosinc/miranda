@@ -19,11 +19,6 @@ repos:
     -   id: black
         language_version: python3
         args: ['--target-version', 'py36']
-#-   repo: https://github.com/asottile/reorder_python_imports
-#    rev: v2.2.0
-#    hooks:
-#    -   id: reorder-python-imports
-#        language_version: python3
 -   repo: https://github.com/pycqa/flake8
     rev: 3.8.0a2
     hooks:
@@ -40,6 +35,18 @@ repos:
     hooks:
     -   id: pyupgrade
         language_version: python3
+-   repo: https://github.com/timothycrosley/isort
+    rev: 5.5.2
+    hooks:
+    -   id: isort
+        language_version: python3
+        args: ['--profile', 'black']
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 5.1.1
+    hooks:
+    -   id: pydocstyle
+        language_version: python3
+        args: ['--convention=numpy', '--match="(?!test_).*\.py"']
 -   repo: meta
     hooks:
     -   id: check-hooks-apply

@@ -1,8 +1,10 @@
 from pathlib import Path
 
-from miranda.eccc import aggregate_stations
-from miranda.eccc import convert_daily_flat_files
-from miranda.eccc import merge_converted_variables
+from miranda.eccc import (
+    aggregate_stations,
+    convert_daily_flat_files,
+    merge_converted_variables,
+)
 
 if __name__ == "__main__":
 

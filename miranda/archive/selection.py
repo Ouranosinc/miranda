@@ -3,12 +3,10 @@ from datetime import date
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List
-from typing import Union
+from typing import List, Union
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import creation_date
-from miranda.utils import find_filepaths
+from miranda.utils import creation_date, find_filepaths
 
 __all__ = ["select_by_date_modified"]
 

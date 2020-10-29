@@ -4,16 +4,13 @@ from getpass import getpass
 from logging import config
 from pathlib import Path
 from types import GeneratorType
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import List, Optional, Union
 
 import fabric
 
 from .scripting import LOGGING_CONFIG
 from .storage import report_file_size
-from .utils import creation_date
-from .utils import ingest
+from .utils import creation_date, ingest
 
 config.dictConfig(LOGGING_CONFIG)
 

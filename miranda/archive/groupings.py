@@ -4,9 +4,7 @@ from collections import defaultdict
 from logging import config
 from pathlib import Path
 from types import GeneratorType
-from typing import List
-from typing import Mapping
-from typing import Union
+from typing import List, Mapping, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size

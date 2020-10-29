@@ -3,16 +3,16 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.1.0-beta"
 
 
-import miranda.archive as archive
-import miranda.gis as gis
-import miranda.decode.metadata as metadata
-import miranda.ops as ops
-import miranda.remove as remove
-import miranda.scripting as scripting
-import miranda.subset as subset
-import miranda.utils as utils
+from miranda import archive as archive
+from miranda import gis as gis
+from miranda import ops as ops
+from miranda import remove as remove
+from miranda import scripting as scripting
+from miranda import subset as subset
+from miranda import utils as utils
+from miranda.decode import metadata as metadata
+
 from .archiver import archive_database
 from .connect import Connection
 from .data import DataBase
-from .storage import FileMeta
-from .storage import StorageState
+from .storage import FileMeta, StorageState

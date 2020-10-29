@@ -1,8 +1,8 @@
 #!/bin/env python3
 import logging
+import logging.config
 from collections import defaultdict
 from datetime import datetime as dt
-from logging import config
 from pathlib import Path
 from typing import List, Union
 
@@ -17,7 +17,7 @@ from .scripting import LOGGING_CONFIG
 from .storage import report_file_size
 from .utils import find_filepaths, single_item_list, working_directory
 
-config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["archive_database"]
 
 

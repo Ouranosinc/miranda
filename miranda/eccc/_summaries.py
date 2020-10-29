@@ -15,10 +15,7 @@ import json
 import logging
 from logging import config
 from pathlib import Path
-from typing import Generator
-from typing import List
-from typing import Tuple
-from typing import Union
+from typing import Generator, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -210,9 +207,9 @@ def _read_multiple_daily_summaries(
 
     files = ingest(files)
 
-    for i, f in enumerate(files):
+    for f in files:
         station_meta, data = _read_single_daily_summaries(f)
-        if i == 0:
+        if datafull is None:
             datafull = data
         else:
             datafull = datafull.append(data, ignore_index=True)

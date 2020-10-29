@@ -1,15 +1,17 @@
 import logging
+import logging.config
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 import fiona
 import geojson
 import numpy as np
 import rasterio.crs
 import xarray
+
+from miranda.scripting import LOGGING_CONFIG
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 
 def _read_geometries(

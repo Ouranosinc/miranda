@@ -13,25 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import logging.config
 import os
 from logging import config
 from pathlib import Path
 from types import GeneratorType
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 from .ops import url_validate
 from .scripting import LOGGING_CONFIG
-from .utils import find_filepaths
-from .utils import GiB
+from .utils import GiB, find_filepaths
 
-# import logging
-
-# from functools import reduce
-
-config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["DataBase"]
 

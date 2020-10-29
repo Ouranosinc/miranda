@@ -1,22 +1,20 @@
 import inspect
 import json
-import logging
+import logging.config
 from functools import partial
-from logging import config
 from pathlib import Path
-from typing import Optional
-from typing import Union
+from typing import Optional, Union
 
 import fiona
 import pyproj
-import shapely.geometry as geo
-import shapely.ops as ops
 from custom_inherit import doc_inherit
 from rasterio.crs import CRS
+from shapely import geometry as geo
+from shapely import ops as ops
 
 from miranda.scripting import LOGGING_CONFIG
 
-config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 WGS84 = "+init=epsg:4326"
 WGS84_PROJ4 = "+proj=longlat +datum=WGS84 +no_defs"
 
