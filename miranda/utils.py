@@ -28,7 +28,6 @@ __all__ = [
     "read_privileges",
     "set_comparisons",
     "single_item_list",
-    "verbose_fn",
     "working_directory",
     "yesno_prompt",
 ]

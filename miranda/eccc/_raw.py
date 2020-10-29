@@ -390,7 +390,11 @@ def convert_daily_flat_files(
                     )
                 else:
                     f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
-                        c=code, vc=variable_code, v=nc_name, sy=start_year, ey=end_year,
+                        c=code,
+                        vc=variable_code,
+                        v=nc_name,
+                        sy=start_year,
+                        ey=end_year,
                     )
 
                 ds.attrs["Conventions"] = "CF-1.7"
@@ -498,7 +502,9 @@ def aggregate_stations(
         else:
             info = eccc_cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
-        logging.info("Merging `%s` using `%s` time step." % (variable_name, time_step))
+        logging.info(
+            "Merging `{}` using `{}` time step.".format(variable_name, time_step)
+        )
 
         # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(str(station_metadata), header=3)
@@ -648,7 +654,10 @@ def aggregate_stations(
             output_folder.mkdir(parents=True, exist_ok=True)
 
             file_out = Path(output_folder).joinpath(
-                "{}_eccc_{}".format(variable_name, "hourly" if hourly else "daily",)
+                "{}_eccc_{}".format(
+                    variable_name,
+                    "hourly" if hourly else "daily",
+                )
             )
 
             if mf_dataset_freq is not None:
@@ -670,7 +679,10 @@ def aggregate_stations(
                 for dataset, path in zip(datasets, paths):
                     encoding = {var: comp for var in ds_out.data_vars}
                     dataset.to_netcdf(
-                        path, engine="h5netcdf", format="NETCDF4", encoding=encoding,
+                        path,
+                        engine="h5netcdf",
+                        format="NETCDF4",
+                        encoding=encoding,
                     )
                     dataset.close()
                     del dataset
