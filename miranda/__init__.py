@@ -1,6 +1,6 @@
 __author__ = "Trevor James Smith"
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.1.0-beta"
+__version__ = "0.2.0-beta"
 
 
 from miranda import archive, gis, ops, remove, scripting, subset, utils
