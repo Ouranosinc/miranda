@@ -4,7 +4,6 @@ import pandas as pd
 
 from miranda.eccc import convert_ahccd_fwf_files
 
-
 testsrc = dict()
 meta_src = dict()
 testsrc["tasmax"] = Path(
@@ -130,7 +129,7 @@ for variable in testsrc.keys():
             cols_specs.append((ii, ii + 1))
             ii += 1
         for index, row in metadata.iterrows():
-            if type(row["stnid"]) == str:
+            if isinstance(row["stnid"], str):
                 metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].strip(" ")
     for ff in testsrc[variable].glob("*d*.txt"):
         print(ff.name)
@@ -138,7 +137,7 @@ for variable in testsrc.keys():
 
         try:
             metadata_st = metadata[metadata["stnid"] == int(stid)]
-        except:
+        except ValueError:
             metadata_st = metadata[metadata["stnid"] == stid]
 
         if len(metadata_st) == 1:
