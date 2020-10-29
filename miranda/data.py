@@ -15,7 +15,6 @@ limitations under the License.
 """
 import logging.config
 import os
-from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import List, Optional, Tuple, Union

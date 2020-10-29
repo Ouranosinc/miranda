@@ -254,9 +254,7 @@ def file_size(
                 (lambda x, y: x + y),
                 [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")],
             )
-        elif isinstance(file_path_or_bytes, list) or isinstance(
-            file_path_or_bytes, GeneratorType
-        ):
+        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
             total = reduce(
                 (lambda x, y: x + y),
                 map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
