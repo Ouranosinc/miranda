@@ -62,19 +62,19 @@ vari_attrs = dict(
         units="mm day-1",
         standard_name="precipitation_flux",
         long_name="Total Precipitation",
-        comment="ECCC Second Generation of Homogenized Precipiation Data",
+        comment="ECCC Second Generation of Homogenized Precipitation Data",
     ),
     prsn=dict(
         units="mm day-1",
         standard_name="snowfall_flux",
         long_name="Snowfall",
-        comment="ECCC Second Generation of Homogenized Precipiation Data",
+        comment="ECCC Second Generation of Homogenized Precipitation Data",
     ),
     prlp=dict(
         units="mm day-1",
         standard_name="rainfall_flux",
         long_name="Rainfall",
-        comment="ECCC Second Generation of Homogenized Precipiation Data",
+        comment="ECCC Second Generation of Homogenized Precipitation Data",
     ),
 )
 outpath = Path(
