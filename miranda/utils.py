@@ -2,7 +2,7 @@ import logging.config
 import os
 import sys
 from contextlib import contextmanager
-from datetime import date
+from datetime import date, datetime as dt
 from pathlib import Path
 from types import GeneratorType
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
@@ -17,7 +17,7 @@ logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
     "creation_date",
-    "eccc_cf_ahccd_metadata",
+    "eccc_ahccd_metadata",
     "eccc_cf_daily_metadata",
     "eccc_cf_hourly_metadata",
     "find_filepaths",
@@ -680,25 +680,25 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
         },
         "010": {
             "nc_units": "mm",
-            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
+            "scale_factor": 0.1,
             "add_offset": 0,
-            "long_name": "Total Rainfall",
+            "long_name": "Daily Total Rainfall",
             "standard_name": "liquid_precipitation_flux",
             "nc_name": "prlptot",
         },
         "011": {
             "nc_units": "cm",
-            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
+            "scale_factor": 0.1,
             "add_offset": 0,
-            "long_name": "Total Snowfall",
+            "long_name": "Daily Total Snowfall",
             "standard_name": "solid_precipitation_flux",
             "nc_name": "prsntot",
         },
         "012": {
             "nc_units": "mm",
-            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
+            "scale_factor": 0.1,
             "add_offset": 0,
-            "long_name": "Total Precipitation",
+            "long_name": "Daily Total Precipitation",
             "standard_name": "precipitation_flux",
             "nc_name": "prcptot",
         },
@@ -818,81 +818,82 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
     return variable
 
 
-def eccc_cf_ahccd_metadata(code: str) -> (dict, dict, List[Tuple[int, int]], int):
+def eccc_ahccd_metadata(code: str, gen: int) -> (dict, dict, List[Tuple[int, int]], int):
     """
 
     Parameters
     ----------
     code: str
+    gen: int
 
     Returns
     -------
     dict, dict, List[Tuple[(int, int)]], int
     """
+
+
     ec_ahccd_attrs = dict(
         dx=dict(
             variable="tasmax",
             units="deg C",
             standard_name="air_temperature",
             long_name="Near-Surface Maximum Daily Air Temperature",
-            comment="ECCC Second Generation of Adjusted and Homogenized Temperature Data",
+            comment=f"ECCC {gen} Generation of Adjusted and Homogenized Temperature Data",
         ),
         dn=dict(
             variable="tasmin",
             units="deg C",
             standard_name="air_temperature",
             long_name="Near-Surface Minimum Daily Air Temperature",
-            comment="ECCC Second Generation of Adjusted and Homogenized Temperature Data",
+            comment=f"ECCC {gen} Generation of Adjusted and Homogenized Temperature Data",
         ),
         dm=dict(
             variable="tas",
             units="deg C",
             standard_name="air_temperature",
             long_name="Near-Surface Daily Mean Air Temperature",
-            comment="ECCC Second Generation of Adjusted and Homogenized Temperature Data",
+            comment=f"ECCC {gen} Generation of Adjusted and Homogenized Temperature Data",
         ),
         dt=dict(
             variable="pr",
             units="mm day-1",
             standard_name="precipitation_flux",
-            long_name="Total Precipitation",
-            comment="ECCC Second Generation of Adjusted and Homogenized Precipitation Data",
+            long_name="Daily Total Precipitation",
+            comment=f"ECCC {gen} Generation of Adjusted and Homogenized Precipitation Data",
         ),
         ds=dict(
             variable="prsn",
             units="mm day-1",
             standard_name="snowfall_flux",
-            long_name="Snowfall",
-            comment="ECCC Second Generation of Adjusted and Homogenized Precipitation Data",
+            long_name="Daily Snowfall",
+            comment=f"ECCC {gen} Generation of Adjusted and Homogenized Precipitation Data",
         ),
         dr=dict(
             variable="prlp",
             units="mm day-1",
             standard_name="rainfall_flux",
-            long_name="Rainfall",
-            comment="ECCC Second Generation of Adjusted and HomogenizedPrecipitation Data",
+            long_name="Daily Rainfall",
+            comment=f"ECCC {gen} Generation of Adjusted and Homogenized Precipitation Data",
         ),
     )
     try:
         variable = ec_ahccd_attrs[code]
         # variable["missing_flags"] = "M"\
-        variable["least_significant_digit"] = None
+        variable["least_significant_digit"] = None  # noqa
         if variable["variable"].startswith("tas"):
             variable["NaN_value"] = "-9999.9"
             column_names = [
                 "Prov",
                 "Station name",
                 "stnid",
-                "beg yr",
-                "beg mon",
-                "end yr",
-                "end mon",
-                "lat (deg)",
-                "long (deg)",
-                "elev (m)",
+                "FromYear",
+                "FromMonth",
+                "ToYear",
+                "ToMonth",
+                "lat",
+                "long",
+                "elev",
                 "stns joined",
-                "RCS",
-                "%Miss",
             ]
             column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
             ii = 9
@@ -925,13 +926,43 @@ def eccc_cf_ahccd_metadata(code: str) -> (dict, dict, List[Tuple[int, int]], int
                 ii += 8
                 column_spaces.append((ii, ii + 1))
                 ii += 1
-            header_row = 1
+            header_row = 0
 
         else:
             raise KeyError
 
+        column_names = [
+            col.lower().split("(")[0].replace("%", "pct_").replace(" ", "_")
+            for col in list(column_names)
+        ]
+
+        generation = {1: "First", 2: "Second", 3: "Third"}.get(gen)
+        if gen == 1:
+            _citation = "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized "
+            "Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. "
+            "Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"
+        elif gen == 2:
+            _citation = "Mekis, É and L.A. Vincent, 2011: An overview of the second generation adjusted daily "
+            "precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), "
+            "163-177 doi:10.1080/07055900.2011.583910"
+        else:
+            raise KeyError
+
+        global_attrs = dict(
+            title=f"{generation} Generaion of Homogenized Daily {variable} for Canada Update to December 2019",
+            history=f"{dt.today().strftime('%Y-%m-%d')}: Convert from original format to NetCDF",
+            type="station_obs",
+            institute="Environment and Climate Change Canada",
+            institute_id="ECCC",
+            dataset_id=f"AHCCD_gen{gen}_day_{variable}",
+            frequency="day",
+            licence_type="permissive",
+            licence="https:/open.canada.ca/en/open-government-licence-canada",
+            citation=_citation,
+        )
+
     except KeyError:
-        logging.error("AHCCD variable `{}` not supported.".format(code))
+        logging.error(f"AHCCD variable `{code}` or generation {gen} not supported.")
         raise
 
-    return variable, column_names, column_spaces, header_row
+    return variable, column_names, column_spaces, header_row, global_attrs
