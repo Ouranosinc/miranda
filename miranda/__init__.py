@@ -3,7 +3,7 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.2.0-beta"
 
 
-from miranda import archive, gis, ops, remove, scripting, subset, utils
+from miranda import archive, gis, ops, remove, scripting, utils
 
 from .archiver import archive_database
 from .connect import Connection
