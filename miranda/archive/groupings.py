@@ -1,7 +1,7 @@
 import logging
 import re
 from collections import defaultdict
-from logging import config
+from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
 from typing import List, Mapping, Union
@@ -10,7 +10,7 @@ from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 from miranda.utils import ingest
 
-config.dictConfig(LOGGING_CONFIG)
+dictConfig(LOGGING_CONFIG)
 Nested_List = List[List[Path]]
 PathDict = Mapping[str, List[Path]]
 
