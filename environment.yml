@@ -1,0 +1,36 @@
+name: miranda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - fabric
+  - paramiko>=2.6.0
+  - scp
+  - custom-inherit>=2.3.0
+  - cftime
+  - numpy
+  - requests
+  - netCDF4
+  - xarray
+  - rioxarray
+  - dask
+  - distributed
+  - fiona
+  - rasterio
+  - shapely
+  - pyproj
+  - geojson
+  - pandas
+  - geopandas
+  - pint
+  - h5netcdf
+  - pip
+  - wheel
+  - coverage
+  - pytest
+  - pytest-runner
+  - flake8
+  - tox
+  - pre-commit
+  - autopep8
+  - bumpversion
