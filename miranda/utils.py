@@ -2,7 +2,8 @@ import logging.config
 import os
 import sys
 from contextlib import contextmanager
-from datetime import date, datetime as dt
+from datetime import date
+from datetime import datetime as dt
 from pathlib import Path
 from types import GeneratorType
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
@@ -818,7 +819,9 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
     return variable
 
 
-def eccc_ahccd_metadata(code: str, gen: int) -> (dict, dict, List[Tuple[int, int]], int):
+def eccc_ahccd_metadata(
+    code: str, gen: int
+) -> (dict, dict, List[Tuple[int, int]], int):
     """
 
     Parameters
@@ -830,7 +833,6 @@ def eccc_ahccd_metadata(code: str, gen: int) -> (dict, dict, List[Tuple[int, int
     -------
     dict, dict, List[Tuple[(int, int)]], int
     """
-
 
     ec_ahccd_attrs = dict(
         dx=dict(

@@ -8,8 +8,7 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from miranda.utils import eccc_ahccd_metadata
-from miranda.utils import scripting
+from miranda.utils import eccc_ahccd_metadata, scripting
 
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
@@ -24,7 +23,6 @@ def convert_ahccd(
     variable: str,
     generation: Optional[int] = None,
 ):
-
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )
@@ -34,8 +32,35 @@ def convert_ahccd(
     gen = {2: "Second", 3: "Third"}.get(generation)
     if gen == 3 and code in {"dx", "dn", "dm"}:
         meta = "ahccd_gen3_temperature.csv"
+        long_name_dict = dict(
+            elev="elevation",
+            frommonth="from month",
+            fromyear="from year",
+            prov="province",
+            station="station identification number",
+            station_name="station name",
+            stnid="station identification number",
+            joined="joined station (y/n)",
+            tomonth="to month",
+            toyear="to year",
+            pct_miss="%Miss",
+        )
+
     elif gen == 2 and code in {"dt", "ds", "dr"}:
         meta = "ahccd_gen2_precipitation.csv"
+        long_name_dict = dict(
+            elev="elevation",
+            frommonth="from month",
+            fromyear="from year",
+            prov="province",
+            station="station identification number",
+            station_name="station name",
+            stnid="station identification number",
+            stns_joined="joined station (y/n)",
+            tomonth="to month",
+            toyear="to year",
+        )
+
     else:
         raise NotImplementedError()
     metadata_source = Path().cwd().joinpath("data").joinpath(meta)
@@ -87,12 +112,11 @@ def convert_ahccd(
 
     # merge individual stations to single .nc file
     # variable
-
     ncfiles = list(output_dir.joinpath(variable).glob("*.nc"))
-
     outfile = output_dir.parent.joinpath(
         "merged_stations", f"ahccd_{gen}_{variable}.nc"
     )
+
     if not outfile.exists():
         logger.info("merging stations :", variable)
         with ProgressBar():
@@ -114,49 +138,19 @@ def convert_ahccd(
                     logger.info(v)
                     ds_ahccd[v] = ds_ahccd[v].astype(str)
 
-            # ds_ahccd[f"{variable}_flag"].attrs[
-            #     "long_name"
-            # ] = f"{ds_ahccd[f'{variable}'].attrs['long_name']} flag"
-            # outfile1.parent.mkdir(parents=True, exist_ok=True)
-            # ds_ahccd.lon.attrs["units"] = "degrees_east"
-            # ds_ahccd.lon.attrs["long_name"] = "longitude"
-            # ds_ahccd.lat.attrs["units"] = "degrees_north"
-            # ds_ahccd.lat.attrs["long_name"] = "latitude"
-            # if gen == "gen3":
-            #     long_name_dict = dict(
-            #         elev="elevation",
-            #         frommonth="from month",
-            #         fromyear="from year",
-            #         prov="province",
-            #         station="station identification number",
-            #         station_name="station name",
-            #         stnid="station identification number",
-            #         joined="joined station (y/n)",
-            #         tomonth="to month",
-            #         toyear="to year",
-            #         pct_miss="%Miss",
-            #     )
-            # else:
-            #     long_name_dict = dict(
-            #         elev="elevation",
-            #         frommonth="from month",
-            #         fromyear="from year",
-            #         prov="province",
-            #         station="station identification number",
-            #         station_name="station name",
-            #         stnid="station identification number",
-            #         stns_joined="joined station (y/n)",
-            #         tomonth="to month",
-            #         toyear="to year",
-            #     )
-            # for ll in long_name_dict:
-            #     ds_ahccd[ll].attrs["long_name"] = long_name_dict[ll]
+            ds_ahccd[f"{variable}_flag"].attrs[
+                "long_name"
+            ] = f"{ds_ahccd[f'{variable}'].attrs['long_name']} flag"
+            ds_ahccd.lon.attrs["units"] = "degrees_east"
+            ds_ahccd.lon.attrs["long_name"] = "longitude"
+            ds_ahccd.lat.attrs["units"] = "degrees_north"
+            ds_ahccd.lat.attrs["long_name"] = "latitude"
 
+            for ll in long_name_dict:
+                ds_ahccd[ll].attrs["long_name"] = long_name_dict[ll]
 
             outfile.parent.mkdir(parents=True, exist_ok=True)
-
-            mode = "w"
-            ds_ahccd.to_netcdf(outfile, format="NETCDF4_CLASSIC", mode=mode)
+            ds_ahccd.to_netcdf(outfile, format="NETCDF4_CLASSIC", mode="w")
 
             del ds_ahccd
     for nc in outfile.parent.glob("*.nc"):
@@ -226,7 +220,6 @@ def _convert_ahccd_fwf_files(
 
     # find non-valid dates
     for y in time1.year.unique():
-
         for m in (
             ds[ds.index.get_level_values("Year") == y]
             .index.get_level_values("Month")
