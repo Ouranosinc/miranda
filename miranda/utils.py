@@ -555,7 +555,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 00-15)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q1",
+            "nc_name": "wind_speed_q1",
         },
         "272": {
             "nc_units": "m s-1",
@@ -563,7 +563,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 15-30)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q2",
+            "nc_name": "wind_speed_q2",
         },
         "273": {
             "nc_units": "m s-1",
@@ -571,7 +571,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 30-45)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q3",
+            "nc_name": "wind_speed_q3",
         },
         "274": {
             "nc_units": "m s-1",
@@ -579,7 +579,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 45-60)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q4",
+            "nc_name": "wind_speed_q4",
         },
         "275": {
             "nc_units": "m",
