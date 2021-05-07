@@ -29,7 +29,7 @@ __all__ = ["DataBase"]
 
 
 class DataBase(object):
-    """"""
+    """ """
 
     def __init__(
         self,
