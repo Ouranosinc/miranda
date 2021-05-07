@@ -102,4 +102,7 @@ class TestReadPrivileges:
     def test_forbidden_folder_lax(self):
         root_folder = Path(Path.cwd().root).joinpath("root")
         allowed = utils.read_privileges(root_folder, strict=False)
-        assert allowed
+        if os.getenv("GITHUB_JOB"):
+            assert not allowed
+        else:
+            assert allowed
