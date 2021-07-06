@@ -60,7 +60,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
     dates = defaultdict(lambda: list())
     total = 0
     for f in files:
-        match = re.search(year_month_day, str(f.name))
+        match = re.search(year_month_day, str(Path(f).name))
         if match.group("day"):
             key = "-".join([match.group("year"), match.group("month")])
             dates[key].append(Path(f))
