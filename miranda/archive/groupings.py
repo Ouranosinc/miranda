@@ -10,7 +10,6 @@ from miranda.storage import report_file_size
 from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
-Nested_List = List[List[Path]]
 
 GiB = int(pow(2, 30))
 
@@ -22,7 +21,7 @@ __all__ = [
 ]
 
 
-def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested_List:
+def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> List[List[Path]]:
     """
     This function groups files by an arbitrary number of file entries
     """
@@ -44,7 +43,7 @@ def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested
     return grouped_list
 
 
-def group_by_deciphered_date(files: Union[GeneratorType, List]) -> Dict[Path]:
+def group_by_deciphered_date(files: Union[GeneratorType, List]) -> Dict[str, List[Path]]:
     """
     This function attempts to find a common date and groups files based on year and month
     """
@@ -87,7 +86,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> Dict[Path]:
 
 def group_by_size(
     files: Union[GeneratorType, List], size: int = 10 * GiB
-) -> Nested_List:
+) -> List[List[Path]]:
     """
     This function will group files up until a desired size and save it as a grouping within a list
     """
@@ -121,7 +120,7 @@ def group_by_size(
 
 def group_by_subdirectories(
     files: Union[GeneratorType, List], within: str or Path = None
-) -> Dict[Path]:
+) -> Dict[str, List[Path]]:
     """
     This function will group files based on the parent folder that they are located within.
     """
