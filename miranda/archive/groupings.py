@@ -21,7 +21,9 @@ __all__ = [
 ]
 
 
-def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> List[List[Path]]:
+def group_by_length(
+    files: Union[GeneratorType, List], size: int = 10
+) -> List[List[Path]]:
     """
     This function groups files by an arbitrary number of file entries
     """
@@ -43,10 +45,13 @@ def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> List[L
     return grouped_list
 
 
-def group_by_deciphered_date(files: Union[GeneratorType, List]) -> Dict[str, List[Path]]:
+def group_by_deciphered_date(
+    files: Union[GeneratorType, List]
+) -> Dict[str, List[Path]]:
     """
     This function attempts to find a common date and groups files based on year and month
     """
+    logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
 
     year_month_day = re.compile(
