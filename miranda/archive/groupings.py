@@ -1,6 +1,5 @@
 import logging
 import re
-from collections import defaultdict
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
@@ -12,7 +11,7 @@ from miranda.utils import ingest
 
 dictConfig(LOGGING_CONFIG)
 Nested_List = List[List[Path]]
-PathDict = Mapping[str, List[Path]]
+PathDict = Dict[str, List[Path]]
 
 
 GiB = int(pow(2, 30))
