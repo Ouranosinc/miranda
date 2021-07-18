@@ -8,8 +8,9 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from miranda.eccc import ahccd_metadata
 from miranda.utils import scripting
+
+from ._utils import ahccd_metadata
 
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 

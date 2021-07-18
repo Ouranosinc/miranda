@@ -26,8 +26,9 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from miranda.eccc import cf_daily_metadata, cf_hourly_metadata
 from miranda.scripting import LOGGING_CONFIG
+
+from ._utils import cf_daily_metadata, cf_hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
 
