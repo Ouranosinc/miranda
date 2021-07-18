@@ -14,7 +14,7 @@ logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 logger = logging.Logger("miranda")
 
-__all__ = ["convert_ahccd", "_convert_ahccd_fwf_files"]
+__all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
 
 
 def convert_ahccd(
@@ -99,7 +99,7 @@ def convert_ahccd(
                 metadata_st = metadata[metadata["stnid"] == stid]
 
             if len(metadata_st) == 1:
-                ds_out = _convert_ahccd_fwf_files(
+                ds_out = convert_ahccd_fwf_files(
                     ff, metadata_st, variable, generation, cols_specs, code
                 )
                 ds_out.attrs = global_attrs[outvar]
@@ -159,7 +159,7 @@ def convert_ahccd(
         logger.info(ds)
 
 
-def _convert_ahccd_fwf_files(
+def convert_ahccd_fwf_files(
     ff,
     metadata,
     variable,
@@ -197,7 +197,6 @@ def _convert_ahccd_fwf_files(
         df = df.rename(columns={df.columns[i]: j})
     start_date = f"{df['Year'][0]}-{str(df['Month'][0]).zfill(2)}-01"
 
-    # ndays last month
     _, ndays = calendar.monthrange(df["Year"].iloc[-1], df["Month"].iloc[-1])
     end_date = f"{df['Year'].iloc[-1]}-{str(df['Month'].iloc[-1]).zfill(2)}-{str(ndays).zfill(2)}"
     time1 = pd.date_range(start=start_date, end=end_date)
@@ -218,7 +217,7 @@ def _convert_ahccd_fwf_files(
     ds[f"{variable}_flag"] = ds_flag["flag"]
     del ds_flag
 
-    # find non-valid dates
+    # find invalid dates
     for y in time1.year.unique():
         for m in (
             ds[ds.index.get_level_values("Year") == y]

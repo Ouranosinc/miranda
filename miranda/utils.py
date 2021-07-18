@@ -45,7 +45,7 @@ def ingest(files: Union[GeneratorType, List]) -> List:
 def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
     """
     Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
-    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
     ----------
@@ -305,7 +305,9 @@ def list_paths_with_elements(
     return paths_elements
 
 
-def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
+def eccc_cf_hourly_metadata(
+    variable_code: Union[int, str]
+) -> Dict[str, Union[int, float, bool]]:
     """
 
     Parameters
@@ -632,18 +634,20 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     }
     code = str(variable_code).zfill(3)
     if code in ["061"]:
-        raise NotImplementedError
+        raise NotImplementedError()
     try:
         variable = ec_hourly_variables[code]
         variable["missing_flags"] = "M"
-        variable["least_significant_digit"] = None
+        variable["least_significant_digit"] = False
     except KeyError:
         logging.error("Hourly variable `{}` not supported.".format(code))
         raise
     return variable
 
 
-def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
+def eccc_cf_daily_metadata(
+    variable_code: Union[int, str]
+) -> Dict[str, Union[int, float, bool]]:
     """
 
     Parameters
@@ -812,7 +816,7 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
     try:
         variable = ec_daily_variables[code]
         variable["missing_flags"] = "M"
-        variable["least_significant_digit"] = None
+        variable["least_significant_digit"] = False
     except KeyError:
         logging.error("Daily variable `{}` not supported.".format(code))
         raise
@@ -880,8 +884,7 @@ def eccc_ahccd_metadata(
     )
     try:
         variable = ec_ahccd_attrs[code]
-        # variable["missing_flags"] = "M"\
-        variable["least_significant_digit"] = None  # noqa
+        variable["missing_flags"] = "M"
         if variable["variable"].startswith("tas"):
             variable["NaN_value"] = "-9999.9"
             column_names = [
@@ -948,10 +951,11 @@ def eccc_ahccd_metadata(
             "precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), "
             "163-177 doi:10.1080/07055900.2011.583910"
         else:
-            raise KeyError
+            msg = f"Generation '{gen}' not supported."
+            raise NotImplementedError(msg)
 
         global_attrs = dict(
-            title=f"{generation} Generaion of Homogenized Daily {variable} for Canada Update to December 2019",
+            title=f"{generation} Generation of Homogenized Daily {variable} for Canada Update to December 2019",
             history=f"{dt.today().strftime('%Y-%m-%d')}: Convert from original format to NetCDF",
             type="station_obs",
             institute="Environment and Climate Change Canada",
@@ -963,8 +967,9 @@ def eccc_ahccd_metadata(
             citation=_citation,
         )
 
-    except KeyError:
-        logging.error(f"AHCCD variable `{code}` or generation {gen} not supported.")
-        raise
+    except KeyError as e:
+        msg = f"AHCCD variable '{code}' or generation '{gen}' not supported."
+        logging.error(msg)
+        raise NotImplementedError(msg) from e
 
     return variable, column_names, column_spaces, header_row, global_attrs

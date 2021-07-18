@@ -149,7 +149,7 @@ for variable in testsrc.keys():
                 attrs=vari_attrs[variable],
             )
         else:
-            raise Exception("metadata not found")
+            raise FileNotFoundError("Metadata not found")
 
         outfile = outpath.joinpath(variable, ff.name.replace(".txt", ".nc"))
         dsOut.to_netcdf(outfile)
