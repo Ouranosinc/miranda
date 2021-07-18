@@ -26,8 +26,8 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
+from miranda.eccc import cf_daily_metadata, cf_hourly_metadata
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import eccc_cf_daily_metadata, eccc_cf_hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -64,7 +64,7 @@ def convert_hourly_flat_files(
         variables = [variables]
 
     for variable_code in variables:
-        info = eccc_cf_hourly_metadata(variable_code)
+        info = cf_hourly_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         variable_name = info["standard_name"]
         variable_file_name = info["nc_name"]
@@ -259,7 +259,7 @@ def convert_daily_flat_files(
         variables = [variables]
 
     for variable_code in variables:
-        info = eccc_cf_daily_metadata(variable_code)
+        info = cf_daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         nc_name = info["nc_name"]
 
@@ -496,9 +496,9 @@ def aggregate_stations(
 
     for variable_code in variables:
         if hourly:
-            info = eccc_cf_hourly_metadata(variable_code)
+            info = cf_hourly_metadata(variable_code)
         else:
-            info = eccc_cf_daily_metadata(variable_code)
+            info = cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
         logging.info(
             "Merging `{}` using `{}` time step.".format(variable_name, time_step)
@@ -781,9 +781,9 @@ def merge_converted_variables(
             variables = [variables]
         for var in variables:
             try:
-                selected_variables.append(eccc_cf_hourly_metadata(var))
+                selected_variables.append(cf_hourly_metadata(var))
             except KeyError:
-                selected_variables.append(eccc_cf_hourly_metadata(var))
+                selected_variables.append(cf_hourly_metadata(var))
 
     variables_found = [x.name for x in source.iterdir() if x.is_dir()]
     if selected_variables:
