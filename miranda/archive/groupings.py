@@ -4,7 +4,7 @@ from collections import defaultdict
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Mapping, Union
+from typing import Dict, List, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -13,6 +13,7 @@ from miranda.utils import ingest
 dictConfig(LOGGING_CONFIG)
 Nested_List = List[List[Path]]
 PathDict = Mapping[str, List[Path]]
+
 
 GiB = int(pow(2, 30))
 
@@ -24,7 +25,9 @@ __all__ = [
 ]
 
 
-def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested_List:
+def group_by_length(
+    files: Union[GeneratorType, List], size: int = 10
+) -> List[List[Path]]:
     """
     This function groups files by an arbitrary number of file entries
     """
@@ -46,10 +49,13 @@ def group_by_length(files: Union[GeneratorType, List], size: int = 10) -> Nested
     return grouped_list
 
 
-def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
+def group_by_deciphered_date(
+    files: Union[GeneratorType, List]
+) -> Dict[str, List[Path]]:
     """
     This function attempts to find a common date and groups files based on year and month
     """
+    logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
 
     year_month_day = re.compile(
@@ -57,17 +63,17 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
     )
 
     files = ingest(files)
-    dates = defaultdict(lambda: list())
+    dates = dict()
     total = 0
     for f in files:
-        match = re.search(year_month_day, str(f.name))
+        match = re.search(year_month_day, str(Path(f).name))
         if match.group("day"):
             key = "-".join([match.group("year"), match.group("month")])
-            dates[key].append(Path(f))
+            dates.setdefault(key, list()).append(Path(f))
             total += 1
         elif match.group("month"):
             key = match.group("year")
-            dates[key].append(Path(f))
+            dates.setdefault(key, list()).append(Path(f))
             total += 1
         else:
             continue
@@ -76,7 +82,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
         logging.info(
             "All files have been grouped by date. {} groups created.".format(len(dates))
         )
-        return dates
+        return dict(dates)
 
     if dates and total != len(files):
         logging.info(
@@ -89,7 +95,7 @@ def group_by_deciphered_date(files: Union[GeneratorType, List]) -> PathDict:
 
 def group_by_size(
     files: Union[GeneratorType, List], size: int = 10 * GiB
-) -> Nested_List:
+) -> List[List[Path]]:
     """
     This function will group files up until a desired size and save it as a grouping within a list
     """
@@ -123,7 +129,7 @@ def group_by_size(
 
 def group_by_subdirectories(
     files: Union[GeneratorType, List], within: str or Path = None
-) -> PathDict:
+) -> Dict[str, List[Path]]:
     """
     This function will group files based on the parent folder that they are located within.
     """
@@ -131,10 +137,10 @@ def group_by_subdirectories(
         within = Path.cwd()
 
     files = ingest(files)
-    groups = defaultdict(list)
+    groups = dict()
     for f in files:
         group_name = Path(f).relative_to(within).parent
-        groups[group_name].append(f)
+        groups.setdefault(group_name, list()).append(f)
 
     logging.info(
         "File subdirectories found. Proceeding with {}.".format(
