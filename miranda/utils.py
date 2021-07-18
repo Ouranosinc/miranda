@@ -307,7 +307,7 @@ def list_paths_with_elements(
 
 def eccc_cf_hourly_metadata(
     variable_code: Union[int, str]
-) -> Dict[str, Union[int, float, bool]]:
+) -> Dict[str, Union[int, float]]:
     """
 
     Parameters
@@ -638,7 +638,7 @@ def eccc_cf_hourly_metadata(
     try:
         variable = ec_hourly_variables[code]
         variable["missing_flags"] = "M"
-        variable["least_significant_digit"] = False
+        variable["least_significant_digit"] = ""
     except KeyError:
         logging.error("Hourly variable `{}` not supported.".format(code))
         raise
@@ -647,7 +647,7 @@ def eccc_cf_hourly_metadata(
 
 def eccc_cf_daily_metadata(
     variable_code: Union[int, str]
-) -> Dict[str, Union[int, float, bool]]:
+) -> Dict[str, Union[int, float]]:
     """
 
     Parameters
@@ -816,7 +816,7 @@ def eccc_cf_daily_metadata(
     try:
         variable = ec_daily_variables[code]
         variable["missing_flags"] = "M"
-        variable["least_significant_digit"] = False
+        variable["least_significant_digit"] = ""
     except KeyError:
         logging.error("Daily variable `{}` not supported.".format(code))
         raise

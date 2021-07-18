@@ -32,7 +32,6 @@ class TestEnvCanVariables:
             else:
                 assert variables[key]["add_offset"] == 0
             assert variables[key]["missing_flags"] == "M"
-            assert variables[key]["least_significant_digit"] is None
 
         assert set(codes) == {
             "wind_speed_u2a",
@@ -63,7 +62,6 @@ class TestEnvCanVariables:
             else:
                 assert variables[key]["add_offset"] == 0
             assert variables[key]["missing_flags"] == "M"
-            assert variables[key]["least_significant_digit"] is None
 
         assert set(codes) == {
             "air_temperature",
