@@ -588,17 +588,20 @@ def ahccd_metadata(
         if variable["variable"].startswith("tas"):
             variable["NaN_value"] = -9999.9
             column_names = [
-                "Prov",
+                "No",
+                "StnId",
                 "Station name",
-                "stnid",
+                "Prov",
                 "FromYear",
                 "FromMonth",
                 "ToYear",
                 "ToMonth",
-                "lat",
-                "long",
-                "elev",
-                "stns joined",
+                "%Miss",
+                "Lat(deg)",
+                "Long(deg)",
+                "Elev(m)",
+                "Joined",
+                "RCS",
             ]
             column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
             ii = 9
@@ -645,7 +648,7 @@ def ahccd_metadata(
             for col in list(column_names)
         }
 
-        if gen == 1:
+        if gen == 3:
             _citation = "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized "
             "Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. "
             "Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"

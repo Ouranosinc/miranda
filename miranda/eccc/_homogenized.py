@@ -44,6 +44,7 @@ def convert_ahccd(
 
     if "tas" in variable:
         metadata = pd.read_csv(metadata_source, header=2)
+        print(metadata.columns)
         metadata.columns = col_names.keys()
         cols_specs = col_spaces
 
@@ -90,7 +91,7 @@ def convert_ahccd(
     # variable
     ncfiles = list(output_dir.glob("*.nc"))
     outfile = output_dir.parent.joinpath(
-        "merged_stations", f"ahccd_{gen}_{variable}.nc"
+        "merged_stations", f"ahccd_gen{generation}_{variable}.nc"
     )
 
     if not outfile.exists():
@@ -122,6 +123,8 @@ def convert_ahccd(
             ds_ahccd.lat.attrs["long_name"] = "latitude"
 
             for clean_name, orig_name in col_names.items():
+                if clean_name in ["lat", "long", "elev"]:
+                    continue
                 ds_ahccd[clean_name].attrs["long_name"] = orig_name
 
             outfile.parent.mkdir(parents=True, exist_ok=True)
