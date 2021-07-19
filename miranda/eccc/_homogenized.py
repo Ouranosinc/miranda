@@ -25,6 +25,7 @@ def convert_ahccd(
     variable: str,
     generation: Optional[int] = None,
 ):
+    output_dir = Path(output_dir)
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )
@@ -32,51 +33,23 @@ def convert_ahccd(
         code, generation
     )
     gen = {2: "Second", 3: "Third"}.get(generation)
-    if gen == 3 and code in {"dx", "dn", "dm"}:
+    if generation == 3 and code in {"dx", "dn", "dm"}:
         meta = "ahccd_gen3_temperature.csv"
-        long_name_dict = dict(
-            elev="elevation",
-            frommonth="from month",
-            fromyear="from year",
-            prov="province",
-            station="station identification number",
-            station_name="station name",
-            stnid="station identification number",
-            joined="joined station (y/n)",
-            tomonth="to month",
-            toyear="to year",
-            pct_miss="%Miss",
-        )
-
-    elif gen == 2 and code in {"dt", "ds", "dr"}:
+    elif generation == 2 and code in {"dt", "ds", "dr"}:
         meta = "ahccd_gen2_precipitation.csv"
-        long_name_dict = dict(
-            elev="elevation",
-            frommonth="from month",
-            fromyear="from year",
-            prov="province",
-            station="station identification number",
-            station_name="station name",
-            stnid="station identification number",
-            stns_joined="joined station (y/n)",
-            tomonth="to month",
-            toyear="to year",
-        )
 
     else:
-        raise NotImplementedError()
-    metadata_source = Path().cwd().joinpath("data").joinpath(meta)
+        raise NotImplementedError(f"Code '{code} for generation {gen}.")
+    metadata_source = Path(__file__).parent.joinpath("data").joinpath(meta)
 
-    if "tas" in variable and not generation:
-        outvar = "temperature"
-        metadata = pd.read_excel(metadata_source, header=2)
-        metadata.columns = col_names
+    if "tas" in variable:
+        metadata = pd.read_csv(metadata_source, header=2)
+        metadata.columns = col_names.keys()
         cols_specs = col_spaces
 
-    elif "pr" in variable and not generation:
-        outvar = "precipitation"
-        metadata = pd.read_excel(metadata_source, header=3)
-        metadata.columns = col_names
+    elif "pr" in variable:
+        metadata = pd.read_csv(metadata_source, header=3)
+        metadata.columns = col_names.keys()
         cols_specs = col_spaces
         for index, row in metadata.iterrows():
             if type(row["stnid"]) == str:
@@ -84,17 +57,18 @@ def convert_ahccd(
                     " ", ""
                 )
     else:
-        raise KeyError()
+        raise KeyError(f"{variable} does not include 'pr' or 'tas'.")
 
-    output_dir.joinpath(variable).mkdir(parents=True, exist_ok=True)
+    output_dir = output_dir.joinpath(variable)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Convert station .txt files to netcdf
-    for ff in Path(data_source).joinpath(variable).glob("*d*.txt"):
-        outfile = output_dir.joinpath(variable, ff.name.replace(".txt", ".nc"))
+    for ff in Path(data_source).glob("*d*.txt"):
+        outfile = output_dir.joinpath(ff.name.replace(".txt", ".nc"))
         if not outfile.exists():
             logger.info(ff.name)
 
-            stid = ff.name.replace(var, "").split(".txt")[0]
+            stid = ff.name.replace(code, "").split(".txt")[0]
             try:
                 metadata_st = metadata[metadata["stnid"] == int(stid)]
             except ValueError:
@@ -102,9 +76,9 @@ def convert_ahccd(
 
             if len(metadata_st) == 1:
                 ds_out = convert_ahccd_fwf_files(
-                    ff, metadata_st, variable, generation, cols_specs, code
+                    ff, metadata_st, variable, generation, cols_specs, var
                 )
-                ds_out.attrs = global_attrs[outvar]
+                ds_out.attrs = global_attrs
 
                 ds_out.to_netcdf(outfile)
             else:
@@ -114,7 +88,7 @@ def convert_ahccd(
 
     # merge individual stations to single .nc file
     # variable
-    ncfiles = list(output_dir.joinpath(variable).glob("*.nc"))
+    ncfiles = list(output_dir.glob("*.nc"))
     outfile = output_dir.parent.joinpath(
         "merged_stations", f"ahccd_{gen}_{variable}.nc"
     )
@@ -130,7 +104,6 @@ def convert_ahccd(
                 # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
                 # Do not apply to datetime object
                 if coord != "time" and ds_ahccd[coord].dtype == "O":
-                    print(coord)
                     ds_ahccd[coord] = ds_ahccd[coord].astype(str)
 
             for v in ds_ahccd.data_vars:
@@ -148,8 +121,8 @@ def convert_ahccd(
             ds_ahccd.lat.attrs["units"] = "degrees_north"
             ds_ahccd.lat.attrs["long_name"] = "latitude"
 
-            for ll in long_name_dict:
-                ds_ahccd[ll].attrs["long_name"] = long_name_dict[ll]
+            for clean_name, orig_name in col_names.items():
+                ds_ahccd[clean_name].attrs["long_name"] = orig_name
 
             outfile.parent.mkdir(parents=True, exist_ok=True)
             ds_ahccd.to_netcdf(outfile, format="NETCDF4_CLASSIC", mode="w")
@@ -231,8 +204,9 @@ def convert_ahccd_fwf_files(
                 (ds.index.get_level_values("Year") == y)
                 & (ds.index.get_level_values("Month") == m)
             ).sum()
-            if ndays > exp_ndays:
-                raise Exception("unknown days present")
+            if ndays > np.int(exp_ndays):
+                print(f"year {y}, month {m}, ndays={ndays}, exp_ndays={exp_ndays}")
+                raise RuntimeError("Unknown days present.")
 
     time_ds = pd.DataFrame(
         {
