@@ -26,7 +26,6 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
             "scale_factor": 1e6 / (60 * 60),
             "add_offset": 0,
             "long_name": "RF1 Global Solar Radiation",
-            "standard_name": "solar_radiation_flux",
             "nc_name": "rf1_radiation",
         },
         "071": {
