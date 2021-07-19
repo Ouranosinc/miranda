@@ -123,7 +123,7 @@ def convert_ahccd(
             ds_ahccd.lat.attrs["long_name"] = "latitude"
 
             for clean_name, orig_name in col_names.items():
-                if clean_name in ["lat", "long", "elev"]:
+                if clean_name in ["lat", "long"]:
                     continue
                 ds_ahccd[clean_name].attrs["long_name"] = orig_name
 
