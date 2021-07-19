@@ -22,8 +22,8 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
     """
     ec_hourly_variables = {
         "061": {
-            "nc_units": "W s m-2",  # FIXME: Original units are MJ m-2 h-1, how best to convert?
-            "scale_factor": None,  # Not sure how best to proceed here.
+            "nc_units": "W m-2 h-1",
+            "scale_factor": 1e6 / (60 * 60),
             "add_offset": 0,
             "long_name": "RF1 Global Solar Radiation",
             "standard_name": "solar_radiation_flux",
