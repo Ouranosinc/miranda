@@ -25,7 +25,9 @@ def convert_ahccd(
     variable: str,
     generation: Optional[int] = None,
 ):
-    output_dir = Path(output_dir)
+    output_dir = Path(output_dir).expanduser().joinpath(variable)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )
@@ -44,7 +46,6 @@ def convert_ahccd(
 
     if "tas" in variable:
         metadata = pd.read_csv(metadata_source, header=2)
-        print(metadata.columns)
         metadata.columns = col_names.keys()
         cols_specs = col_spaces
 
@@ -59,9 +60,6 @@ def convert_ahccd(
                 )
     else:
         raise KeyError(f"{variable} does not include 'pr' or 'tas'.")
-
-    output_dir = output_dir.joinpath(variable)
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Convert station .txt files to netcdf
     for ff in Path(data_source).glob("*d*.txt"):
