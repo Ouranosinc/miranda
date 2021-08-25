@@ -28,7 +28,7 @@ if __name__ == "__main__":
         )
         aggregate_stations(
             source_files=source_data,
-            output_file=out_file,
+            output_folder=source_data.joinpath("output"),
             variables=var,
-            station_inventory=station_file,
+            station_metadata=station_file,
         )
