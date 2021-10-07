@@ -57,7 +57,7 @@ def collect_tigge(
     number: int,
     date: str,
 ):
-    numbers = "/".join([str(n) for n in range(number)])
+    numbers = "/".join([str(n) for n in range(1, number + 1)])
     output_name = f"{variable_name}_{member}_{time.split(':')[0]}_tigge_reanalysis_6h_{'-'.join(date.split('-')[:2])}.grib2"
     server = ECMWFDataServer()
     server.retrieve(
@@ -73,7 +73,7 @@ def collect_tigge(
             "param": variable_code,
             "step": "0/6/12/18/24/30/36/42/48/54/60/66/72/78/84/90/96/102/108/114/120/126/132/138/144/150/156/162/168/"
             "174/180/186/192/198/204/210/216/222/228/234/240/246/252/258/264/270/276/282/288/294/300/306/312/318/324/"
-            "330/336/342/348/354/360/366/372/378/384",
+            "330/336/342/348/354/360",
             "time": time,
             "type": "pf",
             "target": output_name,
