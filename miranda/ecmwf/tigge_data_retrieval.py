@@ -122,9 +122,9 @@ if __name__ == "__main__":
     #         )
 
     # Collect individual days
-    two_days_ago = (dt.today() - td(days=2)).strftime("%Y-%m-%d")
-    one_day_ago = (dt.today() - td(days=1)).strftime("%Y-%m-%d")
-    date_range = f"{two_days_ago}/to/{one_day_ago}"
+    start = (dt.today() - td(days=4)).strftime("%Y-%m-%d")
+    finish = (dt.today() - td(days=3)).strftime("%Y-%m-%d")
+    date_range = f"{start}/to/{finish}"
     dates.append(date_range)
 
     main(variables, members, start_times, dates)
