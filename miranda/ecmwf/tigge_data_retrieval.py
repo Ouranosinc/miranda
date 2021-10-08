@@ -59,7 +59,7 @@ def collect_tigge(
 ):
     numbers = "/".join([str(n) for n in range(1, number + 1)])
     output_name = (
-        f"{variable_name}_{member}_{time.split(':')[0]}_tigge_reanalysis_6h_"
+        f"{variable_name}_{member}_{'-'.join(time.split('/'))}_tigge_reanalysis_6h_"
         f"{date.split('/')[0]}_{date.split('/')[-1]}.grib2"
     )
     server = ECMWFDataServer()
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     )
 
     # Forecast start dates
-    start_times = ["00:00:00", "12:00:00"]
+    start_times = ["00/12"]
 
     dates = list()
     # Grab entire months
