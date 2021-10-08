@@ -58,7 +58,10 @@ def collect_tigge(
     date: str,
 ):
     numbers = "/".join([str(n) for n in range(1, number + 1)])
-    output_name = f"{variable_name}_{member}_{time.split(':')[0]}_tigge_reanalysis_6h_{'-'.join(date.split('-')[:2])}.grib2"
+    output_name = (
+        f"{variable_name}_{member}_{time.split(':')[0]}_tigge_reanalysis_6h_"
+        f"{date.split('/')[0]}_{date.split('/')[-1]}.grib2"
+    )
     server = ECMWFDataServer()
     server.retrieve(
         {
