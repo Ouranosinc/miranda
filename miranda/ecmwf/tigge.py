@@ -28,8 +28,8 @@ def tigge_request(
     forecast_type: str = "pf",
     times: Optional[List[str]] = None,
     dates: Optional[List[str]] = None,
-    start_day: Optional[str] = None,
-    end_day: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
     output_folder: Optional[os.PathLike] = None,
 ):
     def _tigge_request(
@@ -92,7 +92,7 @@ def tigge_request(
     if times is None:
         times = ["00/12"]
 
-    if start_day and end_day:
+    if date_start and date_end:
         start = (dt.today() - td(days=4)).strftime("%Y-%m-%d")
         finish = (dt.today() - td(days=3)).strftime("%Y-%m-%d")
         date_range = f"{start}/to/{finish}"
