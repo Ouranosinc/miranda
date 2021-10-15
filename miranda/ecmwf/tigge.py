@@ -18,7 +18,7 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["tigge_request"]
+__all__ = ["tigge_convert", "tigge_request"]
 
 
 def tigge_request(
@@ -31,7 +31,25 @@ def tigge_request(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     output_folder: Optional[os.PathLike] = None,
-):
+) -> None:
+    """Request tigge data from ECMWF in grib format.
+
+    Parameters
+    ----------
+    variables : List[str]
+    providers : List[str], optional
+    forecast_type: {"pf", "cf"]
+    times : List[str], optional
+    dates : List[str]. optional
+    date_start : str, optional
+    date_end : str, optional
+    output_folder : os.PathLike, optional
+
+    Returns
+    -------
+    None
+    """
+
     def _tigge_request(
         variable_name: str,
         variable_code: str,
@@ -41,7 +59,10 @@ def tigge_request(
         numbers: Optional[int],
         date: str,
     ):
-        numbers = "/".join([str(n) for n in range(1, numbers + 1)])
+        """Launch formatted request."""
+        number_range = ""
+        if numbers:
+            number_range = "/".join([str(n) for n in range(1, numbers + 1)])
         output_name = (
             f"{variable_name}_{provider}_{'-'.join(time.split('/'))}_tigge_reanalysis_6h_"
             f"{date.split('/')[0]}_{date.split('/')[-1]}.grib2"
@@ -73,7 +94,7 @@ def tigge_request(
             "target": output_name,
         }
         if numbers:
-            request.update({"number": numbers})
+            request.update({"number": number_range})
 
         server = ECMWFDataServer()
         server.retrieve(request)
@@ -89,7 +110,7 @@ def tigge_request(
     Path(target).mkdir(exist_ok=True)
     os.chdir(target)
 
-    if times is None:
+    if not times:
         times = ["00/12"]
 
     if date_start and date_end:
@@ -158,11 +179,22 @@ def tigge_request(
 
 def tigge_convert(
     source: Optional[os.PathLike] = None, target: Optional[os.PathLike] = None
-):
-    """Convert grib2 file to netCDF format."""
+) -> None:
+    """Convert grib2 file to netCDF format.
+
+    Parameters
+    ----------
+    source : os.PathLike, optional
+    target : os.PathLike, optional
+
+    Returns
+    -------
+    None
+    """
 
     def _tigge_convert(fn):
-        infile, outfolder = fn
+        """Launch reformatting function."""
+        infile, output_folder = fn
         try:
             for f in Path(infile.parent).glob(infile.name.replace(".grib", "*.idx")):
                 f.unlink(missing_ok=True)
@@ -185,7 +217,7 @@ def tigge_convert(
 
             shutil.move(
                 tmpfile.name,
-                outfolder.joinpath(infile.name.replace(".grib", ".nc")).as_posix(),
+                output_folder.joinpath(infile.name.replace(".grib", ".nc")).as_posix(),
             )
 
         except ValueError:

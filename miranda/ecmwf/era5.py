@@ -5,7 +5,7 @@ import os
 from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Mapping, Optional, Tuple
 
 from cdsapi import Client
 
@@ -13,21 +13,21 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["collect_era5"]
+__all__ = ["request_era5"]
 
 
-def collect_era5(
-    variables: Optional[Dict[str]] = None,
+def request_era5(
+    variables: Optional[Mapping[str, str]] = None,
     projects: List[str] = None,
     year_start: int = 1981,
     year_end: Optional[int] = None,
 ) -> None:
-    """
+    """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
     Parameters
     ----------
-    variables: dict[str], optional
-    projects : {"era5", "era5-land"}
+    variables: Mapping[str, str], optional
+    projects : List[{"era5", "era5-land"}]
     year_start : int
     year_end : int, optional
 
@@ -79,7 +79,7 @@ def collect_era5(
 
     for p in projects:
         proc = multiprocessing.Pool(processes=4)
-        func = functools.partial(_collect_direct_era, v_requested, p, product)
+        func = functools.partial(_request_direct_era, v_requested, p, product)
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
 
@@ -88,9 +88,10 @@ def collect_era5(
         proc.join()
 
 
-def _collect_direct_era(
-    variables: Dict[str], project: str, product: str, yearmonth: Tuple[int, str]
+def _request_direct_era(
+    variables: Mapping[str, str], project: str, product: str, yearmonth: Tuple[int, str]
 ):
+    """Launch formatted request."""
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]
     times = ["{}:00".format(str(t).zfill(2)) for t in range(24)]
