@@ -5,7 +5,7 @@ import os
 from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from cdsapi import Client
 
@@ -17,7 +17,7 @@ __all__ = ["collect_era5"]
 
 
 def collect_era5(
-    variables: Optional[Mapping[str]] = None,
+    variables: Optional[Dict[str]] = None,
     projects: List[str] = None,
     year_start: int = 1981,
     year_end: Optional[int] = None,
@@ -26,7 +26,7 @@ def collect_era5(
 
     Parameters
     ----------
-    variables: Dict[str], optional
+    variables: dict[str], optional
     projects : {"era5", "era5-land"}
     year_start : int
     year_end : int, optional
@@ -89,7 +89,7 @@ def collect_era5(
 
 
 def _collect_direct_era(
-    variables: Mapping[str], project: str, product: str, yearmonth: Tuple[int, str]
+    variables: Dict[str], project: str, product: str, yearmonth: Tuple[int, str]
 ):
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]

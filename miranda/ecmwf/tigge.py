@@ -190,7 +190,6 @@ def tigge_convert(
 
         except ValueError:
             print(f"error converting {infile.name} : File may be corrupted")
-            pass
 
     if source is None:
         source = Path().cwd().joinpath("download")
