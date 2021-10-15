@@ -1,1 +1,1 @@
-from _tigge import *
+from . import tigge
