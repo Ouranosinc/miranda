@@ -39,7 +39,7 @@ def tigge_request(
     ----------
     variables : List[str]
     providers : List[str], optional
-    forecast_type: {"pf", "cf"]
+    forecast_type: {"pf", "cf"}
     times : List[str], optional
     dates : List[str]. optional
     date_start : str, optional
