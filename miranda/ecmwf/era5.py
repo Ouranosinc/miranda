@@ -19,8 +19,10 @@ __all__ = ["request_era5"]
 def request_era5(
     variables: Optional[Mapping[str, str]] = None,
     projects: List[str] = None,
+    domain: str = "AMNO",
     year_start: int = 1981,
     year_end: Optional[int] = None,
+    processes: int = 4,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
@@ -28,8 +30,10 @@ def request_era5(
     ----------
     variables: Mapping[str, str], optional
     projects : List[{"era5", "era5-land"}]
+    domain : {"GLOBAL", "AMNO", "CAN", "QC"}
     year_start : int
     year_end : int, optional
+    processes : int
 
     Returns
     -------
@@ -78,8 +82,8 @@ def request_era5(
     os.chdir(target)
 
     for p in projects:
-        proc = multiprocessing.Pool(processes=4)
-        func = functools.partial(_request_direct_era, v_requested, p, product)
+        proc = multiprocessing.Pool(processes=processes)
+        func = functools.partial(_request_direct_era, v_requested, p, domain, product)
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
 
@@ -89,14 +93,27 @@ def request_era5(
 
 
 def _request_direct_era(
-    variables: Mapping[str, str], project: str, product: str, yearmonth: Tuple[int, str]
+    variables: Mapping[str, str],
+    project: str,
+    domain: str,
+    product: str,
+    yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]
     times = ["{}:00".format(str(t).zfill(2)) for t in range(24)]
 
-    region = "90/-180/10/-10"
+    if domain.upper() == "GLOBAL":
+        region = "90/-180/-90/180"
+    elif domain.upper() == "AMNO":
+        region = "90/-180/10/-10"
+    elif domain.upper() == "CAN":
+        region = "83.5/-141/41.5/-52.5"
+    elif domain.upper() == "QC":
+        region = "63/-80/44.5/-57"
+    else:
+        raise ValueError()
 
     c = Client()
 

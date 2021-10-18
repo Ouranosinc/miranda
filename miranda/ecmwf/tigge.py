@@ -31,6 +31,7 @@ def tigge_request(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     output_folder: Optional[os.PathLike] = None,
+    processes: int = 4,
 ) -> None:
     """Request tigge data from ECMWF in grib format.
 
@@ -44,6 +45,7 @@ def tigge_request(
     date_start : str, optional
     date_end : str, optional
     output_folder : os.PathLike, optional
+    processes : int
 
     Returns
     -------
@@ -155,7 +157,7 @@ def tigge_request(
         for t in times:
             for d in dates:
                 for p in providers:
-                    proc = multiprocessing.Pool(processes=4)
+                    proc = multiprocessing.Pool(processes=processes)
                     config = dict(
                         variable_name=v,
                         variable_code=var_num,
@@ -178,7 +180,9 @@ def tigge_request(
 
 
 def tigge_convert(
-    source: Optional[os.PathLike] = None, target: Optional[os.PathLike] = None
+    source: Optional[os.PathLike] = None,
+    target: Optional[os.PathLike] = None,
+    processes: int = 8,
 ) -> None:
     """Convert grib2 file to netCDF format.
 
@@ -186,6 +190,7 @@ def tigge_convert(
     ----------
     source : os.PathLike, optional
     target : os.PathLike, optional
+    processes : int
 
     Returns
     -------
@@ -233,7 +238,7 @@ def tigge_convert(
     target = Path(target)
     target.mkdir(exist_ok=True)
 
-    p = multiprocessing.Pool(processes=10)
+    p = multiprocessing.Pool(processes=processes)
 
     combs = list(it.product(*[all_files, [target]]))
     p.map(_tigge_convert, combs)
