@@ -19,3 +19,5 @@ pandas
 geopandas
 pint
 h5netcdf
+cdsapi
+ecmwf-api-client
