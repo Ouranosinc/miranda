@@ -745,7 +745,7 @@ def merge_converted_variables(
     """
 
     def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
-        var, input_folder, output_folder = args
+        v, input_folder, output_folder = args
 
         ncfiles = sorted(list(input_folder.glob("*.nc")))
         logging.info(
@@ -758,13 +758,13 @@ def merge_converted_variables(
         )
 
         outfile = output_folder.joinpath(
-            f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_'
+            f'{ncfiles[0].name.split(f"_{v}_")[0]}_{v}_'
             f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
         )
         if not outfile.exists():
             logging.info(f"Merging to {outfile.name}")
             comp = dict(zlib=True, complevel=5)
-            encoding = {var: comp for var in ds.data_vars}
+            encoding = {data_var: comp for data_var in ds.data_vars}
             encoding["time"] = {"dtype": "single"}
             with ProgressBar():
                 ds.to_netcdf(outfile, encoding=encoding)

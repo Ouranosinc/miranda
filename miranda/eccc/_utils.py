@@ -649,13 +649,17 @@ def ahccd_metadata(
         }
 
         if gen == 3:
-            _citation = "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized "
-            "Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. "
-            "Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"
+            _citation = (
+                "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized "
+                "Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. "
+                "Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"
+            )
         elif gen == 2:
-            _citation = "Mekis, É and L.A. Vincent, 2011: An overview of the second generation adjusted daily "
-            "precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), "
-            "163-177 doi:10.1080/07055900.2011.583910"
+            _citation = (
+                "Mekis, É and L.A. Vincent, 2011: An overview of the second generation adjusted daily "
+                "precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), "
+                "163-177 doi:10.1080/07055900.2011.583910"
+            )
         else:
             msg = f"Generation '{gen}' not supported."
             raise NotImplementedError(msg)

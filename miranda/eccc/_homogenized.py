@@ -54,7 +54,7 @@ def convert_ahccd(
         metadata.columns = col_names.keys()
         cols_specs = col_spaces
         for index, row in metadata.iterrows():
-            if type(row["stnid"]) == str:
+            if isinstance(row["stnid"], str):
                 metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].replace(
                     " ", ""
                 )
