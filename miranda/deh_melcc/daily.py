@@ -15,7 +15,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 # CMOR-like attributes
 cmor = json.load(open(Path(__file__).parent / "deh_cf_attrs.json"))["variable_entry"]
 
-# TODO: Some potentially useful attributes were skipped, because they would be complicated to include in a dataset and vary per station
+# TODO: Some potentially useful attributes were skipped, because they would be complicated to include in a dataset since they vary per station
 meta_patterns = {
     "Station: ": "name",
     "Bassin versant: ": "bv",
@@ -23,6 +23,7 @@ meta_patterns = {
 }
 
 data_header_pattern = "Station Date Débit (m³/s) Remarque\n"
+
 
 def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
     """Extract data and metadata from DEH (MELCC) streamflow file."""

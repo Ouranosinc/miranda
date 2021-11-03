@@ -1,6 +1,5 @@
 {
     "Header": {
-        "cmor_version": "1.0",
         "table_id": "DEH",
         "realm": "land",
         "table_date": "2021-10-26",
