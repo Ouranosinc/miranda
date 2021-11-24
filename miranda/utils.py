@@ -316,8 +316,8 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
     """
     ec_hourly_variables = {
         "061": {
-            "nc_units": "W s m-2",  # FIXME: Original units are MJ m-2 h-1, how best to convert?
-            "scale_factor": None,  # Not sure how best to proceed here.
+            "nc_units": "MJ m-2 h-1",
+            "scale_factor": 1,
             "add_offset": 0,
             "long_name": "RF1 Global Solar Radiation",
             "standard_name": "solar_radiation_flux",
@@ -402,6 +402,22 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "long_name": "Relative Humidity",
             "standard_name": "relative_humidity",
             "nc_name": "hur",
+        },
+        "081": {
+            "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Total Cloud Opacity",
+            "standard_name": "cloud_albedo",
+            "nc_name": "clo",
+        },
+        "082": {
+            "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Total Cloud Amount",
+            "standard_name": "cloud_area_fraction",
+            "nc_name": "clt",
         },
         "089": {
             "nc_units": "1",
