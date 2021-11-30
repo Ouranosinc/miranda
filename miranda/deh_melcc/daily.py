@@ -13,9 +13,9 @@ from miranda.units import u
 logging.config.dictConfig(LOGGING_CONFIG)
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "deh_cf_attrs.json"))[
+cmor = json.load(open(Path(__file__).parent / "deh_cf_attrs.json"))[  # noqa
     "variable_entry"
-]  # noqa
+]
 
 # TODO: Some potentially useful attributes were skipped, because they would be complicated to include in a dataset since they vary per station
 meta_patterns = {
