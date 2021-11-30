@@ -47,7 +47,7 @@ def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
         delimiter=r"\s+",
         skiprows=len(meta.splitlines()),
         encoding="latin1",
-        converters={0: lambda x: str(x)},
+        converters={0: lambda x: str(x)},  # noqa
         index_col=1,
         parse_dates=True,
         infer_datetime_format=True,
@@ -85,10 +85,7 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: Optional[dict] = {}) -> xr.D
             return round(
                 float(deg) + float(minutes) / 60 + float(seconds) / (60 * 60), 6
             )
-        else:
-            return round(
-                float(deg) - (float(minutes) / 60 + float(seconds) / (60 * 60)), 6
-            )
+        return round(float(deg) - (float(minutes) / 60 + float(seconds) / (60 * 60)), 6)
 
     coords = meta["coords"].split(" // ")
     ds["lat"] = xr.DataArray(
