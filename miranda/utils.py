@@ -468,7 +468,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "low_cloud_hgt",
         },
         "123": {
-            "nc_units": "kg m-2 s-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Rainfall",
@@ -492,7 +492,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "wind_dir_u2a_36",
         },
         "262": {
-            "nc_units": "kg m-2 s-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 00-60)",
@@ -500,7 +500,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "precipitation",
         },
         "263": {
-            "nc_units": "kg m-2 s-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 00-15)",
@@ -508,7 +508,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "precipitation_q1",
         },
         "264": {
-            "nc_units": "kg m-2 s-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 15-30)",
@@ -516,7 +516,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "precipitation_q2",
         },
         "265": {
-            "nc_units": "kg m-2 s-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 30-45)",
@@ -524,7 +524,7 @@ def eccc_cf_hourly_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "precipitation_q3",
         },
         "266": {
-            "nc_units": "kg m-2 s-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 45-60)",
@@ -694,24 +694,24 @@ def eccc_cf_daily_metadata(variable_code: Union[int, str]) -> dict:
             "nc_name": "tas",
         },
         "010": {
-            "nc_units": "mm",
-            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
+            "nc_units": "mm d-1",
+            "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Rainfall",
             "standard_name": "liquid_precipitation_flux",
             "nc_name": "prlptot",
         },
         "011": {
-            "nc_units": "cm",
-            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
+            "nc_units": "cm d-1",
+            "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Snowfall",
             "standard_name": "solid_precipitation_flux",
             "nc_name": "prsntot",
         },
         "012": {
-            "nc_units": "mm",
-            "scale_factor": 0.1,  # FIXME: This factor need to be adjusted to kg m-2 s-1
+            "nc_units": "mm d-1",
+            "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation",
             "standard_name": "precipitation_flux",
