@@ -28,7 +28,7 @@ from dask.diagnostics import ProgressBar
 
 from miranda.scripting import LOGGING_CONFIG
 
-from ._utils import cf_daily_metadata, cf_hourly_metadata
+from ._utils import daily_metadata, hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -65,7 +65,7 @@ def convert_hourly_flat_files(
         variables = [variables]
 
     for variable_code in variables:
-        info = cf_hourly_metadata(variable_code)
+        info = hourly_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         variable_name = info["standard_name"]
         variable_file_name = info["nc_name"]
@@ -104,7 +104,12 @@ def convert_hourly_flat_files(
                     names=col_names,
                     dtype={"year": int, "month": int, "day": int, "code_var": str},
                 )
-            except Exception:
+            except FileNotFoundError:
+                logging.error(f"File {fichier} was not found.")
+                errored_files.append(fichier)
+                continue
+
+            except (UnicodeDecodeError, Exception):
                 logging.error(
                     f"File {fichier} was unable to be read. This is probably an issue with the file."
                 )
@@ -260,7 +265,7 @@ def convert_daily_flat_files(
         variables = [variables]
 
     for variable_code in variables:
-        info = cf_daily_metadata(variable_code)
+        info = daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         nc_name = info["nc_name"]
 
@@ -497,9 +502,9 @@ def aggregate_stations(
 
     for variable_code in variables:
         if hourly:
-            info = cf_hourly_metadata(variable_code)
+            info = hourly_metadata(variable_code)
         else:
-            info = cf_daily_metadata(variable_code)
+            info = daily_metadata(variable_code)
         variable_name = info["nc_name"]
         logging.info(
             "Merging `{}` using `{}` time step.".format(variable_name, time_step)
@@ -534,7 +539,7 @@ def aggregate_stations(
                     chunks=dict(time=365),
                 )
 
-                # dask gives warnings about export 'object' datatypes
+                # dask gives warnings about export 'object' data types
                 ds["station_id"] = ds["station_id"].astype(str)
         if ds:
             station_file_codes = [x.name.split("_")[0] for x in nclist]
@@ -745,7 +750,7 @@ def merge_converted_variables(
     """
 
     def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
-        v, input_folder, output_folder = args
+        varia, input_folder, output_folder = args
 
         ncfiles = sorted(list(input_folder.glob("*.nc")))
         logging.info(
@@ -758,7 +763,7 @@ def merge_converted_variables(
         )
 
         outfile = output_folder.joinpath(
-            f'{ncfiles[0].name.split(f"_{v}_")[0]}_{v}_'
+            f'{ncfiles[0].name.split(f"_{varia}_")[0]}_{varia}_'
             f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
         )
         if not outfile.exists():
@@ -782,9 +787,9 @@ def merge_converted_variables(
             variables = [variables]
         for var in variables:
             try:
-                selected_variables.append(cf_hourly_metadata(var))
+                selected_variables.append(hourly_metadata(var))
             except KeyError:
-                selected_variables.append(cf_hourly_metadata(var))
+                selected_variables.append(hourly_metadata(var))
 
     variables_found = [x.name for x in source.iterdir() if x.is_dir()]
     if selected_variables:
