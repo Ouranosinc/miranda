@@ -105,20 +105,21 @@ def _request_direct_era(
     times = ["{}:00".format(str(t).zfill(2)) for t in range(24)]
 
     if domain.upper() == "GLOBAL":
-        region = "90/-180/-90/180"
+        region = [90, -180, -90, 180]
     elif domain.upper() == "AMNO":
-        region = "90/-180/10/-10"
+        domain = "NAM"
+        region = [90, -180, 10, -10]
     elif domain.upper() == "CAN":
-        region = "83.5/-141/41.5/-52.5"
+        region = [83.5, -141, 41.5, -52.5]
     elif domain.upper() == "QC":
-        region = "63/-80/44.5/-57"
+        region = [63, -80, 44.5, -57]
     else:
         raise ValueError()
 
     c = Client()
 
     for var in variables.keys():
-        netcdf_name = f"{var}_{'-'.join(project.split('-')[1:])}_{product}_hourly_{year}{month}_NAM.nc"
+        netcdf_name = f"{var}_{'-'.join(project.split('-')[1:])}_{product}_hourly_{year}{month}_{domain.upper()}.nc"
 
         if Path(netcdf_name).exists():
             continue
