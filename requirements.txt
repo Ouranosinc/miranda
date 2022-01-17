@@ -1,5 +1,6 @@
 cdsapi
 cftime
+clisops
 custom-inherit>=2.3.0
 dask
 distributed
@@ -17,8 +18,10 @@ pint
 pyproj
 rasterio
 requests
+regionmask
 rioxarray
 scp
 shapely
 xarray
+xclim
 zarr
