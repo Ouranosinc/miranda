@@ -28,14 +28,14 @@ with open("requirements_dev.txt") as dev:
     for dependency in dev.readlines():
         dev_requirements.append(dependency)
 
-docs_requirements = ["sphinx", "guzzle-sphinx-theme", "nbsphinx", "pandoc", "ipython"]
+docs_requirements = ["guzzle-sphinx-theme", "ipython", "nbsphinx", "pandoc", "sphinx"]
 
 readme = open("README.rst").read()
 doclink = """
 Documentation
 -------------
 
-The full documentation is at http://miranda.readthedocs.io/en/latest."""
+The full documentation is at https://miranda.readthedocs.io/en/latest."""
 history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 
 setup(

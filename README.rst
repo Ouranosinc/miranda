@@ -14,8 +14,8 @@ Features
 
 * TODO
 
-.. |build| image:: https://img.shields.io/travis/Ouranosinc/miranda.svg?branch=master
-        :target: https://travis-ci.org/Ouranosinc/miranda
+.. |build| image:: https://github.com/Ouranosinc/miranda/actions/workflows/main.yml/badge.svg
+        :target: https://github.com/Ouranosinc/miranda/actions/workflows/main.yml
         :alt: Build Status
 
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/miranda/badge.svg
