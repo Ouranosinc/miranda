@@ -1,3 +1,4 @@
+import json
 import logging.config
 import os
 from pathlib import Path
@@ -198,9 +199,29 @@ def reanalysis_processing(
                     daily_aggregation(ds, project, var, file_name, output_folder)
 
 
-def variable_conversion(
-    ds: xarray.DataArray, project: str
-) -> Union[xarray.Dataset, xarray.DataArray]:
+def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
+    """Convert variables to CF-compliant format"""
+
+    def _metadata_conversion(d: xarray.Dataset, project: str) -> xarray.Dataset:
+        if project in ["era5", "era5-single-levels", "era5-land"]:
+            metadata_definition = json.load(
+                open(Path(__file__).parent / "ecmwf_cf_attrs.json")
+            )
+        else:
+            raise NotImplementedError()
+
+        d.attrs.update(metadata_definition["Header"])
+        for v in d.data_vars:
+            d[v].attrs.update(metadata_definition["variable_entry"][v])
+        return d
+
+    def _units_conversion(d: xarray.Dataset) -> xarray.Dataset:
+        for v in d.data_vars:
+            if "_conversion" in d[v].attrs:
+                d[v] = d[v] * d[v].attrs["_conversion"]
+            del d[v].attrs["_conversion"]
+        return d
+
     conversions = dict()
     conversions["era5"] = dict(
         d2m="td",
@@ -223,15 +244,9 @@ def variable_conversion(
             ds = ds.rename({old: new})
         except ValueError:
             pass
-    ds = metadata_conversion(ds, project)
-
+    ds = _metadata_conversion(ds, project)
+    ds = _units_conversion(ds)
     return ds
-
-
-def metadata_conversion(ds, project: str) -> Union[xarray.Dataset, xarray.DataArray]:
-    ecmwf = json.load(open(Path(__file__).parent / "ecmwf_cf_attrs.json"))[  # noqa
-        "variable_entry"
-    ]
 
 
 def daily_aggregation(
