@@ -22,7 +22,13 @@ def gather_era5(path: Union[str, os.PathLike]) -> (list, Dict):
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
     infiles_era5 = list(sorted(source_era5.rglob("tas_*.nc")))
+    infiles_era5.extend(list(sorted(source_era5.rglob("td_*.nc"))))
     infiles_era5.extend(list(sorted(source_era5.rglob("pr_*.nc"))))
+    infiles_era5.extend(list(sorted(source_era5.rglob("prsn_*.nc"))))
+    infiles_era5.extend(list(sorted(source_era5.rglob("potevap_*.nc"))))
+    infiles_era5.extend(list(sorted(source_era5.rglob("snd_*.nc"))))
+    infiles_era5.extend(list(sorted(source_era5.rglob("uas_*.nc"))))
+    infiles_era5.extend(list(sorted(source_era5.rglob("vas_*.nc"))))
     land_sea_mask = dict(lsm=next(source_era5.glob("sftlf*.nc")))
     return infiles_era5, land_sea_mask
 
@@ -32,7 +38,13 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> (list, None):
     source_era5l = Path(path)
     logging.info("Gathering ERA5-Land from %s" % source_era5l.as_posix())
     infiles_era5l = list(sorted(source_era5l.rglob("*tas_*.nc")))
-    infiles_era5l.extend(list(sorted(source_era5l.rglob("*pr_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("td_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("pr_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("prsn_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("potevap_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("snd_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("uas_*.nc"))))
+    infiles_era5l.extend(list(sorted(source_era5l.rglob("vas_*.nc"))))
     return infiles_era5l, None
 
 

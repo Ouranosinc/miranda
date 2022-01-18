@@ -1,0 +1,84 @@
+{
+  "Header": {
+    "data_specs_version": "00.00.01",
+    "table_id": "ECMWF",
+    "realm": "atmos",
+    "table_date": "18 January 2022",
+    "product": "reanalysis",
+    "Conventions": "CF-1.8"
+  },
+  "variable_entry": {
+    "evspsbl": {
+      "original_field": "pev",
+      "standard_name": "water_evapotranspiration_flux",
+      "units": "kg m-2 s-1",
+      "cell_methods": "time: mean",
+      "long_name": "Potential evapotranspiration",
+      "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
+      "out_name": "pr",
+      "_conversion": 0.2777777777778
+    },
+    "pr": {
+      "original_field": "tp",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "cell_methods": "time: mean",
+      "long_name": "Precipitation",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "out_name": "pr",
+      "_conversion": 0.2777777777778
+    },
+    "prsn": {
+      "original_field": "sf",
+      "standard_name": "snowfall_flux",
+      "units": "kg m-2 s-1",
+      "cell_methods": "time: mean",
+      "long_name": "Snowfall flux",
+      "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
+      "out_name": "prsn",
+      "_conversion": 0.2777777777778
+    },
+    "tas": {
+      "original_field": "t2m",
+      "standard_name": "air_temperature",
+      "units": "K",
+      "cell_methods": "time: mean",
+      "long_name": "2 metre temperature",
+      "out_name": "tas"
+    },
+    "td": {
+      "original_field": "d2m",
+      "standard_name": "air_temperature",
+      "units": "K",
+      "cell_methods": "time: mean",
+      "long_name": "2 metre dewpoint temperature",
+      "out_name": "td"
+    },
+    "snd": {
+      "original_field": "sde",
+      "standard_name": "surface_snow_thickness",
+      "units": "m",
+      "cell_methods": "time: mean",
+      "long_name": "Snow depth",
+      "out_name": "snd"
+    },
+    "uas": {
+      "original_field": "u10",
+      "standard_name": "surface_snow_thickness",
+      "units": "m s-1",
+      "cell_methods": "time: mean",
+      "long_name": "Snow Depth",
+      "comments": "Converted from 10 metre U wind component.",
+      "out_name": "uas"
+    },
+    "vas": {
+      "original_field": "v10",
+      "standard_name": "surface_snow_thickness",
+      "units": "m s-1",
+      "cell_methods": "time: mean",
+      "long_name": "Snow Depth",
+      "comments": "Converted from 10 metre V wind component.",
+      "out_name": "vas"
+    }
+  }
+}
