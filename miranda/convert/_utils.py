@@ -30,20 +30,34 @@ PROJECT_INSTITUTES = {
     "wfdei-gem-capa": "usask",
 }
 
+HOURLY_ACCUMULATED_VARIABLES = dict()
+HOURLY_ACCUMULATED_VARIABLES["era5-land"] = [
+    "e",
+    "evabs",
+    "evaow",
+    "evatc",
+    "evavt",
+    "pev",
+    "ro",
+    "sf",
+    "slhf",
+    "smlt",
+    "sro",
+    "sshf",
+    "ssr",
+    "ssrd",
+    "ssro",
+    "str",
+    "strd",
+    "tp",
+]
+
 
 # Needed pre-processing function
 def _drop_those_time_bnds(dataset: xr.Dataset):
     if "time_bnds" in dataset.variables:
         return dataset.drop_vars(["time_bnds"])
     return dataset
-
-
-# Needed for ERA5-Land precipitation data
-def _hourly_incremented_precipitation(
-    ds: Union[xarray.Dataset, xarray.DataArray]
-) -> Union[xarray.Dataset, xarray.DataArray]:
-    ds["time"] = ds.time - np.timedelta64(1, "h")
-    return ds
 
 
 def reanalysis_processing(
@@ -76,12 +90,12 @@ def reanalysis_processing(
     -------
     None
     """
-    outfiles = Path(output_folder)
+    out_files = Path(output_folder)
     if domains is None:
         domains = ["raw"]
 
     for domain in domains:
-        output_folder = outfiles.joinpath(domain)
+        output_folder = out_files.joinpath(domain)
         output_folder.mkdir(exist_ok=True)
         for project, infiles in data.items():
             if domain != "raw":
@@ -108,12 +122,14 @@ def reanalysis_processing(
                     elif domain.upper() == "AMNO":
                         lons = np.array([-180, -10])
                         lats = np.array([10, 90])
-                    else:
+                    elif domain.upper() == "RAW":
                         subset_geo = False
                         if start and end:
                             subset_time = True
                         else:
                             subset_time = False
+                    else:
+                        raise NotImplementedError()
 
                     if subset_geo:
                         ds = subset.subset_bbox(
@@ -157,9 +173,6 @@ def reanalysis_processing(
 
                     ds = variable_conversion(ds, project=project)
 
-                    if project == "era5-land" and var == "pr":
-                        ds = _hourly_incremented_precipitation(ds)
-
                     # Land-Sea mask operations
                     if project in land_sea_mask.keys():
                         logging.info(
@@ -202,50 +215,47 @@ def reanalysis_processing(
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
 
-    def _metadata_conversion(d: xarray.Dataset, project: str) -> xarray.Dataset:
-        if project in ["era5", "era5-single-levels", "era5-land"]:
+    # Add and update existing metadata fields
+    def _metadata_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
+        if p in ["era5", "era5-single-levels", "era5-land"]:
             metadata_definition = json.load(
                 open(Path(__file__).parent / "ecmwf_cf_attrs.json")
             )
         else:
             raise NotImplementedError()
 
+        # Add global attributes
         d.attrs.update(metadata_definition["Header"])
+        descriptions = metadata_definition["variable_entry"]
+
+        # Add variable metadata
         for v in d.data_vars:
-            d[v].attrs.update(metadata_definition["variable_entry"][v])
+            d[v].attrs.update(descriptions[v])
+
+        # Rename data variables
+        for v in d.data_vars:
+            try:
+                d = d.rename({descriptions[v]["original_variable"]: v})
+            except (ValueError, IndexError):
+                pass
         return d
 
-    def _units_conversion(d: xarray.Dataset) -> xarray.Dataset:
+    # For converting variable units
+    def _units_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
+
+        if p in HOURLY_ACCUMULATED_VARIABLES.keys():
+            if any([v in d.data_vars for v in HOURLY_ACCUMULATED_VARIABLES[p]]):
+                d["time"] = d.time - np.timedelta64(1, "h")
+
         for v in d.data_vars:
-            if "_conversion" in d[v].attrs:
+            if hasattr(d[v].attrs, "_conversion"):
                 d[v] = d[v] * d[v].attrs["_conversion"]
             del d[v].attrs["_conversion"]
         return d
 
-    conversions = dict()
-    conversions["era5"] = dict(
-        d2m="td",
-        pev="evspsbl",
-        sde="snd",
-        sf="prsn",
-        t2m="tas",
-        tp="pr",
-        u10="uas",
-        v10="vas",
-        longitude="lon",
-        latitude="lat",
-    )
-    conversions["era5-single-levels"] = conversions["era5"]
-    conversions["era5-land"] = conversions["era5"]
-
-    equivalent = conversions[project]
-    for old, new in equivalent.items():
-        try:
-            ds = ds.rename({old: new})
-        except ValueError:
-            pass
     ds = _metadata_conversion(ds, project)
-    ds = _units_conversion(ds)
+    ds = _units_conversion(ds, project)
+
     return ds
 
 
@@ -255,56 +265,44 @@ def daily_aggregation(
     # Daily variable aggregation operations
     input_file = Path(input_file)
     output_folder = Path(output_folder)
-    ds_out = xr.Dataset()
 
     logging.info("Creating daily upscaled reanalyses.")
     if variable == "tas":
-        if project in ["era5-land", "cfsr", "nrcan", "era5", "merra2", "wfdei"]:
-            # Some looping to deal with memory consumption issues
-            for v, func in {
-                "tasmax": "max",
-                "tasmin": "min",
-                "tas": "mean",
-            }.items():
-                if project in ["cfsr", "nrcan"]:
-                    v_desired = v
-                else:
-                    v_desired = "tas"
+        # Some looping to deal with memory consumption issues
+        for v, func in {
+            "tasmax": "max",
+            "tasmin": "min",
+            "tas": "mean",
+        }.items():
+            if project in ["cfsr", "nrcan"]:
+                v_desired = v
+            else:
+                v_desired = "tas"
 
-                input_file_parts = input_file.stem.split("_")
-                input_file_parts[1] = "daily"
-                output = output_folder.joinpath(f"{'_'.join(input_file_parts)}.nc")
+            input_file_parts = input_file.stem.split("_")
+            input_file_parts[1] = "daily"
+            output = output_folder.joinpath(f"{'_'.join(input_file_parts)}.nc")
 
-                if output.exists():
-                    logging.info("File `%s` exists. Continuing..." % output.name)
-                    return
+            if output.exists():
+                logging.info("File `%s` exists. Continuing..." % output.name)
+                return
+            ds_out = xr.Dataset()
+            if v == "tas" and not hasattr(ds, "tas"):
+                ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
+            else:
+                # Thanks for the help, xclim contributors
+                r = ds[v_desired].resample(time="D", keep_attrs=True)
+                ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
 
-                if v == "tas" and project == "nrcan":
-                    ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
-                else:
-                    # Thanks for the help, xclim contributors
-                    r = ds[v_desired].resample(time="D", keep_attrs=True)
-                    ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
+            logging.info("Masking individual variable with AR6 regions.")
+            mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
+            ds_out = ds_out.assign_coords(region=mask)
 
-                logging.info("Masking individual variable with AR6 regions.")
-                mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
-                ds_out = ds_out.assign_coords(region=mask)
+            logging.info("Writing out %s." % output)
+            ds_out.to_netcdf(output)
+            del ds_out[v]
 
-                logging.info("Writing out %s." % output)
-                ds_out.to_netcdf(output)
-                del ds_out[v]
-        elif project in ["era5", "merra2", "wfdei"]:
-            ds_out["tasmax"] = ds.tas.resample(time="D").max(
-                dim="time", keep_attrs=True
-            )
-            ds_out["tasmin"] = ds.tas.resample(time="D").min(
-                dim="time", keep_attrs=True
-            )
-            ds_out["tas"] = ds.tas.resample(time="D").mean(dim="time", keep_attrs=True)
-        else:
-            raise ValueError()
-
-    if variable == "pr":
+    if variable in ["pr"]:
         input_file_parts = input_file.stem.split("_")
         input_file_parts[1] = "daily"
         output = output_folder.joinpath(f"{'_'.join(input_file_parts)}.nc")

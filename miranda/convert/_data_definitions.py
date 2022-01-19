@@ -21,6 +21,7 @@ def gather_era5(path: Union[str, os.PathLike]) -> (list, Dict):
     # ERA5 source data
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
+    # TODO: We should be downloading unconverted variables into files with their original names
     infiles_era5 = list(sorted(source_era5.rglob("tas_*.nc")))
     infiles_era5.extend(list(sorted(source_era5.rglob("td_*.nc"))))
     infiles_era5.extend(list(sorted(source_era5.rglob("pr_*.nc"))))
@@ -37,6 +38,7 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> (list, None):
     # ERA5-Land source data
     source_era5l = Path(path)
     logging.info("Gathering ERA5-Land from %s" % source_era5l.as_posix())
+    # TODO: We should be downloading unconverted variables into files with their original names
     infiles_era5l = list(sorted(source_era5l.rglob("*tas_*.nc")))
     infiles_era5l.extend(list(sorted(source_era5l.rglob("td_*.nc"))))
     infiles_era5l.extend(list(sorted(source_era5l.rglob("pr_*.nc"))))

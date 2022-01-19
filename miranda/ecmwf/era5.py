@@ -41,14 +41,14 @@ def request_era5(
     """
     # Variables of interest
     variable_reference = dict(
-        pr="total_precipitation",
-        vas="10m_v_component_of_wind",
-        uas="10m_u_component_of_wind",
-        td="2m_dewpoint_temperature",
-        tas="2m_temperature",
-        potevap="potential evaporation",
-        snd="snow_depth",
-        prsn="snowfall",
+        tp="total_precipitation",
+        v10="10m_v_component_of_wind",
+        u10="10m_u_component_of_wind",
+        d2m="2m_dewpoint_temperature",
+        t2m="2m_temperature",
+        pev="potential evaporation",
+        sde="snow_depth",
+        sf="snowfall",
     )
 
     v_requested = dict()
@@ -118,8 +118,16 @@ def _request_direct_era(
 
     c = Client()
 
+    if project in ["reanalysis-era5-single-levels", "reanlysis-era5-land"]:
+        timestep = "hourly"
+    else:
+        raise NotImplementedError()
+
     for var in variables.keys():
-        netcdf_name = f"{var}_{'-'.join(project.split('-')[1:])}_{product}_hourly_{year}{month}_{domain.upper()}.nc"
+        netcdf_name = (
+            f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+            "_{product}_{domain.upper()}_{year}{month}.nc"
+        )
 
         if Path(netcdf_name).exists():
             continue
