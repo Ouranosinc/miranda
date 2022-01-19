@@ -16,7 +16,7 @@ with Client(
     n_workers=2,
     threads_per_worker=1,
     dashboard_address=8786,
-    memory_limit="50GB",
+    memory_limit="4GB",
     local_directory=Path(tempdir),
 ):
     rechunk_ecmwf(

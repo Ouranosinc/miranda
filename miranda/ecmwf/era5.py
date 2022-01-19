@@ -5,7 +5,7 @@ import os
 from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple
+from typing import List, Mapping, Optional, Tuple, Union
 
 from cdsapi import Client
 
@@ -17,20 +17,23 @@ __all__ = ["request_era5"]
 
 
 def request_era5(
-    variables: Optional[Mapping[str, str]] = None,
-    projects: List[str] = None,
+    variables: Optional[Mapping[str, str]],
+    projects: List[str],
+    *,
     domain: str = "AMNO",
-    year_start: int = 1981,
-    year_end: Optional[int] = None,
+    output_folder: Optional[Union[str, os.PathLike]] = None,
+    year_start: Union[str, int] = 1950,
+    year_end: Optional[Union[str, int]] = None,
     processes: int = 4,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
     Parameters
     ----------
-    variables: Mapping[str, str], optional
+    variables: Mapping[str, str]
     projects : List[{"era5", "era5-land"}]
     domain : {"GLOBAL", "AMNO", "CAN", "QC", "MTL"}
+    output_folder : str or os.PathLike, optional
     year_start : int
     year_end : int, optional
     processes : int
@@ -61,7 +64,7 @@ def request_era5(
 
     if year_end is None:
         year_end = date.today().year
-    years = range(year_start, year_end)
+    years = range(int(year_start), int(year_end))
 
     months = [str(d).zfill(2) for d in range(13)]
     yearmonth = list()
@@ -76,12 +79,14 @@ def request_era5(
         project_names.append("reanalysis-era5-land")
     product = project_names[0].split("-")[0]
 
-    target = Path().cwd().joinpath("downloaded")
-
+    if output_folder is None:
+        target = Path().cwd().joinpath("downloaded")
+    else:
+        target = output_folder
     Path(target).mkdir(exist_ok=True)
     os.chdir(target)
 
-    for p in projects:
+    for p in project_names:
         proc = multiprocessing.Pool(processes=processes)
         func = functools.partial(_request_direct_era, v_requested, p, domain, product)
 
@@ -120,10 +125,10 @@ def _request_direct_era(
 
     c = Client()
 
-    if project in ["reanalysis-era5-single-levels", "reanlysis-era5-land"]:
+    if project in ["reanalysis-era5-single-levels", "reanalysis-era5-land"]:
         timestep = "hourly"
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(project)
 
     for var in variables.keys():
         netcdf_name = (
