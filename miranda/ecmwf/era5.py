@@ -30,7 +30,7 @@ def request_era5(
     ----------
     variables: Mapping[str, str], optional
     projects : List[{"era5", "era5-land"}]
-    domain : {"GLOBAL", "AMNO", "CAN", "QC"}
+    domain : {"GLOBAL", "AMNO", "CAN", "QC", "MTL"}
     year_start : int
     year_end : int, optional
     processes : int
@@ -113,6 +113,8 @@ def _request_direct_era(
         region = [83.5, -141, 41.5, -52.5]
     elif domain.upper() == "QC":
         region = [63, -80, 44.5, -57]
+    elif domain.upper() == "MTL":
+        region = [45.75, -74.05, 45.3, -73.4]
     else:
         raise ValueError()
 
@@ -126,7 +128,7 @@ def _request_direct_era(
     for var in variables.keys():
         netcdf_name = (
             f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-            "_{product}_{domain.upper()}_{year}{month}.nc"
+            f"_{product}_{domain.upper()}_{year}{month}.nc"
         )
 
         if Path(netcdf_name).exists():
