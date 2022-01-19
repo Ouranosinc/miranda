@@ -209,7 +209,16 @@ def reanalysis_processing(
                             ds = ds.where(lsm[land_sea_mask].notnull())
                         ds.attrs["land_sea_cutoff"] = f"{land_sea_percentage} %"
 
-                    daily_aggregation(ds, project, var, file_name, output_folder)
+                    if time_freq.lower() == "daily":
+                        daily_aggregation(ds, project, var, file_name, output_folder)
+                    else:
+                        logging.info("Writing out fixed files for %s." % file_name)
+                        years, datasets = zip(*ds.groupby("time.year"))  # noqa
+                        out_filenames = [
+                            output_folder.joinpath(f"{file_name}_{year}.nc")
+                            for year in years
+                        ]
+                        xr.save_mfdataset(datasets, out_filenames)
 
 
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
@@ -281,11 +290,12 @@ def daily_aggregation(
 
             input_file_parts = input_file.stem.split("_")
             input_file_parts[1] = "daily"
-            output = output_folder.joinpath(f"{'_'.join(input_file_parts)}.nc")
+            output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
 
-            if output.exists():
-                logging.info("File `%s` exists. Continuing..." % output.name)
+            if any([f for f in output.glob("*")]):
+                logging.info("Files for `%s` exist. Continuing..." % output.name)
                 return
+
             ds_out = xr.Dataset()
             if v == "tas" and not hasattr(ds, "tas"):
                 ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
@@ -294,46 +304,46 @@ def daily_aggregation(
                 r = ds[v_desired].resample(time="D", keep_attrs=True)
                 ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
 
-            logging.info("Masking individual variable with AR6 regions.")
+            logging.info("Masking %s with AR6 regions." % v)
             mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
             ds_out = ds_out.assign_coords(region=mask)
 
-            logging.info("Writing out %s." % output)
-            ds_out.to_netcdf(output)
-            del ds_out[v]
+            logging.info("Writing out daily converted %s." % output)
+            years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
+            out_filenames = [
+                output_folder.joinpath(f"{output}_{year}.nc") for year in years
+            ]
+            xr.save_mfdataset(datasets, out_filenames)
+
+            del ds_out
 
     if variable in ["pr"]:
         input_file_parts = input_file.stem.split("_")
         input_file_parts[1] = "daily"
-        output = output_folder.joinpath(f"{'_'.join(input_file_parts)}.nc")
+        output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
 
-        if output.exists():
-            logging.info("File `%s` exists. Continuing..." % output.name)
+        if any([f for f in output.glob("*")]):
+            logging.info("Files for `%s` exist. Continuing..." % output.name)
             return
 
+        ds_out = xr.Dataset()
         logging.info("Converting precipitation units")
-        if project == "era5-land":
-            ds_out["pr"] = (
-                ds.pr.resample(time="D").max(dim="time", keep_attrs=True) * 1000
-            )
-            ds_out["pr"].attrs["units"] = "mm d-1"
-        elif project == "era5":
-            ds_out["pr"] = (
-                ds.pr.resample(time="D").sum(dim="time", keep_attrs=True, skipna=False)
-                * 1000
-            )
-            ds_out["pr"].attrs["units"] = "mm d-1"
-        elif project in ["merra2", "cfsr", "nrcan", "wfdei"]:
-            ds_out["pr"] = (
-                ds.pr.resample(time="D").mean(dim="time", keep_attrs=True) * 86400
-            )
-            ds_out["pr"].attrs["units"] = "mm d-1"
+        if project in HOURLY_ACCUMULATED_VARIABLES.keys():
+            ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
+        else:
+            ds_out["pr"] = ds.pr.resample(time="D").mean(dim="time", keep_attrs=True)
 
-        logging.info("Masking outputs with AR6 regions.")
+        logging.info("Masking %s with AR6 regions." % variable)
         mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
         ds_out = ds_out.assign_coords(region=mask)
 
-        logging.info("Writing out %s." % output)
-        ds_out.to_netcdf(output)
+        logging.info("Writing out daily converted %s." % output)
+        years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
+        out_filenames = [
+            output_folder.joinpath(f"{output}_{year}.nc") for year in years
+        ]
+        xr.save_mfdataset(datasets, out_filenames)
+
+        del ds_out
 
     return
