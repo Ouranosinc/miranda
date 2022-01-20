@@ -22,10 +22,10 @@ dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
 
 
 PROJECT_INSTITUTES = {
+    "cfsr": "ncar",
     "era5": "ecmwf",
     "era5-land": "ecmwf",
     "merra2": "nasa",
-    "cfsr": "ncar",
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
 }
@@ -274,8 +274,16 @@ def daily_aggregation(
     # Daily variable aggregation operations
     input_file = Path(input_file)
     output_folder = Path(output_folder)
-
     logging.info("Creating daily upscaled reanalyses.")
+
+    input_file_parts = input_file.stem.split("_")
+    input_file_parts[1] = "daily"
+    output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
+
+    if any([f for f in output.glob("*")]):
+        logging.info("Files for `%s` exist. Continuing..." % output.name)
+        return
+
     if variable == "tas":
         # Some looping to deal with memory consumption issues
         for v, func in {
@@ -287,14 +295,6 @@ def daily_aggregation(
                 v_desired = v
             else:
                 v_desired = "tas"
-
-            input_file_parts = input_file.stem.split("_")
-            input_file_parts[1] = "daily"
-            output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
-
-            if any([f for f in output.glob("*")]):
-                logging.info("Files for `%s` exist. Continuing..." % output.name)
-                return
 
             ds_out = xr.Dataset()
             if v == "tas" and not hasattr(ds, "tas"):
@@ -316,34 +316,26 @@ def daily_aggregation(
             xr.save_mfdataset(datasets, out_filenames)
 
             del ds_out
-
-    if variable in ["pr"]:
-        input_file_parts = input_file.stem.split("_")
-        input_file_parts[1] = "daily"
-        output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
-
-        if any([f for f in output.glob("*")]):
-            logging.info("Files for `%s` exist. Continuing..." % output.name)
             return
 
+    if variable in ["pr"]:
         ds_out = xr.Dataset()
         logging.info("Converting precipitation units")
         if project in HOURLY_ACCUMULATED_VARIABLES.keys():
             ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
         else:
             ds_out["pr"] = ds.pr.resample(time="D").mean(dim="time", keep_attrs=True)
+    else:
+        raise NotImplementedError()
 
-        logging.info("Masking %s with AR6 regions." % variable)
-        mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
-        ds_out = ds_out.assign_coords(region=mask)
+    logging.info("Masking %s with AR6 regions." % variable)
+    mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
+    ds_out = ds_out.assign_coords(region=mask)
 
-        logging.info("Writing out daily converted %s." % output)
-        years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
-        out_filenames = [
-            output_folder.joinpath(f"{output}_{year}.nc") for year in years
-        ]
-        xr.save_mfdataset(datasets, out_filenames)
+    logging.info("Writing out daily converted %s." % output)
+    years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
+    out_filenames = [output_folder.joinpath(f"{output}_{year}.nc") for year in years]
+    xr.save_mfdataset(datasets, out_filenames)
 
-        del ds_out
-
+    del ds_out
     return

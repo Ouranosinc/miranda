@@ -137,6 +137,7 @@ def _request_direct_era(
         )
 
         if Path(netcdf_name).exists():
+            logging.info("Dataset %s already exists. Continuing..." % netcdf_name)
             continue
 
         request_kwargs = dict(
