@@ -92,19 +92,25 @@ def reanalysis_processing(
     """
     out_files = Path(output_folder)
     if domains is None:
-        domains = ["raw"]
+        domains = [None]
 
     for domain in domains:
-        output_folder = out_files.joinpath(domain)
+        if domain is not None:
+            output_folder = out_files.joinpath(domain)
+        else:
+            output_folder = output_folder
+
         output_folder.mkdir(exist_ok=True)
-        for project, in_files in data.items():
-            if domain != "raw":
+        for project, in_files in data:
+            if domain is not None:
                 logging.info(f"Processing {project} data for domain {domain}.")
             else:
                 logging.info(f"Processing {project} data.")
             for var in variables:
                 institute = PROJECT_INSTITUTES[project]
-                file_name = f"{var}_{time_freq}_{institute}_{project}_{domain.lower()}"
+                file_name = "_".join([var, time_freq, institute, project])
+                if domain is not None:
+                    file_name = f"{file_name}_{domain}"
 
                 # Select only for variable of interest
                 multi_files = [x for x in in_files if var in str(x)]

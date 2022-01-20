@@ -1,5 +1,6 @@
 import logging.config
 import os
+import shutil
 import time
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Union
@@ -72,11 +73,8 @@ def rechunk_ecmwf(
     errored = list()
     start_all = time.perf_counter()
     for variable in variables:
-
         try:
-
             next(input_folder.glob(f"{variable}*"))
-            print("found")
         except StopIteration:
             logging.warning("No files found for %s. Continuing..." % variable)
             continue
@@ -102,6 +100,9 @@ def rechunk_ecmwf(
             if (out.is_dir() or out.is_file()) and not overwrite:
                 logging.info(f"Already completed: {file.name}")
                 continue
+            if out.is_dir() and output_format == "zarr":
+                logging.warning(f"Removing existing zarr files for {out.name}.")
+                shutil.rmtree(out)
 
             ds = xr.open_dataset(
                 file,
@@ -183,9 +184,11 @@ def rechunk_ecmwf(
         for var in ds.data_vars.values():
             del var.encoding["chunks"]
 
-        ds.to_zarr(
+        merged_zarr = Path(
             output_folder / f"{variable}_{time_step}_ecmwf_{project}_reanalysis.zarr"
         )
+        ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
+
         logging.info(
             f"Second step done for {variable} in {time.perf_counter() - start:.2f} s"
         )
