@@ -24,7 +24,7 @@ def request_era5(
     output_folder: Optional[Union[str, os.PathLike]] = None,
     year_start: Union[str, int] = 1950,
     year_end: Optional[Union[str, int]] = None,
-    processes: int = 4,
+    processes: int = 10,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 

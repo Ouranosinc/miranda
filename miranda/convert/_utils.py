@@ -97,7 +97,7 @@ def reanalysis_processing(
     for domain in domains:
         output_folder = out_files.joinpath(domain)
         output_folder.mkdir(exist_ok=True)
-        for project, infiles in data.items():
+        for project, in_files in data.items():
             if domain != "raw":
                 logging.info(f"Processing {project} data for domain {domain}.")
             else:
@@ -107,7 +107,7 @@ def reanalysis_processing(
                 file_name = f"{var}_{time_freq}_{institute}_{project}_{domain.lower()}"
 
                 # Select only for variable of interest
-                multi_files = [x for x in infiles if var in str(x)]
+                multi_files = [x for x in in_files if var in str(x)]
                 with Client():
                     logging.info("Resampling variable `%s`." % var)
 
