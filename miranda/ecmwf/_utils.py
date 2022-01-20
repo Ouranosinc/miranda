@@ -15,27 +15,42 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["rechunk_ecmwf"]
 
 
+ERA5_VARIABLES = [
+    "d2m",
+    "pev",
+    "sde",
+    "sf",
+    "t2m",
+    "tp",
+    "u10",
+    "v10",
+]
+
+
 def rechunk_ecmwf(
     project: str,
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
-    time_step: str,
+    time_step: Optional[str] = None,
     target_chunks: Optional[Dict[str, int]] = None,
     variables: Optional[Sequence[str]] = None,
-    output_format: str = ".nc",
+    output_format: str = "netcdf",
+    overwrite: bool = False,
 ):
     """Rechunks ERA5 dataset for better loading/reading performance.
 
     Parameters
     ----------
-    project: {"era5", "era5-land", "era5-single-levels"}
-    input_folder: str or os.PathLike
-    output_folder: str or os.PathLike
-    time_step: {"hourly", "daily"}
-    target_chunks: dict
+    project : {"era5", "era5-land", "era5-single-levels"}
+    input_folder : str or os.PathLike
+    output_folder : str or os.PathLike
+    time_step : {"hourly", "daily"}, optional
+      Time step of the input data. Parsed from filename if not set.
+    target_chunks : dict
       Must include "time", optionally "latitude" and "longitude"
-    variables: Sequence[str]
-    output_format: {".nc", ".zarr"}
+    variables : Sequence[str]
+    output_format : {"netcdf", "zarr"}
+    overwrite : bool
 
     Returns
     -------
@@ -44,135 +59,143 @@ def rechunk_ecmwf(
     input_folder = Path(input_folder)
     output_folder = Path(output_folder)
 
-    if variables is None:
-        variables = ["potevap", "pr", "prsn", "snd", "swe", "tas", "td", "uas", "vas"]
-
-    if target_chunks is None:
-        # ~35 Mo chunks
-        if project.lower() == ["era5-single-levels", "era5", "era5-land"]:
-            if time_step == "hourly":
-                target_chunks = {"time": 24 * 7, "latitude": 225, "longitude": 252}
-            elif time_step == "daily":
-                target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
-            else:
-                raise NotImplementedError()
-        else:
+    if time_step is None:
+        test_file = next(input_folder.glob("*"))
+        file_parts = str(test_file.name).split("_")
+        time_step = file_parts[1]
+        if time_step not in ["hourly", "daily"]:
             raise NotImplementedError()
 
+    if project.startswith("era5") and variables is None:
+        variables = ERA5_VARIABLES
+
     errored = list()
-    for folder, variables in (input_folder, variables):
-        start_all = time.perf_counter()
-        for variable in variables:
+    start_all = time.perf_counter()
+    for variable in variables:
 
-            # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along time.
-            start_var = time.perf_counter()
-            for file in sorted(
-                folder.glob(f"{variable}_{project}_reanalysis_{time_step}_*.nc")
-            ):
-                start = time.perf_counter()
+        try:
 
-                if output_format == "nc":
-                    output_folder.mkdir(exist_ok=True)
-                    out = output_folder / f"{file.stem}.nc"
-                elif output_format == "zarr":
-                    outpath = output_folder / "temp"
-                    outpath.mkdir(exist_ok=True, parents=True)
-                    out = outpath / f"{file.stem}.zarr"
+            next(input_folder.glob(f"{variable}*"))
+            print("found")
+        except StopIteration:
+            logging.warning("No files found for %s. Continuing..." % variable)
+            continue
+
+        # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along time.
+        start_var = time.perf_counter()
+
+        for file in sorted(
+            input_folder.glob(f"{variable}_{time_step}_ecmwf_{project}_reanalysis_*.nc")
+        ):
+            start = time.perf_counter()
+
+            if output_format == "netcdf":
+                output_folder.mkdir(exist_ok=True)
+                out = output_folder / f"{file.stem}.nc"
+            elif output_format == "zarr":
+                outpath = output_folder / "temp"
+                outpath.mkdir(exist_ok=True, parents=True)
+                out = outpath / f"{file.stem}.zarr"
+            else:
+                raise NotImplementedError()
+
+            if (out.is_dir() or out.is_file()) and not overwrite:
+                logging.info(f"Already completed: {file.name}")
+                continue
+
+            ds = xr.open_dataset(
+                file,
+                chunks={"time": -1},
+            )
+
+            if target_chunks is None:
+                # ~35 Mo chunks
+                if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
+                    if time_step == "hourly":
+                        target_chunks = {
+                            "time": 24 * 7,
+                            "latitude": 225,
+                            "longitude": 252,
+                        }
+                    elif time_step == "daily":
+                        target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
+                    else:
+                        raise NotImplementedError()
                 else:
                     raise NotImplementedError()
 
-                if out.is_dir() or out.is_file():
-                    logging.info(f"Already completed: {file}")
-                    continue
+            # Set correct chunks in encoding options
+            encoding = dict()
+            try:
+                for name, da in ds.data_vars.items():
+                    chunks = []
+                    for dim in da.dims:
+                        if dim in target_chunks.keys():
+                            chunks.append(target_chunks[str(dim)])
+                        else:
+                            chunks.append(len(da[dim]))
 
-                ds = xr.open_dataset(
-                    file,
-                    chunks={"time": -1},
-                )
-
-                # Set correct chunks in encoding options
-                encoding = dict()
-                try:
-                    for name, da in ds.data_vars.items():
-                        if output_format == "nc":
-                            encoding[name] = {
-                                "chunksizes": [
-                                    target_chunks[str(dim)] for dim in da.dims
-                                ],
-                                "zlib": True,
-                            }
-                        elif output_format == "zarr":
-                            encoding[name] = {
-                                "chunks": [target_chunks[str(dim)] for dim in da.dims],
-                                "compressor": zarr.Blosc(),
-                            }
-                except KeyError:
-                    logging.warning(
-                        f"{file} has chunking errors. Verify data manually."
-                    )
-                    errored.append(file)
-                    continue
-
-                # Write yearly file
-                if output_format == "nc":
-                    ds.to_netcdf(out, encoding=encoding)
-                elif output_format == "zarr":
-                    ds.to_zarr(out, encoding=encoding)
-
-                logging.info(
-                    f"Done for {file.stem} in {time.perf_counter() - start:.2f} s"
-                )
-            logging.info(
-                f"First step done for {variable} in {(time.perf_counter() - start_all) / 3600:.2f} h"
-            )
-
-            if output_format == "nc":
+                    if output_format == "netcdf":
+                        encoding[name] = {
+                            "chunksizes": chunks,
+                            "zlib": True,
+                        }
+                    elif output_format == "zarr":
+                        encoding[name] = {
+                            "chunks": chunks,
+                            "compressor": zarr.Blosc(),
+                        }
+            except KeyError:
+                logging.warning(f"{file} has chunking errors. Verify data manually.")
+                errored.append(file)
                 continue
 
-            # STEP 2 : Merge all years, chunking along time.
-            start = time.perf_counter()
+            # Write yearly file
+            getattr(ds, f"to_{output_format}")(out, encoding=encoding)
 
-            files = sorted(
-                (output_folder / "temp").glob(
-                    f"{variable}_{project}_reanalysis_{time_step}_*.zarr"
-                )
+            logging.info(f"Done for {file.stem} in {time.perf_counter() - start:.2f} s")
+
+        if output_format == "netcdf":
+            continue
+
+        logging.info(
+            f"First step done for {variable} in {(time.perf_counter() - start_all) / 3600:.2f} h"
+        )
+
+        # STEP 2 : Merge all years, chunking along time.
+        start = time.perf_counter()
+
+        files = sorted(
+            (output_folder / "temp").glob(
+                f"{variable}_{time_step}_ecmwf_{project}_reanalysis_*.zarr"
             )
+        )
 
-            ds = xr.open_mfdataset(files, parallel=True, engine="zarr")
+        ds = xr.open_mfdataset(files, parallel=True, engine="zarr")
 
-            ds = ds.chunk({"time": 2922})
-            for var in ds.data_vars.values():
-                del var.encoding["chunks"]
+        if time_step == "hourly":
+            # Four months of hours
+            ds = ds.chunk(dict(time=2922))
+        else:
+            # Five years of days
+            ds = ds.chunk(dict(time=1825))
 
-            ds.to_zarr(
-                output_folder / f"{variable}_{project}_reanalysis_{time_step}.zarr"
-            )
-            logging.info(
-                f"Second step done for {variable} in {time.perf_counter() - start:.2f} s"
-            )
-            logging.info(
-                f"Both steps done for {variable} in {time.perf_counter() - start_var:.2f} s"
-            )
+        for var in ds.data_vars.values():
+            del var.encoding["chunks"]
 
-        print(f"All variables in {folder} done in {time.perf_counter() - start_all}")
-        if errored:
-            errored_filenames = "\n".join(map(str, errored))
-            logging.warning(f"Errored files are as follows: \n{errored_filenames}")
+        ds.to_zarr(
+            output_folder / f"{variable}_{time_step}_ecmwf_{project}_reanalysis.zarr"
+        )
+        logging.info(
+            f"Second step done for {variable} in {time.perf_counter() - start:.2f} s"
+        )
+        logging.info(
+            f"Both steps done for {variable} in {time.perf_counter() - start_var:.2f} s"
+        )
 
-
-def daily_metadata():
-    pass
-
-
-def hourly_metadata():
-    pass
-
-
-def correct_cf_metadata():
-    pass
-
-
-def increment_hourly_precipitation(
-    files: Sequence[Union[os.PathLike, str]], output_folder
-):
-    pass
+    logging.info(
+        f"All variables in {input_folder} done in {time.perf_counter() - start_all}"
+    )
+    if errored:
+        errored_filenames = "\n".join(map(str, errored))
+        logging.warning(f"Errored files are as follows: \n{errored_filenames}")

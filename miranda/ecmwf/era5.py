@@ -64,7 +64,7 @@ def request_era5(
 
     if year_end is None:
         year_end = date.today().year
-    years = range(int(year_start), int(year_end))
+    years = range(int(year_start), int(year_end) + 1)
 
     months = [str(d).zfill(2) for d in range(1, 13)]
     yearmonth = list()
