@@ -8,72 +8,72 @@
     "Conventions": "CF-1.8"
   },
   "variable_entry": {
-    "evspsbl": {
-      "original_variable": "pev",
+    "pev": {
       "original_long_name": "Potential Evaporation",
       "standard_name": "water_evapotranspiration_flux",
       "units": "kg m-2 s-1",
       "cell_methods": "time: mean",
       "long_name": "Potential evapotranspiration",
       "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
-      "_conversion": 0.2777777777778
+      "_conversion": 0.2777777777778,
+      "_cf_variable_name": "evspsbl"
     },
-    "pr": {
-      "original_variable": "tp",
+    "tp": {
       "original_long_name": "Total Precipitation",
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1",
       "cell_methods": "time: mean",
       "long_name": "Precipitation",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
-      "_conversion": 0.2777777777778
+      "_conversion": 0.2777777777778,
+      "_cf_variable_name": "pr"
     },
-    "prsn": {
-      "original_variable": "sf",
+    "sf": {
       "original_long_name": "Snowfall",
       "standard_name": "snowfall_flux",
       "units": "kg m-2 s-1",
       "cell_methods": "time: mean",
       "long_name": "Snowfall flux",
       "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
-      "_conversion": 0.2777777777778
+      "_conversion": 0.2777777777778,
+      "_cf_variable_name": "pr"
     },
-    "tas": {
-      "original_variable": "t2m",
+    "t2m": {
       "standard_name": "air_temperature",
       "units": "K",
       "cell_methods": "time: mean",
-      "long_name": "2 metre temperature"
+      "long_name": "2 metre temperature",
+      "_cf_variable_name": "tas"
     },
-    "td": {
-      "original_variable": "d2m",
+    "d2m": {
       "standard_name": "dew_point_temperature",
       "units": "K",
       "cell_methods": "time: mean",
-      "long_name": "2 metre dewpoint temperature"
+      "long_name": "2 metre dewpoint temperature",
+      "_cf_variable_name": "td"
     },
-    "snd": {
-      "original_variable": "sde",
+    "sde": {
       "standard_name": "surface_snow_thickness",
       "units": "m",
       "cell_methods": "time: mean",
-      "long_name": "Snow depth"
+      "long_name": "Snow depth",
+      "_cf_variable_name": "snd"
     },
-    "uas": {
-      "original_variable": "u10",
+    "u10": {
       "standard_name": "surface_snow_thickness",
       "units": "m s-1",
       "cell_methods": "time: mean",
       "long_name": "Snow Depth",
-      "comments": "Converted from 10 metre U wind component."
+      "comments": "Converted from 10 metre U wind component.",
+      "_cf_variable_name": "uas"
     },
-    "vas": {
-      "original_variable": "v10",
+    "v10": {
       "standard_name": "surface_snow_thickness",
       "units": "m s-1",
       "cell_methods": "time: mean",
       "long_name": "Snow Depth",
-      "comments": "Converted from 10 metre V wind component."
+      "comments": "Converted from 10 metre V wind component.",
+      "_cf_variable_name": "vas"
     }
   }
 }
