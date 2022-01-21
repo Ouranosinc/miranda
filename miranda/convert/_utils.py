@@ -63,7 +63,7 @@ def reanalysis_processing(
     data: Dict[str, List[Union[str, os.PathLike]]],
     output_folder: Union[str, os.PathLike],
     variables: Sequence[str],
-    time_freq: str,
+    aggregate: Union[str, bool] = False,
     domains: Optional[Sequence[str]] = None,
     start: Optional[str] = None,
     end: Optional[str] = None,
@@ -77,7 +77,7 @@ def reanalysis_processing(
     data: Dict[str, List[str]]
     output_folder: Union[str, os.PathLike]
     variables: Sequence[str]
-    time_freq: {"hourly", "daily"}
+    aggregate: {"daily", False}
     domains: Sequence[str]
       Allowed options: {"QC", "CAN", "AMNO", None}
     start: str, optional
@@ -101,23 +101,27 @@ def reanalysis_processing(
             output_folder = out_files.joinpath(domain)
         else:
             output_folder = output_folder
-
         output_folder.mkdir(exist_ok=True)
+
         for project, in_files in data.items():
             if domain is not None:
                 logging.info(f"Processing {project} data for domain {domain}.")
             else:
                 logging.info(f"Processing {project} data.")
             for var in variables:
+                # Select only for variable of interest
+                multi_files = sorted(x for x in in_files if var in str(x))
+                logging.info("Resampling variable `%s`." % var)
+
+                if aggregate:
+                    time_freq = aggregate
+                else:
+                    time_freq = multi_files[0].split("_")[1]
+
                 institute = PROJECT_INSTITUTES[project]
                 file_name = "_".join([var, time_freq, institute, project])
                 if domain is not None:
                     file_name = f"{file_name}_{domain}"
-
-                # Select only for variable of interest
-                multi_files = [x for x in in_files if var in str(x)]
-                # with Client():
-                logging.info("Resampling variable `%s`." % var)
 
                 subset_geo = False
                 subset_time = False
@@ -219,7 +223,7 @@ def reanalysis_processing(
                     ds.attrs["land_sea_cutoff"] = f"{land_sea_percentage} %"
 
                 if time_freq.lower() == "daily":
-                    daily_aggregation(ds, project, var, file_name, output_folder)
+                    daily_aggregation(ds, project, file_name, output_folder)
                 else:
                     logging.info("Writing out fixed files for %s." % file_name)
                     years, datasets = zip(*ds.groupby("time.year"))  # noqa
@@ -261,6 +265,15 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                 pass
         return d
 
+    # For renaming lat and lon dims
+    def _dims_conversion(d: xarray.Dataset):
+        for orig, new in dict(longitude="lon", latitude="lat").items():
+            try:
+                d = d.rename({orig: new})
+            except KeyError:
+                pass
+        return d
+
     # For converting variable units
     def _units_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
 
@@ -275,79 +288,89 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         return d
 
     ds = _metadata_conversion(ds, project)
+    ds = _dims_conversion(ds)
     ds = _units_conversion(ds, project)
 
     return ds
 
 
 def daily_aggregation(
-    ds, project: str, variable: str, input_file: Union[str, os.PathLike], output_folder
+    ds, project: str, input_file: Union[str, os.PathLike], output_folder
 ) -> None:
     # Daily variable aggregation operations
     input_file = Path(input_file)
     output_folder = Path(output_folder)
     logging.info("Creating daily upscaled reanalyses.")
 
-    input_file_parts = input_file.stem.split("_")
-    input_file_parts[1] = "daily"
-    output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
+    for variable in ds.data_vars:
+        input_file_parts = input_file.stem.split("_")
+        input_file_parts[0] = variable
+        input_file_parts[1] = "daily"
+        output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
 
-    if any([f for f in output.glob("*")]):
-        logging.info("Files for `%s` exist. Continuing..." % output.name)
-        return
-
-    if variable == "tas":
-        # Some looping to deal with memory consumption issues
-        for v, func in {
-            "tasmax": "max",
-            "tasmin": "min",
-            "tas": "mean",
-        }.items():
-            if project in ["cfsr", "nrcan"]:
-                v_desired = v
-            else:
-                v_desired = "tas"
-
-            ds_out = xr.Dataset()
-            if v == "tas" and not hasattr(ds, "tas"):
-                ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
-            else:
-                # Thanks for the help, xclim contributors
-                r = ds[v_desired].resample(time="D", keep_attrs=True)
-                ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
-
-            logging.info("Masking %s with AR6 regions." % v)
-            mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
-            ds_out = ds_out.assign_coords(region=mask)
-
-            logging.info("Writing out daily converted %s." % output)
-            years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
-            out_filenames = [
-                output_folder.joinpath(f"{output}_{year}.nc") for year in years
-            ]
-            xr.save_mfdataset(datasets, out_filenames)
-
-            del ds_out
+        if any([f for f in output.glob("*")]):
+            logging.info("Files for `%s` exist. Continuing..." % output.name)
             return
 
-    if variable in ["pr"]:
-        ds_out = xr.Dataset()
-        logging.info("Converting precipitation units")
-        if project in HOURLY_ACCUMULATED_VARIABLES.keys():
-            ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
+        if variable == "tas":
+            # Some looping to deal with memory consumption issues
+            for v, func in {
+                "tasmax": "max",
+                "tasmin": "min",
+                "tas": "mean",
+            }.items():
+                if project in ["cfsr", "nrcan"]:
+                    v_desired = v
+                else:
+                    v_desired = "tas"
+
+                input_file_parts[0] = v
+                output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
+
+                ds_out = xr.Dataset()
+                if v == "tas" and not hasattr(ds, "tas"):
+                    ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
+                else:
+                    # Thanks for the help, xclim contributors
+                    r = ds[v_desired].resample(time="D", keep_attrs=True)
+                    ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
+
+                logging.info("Masking %s with AR6 regions." % v)
+                mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
+                ds_out = ds_out.assign_coords(region=mask)
+
+                logging.info("Writing out daily converted %s." % output)
+                years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
+                out_filenames = [
+                    output_folder.joinpath(f"{output}_{year}.nc") for year in years
+                ]
+                xr.save_mfdataset(datasets, out_filenames)
+
+                del ds_out
+            return
+
+        if variable in ["pr"]:
+            ds_out = xr.Dataset()
+            logging.info("Converting precipitation units")
+            if project in HOURLY_ACCUMULATED_VARIABLES.keys():
+                ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
+            else:
+                ds_out["pr"] = ds.pr.resample(time="D").mean(
+                    dim="time", keep_attrs=True
+                )
         else:
-            ds_out["pr"] = ds.pr.resample(time="D").mean(dim="time", keep_attrs=True)
-    else:
-        raise NotImplementedError()
+            continue
 
-    logging.info("Masking %s with AR6 regions." % variable)
-    mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
-    ds_out = ds_out.assign_coords(region=mask)
+        logging.info("Masking %s with AR6 regions." % variable)
+        mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
+        ds_out = ds_out.assign_coords(region=mask)
 
-    logging.info("Writing out daily converted %s." % output)
-    years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
-    out_filenames = [output_folder.joinpath(f"{output}_{year}.nc") for year in years]
-    xr.save_mfdataset(datasets, out_filenames)
+        logging.info("Writing out daily converted %s." % output)
+        years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
+        out_filenames = [
+            output_folder.joinpath(f"{output}_{year}.nc") for year in years
+        ]
+        xr.save_mfdataset(datasets, out_filenames)
 
-    del ds_out
+        del ds_out
     return
