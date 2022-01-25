@@ -13,8 +13,18 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["rechunk_ecmwf"]
+__all__ = [
+    "rechunk_reanalysis",  # noqa
+]
 
+PROJECT_INSTITUTES = {
+    "cfsr": "ncar",
+    "era5": "ecmwf",
+    "era5-land": "ecmwf",
+    "merra2": "nasa",
+    "nrcan-gridded-10km": "nrcan",
+    "wfdei-gem-capa": "usask",
+}
 
 ERA5_VARIABLES = [
     "d2m",
@@ -28,7 +38,7 @@ ERA5_VARIABLES = [
 ]
 
 
-def rechunk_ecmwf(
+def rechunk_reanalysis(
     project: str,
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
@@ -168,7 +178,7 @@ def rechunk_ecmwf(
 
         files = sorted(
             (output_folder / "temp").glob(
-                f"{variable}_{time_step}_ecmwf_{project}_reanalysis_*.zarr"
+                f"{variable}_{time_step}_{PROJECT_INSTITUTES[project]}_{project}_reanalysis_*.zarr"
             )
         )
 
@@ -187,7 +197,14 @@ def rechunk_ecmwf(
         merged_zarr = Path(
             output_folder / f"{variable}_{time_step}_ecmwf_{project}_reanalysis.zarr"
         )
-        ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
+        try:
+            ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
+        except zarr.errors.ContainsGroupError:
+            logging.error(
+                'Files exist for variable %s. Consider using "overwrite=True"'
+                % variable
+            )
+            raise
 
         logging.info(
             f"Second step done for {variable} in {time.perf_counter() - start:.2f} s"

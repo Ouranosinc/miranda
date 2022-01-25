@@ -199,7 +199,7 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     def _metadata_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
         if p in ["era5", "era5-single-levels", "era5-land"]:
             metadata_definition = json.load(
-                open(Path(__file__).parent / "ecmwf_cf_attrs.json")
+                open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
             )
         else:
             raise NotImplementedError()
@@ -290,6 +290,7 @@ def daily_aggregation(
                 output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
 
                 ds_out = xr.Dataset()
+                ds_out.attrs = ds.attrs.copy()
                 if v == "tas" and not hasattr(ds, "tas"):
                     ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
                 else:
@@ -309,6 +310,7 @@ def daily_aggregation(
 
         if variable in ["pr"]:
             ds_out = xr.Dataset()
+            ds_out.attrs = ds.attrs.copy()
             logging.info("Converting precipitation units")
             if project in HOURLY_ACCUMULATED_VARIABLES.keys():
                 ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
