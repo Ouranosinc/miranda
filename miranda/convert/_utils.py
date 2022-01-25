@@ -28,6 +28,7 @@ PROJECT_INSTITUTES = {
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
 }
+PROJECT_LONS_FROM_0TO360 = ["era5", "cfsr"]
 
 HOURLY_ACCUMULATED_VARIABLES = dict()
 HOURLY_ACCUMULATED_VARIABLES["era5-land"] = [
@@ -67,8 +68,6 @@ def reanalysis_processing(
     domains: Optional[Sequence[str]] = None,
     start: Optional[str] = None,
     end: Optional[str] = None,
-    land_sea_mask: Optional[Dict] = None,
-    land_sea_percentage: int = 50,
 ) -> None:
     """
 
@@ -82,8 +81,6 @@ def reanalysis_processing(
       Allowed options: {"QC", "CAN", "AMNO", None}
     start: str, optional
     end: str, optional
-    land_sea_mask: Dict, optional
-    land_sea_percentage: int
 
     Returns
     -------
@@ -93,12 +90,9 @@ def reanalysis_processing(
     if domains is None:
         domains = [None]
 
-    if land_sea_mask is None:
-        land_sea_mask = dict()
-
     for domain in domains:
         if domain is not None:
-            output_folder = out_files.joinpath(domain)
+            output_folder = out_files.joinpath(domain)  # noqa
         else:
             output_folder = output_folder
         output_folder.mkdir(exist_ok=True)
@@ -123,28 +117,27 @@ def reanalysis_processing(
                 if domain is not None:
                     file_name = f"{file_name}_{domain}"
 
-                subset_geo = False
-                subset_time = False
                 # Subsetting operations
+                ds = None
+                subset_time = False
                 if domain is None:
                     if start and end:
                         subset_time = True
-                elif domain.upper() == "QC":
-                    subset_geo = True
-                    lons = np.array([-79.76, -57.10])
-                    lats = np.array([44.99, 62.59])
-                elif domain.upper() == "CAN":
-                    subset_geo = True
-                    lons = np.array([-141.02, -52.60])
-                    lats = np.array([41.68, 83.14])
-                elif domain.upper() in ["AMNO", "NAM"]:
-                    subset_geo = True
-                    lons = np.array([-180, -10])
-                    lats = np.array([10, 90])
-                else:
-                    raise NotImplementedError()
 
-                if subset_geo:
+                # TODO: Extract the domain to a dictionary/json somewhere
+                elif domain is not None:
+                    if domain.upper() == "QC":
+                        lon_values = np.array([-79.76, -57.10])
+                        lat_values = np.array([44.99, 62.59])
+                    elif domain.upper() == "CAN":
+                        lon_values = np.array([-141.02, -52.60])
+                        lat_values = np.array([41.68, 83.14])
+                    elif domain.upper() in ["AMNO", "NAM"]:
+                        lon_values = np.array([-180, -10])
+                        lat_values = np.array([10, 90])
+                    else:
+                        raise NotImplementedError()
+
                     ds = subset.subset_bbox(
                         xr.open_mfdataset(
                             multi_files,
@@ -154,14 +147,14 @@ def reanalysis_processing(
                             engine="netcdf4",
                             preprocess=_drop_those_time_bnds,
                         ),
-                        lon_bnds=lons
+                        lon_bnds=lon_values
                         if project not in {"era5", "cfsr"}
-                        else lons + 360,
-                        lat_bnds=lats,
+                        else lon_values + 360,
+                        lat_bnds=lat_values,
                         start_date=start,
                         end_date=end,
                     )
-                elif subset_time:
+                if subset_time:
                     ds = subset.subset_time(
                         xr.open_mfdataset(
                             multi_files,
@@ -174,7 +167,7 @@ def reanalysis_processing(
                         start_date=start,
                         end_date=end,
                     )
-                else:
+                elif not any([subset_time, domain, ds]):
                     ds = xr.open_mfdataset(
                         multi_files,
                         combine="by_coords",
@@ -186,46 +179,11 @@ def reanalysis_processing(
 
                 ds = variable_conversion(ds, project=project)
 
-                # Land-Sea mask operations
-                if project in land_sea_mask.keys():
-                    logging.info(
-                        f"Masking variable with land-sea mask at {land_sea_percentage} % cutoff."
-                    )
-                    land_sea_mask, lsm_file = land_sea_mask[project]
-                    lsm_raw = xr.open_dataset(lsm_file)
-                    try:
-                        lsm_raw = lsm_raw.rename(
-                            {"longitude": "lon", "latitude": "lat"}
-                        )
-                    except ValueError:
-                        raise
-
-                    lsm = subset.subset_bbox(
-                        lsm_raw,
-                        lon_bnds=lons
-                        if project not in ["era5", "cfsr"]
-                        else lons + 360,
-                        lat_bnds=lats,
-                    ).load()
-                    lsm = lsm.where(
-                        lsm[land_sea_mask] > float(land_sea_percentage) / 100
-                    )
-                    if project == "era5":
-                        ds = ds.where(
-                            lsm[land_sea_mask].isel(time=0, drop=True).notnull()
-                        )
-                        try:
-                            ds = ds.rename({"longitude": "lon", "latitude": "lat"})
-                        except ValueError:
-                            raise
-                    elif project in ["merra2", "cfsr"]:
-                        ds = ds.where(lsm[land_sea_mask].notnull())
-                    ds.attrs["land_sea_cutoff"] = f"{land_sea_percentage} %"
-
                 if time_freq.lower() == "daily":
                     daily_aggregation(ds, project, file_name, output_folder)
                 else:
                     logging.info("Writing out fixed files for %s." % file_name)
+                    # TODO: Resample for year*months
                     years, datasets = zip(*ds.groupby("time.year"))  # noqa
                     out_filenames = [
                         output_folder.joinpath(f"{file_name}_{year}.nc")
@@ -248,6 +206,7 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
 
         # Add global attributes
         d.attrs.update(metadata_definition["Header"])
+        d.attrs.update(dict(project=p))
         descriptions = metadata_definition["variable_entry"]
 
         # Add variable metadata
@@ -280,6 +239,8 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         if p in HOURLY_ACCUMULATED_VARIABLES.keys():
             if any([v in d.data_vars for v in HOURLY_ACCUMULATED_VARIABLES[p]]):
                 d["time"] = d.time - np.timedelta64(1, "h")
+
+        # TODO: We need to de-accumulate this variable as well
 
         for v in d.data_vars:
             if hasattr(d[v].attrs, "_conversion"):
@@ -314,6 +275,7 @@ def daily_aggregation(
 
         if variable == "tas":
             # Some looping to deal with memory consumption issues
+            # TODO: Add cell methods for tasmax and tasmin
             for v, func in {
                 "tasmax": "max",
                 "tasmin": "min",
@@ -334,10 +296,6 @@ def daily_aggregation(
                     # Thanks for the help, xclim contributors
                     r = ds[v_desired].resample(time="D", keep_attrs=True)
                     ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
-
-                logging.info("Masking %s with AR6 regions." % v)
-                mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
-                ds_out = ds_out.assign_coords(region=mask)
 
                 logging.info("Writing out daily converted %s." % output)
                 years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
@@ -361,10 +319,6 @@ def daily_aggregation(
         else:
             continue
 
-        logging.info("Masking %s with AR6 regions." % variable)
-        mask = regionmask.defined_regions.ar6.all.mask(ds_out.lon, ds_out.lat)
-        ds_out = ds_out.assign_coords(region=mask)
-
         logging.info("Writing out daily converted %s." % output)
         years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
         out_filenames = [
@@ -374,3 +328,103 @@ def daily_aggregation(
 
         del ds_out
     return
+
+
+def add_ar6_regions(ds: xarray.Dataset) -> xarray.Dataset:
+    """Add the IPCC AR6 Regions to dataset.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+
+    Returns
+    -------
+    xarray.Dataset
+    """
+    mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
+    ds = ds.assign_coords(region=mask)
+    return ds
+
+
+def threshold_land_sea_mask(
+    ds: Union[xr.Dataset, str, os.PathLike],
+    *,
+    land_sea_mask: Dict[str, Union[os.PathLike, str]],
+    land_sea_percentage: int = 50,
+    output_folder: Optional[Union[str, os.PathLike]] = None,
+) -> Optional[Path]:
+    """Land-Sea mask operations.
+
+    Parameters
+    ----------
+    ds: Union[xr.Dataset, str, os.PathLike]
+    land_sea_mask: dict
+    land_sea_percentage: int
+    output_folder: str or os.PathLike, optional
+
+    Returns
+    -------
+    Path
+    """
+    file_name = ""
+    if isinstance(ds, (str, os.PathLike)):
+        if output_folder is not None:
+            output_folder = Path(output_folder)
+            file_name = f"{Path(ds).stem}_land-sea-masked.nc"
+        ds = xr.open_dataset(ds)
+
+    if output_folder is not None and file_name == "":
+        logging.warning(
+            "Cannot generate filenames from xarray.Dataset objects. Consider writing NetCDF manually."
+        )
+
+    try:
+        project = ds.attrs["project"]
+    except KeyError:
+        raise ValueError("No 'project' found for given dataset.")
+
+    if project in PROJECT_LONS_FROM_0TO360:
+        add_lon_values = 360
+    else:
+        add_lon_values = 0
+
+    if project in land_sea_mask.keys():
+        logging.info(
+            f"Masking variable with land-sea mask at {land_sea_percentage} % cutoff."
+        )
+        land_sea_mask_variable, lsm_file = land_sea_mask[project]
+        lsm_raw = xr.open_dataset(lsm_file)
+        try:
+            lsm_raw = lsm_raw.rename({"longitude": "lon", "latitude": "lat"})
+        except ValueError:
+            raise
+
+        lon_bounds = np.array([ds.lon.min(), ds.lon.max()]) + add_lon_values
+        lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
+
+        lsm = subset.subset_bbox(
+            lsm_raw,
+            lon_bnds=lon_bounds,
+            lat_bnds=lat_bounds,
+        ).load()
+        lsm = lsm.where(lsm[land_sea_mask_variable] > float(land_sea_percentage) / 100)
+        if project == "era5":
+            ds = ds.where(lsm[land_sea_mask].isel(time=0, drop=True).notnull())
+            try:
+                ds = ds.rename({"longitude": "lon", "latitude": "lat"})
+            except ValueError:
+                raise
+        elif project in ["merra2", "cfsr"]:
+            ds = ds.where(lsm[land_sea_mask].notnull())
+
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_percentage} %"
+
+        if len(file_name) > 0:
+            out = output_folder / file_name
+            ds.to_netcdf(out)
+            return out
+        else:
+            return ds
+    else:
+        logging.warning("Project was not found.")
+        raise RuntimeError()
