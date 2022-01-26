@@ -9,6 +9,7 @@ from typing import List, Mapping, Optional, Tuple, Union
 
 from cdsapi import Client
 
+from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -109,19 +110,9 @@ def _request_direct_era(
     days = [str(d).zfill(2) for d in range(32)]
     times = ["{}:00".format(str(t).zfill(2)) for t in range(24)]
 
-    if domain.upper() == "GLOBAL":
-        region = [90, -180, -90, 180]
-    elif domain.upper() == "AMNO":
+    if domain.upper() == "AMNO":
         domain = "NAM"
-        region = [90, -180, 10, -10]
-    elif domain.upper() == "CAN":
-        region = [83.5, -141, 41.5, -52.5]
-    elif domain.upper() == "QC":
-        region = [63, -80, 44.5, -57]
-    elif domain.upper() == "MTL":
-        region = [45.75, -74.05, 45.3, -73.4]
-    else:
-        raise ValueError()
+    region = subsetting_domains(domain)
 
     c = Client()
 

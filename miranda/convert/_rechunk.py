@@ -20,6 +20,7 @@ __all__ = [
 PROJECT_INSTITUTES = {
     "cfsr": "ncar",
     "era5": "ecmwf",
+    "era5-single-levels": "ecmwf",
     "era5-land": "ecmwf",
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",

@@ -12,6 +12,7 @@ import xarray as xr
 from clisops.core import subset
 from xclim.indices import tas
 
+from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -124,19 +125,12 @@ def reanalysis_processing(
                     if start and end:
                         subset_time = True
 
-                # TODO: Extract the domain to a dictionary/json somewhere
                 elif domain is not None:
-                    if domain.upper() == "QC":
-                        lon_values = np.array([-79.76, -57.10])
-                        lat_values = np.array([44.99, 62.59])
-                    elif domain.upper() == "CAN":
-                        lon_values = np.array([-141.02, -52.60])
-                        lat_values = np.array([41.68, 83.14])
-                    elif domain.upper() in ["AMNO", "NAM"]:
-                        lon_values = np.array([-180, -10])
-                        lat_values = np.array([10, 90])
-                    else:
-                        raise NotImplementedError()
+                    if domain.upper() == "AMNO":
+                        domain = "NAM"
+                    region = subsetting_domains(domain)
+                    lon_values = region[1], region[3]
+                    lat_values = region[0], region[2]
 
                     ds = subset.subset_bbox(
                         xr.open_mfdataset(

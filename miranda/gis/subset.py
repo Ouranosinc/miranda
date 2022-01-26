@@ -14,12 +14,45 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
+__all__ = ["subset_shape", "subsetting_domains"]
+
+
+def subsetting_domains(domain: str) -> List[float]:
+    """Provides the bounding box coordinates for specific domains.
+
+    Parameters
+    ----------
+    domain: {"global", "nam", "can", "qc", "mtl"}
+
+    Returns
+    -------
+    [float, float, float, float]
+      North, West, South, and East coordinates
+    """
+    region = None
+
+    if domain.upper() == "GLOBAL":
+        region = [90.0, -180.0, -90.0, 180.0]
+    elif domain.upper() in ["AMNO", "NAM"]:
+        region = [90.0, -180.0, 10.0, -10.0]
+    elif domain.upper() == "CAN":
+        region = [83.5, -141.0, 41.5, -52.5]
+    elif domain.upper() == "QC":
+        region = [63.0, -80.0, 44.5, -57.0]
+    elif domain.upper() == "MTL":
+        region = [45.75, -74.05, 45.3, -73.4]
+    if region is not None:
+        return region
+
+    raise NotImplementedError(domain)
+
+
 def _read_geometries(
     shape: Union[str, Path], crs: Optional[Union[str, int, dict]] = None
 ) -> Tuple[List[geojson.geometry.Geometry], rasterio.crs.CRS]:
     """
-    A decorator to perform a check to verify a geometry is valid. Returns the function with geom set to
-      the shapely Shape object.
+    A decorator to perform a check to verify a geometry is valid.
+    Returns the function with geom set to the shapely Shape object.
     """
     try:
         if shape is None:
@@ -86,12 +119,6 @@ def subset_shape(
       CRS of the xarray.DataArray or xarray.Dataset provided. Default: dict(epsg=4326).
     shape_crs : Optional[Union[int, dict, str]]
       CRS of the geometries provided. If passing GeometryCollections as shapes, CRS must be explicitly stated.
-    start_yr : int
-      Deprecated
-        First year of the subset. Defaults to first year of input data-array.
-    end_yr : int
-      Deprecated
-        Last year of the subset. Defaults to last year of input data-array.
 
     Returns
     -------
