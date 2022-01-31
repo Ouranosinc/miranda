@@ -135,8 +135,6 @@ def reanalysis_processing(
                     ds = subset.subset_bbox(
                         xr.open_mfdataset(
                             multi_files,
-                            combine="by_coords",
-                            concat_dim=["time"],
                             chunks={"time": "auto"},
                             engine="netcdf4",
                             preprocess=_drop_those_time_bnds,
@@ -152,8 +150,6 @@ def reanalysis_processing(
                     ds = subset.subset_time(
                         xr.open_mfdataset(
                             multi_files,
-                            combine="by_coords",
-                            concat_dim=["time"],
                             chunks={"time": "auto"},
                             engine="netcdf4",
                             preprocess=_drop_those_time_bnds,
@@ -164,12 +160,15 @@ def reanalysis_processing(
                 elif not any([subset_time, domain, ds]):
                     ds = xr.open_mfdataset(
                         multi_files,
-                        combine="by_coords",
-                        concat_dim=["time"],
                         chunks={"time": "auto"},
                         engine="netcdf4",
                         preprocess=_drop_those_time_bnds,
                     )
+
+                if project in HOURLY_ACCUMULATED_VARIABLES.keys():
+                    if all([v in HOURLY_ACCUMULATED_VARIABLES[project] for v in ds.data_vars]):
+                        ds = deaccumulate(ds, project)
+                        #ds["time"] = ds.time - np.timedelta64(1, "h")
 
                 ds = variable_conversion(ds, project=project)
 
@@ -184,6 +183,10 @@ def reanalysis_processing(
                         for year in years
                     ]
                     xr.save_mfdataset(datasets, out_filenames)
+
+def deaccumulate(ds: xarray.Dataset, project: str):
+
+    ds
 
 
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
@@ -230,9 +233,9 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     # For converting variable units
     def _units_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
 
-        if p in HOURLY_ACCUMULATED_VARIABLES.keys():
-            if any([v in d.data_vars for v in HOURLY_ACCUMULATED_VARIABLES[p]]):
-                d["time"] = d.time - np.timedelta64(1, "h")
+        # if p in HOURLY_ACCUMULATED_VARIABLES.keys():
+        #     if any([v in d.data_vars for v in HOURLY_ACCUMULATED_VARIABLES[p]]):
+        #         d["time"] = d.time - np.timedelta64(1, "h")
 
         # TODO: We need to de-accumulate this variable as well
 
