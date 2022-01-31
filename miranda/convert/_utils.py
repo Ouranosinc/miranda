@@ -169,6 +169,9 @@ def reanalysis_processing(
                     if all([v in HOURLY_ACCUMULATED_VARIABLES[project] for v in ds.data_vars]):
                         ds = deaccumulate(ds, project)
                         #ds["time"] = ds.time - np.timedelta64(1, "h")
+                    if any([v in HOURLY_ACCUMULATED_VARIABLES[project] for v in ds.data_vars]):
+                        raise ValueError("dataset has a mix of accumulated and non-accumulated variables")
+
 
                 ds = variable_conversion(ds, project=project)
 
