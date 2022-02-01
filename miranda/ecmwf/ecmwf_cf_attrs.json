@@ -36,7 +36,7 @@
       "long_name": "Snowfall flux",
       "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
       "_conversion": 0.2777777777778,
-      "_cf_variable_name": "pr"
+      "_cf_variable_name": "prsn"
     },
     "t2m": {
       "standard_name": "air_temperature",

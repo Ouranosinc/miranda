@@ -5,12 +5,15 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 import dask.config
+from dask.diagnostics import ProgressBar
 import numpy as np
 import regionmask
 import xarray
 import xarray as xr
+import netCDF4
 from clisops.core import subset
 from xclim.indices import tas
+from xclim.core import calendar, units
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
@@ -60,6 +63,14 @@ def _drop_those_time_bnds(dataset: xr.Dataset):
         return dataset.drop_vars(["time_bnds"])
     return dataset
 
+def get_chunks_on_disk(ncfile):
+    ds = netCDF4.Dataset(ncfile)
+    chunks = {}
+    for v in ds.variables:
+        chunks[v] = {}
+        for ii, dim in enumerate(ds[v].dimensions):
+            chunks[v][dim] = ds[v].chunking()[ii]
+    return chunks
 
 def reanalysis_processing(
     data: Dict[str, List[Union[str, os.PathLike]]],
@@ -87,103 +98,103 @@ def reanalysis_processing(
     -------
     None
     """
-    out_files = Path(output_folder)
-    if domains is None:
-        domains = [None]
+    with ProgressBar():
+        out_files = Path(output_folder)
+        if domains is None:
+            domains = [None]
 
-    for domain in domains:
-        if domain is not None:
-            output_folder = out_files.joinpath(domain)  # noqa
-        else:
-            output_folder = output_folder
-        output_folder.mkdir(exist_ok=True)
-
-        for project, in_files in data.items():
+        for domain in domains:
             if domain is not None:
-                logging.info(f"Processing {project} data for domain {domain}.")
+                output_folder = out_files.joinpath(domain)  # noqa
             else:
-                logging.info(f"Processing {project} data.")
-            for var in variables:
-                # Select only for variable of interest
-                multi_files = sorted(x for x in in_files if var in str(x))
-                logging.info("Resampling variable `%s`." % var)
+                output_folder = output_folder
+            output_folder.mkdir(exist_ok=True)
 
-                if aggregate:
-                    time_freq = aggregate
-                else:
-                    time_freq = multi_files[0].split("_")[1]
-
-                institute = PROJECT_INSTITUTES[project]
-                file_name = "_".join([var, time_freq, institute, project])
+            for project, in_files in data.items():
                 if domain is not None:
-                    file_name = f"{file_name}_{domain}"
-
-                # Subsetting operations
-                ds = None
-                subset_time = False
-                if domain is None:
-                    if start and end:
-                        subset_time = True
-
-                elif domain is not None:
-                    if domain.upper() == "AMNO":
-                        domain = "NAM"
-                    region = subsetting_domains(domain)
-                    lon_values = region[1], region[3]
-                    lat_values = region[0], region[2]
-
-                    ds = subset.subset_bbox(
-                        xr.open_mfdataset(
-                            multi_files,
-                            combine="by_coords",
-                            concat_dim=["time"],
-                            chunks={"time": "auto"},
-                            engine="netcdf4",
-                            preprocess=_drop_those_time_bnds,
-                        ),
-                        lon_bnds=lon_values
-                        if project not in {"era5", "cfsr"}
-                        else lon_values + 360,
-                        lat_bnds=lat_values,
-                        start_date=start,
-                        end_date=end,
-                    )
-                if subset_time:
-                    ds = subset.subset_time(
-                        xr.open_mfdataset(
-                            multi_files,
-                            combine="by_coords",
-                            concat_dim=["time"],
-                            chunks={"time": "auto"},
-                            engine="netcdf4",
-                            preprocess=_drop_those_time_bnds,
-                        ),
-                        start_date=start,
-                        end_date=end,
-                    )
-                elif not any([subset_time, domain, ds]):
-                    ds = xr.open_mfdataset(
-                        multi_files,
-                        combine="by_coords",
-                        concat_dim=["time"],
-                        chunks={"time": "auto"},
-                        engine="netcdf4",
-                        preprocess=_drop_those_time_bnds,
-                    )
-
-                ds = variable_conversion(ds, project=project)
-
-                if time_freq.lower() == "daily":
-                    daily_aggregation(ds, project, file_name, output_folder)
+                    logging.info(f"Processing {project} data for domain {domain}.")
                 else:
-                    logging.info("Writing out fixed files for %s." % file_name)
-                    # TODO: Resample for year*months
-                    years, datasets = zip(*ds.groupby("time.year"))  # noqa
-                    out_filenames = [
-                        output_folder.joinpath(f"{file_name}_{year}.nc")
-                        for year in years
-                    ]
-                    xr.save_mfdataset(datasets, out_filenames)
+                    logging.info(f"Processing {project} data.")
+                for var in variables:
+                    # Select only for variable of interest
+                    multi_files = sorted(x for x in in_files if var in str(x))
+
+                    chunks = get_chunks_on_disk(multi_files[0])
+                    chunks = chunks[var]
+                    logging.info("Resampling variable `%s`." % var)
+
+                    if aggregate:
+                        time_freq = aggregate
+                    else:
+                        time_freq = multi_files[0].split("_")[1]
+
+                    institute = PROJECT_INSTITUTES[project]
+                    file_name = "_".join([var, time_freq, institute, project])
+                    if domain is not None:
+                        file_name = f"{file_name}_{domain}"
+
+                    # Subsetting operations
+                    ds = None
+                    subset_time = False
+                    if domain is None:
+                        if start and end:
+                            subset_time = True
+
+                    elif domain is not None:
+                        if domain.upper() == "AMNO":
+                            domain = "NAM"
+                        region = subsetting_domains(domain)
+                        lon_values = region[1], region[3]
+                        lat_values = region[0], region[2]
+
+                        ds = subset.subset_bbox(
+                            xr.open_mfdataset(
+                                multi_files,
+                                chunks=chunks,
+                                engine="netcdf4",
+                                preprocess=_drop_those_time_bnds,
+                            ),
+                            lon_bnds=lon_values
+                            if project not in {"era5", "cfsr"}
+                            else lon_values + 360,
+                            lat_bnds=lat_values,
+                            start_date=start,
+                            end_date=end,
+                        )
+                    if subset_time:
+                        ds = subset.subset_time(
+                            xr.open_mfdataset(
+                                multi_files,
+                                chunks=chunks,
+                                engine="netcdf4",
+                                preprocess=_drop_those_time_bnds,
+                            ),
+                            start_date=start,
+                            end_date=end,
+                        )
+                    elif not any([subset_time, domain, ds]):
+                        ds = xr.open_mfdataset(
+                            multi_files,
+                            chunks=chunks,
+                            engine="netcdf4",
+                            preprocess=_drop_those_time_bnds,
+                        )
+
+                    ds = variable_conversion(ds, project=project)
+
+                    if time_freq.lower() == "daily":
+                        daily_aggregation(ds, project, file_name, output_folder)
+                    else:
+                        logging.info("Writing out fixed files for %s." % file_name)
+                        # TODO: Resample for year*months
+                        years, datasets = zip(*ds.groupby("time.year"))  # noqa
+                        out_filenames = [
+                            output_folder.joinpath(f"{file_name}_{year}.nc")
+                            for year in years
+                        ]
+                        xr.save_mfdataset(datasets, out_filenames)
+
+
 
 
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
@@ -230,21 +241,49 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     # For converting variable units
     def _units_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
 
-        if p in HOURLY_ACCUMULATED_VARIABLES.keys():
-            if any([v in d.data_vars for v in HOURLY_ACCUMULATED_VARIABLES[p]]):
-                d["time"] = d.time - np.timedelta64(1, "h")
+        if p in ["era5", "era5-single-levels", "era5-land"]:
+            metadata_definition = json.load(
+                open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
+            )
+        else:
+            raise NotImplementedError()
 
         # TODO: We need to de-accumulate this variable as well
-
+        descriptions = metadata_definition["variable_entry"]
         for v in d.data_vars:
-            if hasattr(d[v].attrs, "_conversion"):
-                d[v] = d[v] * d[v].attrs["_conversion"]
-                del d[v].attrs["_conversion"]
+            d[v] = units.convert_units_to(d[v], descriptions[v]['units'])
         return d
 
+    def _deaccumulate(d: xarray.Dataset, p: str):
+        if p in HOURLY_ACCUMULATED_VARIABLES.keys():
+            if all([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
+                freq = xr.infer_freq(ds.time)
+                offset = float(calendar.parse_offset(freq)[0]) if calendar.parse_offset(freq)[0] != '' else 1.0
+
+                ## accumulated hourly to hourly flux (deaccumulation)
+                dout = xr.Dataset(coords=d.coords, attrs=d.attrs)
+                for vv in d.data_vars:
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv].diff(dim='time')
+                        out = d[vv].where(d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv]))
+                        out = out / offset
+
+                        out.attrs['units'] = f"{d[vv].attrs['units'].replace('m of water equivalent','m')} {calendar.parse_offset(freq)[1].lower()}-1"
+                        out = out.shift(time=-1)
+                    dout[out.name] = out
+                return dout
+
+            elif any([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
+                raise ValueError(f"dataset contains a mix of accumulated and non=accumulated variables : {list(d.data_vars)}")
+            else:
+                return d
+        else:
+            return d
+
+    ds = _deaccumulate(ds, project)
+    ds = _units_conversion(ds, project)
     ds = _metadata_conversion(ds, project)
     ds = _dims_conversion(ds)
-    ds = _units_conversion(ds, project)
 
     return ds
 
@@ -302,19 +341,16 @@ def daily_aggregation(
                 del ds_out
             return
 
-        if variable in ["pr"]:
+        if variable in ["pr","prsn","snd"]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
-            logging.info("Converting precipitation units")
-            if project in HOURLY_ACCUMULATED_VARIABLES.keys():
-                ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
-            else:
-                ds_out["pr"] = ds.pr.resample(time="D").mean(
+            logging.info(f"Converting {variable} to daily time step (daily mean)")
+            ds_out[variable] = ds[variable].resample(time="D").mean(
                     dim="time", keep_attrs=True
                 )
         else:
             continue
-
+        ds_out.attrs['frequency'] = 'day'
         logging.info("Writing out daily converted %s." % output)
         years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
         out_filenames = [
