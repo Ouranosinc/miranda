@@ -15,7 +15,6 @@
       "cell_methods": "time: mean",
       "long_name": "Potential evapotranspiration",
       "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
-      "_conversion": 0.2777777777778,
       "_cf_variable_name": "evspsbl"
     },
     "tp": {
@@ -25,7 +24,6 @@
       "cell_methods": "time: mean",
       "long_name": "Precipitation",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
-      "_conversion": 0.2777777777778,
       "_cf_variable_name": "pr"
     },
     "sf": {
@@ -35,7 +33,6 @@
       "cell_methods": "time: mean",
       "long_name": "Snowfall flux",
       "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
-      "_conversion": 0.2777777777778,
       "_cf_variable_name": "prsn"
     },
     "t2m": {
