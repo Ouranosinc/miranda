@@ -30,6 +30,7 @@ PROJECT_INSTITUTES = {
     "era5-land": "ecmwf",
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",
+    "sc-earth": "usask",
     "wfdei-gem-capa": "usask",
 }
 PROJECT_LONS_FROM_0TO360 = ["era5", "cfsr"]

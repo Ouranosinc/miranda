@@ -1,0 +1,72 @@
+{
+  "Header": {
+    "data_specs_version": "00.00.01",
+    "table_id": "NASA",
+    "institution": "NASA",
+    "realm": "atmos",
+    "table_date": "2 February 2022",
+    "product": "reanalysis",
+    "Conventions": "CF-1.8"
+  },
+  "variable_entry": {
+    "prate": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "cell_methods": "time: mean",
+      "long_name": "Precipitation rate",
+      "_cf_variable_name": "pr",
+      "_corrected_units": "mm d-1"
+    },
+    "tavg": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "cell_methods": "time: mean",
+      "long_name": "Average temperature",
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC"
+    },
+    "tmax": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "cell_methods": "time: max",
+      "long_name": "Maximum temperature",
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC"
+    },
+    "tmin": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "cell_methods": "time: min",
+      "long_name": "Minimum temperature",
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC"
+    },
+    "srad": {
+      "standard_name": "surface_net_downward_radiative_flux",
+      "units": "W m-2 d-1",
+      "cell_methods": "time: mean within days",
+      "long_name": "Solar radiation flux",
+      "comment": "Combined longwave and shortwave radiation based on NASA/GEWEX SRB",
+      "_cf_variable_name": "rxds",
+      "_corrected_units": "MJ m-2 d-1"
+    },
+    "rhstmax": {
+      "standard_name": "relative_humidity",
+      "units": "1",
+      "cell_methods": "time: point where tas time: maximum within days",
+      "long_name": "Relative Humidity at time of Maximum Temperature",
+      "_cf_variable_name": "hurs"
+    },
+    "wndspd": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "cell_methods": "time: point",
+      "long_name": "Wind speed",
+      "_cf_variable_name": "sfcWind",
+      "_corrected_units": "m s-1"
+    },
+    "time": {
+      "units": "days since 1980 01-01 12:00:00"
+    }
+  }
+}

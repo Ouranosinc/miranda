@@ -1,9 +1,9 @@
 {
   "Header": {
     "data_specs_version": "00.00.01",
-    "table_id": "ECMWF",
+    "table_id": "USASK",
     "realm": "atmos",
-    "table_date": "18 January 2022",
+    "table_date": "2 February 2022",
     "product": "reanalysis",
     "Conventions": "CF-1.8"
   },
@@ -57,18 +57,18 @@
       "_cf_variable_name": "snd"
     },
     "u10": {
-      "standard_name": "eastward_wind",
+      "standard_name": "surface_snow_thickness",
       "units": "m s-1",
       "cell_methods": "time: mean",
-      "long_name": "10 metre eastward wind",
+      "long_name": "Snow Depth",
       "comments": "Converted from 10 metre U wind component.",
       "_cf_variable_name": "uas"
     },
     "v10": {
-      "standard_name": "northward_wind",
+      "standard_name": "surface_snow_thickness",
       "units": "m s-1",
       "cell_methods": "time: mean",
-      "long_name": "10 metre northward wind",
+      "long_name": "Snow Depth",
       "comments": "Converted from 10 metre V wind component.",
       "_cf_variable_name": "vas"
     }
