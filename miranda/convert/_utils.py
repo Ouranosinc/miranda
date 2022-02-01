@@ -5,15 +5,15 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 import dask.config
-from dask.diagnostics import ProgressBar
+import netCDF4
 import numpy as np
 import regionmask
 import xarray
 import xarray as xr
-import netCDF4
 from clisops.core import subset
-from xclim.indices import tas
+from dask.diagnostics import ProgressBar
 from xclim.core import calendar, units
+from xclim.indices import tas
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
@@ -63,6 +63,7 @@ def _drop_those_time_bnds(dataset: xr.Dataset):
         return dataset.drop_vars(["time_bnds"])
     return dataset
 
+
 def get_chunks_on_disk(ncfile):
     ds = netCDF4.Dataset(ncfile)
     chunks = {}
@@ -71,6 +72,7 @@ def get_chunks_on_disk(ncfile):
         for ii, dim in enumerate(ds[v].dimensions):
             chunks[v][dim] = ds[v].chunking()[ii]
     return chunks
+
 
 def reanalysis_processing(
     data: Dict[str, List[Union[str, os.PathLike]]],
@@ -195,8 +197,6 @@ def reanalysis_processing(
                         xr.save_mfdataset(datasets, out_filenames)
 
 
-
-
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
 
@@ -251,30 +251,40 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         # TODO: We need to de-accumulate this variable as well
         descriptions = metadata_definition["variable_entry"]
         for v in d.data_vars:
-            d[v] = units.convert_units_to(d[v], descriptions[v]['units'])
+            d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
         return d
 
     def _deaccumulate(d: xarray.Dataset, p: str):
         if p in HOURLY_ACCUMULATED_VARIABLES.keys():
             if all([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
                 freq = xr.infer_freq(ds.time)
-                offset = float(calendar.parse_offset(freq)[0]) if calendar.parse_offset(freq)[0] != '' else 1.0
+                offset = (
+                    float(calendar.parse_offset(freq)[0])
+                    if calendar.parse_offset(freq)[0] != ""
+                    else 1.0
+                )
 
-                ## accumulated hourly to hourly flux (deaccumulation)
+                # accumulated hourly to hourly flux (deaccumulation)
                 dout = xr.Dataset(coords=d.coords, attrs=d.attrs)
                 for vv in d.data_vars:
                     with xr.set_options(keep_attrs=True):
-                        out = d[vv].diff(dim='time')
-                        out = d[vv].where(d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv]))
+                        out = d[vv].diff(dim="time")
+                        out = d[vv].where(
+                            d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
+                        )
                         out = out / offset
 
-                        out.attrs['units'] = f"{d[vv].attrs['units'].replace('m of water equivalent','m')} {calendar.parse_offset(freq)[1].lower()}-1"
+                        out.attrs[
+                            "units"
+                        ] = f"{d[vv].attrs['units'].replace('m of water equivalent','m')} {calendar.parse_offset(freq)[1].lower()}-1"
                         out = out.shift(time=-1)
                     dout[out.name] = out
                 return dout
 
             elif any([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
-                raise ValueError(f"dataset contains a mix of accumulated and non=accumulated variables : {list(d.data_vars)}")
+                raise ValueError(
+                    f"dataset contains a mix of accumulated and non=accumulated variables : {list(d.data_vars)}"
+                )
             else:
                 return d
         else:
@@ -341,16 +351,16 @@ def daily_aggregation(
                 del ds_out
             return
 
-        if variable in ["pr","prsn","snd"]:
+        if variable in ["pr", "prsn", "snd"]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
             logging.info(f"Converting {variable} to daily time step (daily mean)")
-            ds_out[variable] = ds[variable].resample(time="D").mean(
-                    dim="time", keep_attrs=True
-                )
+            ds_out[variable] = (
+                ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
+            )
         else:
             continue
-        ds_out.attrs['frequency'] = 'day'
+        ds_out.attrs["frequency"] = "day"
         logging.info("Writing out daily converted %s." % output)
         years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
         out_filenames = [
