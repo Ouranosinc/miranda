@@ -341,23 +341,16 @@ def daily_aggregation(
                 del ds_out
             return
 
-        if variable in ["pr"]:
+        if variable in ["pr","prsn","snd"]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
-            logging.info("Converting precipitation units")
-            ds_out["pr"] = ds.pr.resample(time="D").mean(
+            logging.info(f"Converting {variable} to daily time step (daily mean)")
+            ds_out[variable] = ds[variable].resample(time="D").mean(
                     dim="time", keep_attrs=True
                 )
-
-            # if project in HOURLY_ACCUMULATED_VARIABLES.keys():
-            #     ds_out["pr"] = ds.pr.resample(time="D").max(dim="time", keep_attrs=True)
-            # else:
-            #     ds_out["pr"] = ds.pr.resample(time="D").mean(
-            #         dim="time", keep_attrs=True
-            #     )
         else:
             continue
-
+        ds_out.attrs['frequency'] = 'day'
         logging.info("Writing out daily converted %s." % output)
         years, datasets = zip(*ds_out.groupby("time.year"))  # noqa
         out_filenames = [
