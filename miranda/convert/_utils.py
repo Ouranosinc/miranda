@@ -35,6 +35,9 @@ PROJECT_INSTITUTES = {
 }
 PROJECT_LONS_FROM_0TO360 = ["era5", "cfsr"]
 
+LATLON_COORDINATE_TOLERANCE = dict()
+LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
+
 HOURLY_ACCUMULATED_VARIABLES = dict()
 HOURLY_ACCUMULATED_VARIABLES["era5-land"] = [
     "e",
@@ -101,7 +104,8 @@ def reanalysis_processing(
     -------
     None
     """
-    with ProgressBar():
+    with ProgressBar(), dask.config.set(**{'array.slicing.split_large_chunks': False}):
+        out_files = Path(output_folder)
         out_files = Path(output_folder)
         if domains is None:
             domains = [None]
@@ -197,7 +201,6 @@ def reanalysis_processing(
                         ]
                         xr.save_mfdataset(datasets, out_filenames)
 
-
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
 
@@ -233,12 +236,21 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     # For renaming lat and lon dims
     def _dims_conversion(d: xarray.Dataset):
         for orig, new in dict(longitude="lon", latitude="lat").items():
+            sort_dims = []
             try:
+
                 d = d.rename({orig: new})
+                if new == 'lon' and np.any(d.lon>180):
+                    lon1 = d.lon.where(d.lon<=180.0, d.lon-360.0)
+                    d[new] = lon1
+                sort_dims.append(new)
             except KeyError:
                 pass
+            if project in LATLON_COORDINATE_TOLERANCE.keys():
+                d[new] = d[new].round(LATLON_COORDINATE_TOLERANCE[project])
+        if sort_dims:
+            d = d.sortby(sort_dims)
         return d
-
     # For converting variable units
     def _units_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
 
@@ -273,11 +285,8 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                         out = d[vv].where(
                             d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
                         )
-                        out = out / offset
-
-                        out.attrs[
-                            "units"
-                        ] = f"{d[vv].attrs['units'].replace('m of water equivalent','m')} {calendar.parse_offset(freq)[1].lower()}-1"
+                        out.attrs['units'] = out.attrs['units'].replace('m of water equivalent','m')
+                        out = units.amount2rate(out)
                         out = out.shift(time=-1)
                     dout[out.name] = out
                 return dout
