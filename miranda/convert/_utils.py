@@ -104,7 +104,7 @@ def reanalysis_processing(
     -------
     None
     """
-    with ProgressBar(), dask.config.set(**{'array.slicing.split_large_chunks': False}):
+    with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
         out_files = Path(output_folder)
         out_files = Path(output_folder)
         if domains is None:
@@ -201,6 +201,7 @@ def reanalysis_processing(
                         ]
                         xr.save_mfdataset(datasets, out_filenames)
 
+
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
 
@@ -240,8 +241,8 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
             try:
 
                 d = d.rename({orig: new})
-                if new == 'lon' and np.any(d.lon>180):
-                    lon1 = d.lon.where(d.lon<=180.0, d.lon-360.0)
+                if new == "lon" and np.any(d.lon > 180):
+                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                     d[new] = lon1
                 sort_dims.append(new)
             except KeyError:
@@ -251,6 +252,7 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         if sort_dims:
             d = d.sortby(sort_dims)
         return d
+
     # For converting variable units
     def _units_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
 
@@ -285,7 +287,9 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                         out = d[vv].where(
                             d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
                         )
-                        out.attrs['units'] = out.attrs['units'].replace('m of water equivalent','m')
+                        out.attrs["units"] = out.attrs["units"].replace(
+                            "m of water equivalent", "m"
+                        )
                         out = units.amount2rate(out)
                         out = out.shift(time=-1)
                     dout[out.name] = out
