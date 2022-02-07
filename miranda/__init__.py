@@ -8,12 +8,12 @@ from miranda import (
     convert,
     decode,
     deh_melcc,
+    eccc,
     ecmwf,
-    gis,
+    hq,
     ops,
     remove,
     scripting,
-    subset,
     utils,
 )
 

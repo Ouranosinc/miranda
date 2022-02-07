@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, Iterable, List, Optional, Sequence, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 from . import scripting
 
@@ -24,7 +24,6 @@ __all__ = [
     "list_paths_with_elements",
     "MiB",
     "read_privileges",
-    "set_comparisons",
     "single_item_list",
     "working_directory",
     "yesno_prompt",
@@ -41,7 +40,7 @@ def ingest(files: Union[GeneratorType, List]) -> List:
 def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
     """
     Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
-    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
     ----------
@@ -192,31 +191,6 @@ def single_item_list(iterable: Iterable) -> bool:
     return has_true and not has_another_true  # True if exactly one true found
 
 
-def set_comparisons(set1: Sequence, set2: Sequence) -> bool:
-    """Compare two sequences of non hashable objects as if they were sets.
-
-    Parameters
-    ----------
-    set1 : Sequence
-      First sequence of objects.
-    set2 : Sequence
-      Second sequence of objects.
-
-    Returns
-    -------
-    out : bool
-      True if two sets are identical, that is, they contain the same elements.
-    """
-
-    for item1 in set1:
-        if item1 not in set2:
-            return False
-    for item2 in set2:
-        if item2 not in set1:
-            return False
-    return True
-
-
 ########################################################################################
 
 
@@ -245,17 +219,20 @@ def list_paths_with_elements(
     base_paths: Union[str, List[str]], elements: List[str]
 ) -> List[Dict]:
     """List a given path structure.
+
     Parameters
     ----------
     base_paths : List[str]
         list of paths from which to start the search.
     elements : List[str]
         ordered list of the expected elements.
+
     Returns
     -------
-    out : List[Dict]
+    List[Dict]
         the keys are 'path' and each of the members of the given elements,
         the path is the absolute path.
+
     Notes
     -----
     Suppose you have the following structure:
