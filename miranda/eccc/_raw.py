@@ -769,7 +769,7 @@ def merge_converted_variables(
         if not outfile.exists():
             logging.info(f"Merging to {outfile.name}")
             comp = dict(zlib=True, complevel=5)
-            encoding = {varia: comp for varia in ds.data_vars}
+            encoding = {data_var: comp for data_var in ds.data_vars}
             encoding["time"] = {"dtype": "single"}
             with ProgressBar():
                 ds.to_netcdf(outfile, encoding=encoding)
