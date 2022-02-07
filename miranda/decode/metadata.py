@@ -25,15 +25,15 @@ __all__ = [
 
 
 def _from_netcdf(file: Union[Path, str]) -> (str, Dataset):
-    decode_file = Path(file).stem
-    decode_file = str(decode_file).split("_")[0]
+    file_name = Path(file).stem
+    variable_name = file_name.split("_")[0]
     data = Dataset(file)
-    return decode_file, data
+    return variable_name, data
 
 
 def _from_filename(file: Union[Path, str]) -> List[str]:
-    decode_file = Path(file).name
-    decode_file = decode_file.split("_")
+    file_name = Path(file).stem
+    decode_file = file_name.split("_")
     return decode_file
 
 
@@ -110,11 +110,52 @@ def decode_dimsvar(file: Union[Path, str]) -> dict:
 
 
 def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
-    raise NotImplementedError
+    variable, data = _from_netcdf(file=file)
+
+    facets = dict()
+    facets["variable"] = variable
+    facets["project_id"] = data.mip_era
+    facets["institution"] = data.institution_id
+    facets["frequency"] = data.frequency
+    facets["model"] = data.source_id
+    facets["experiment"] = data.experiment_id
+    facets["modeling_realm"] = data.realm
+    facets["member"] = data.variant_label
+    facets["version"] = data.version
+
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+
+    return facets
 
 
 def decode_cmip6_name(file: Union[Path, str]) -> dict:
-    raise NotImplementedError
+    decode_file = _from_filename(file=file)
+
+    facets = dict()
+    facets["variable"] = decode_file[0]
+    facets["frequency"] = decode_file[1]
+    if "mon" in facets["frequency"]:
+        facets["frequency"] = "mon"
+    facets["model"] = decode_file[2]
+    try:
+        facets["institution"] = CMIP6_GCM_PROVIDERS[facets["model_id"]]
+    except KeyError:
+        logging.info(f"Unable to find Institute for model: {facets['model']}")
+
+    facets["experiment"] = decode_file[3]
+    facets["member"] = decode_file[4]
+    facets["grid_label"] = decode_file[5]
+    facets["date"] = decode_file[6]
+    try:
+
+        facets["date_start"] = decode_file[6].split("-")[0]
+        facets["date_end"] = decode_file[6].split("-")[1]
+    except IndexError:
+        pass
+
+    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+
+    return facets
 
 
 def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
@@ -122,12 +163,12 @@ def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
 
     facets = dict()
     facets["variable"] = variable
-    facets["project_id"] = data.project_id
-    facets["institute_id"] = data.institute_id
+    facets["project"] = data.project_id
+    facets["institution"] = data.institute_id
     facets["frequency"] = data.frequency
-    facets["model_id"] = data.model_id
-    facets["experiment_id"] = data.experiment_id
-    facets["parent_experimental_rip"] = data.parent_experiment_rip
+    facets["model"] = data.model_id
+    facets["experiment"] = data.experiment_id
+    facets["member"] = data.parent_experiment_rip
     facets["modeling_realm"] = data.modeling_realm
 
     logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
@@ -141,13 +182,13 @@ def decode_cmip5_name(file: Union[Path, str]) -> dict:
     facets = dict()
     facets["variable"] = decode_file[0]
     facets["frequency"] = decode_file[1]
-    if facets["frequency"] == "Amon":
+    if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
-    facets["model_id"] = decode_file[2]
-    facets["institute_id"] = CMIP5_GCM_PROVIDERS[facets["model"]]
+    facets["model"] = decode_file[2]
+    facets["institution"] = CMIP5_GCM_PROVIDERS[facets["model"]]
     facets["modeling_realm"] = None
-    facets["experiment_id"] = decode_file[3]
-    facets["parent_experimental_rip"] = decode_file[4]
+    facets["experiment"] = decode_file[3]
+    facets["member"] = decode_file[4]
 
     logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
@@ -159,14 +200,14 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
 
     facets = dict()
     facets["variable"] = variable
-    facets["project_id"] = data.project_id
-    facets["institute_id"] = data.institute_id
-    facets["model_id"] = data.model_id
+    facets["project"] = data.project_id
+    facets["institution"] = data.institute_id
+    facets["model"] = data.model_id
     facets["CORDEX_domain"] = data.CORDEX_domain
     facets["frequency"] = data.frequency
-    facets["driving_model_id"] = data.driving_model_id
-    facets["experiment_id"] = data.experiment_id
-    facets["parent_experimental_rip"] = data.parent_experiment_rip
+    facets["driving_model"] = data.driving_model_id
+    facets["experiment"] = data.experiment_id
+    facets["member"] = data.parent_experiment_rip
 
     logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
@@ -177,12 +218,13 @@ def decode_cordex_name(file: Union[Path, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
+    facets["project"] = "CORDEX"
     facets["variable"] = decode_file[0]
-    facets["institute_id"] = decode_file[5].split("-")[0]
-    facets["model_id"] = decode_file[5].split("-")[1:]
-    facets["experiment_id"] = "_".join(decode_file[1:4])
+    facets["institution"] = decode_file[5].split("-")[0]
+    facets["model"] = decode_file[5].split("-")[1:]
+    facets["experiment"] = "_".join(decode_file[1:4])
     facets["frequency"] = decode_file[-2]
-    facets["parent_experimental_rip"] = decode_file[4]
+    facets["member"] = decode_file[4]
 
     logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
 
@@ -193,15 +235,13 @@ def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
-    facets["variable"] = decode_file[-4]
     facets["project"] = "ISIMIP-FT"
-    facets["institute_id"] = decode_file[1].split("-")[0]
-    facets["model_id"] = "-".join(decode_file[1].split("-")[1:])
+    facets["variable"] = decode_file[-4]
+    facets["institution"] = decode_file[1].split("-")[0]
+    facets["model"] = "-".join(decode_file[1].split("-")[1:])
     facets["experiment"] = decode_file[2]
-
     facets["setup"] = "-".join([facets["model"], facets["experiment"]])
-
-    facets["time_frequency"] = decode_file[-3]
+    facets["frequency"] = decode_file[-3]
     facets["impact_model_id"] = decode_file[0]
     facets["soc_forcing_id"] = decode_file[3]
     facets["co2_forcing_id"] = decode_file[4]
@@ -230,17 +270,17 @@ def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
 def decode_isimip_ft_netcdf(file):
     variable, data = _from_netcdf(file=file)
 
-    facets = defaultdict(str)
+    facets = dict()
     facets["variable"] = variable
-    facets["project_id"] = str(data.project_id)
-    facets["institute_id"] = data.institute_id
-    facets["time_frequency_id"] = data.time_frequency_id
-    facets["model_id"] = data.model_id
-    facets["impact_model_id"] = data.impact_model_id
+    facets["project"] = str(data.project_id)
+    facets["institution"] = data.institute_id
+    facets["frequency"] = data.time_frequency_id
+    facets["model"] = data.model_id
+    facets["impact_model"] = data.impact_model_id
     facets["social_forcing_id"] = data.social_forcing_id
     facets["co2_forcing_id"] = data.co2_forcing_id
-    facets["experiment_id"] = data.experiment_id
-    facets["driving_model_ensemble_member"] = data.driving_model_ensemble_member
+    facets["experiment"] = data.experiment_id
+    facets["member"] = data.driving_model_ensemble_member
     facets["modeling_realm"] = data.modeling_realm
 
     logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
@@ -248,6 +288,7 @@ def decode_isimip_ft_netcdf(file):
     return facets
 
 
+# Decoder class idea
 class DecoderException(Exception):
     pass
 
