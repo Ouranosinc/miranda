@@ -4,9 +4,8 @@ from pathlib import Path
 
 import pytest
 
-import miranda.eccc._utils
+import miranda.eccc._utils as eccc_utils  # noqa
 from miranda import utils
-from miranda.eccc._utils import daily_metadata, hourly_metadata
 
 
 class TestWorkingDirectory:
@@ -27,7 +26,7 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = miranda.eccc._utils.cf_hourly_metadata(key)
+            variables[key] = eccc_utils.cf_hourly_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"] == "dry_bulb_temperature":
                 assert variables[key]["add_offset"] == 273.15
@@ -57,7 +56,7 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = miranda.eccc._utils.cf_daily_metadata(key)
+            variables[key] = eccc_utils.cf_daily_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"].startswith("air_temperature"):
                 assert variables[key]["add_offset"] == 273.15
