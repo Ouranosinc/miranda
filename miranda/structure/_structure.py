@@ -65,7 +65,7 @@ for root, dirs, files in os.walk(path_origin):
             ensemble_member = nc.driving_model_ensemble_member
         except AttributeError:
             ensemble_member = "r1i1p1"
-            logging.info("Guessing r1i1p1 for {}".format(os.path.join(root, nc_file)))
+            logging.info(f"Guessing r1i1p1 for {os.path.join(root, nc_file)}")
 
         nc.close()
         move_path = os.path.join(

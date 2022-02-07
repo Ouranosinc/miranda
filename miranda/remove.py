@@ -38,7 +38,7 @@ def file_emptier(*, file_list: List[Union[str, Path]]) -> None:
     )
 
     for file in file_list:
-        logging.warning("Overwriting {}".format(file))
+        logging.warning(f"Overwriting {file}")
         open(file, "w").close()
 
 
@@ -90,7 +90,7 @@ def delete_by_date(
     nc_files.sort()
 
     logging.info(
-        "Found {} files totalling {}".format(len(nc_files), report_file_size(nc_files))
+        f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}"
     )
 
     context = None
@@ -106,7 +106,7 @@ def delete_by_date(
     for file in nc_files:
         if creation_date(file) == date_selected:
             freed_space += Path(file).stat().st_size
-            logging.info("Deleting {}".format(file.name))
+            logging.info(f"Deleting {file.name}")
             if context:
                 context.remove(file)
             else:
@@ -167,7 +167,7 @@ def delete_duplicates(
     nc_file_duplicates = []
     for f in nc_files_target:
         if f.name in nc_files_source:
-            logging.info("Duplicate found: {}".format(f.name))
+            logging.info(f"Duplicate found: {f.name}")
             nc_file_duplicates.append(f)
 
     nc_file_duplicates.sort()
@@ -183,7 +183,7 @@ def delete_duplicates(
         with connection as context:
             for dup in nc_file_duplicates:
                 freed_space += Path(dup).stat().st_size
-                logging.info("Deleting {}".format(dup.name))
+                logging.info(f"Deleting {dup.name}")
                 context.remove(dup)
                 deleted_files += 1
 
@@ -240,10 +240,10 @@ def delete_by_variable(
             found = list()
             for location in target:
                 found.extend(
-                    [f for f in Path(location).rglob("{}*{}".format(var, glob_suffix))]
+                    [f for f in Path(location).rglob(f"{var}*{glob_suffix}")]
                 )
         else:
-            found = Path(target).rglob("{}*{}".format(var, glob_suffix))
+            found = Path(target).rglob(f"{var}*{glob_suffix}")
 
         nc_files = [Path(f) for f in found]
         nc_files.sort()
@@ -259,7 +259,7 @@ def delete_by_variable(
                 freed_space += Path(file).stat().st_size
                 deleted_files += 1
                 if delete:
-                    logging.info("Deleting file {}".format(file.stem))
+                    logging.info(f"Deleting file {file.stem}")
                     context.remove(file)
 
     logging.info(

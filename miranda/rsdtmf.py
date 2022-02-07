@@ -86,7 +86,7 @@ def rstdmf_rename(file_list: List[str], restore_path: str):
     try:
         Path(restore_path).mkdir(parents=True, exist_ok=True)
     except OSError:
-        raise RstdmfError("Cannot create restore path {}.".format(restore_path))
+        raise RstdmfError(f"Cannot create restore path {restore_path}.")
     # Create string with list of files
     file_list_string = "' '".join(file_list)
     file_list_string = "'" + file_list_string + "'"
@@ -105,7 +105,7 @@ def rstdmf_rename(file_list: List[str], restore_path: str):
         try:
             transfer_file(restored_file, Path(restore_path).joinpath(file_name))
         except OSError:
-            raise RstdmfError("Could not move {}.".format(restored_file))
+            raise RstdmfError(f"Could not move {restored_file}.")
 
 
 def local_storage_for_rstdmf(
@@ -245,7 +245,7 @@ def rstdmf_divisions(
             "Disk space: {} GB, Restoration size: {} GiB, ".format(
                 str(float(storage.free_space) / GiB), str(size_of_files / GiB)
             )
-            + "Subdivisions: {}".format(str(len(divisions)))
+            + f"Subdivisions: {str(len(divisions))}"
         )
         if not yesno_prompt("Proceed with restoration?"):
             return
@@ -278,14 +278,14 @@ def rstdmf_divisions(
                         str(float(storage.free_space) / GiB),
                         str(disk_space_margin / GiB),
                     )
-                    + "Restore size: {} GiB".format(str(size_of_files / GiB))
+                    + f"Restore size: {str(size_of_files / GiB)} GiB"
                 )
             elif local_storage.free_space < size_of_files:
                 verbose_fn(
                     "Reached size limit of files on disk ({} GiB).".format(
                         str(float(max_size_on_disk) / GiB)
                     )
-                    + " Starting wait loop ({} s)".format(disk_refresh_time)
+                    + f" Starting wait loop ({disk_refresh_time} s)"
                 )
             while (storage.free_space - disk_space_margin < size_of_files) or (
                 local_storage.free_space < size_of_files

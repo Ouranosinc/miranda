@@ -30,7 +30,7 @@ def group_by_length(
     """
     This function groups files by an arbitrary number of file entries
     """
-    logging.info("Creating groups of {} files".format(size))
+    logging.info(f"Creating groups of {size} files")
     files = ingest(files)
     grouped_list = list()
     group = list()
@@ -79,7 +79,7 @@ def group_by_deciphered_date(
 
     if dates and total == len(files):
         logging.info(
-            "All files have been grouped by date. {} groups created.".format(len(dates))
+            f"All files have been grouped by date. {len(dates)} groups created."
         )
         return dict(dates)
 

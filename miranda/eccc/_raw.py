@@ -73,8 +73,8 @@ def convert_hourly_flat_files(
         # Preparing the data extraction
         col_names = "code year month day code_var ".split()
         for i in range(1, 25):
-            col_names.append("D{:0n}".format(i))
-            col_names.append("F{:0n}".format(i))
+            col_names.append(f"D{i:0n}")
+            col_names.append(f"F{i:0n}")
 
         rep_nc = Path(output_folder).joinpath(variable_file_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
@@ -144,8 +144,8 @@ def convert_hourly_flat_files(
                 df_var = df_var.replace(missing_value, np.nan)
 
                 # Decode the values and flags
-                dfd = df_var.loc[:, ["D{:0n}".format(i) for i in range(1, 25)]]
-                dff = df_var.loc[:, ["F{:0n}".format(i) for i in range(1, 25)]]
+                dfd = df_var.loc[:, [f"D{i:0n}" for i in range(1, 25)]]
+                dff = df_var.loc[:, [f"F{i:0n}" for i in range(1, 25)]]
 
                 # Remove the "NaN" flag
                 dff = dff.fillna("")
@@ -235,7 +235,7 @@ def convert_hourly_flat_files(
                 ds.to_netcdf(station_folder.joinpath(f_nc))
 
     logging.warning(
-        "Process completed in {:.2f} seconds".format(time.time() - func_time)
+        f"Process completed in {time.time() - func_time:.2f} seconds"
     )
 
 
@@ -272,8 +272,8 @@ def convert_daily_flat_files(
         # Prepare the data extraction
         titre_colonnes = "code year month code_var".split()
         for i in range(1, 32):
-            titre_colonnes.append("D{:0n}".format(i))
-            titre_colonnes.append("F{:0n}".format(i))
+            titre_colonnes.append(f"D{i:0n}")
+            titre_colonnes.append(f"F{i:0n}")
 
         # Create the output directory
         rep_nc = Path(output_folder).joinpath(nc_name)
@@ -290,7 +290,7 @@ def convert_daily_flat_files(
 
         errored_files = list()
         for fichier in list_files:
-            logging.info("Processing file: {}.".format(fichier))
+            logging.info(f"Processing file: {fichier}.")
 
             # Create a Pandas DataFrame from the files
             try:
@@ -324,7 +324,7 @@ def convert_daily_flat_files(
                     continue
 
                 # Perform the data treatment
-                logging.info("Converting {} for station code: {}".format(nc_name, code))
+                logging.info(f"Converting {nc_name} for station code: {code}")
 
                 # Dump the values into a DataFrame
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
@@ -333,8 +333,8 @@ def convert_daily_flat_files(
                 df_var = df_var.replace(missing_value, np.nan)
 
                 # Decoding the values and flags
-                dfd = df_var.loc[:, ["D{:0n}".format(i) for i in range(1, 32)]]
-                dff = df_var.loc[:, ["F{:0n}".format(i) for i in range(1, 32)]]
+                dfd = df_var.loc[:, [f"D{i:0n}" for i in range(1, 32)]]
+                dff = df_var.loc[:, [f"F{i:0n}" for i in range(1, 32)]]
 
                 # Remove the "NaN" flag
                 dff = dff.fillna("")
@@ -431,7 +431,7 @@ def convert_daily_flat_files(
                 ds.to_netcdf(station_folder.joinpath(f_nc))
 
     logging.warning(
-        "Process completed in {:.2f} seconds".format(time.time() - func_time)
+        f"Process completed in {time.time() - func_time:.2f} seconds"
     )
 
 
@@ -507,7 +507,7 @@ def aggregate_stations(
             info = cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
         logging.info(
-            "Merging `{}` using `{}` time step.".format(variable_name, time_step)
+            f"Merging `{variable_name}` using `{time_step}` time step."
         )
 
         # Find the ECCC stations where we have available metadata
@@ -628,8 +628,8 @@ def aggregate_stations(
 
             # Calculate the time index dimensions of the output NetCDF
             time_index = pd.date_range(
-                start="{}-01-01".format(year_start),
-                end="{}-01-01".format(year_end + 1),
+                start=f"{year_start}-01-01",
+                end=f"{year_end + 1}-01-01",
                 freq="H" if hourly else "D",
             )[:-1]
 
@@ -694,7 +694,7 @@ def aggregate_stations(
         else:
             logging.info("No files found for variable: `%s`." % variable_name)
 
-    runtime = "Process completed in {:.2f} seconds".format(time.time() - func_time)
+    runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
     logging.warning(runtime)
 
 

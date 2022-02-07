@@ -123,7 +123,7 @@ def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
     facets["member"] = data.variant_label
     facets["version"] = data.version
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -153,7 +153,7 @@ def decode_cmip6_name(file: Union[Path, str]) -> dict:
     except IndexError:
         pass
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -171,7 +171,7 @@ def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
     facets["member"] = data.parent_experiment_rip
     facets["modeling_realm"] = data.modeling_realm
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -190,7 +190,7 @@ def decode_cmip5_name(file: Union[Path, str]) -> dict:
     facets["experiment"] = decode_file[3]
     facets["member"] = decode_file[4]
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -209,7 +209,7 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
     facets["experiment"] = data.experiment_id
     facets["member"] = data.parent_experiment_rip
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -226,7 +226,7 @@ def decode_cordex_name(file: Union[Path, str]) -> dict:
     facets["frequency"] = decode_file[-2]
     facets["member"] = decode_file[4]
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -262,7 +262,7 @@ def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
             facets["co2_forcing"] = facets["soc_forcing"]
             facets["soc_forcing"] = "NAsoc"
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 
@@ -283,7 +283,7 @@ def decode_isimip_ft_netcdf(file):
     facets["member"] = data.driving_model_ensemble_member
     facets["modeling_realm"] = data.modeling_realm
 
-    logging.info("Deciphered the following from {}: {}".format(file, facets.items()))
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
     return facets
 

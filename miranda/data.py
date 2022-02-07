@@ -28,7 +28,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["DataBase"]
 
 
-class DataBase(object):
+class DataBase:
     """ """
 
     def __init__(
@@ -80,9 +80,9 @@ class DataBase(object):
 
     def __str__(self):
         prepr = "[%s]" % ", ".join(
-            ['{}: "{}"'.format(k, v) for k, v in self.__dict__.items()]
+            [f'{k}: "{v}"' for k, v in self.__dict__.items()]
         )
-        return "{}({})".format(self.__class__.__name__, prepr)
+        return f"{self.__class__.__name__}({prepr})"
 
     def __getitem__(self, key):
         return self.__dict__[key]

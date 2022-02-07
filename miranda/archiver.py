@@ -50,7 +50,7 @@ def archive_database(
     elif not compression:
         suffix = "tar"
     else:
-        raise ValueError("Compression: {}".format(compression))
+        raise ValueError(f"Compression: {compression}")
 
     file_list, source_path = find_filepaths(
         source=source, recursive=recursive, file_suffixes=file_suffixes
@@ -94,10 +94,10 @@ def archive_database(
                             if transfer.is_file():
                                 if not overwrite:
                                     logging.info(
-                                        "{} exists. Skipping file.".format(transfer)
+                                        f"{transfer} exists. Skipping file."
                                     )
                                     continue
-                                logging.info("{} exists. Overwriting.".format(transfer))
+                                logging.info(f"{transfer} exists. Overwriting.")
                             if not dry_run:
                                 if transfer_file(archive_file, transfer, transport=ctx):
                                     successful_transfers.append(archive_file)

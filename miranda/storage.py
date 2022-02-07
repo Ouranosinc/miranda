@@ -62,7 +62,7 @@ class FileMeta:
             try:
                 self.size = self.path.stat().st_size
             except OSError:
-                raise DiskSpaceError("Cannot get size of {}.".format(self.path.name))
+                raise DiskSpaceError(f"Cannot get size of {self.path.name}.")
         elif -1 == size:
             self.size = 0
         else:
@@ -292,7 +292,7 @@ def report_file_size(
         multiple = math.trunc(math.log2(i) / math.log2(base))
         value = i / math.pow(base, multiple)
         suffix = _CONVERSIONS[multiple].format("i" if binary else "")
-        return "{value:.{precision}f} {suffix}".format(**locals())
+        return f"{value:.{precision}f} {suffix}"
 
     total = file_size(file_path_or_bytes)
     return _size_formatter(total, binary=use_binary, precision=significant_digits)

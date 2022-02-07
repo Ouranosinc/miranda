@@ -79,16 +79,16 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
-    msg = str()
+    msg = ''
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
-                msg = "{} is read OK!".format(location)
+                msg = f"{location} is read OK!"
                 logging.info(msg)
                 return True
-            msg = "Ensure read privileges for `{}`.".format(location)
+            msg = f"Ensure read privileges for `{location}`."
         else:
-            msg = "`{}` is an invalid path.".format(location)
+            msg = f"`{location}` is an invalid path."
         raise OSError
 
     except OSError:
@@ -156,13 +156,13 @@ def find_filepaths(
     for location in source:
         for pattern in file_suffixes:
             if "*" not in pattern:
-                pattern = "*{}*".format(pattern)
+                pattern = f"*{pattern}*"
             if recursive:
                 found.extend([f for f in Path(location).expanduser().rglob(pattern)])
             elif not recursive:
                 found.extend([f for f in Path(location).expanduser().glob(pattern)])
             else:
-                raise ValueError("Recursive: {}".format(recursive))
+                raise ValueError(f"Recursive: {recursive}")
 
     if (2, 7) < sys.version_info < (3, 6):
         found = [str(f) for f in found]
@@ -207,12 +207,12 @@ def yesno_prompt(query: str) -> bool:
         True (yes) or False (otherwise).
     """
 
-    user_input = input("{} (y/n) ".format(query))
+    user_input = input(f"{query} (y/n) ")
     if user_input.lower() == "y":
         return True
     if user_input.lower() == "n":
         return False
-    raise ValueError("{} not in (y, n)".format(user_input))
+    raise ValueError(f"{user_input} not in (y, n)")
 
 
 def list_paths_with_elements(

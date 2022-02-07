@@ -54,7 +54,7 @@ def extract_daily_summaries(
 
     # Find the CSV files
     if "*" not in file_suffix:
-        file_suffix = "*{}".format(file_suffix)
+        file_suffix = f"*{file_suffix}"
     station_files = Path(path_station).rglob(file_suffix)
 
     # extract the .csv data
@@ -248,7 +248,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     Tuple[dict, pd.DataFrame]
     """
     # Read the whole file
-    with open(file, "r", encoding="utf-8-sig") as fi:
+    with open(file, encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
     # Find each elements in the header
