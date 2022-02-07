@@ -79,7 +79,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
-    msg = ''
+    msg = ""
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):

@@ -93,9 +93,7 @@ def archive_database(
 
                             if transfer.is_file():
                                 if not overwrite:
-                                    logging.info(
-                                        f"{transfer} exists. Skipping file."
-                                    )
+                                    logging.info(f"{transfer} exists. Skipping file.")
                                     continue
                                 logging.info(f"{transfer} exists. Overwriting.")
                             if not dry_run:

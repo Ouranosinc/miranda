@@ -76,7 +76,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
         "Humidité relative 2 mètres": "hurs",
     }
 
-    name = ''
+    name = ""
     table_name = None
     if v in corr:
         name = corr[v]

@@ -79,9 +79,7 @@ class DataBase:
         )
 
     def __str__(self):
-        prepr = "[%s]" % ", ".join(
-            [f'{k}: "{v}"' for k, v in self.__dict__.items()]
-        )
+        prepr = "[%s]" % ", ".join([f'{k}: "{v}"' for k, v in self.__dict__.items()])
         return f"{self.__class__.__name__}({prepr})"
 
     def __getitem__(self, key):

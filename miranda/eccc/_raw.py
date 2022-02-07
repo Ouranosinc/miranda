@@ -234,9 +234,7 @@ def convert_hourly_flat_files(
 
                 ds.to_netcdf(station_folder.joinpath(f_nc))
 
-    logging.warning(
-        f"Process completed in {time.time() - func_time:.2f} seconds"
-    )
+    logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")
 
 
 def convert_daily_flat_files(
@@ -430,9 +428,7 @@ def convert_daily_flat_files(
 
                 ds.to_netcdf(station_folder.joinpath(f_nc))
 
-    logging.warning(
-        f"Process completed in {time.time() - func_time:.2f} seconds"
-    )
+    logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")
 
 
 def aggregate_stations(
@@ -506,9 +502,7 @@ def aggregate_stations(
         else:
             info = cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
-        logging.info(
-            f"Merging `{variable_name}` using `{time_step}` time step."
-        )
+        logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
         # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(str(station_metadata), header=3)

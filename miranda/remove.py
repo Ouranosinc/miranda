@@ -89,9 +89,7 @@ def delete_by_date(
     nc_files = list(nc_files)
     nc_files.sort()
 
-    logging.info(
-        f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}"
-    )
+    logging.info(f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}")
 
     context = None
     if server:
@@ -239,9 +237,7 @@ def delete_by_variable(
         if isinstance(target, (GeneratorType, list)):
             found = list()
             for location in target:
-                found.extend(
-                    [f for f in Path(location).rglob(f"{var}*{glob_suffix}")]
-                )
+                found.extend([f for f in Path(location).rglob(f"{var}*{glob_suffix}")])
         else:
             found = Path(target).rglob(f"{var}*{glob_suffix}")
 
