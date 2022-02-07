@@ -2,11 +2,10 @@ import os
 from datetime import date
 from pathlib import Path
 
-import pytest
+import pytest  # noqa
 
-import miranda.eccc._utils
+import miranda.eccc._utils as eccc_utils  # noqa
 from miranda import utils
-from miranda.eccc._utils import daily_metadata, hourly_metadata
 
 
 class TestWorkingDirectory:
@@ -27,7 +26,7 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = hourly_metadata(key)
+            variables[key] = eccc_utils.cf_hourly_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"] == "dry_bulb_temperature":
                 assert variables[key]["add_offset"] == 273.15
@@ -40,7 +39,7 @@ class TestEnvCanVariables:
             "atmospheric_pressure",
             "dry_bulb_temperature",
             "relative_humidity",
-            "rainfall_amount",
+            "rainfall_flux",
             "precipitation_flux",
         }
 
@@ -57,7 +56,7 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = daily_metadata(key)
+            variables[key] = eccc_utils.cf_daily_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"].startswith("air_temperature"):
                 assert variables[key]["add_offset"] == 273.15
@@ -69,9 +68,9 @@ class TestEnvCanVariables:
             "air_temperature",
             "air_temperature_maximum",
             "air_temperature_minimum",
-            "precipitation_flux",
-            "liquid_precipitation_flux",
-            "solid_precipitation_flux",
+            "precipitation_amount",
+            "liquid_precipitation_amount",
+            "solid_precipitation_amount",
         }
 
 

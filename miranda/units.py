@@ -25,17 +25,17 @@ hq = pint.Context("hq")
 hq.add_transformation(
     "[mass] / [length]**2",
     "[length]",
-    lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3),
+    lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
 )
 hq.add_transformation(
     "[mass] / [length]**2 / [time]",
     "[length] / [time]",
-    lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3),
+    lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
 )
 hq.add_transformation(
     "[length] / [time]",
     "[mass] / [length]**2 / [time]",
-    lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3),
+    lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
 )
 u.add_context(hq)
 u.enable_contexts(hq)

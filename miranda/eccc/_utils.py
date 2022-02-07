@@ -1,17 +1,15 @@
 import logging.config
-
 from datetime import datetime as dt
 from typing import Dict, List, Tuple, Union
 
 from miranda.scripting import LOGGING_CONFIG
 
+__all__ = ["cf_hourly_metadata", "cf_daily_metadata", "ahccd_metadata"]
+
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["ahccd_metadata", "daily_metadata", "hourly_metadata"]
-
-
-def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float]]:
+def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float]]:
     """
 
     Parameters
@@ -176,11 +174,11 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "nc_name": "low_cloud_hgt",
         },
         "123": {
-            "nc_units": "mm",
+            "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Rainfall",
-            "standard_name": "rainfall_amount",
+            "standard_name": "rainfall_flux",
             "nc_name": "rainfall",
         },
         "133": {
@@ -200,7 +198,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "nc_name": "wind_dir_u2a_36",
         },
         "262": {
-            "nc_units": "mm",
+            "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 00-60)",
@@ -208,7 +206,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "nc_name": "precipitation",
         },
         "263": {
-            "nc_units": "mm",
+            "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 00-15)",
@@ -216,7 +214,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "nc_name": "precipitation_q1",
         },
         "264": {
-            "nc_units": "mm",
+            "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 15-30)",
@@ -224,7 +222,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "nc_name": "precipitation_q2",
         },
         "265": {
-            "nc_units": "mm",
+            "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 30-45)",
@@ -232,7 +230,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "nc_name": "precipitation_q3",
         },
         "266": {
-            "nc_units": "mm",
+            "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Precipitation (minutes 45-60)",
@@ -277,7 +275,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 00-15)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q1",
+            "nc_name": "wind_speed_q1",
         },
         "272": {
             "nc_units": "m s-1",
@@ -285,7 +283,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 15-30)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q2",
+            "nc_name": "wind_speed_q2",
         },
         "273": {
             "nc_units": "m s-1",
@@ -293,7 +291,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 30-45)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q3",
+            "nc_name": "wind_speed_q3",
         },
         "274": {
             "nc_units": "m s-1",
@@ -301,7 +299,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
             "add_offset": 0,
             "long_name": "Wind Speed at 2 m (minutes 45-60)",
             "standard_name": "wind_speed",
-            "nc_name": "windspeed_q4",
+            "nc_name": "wind_speed_q4",
         },
         "275": {
             "nc_units": "m",
@@ -365,7 +363,7 @@ def hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, floa
     return variable
 
 
-def daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float]]:
+def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float]]:
     """
 
     Parameters
@@ -402,27 +400,27 @@ def daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float
             "nc_name": "tas",
         },
         "010": {
-            "nc_units": "mm d-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Daily Total Rainfall",
-            "standard_name": "liquid_precipitation_flux",
+            "standard_name": "liquid_precipitation_amount",
             "nc_name": "prlptot",
         },
         "011": {
-            "nc_units": "cm d-1",
+            "nc_units": "cm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Daily Total Snowfall",
-            "standard_name": "solid_precipitation_flux",
+            "standard_name": "solid_precipitation_amount",
             "nc_name": "prsntot",
         },
         "012": {
-            "nc_units": "mm d-1",
+            "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Daily Total Precipitation",
-            "standard_name": "precipitation_flux",
+            "standard_name": "precipitation_amount",
             "nc_name": "prcptot",
         },
         "013": {
