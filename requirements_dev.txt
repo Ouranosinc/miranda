@@ -1,6 +1,5 @@
 pip
 wheel
-tox-travis
 coverage
 pytest
 pytest-runner
