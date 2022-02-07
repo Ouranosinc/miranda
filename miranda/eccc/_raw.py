@@ -30,7 +30,6 @@ from miranda.scripting import LOGGING_CONFIG
 
 from ._utils import cf_daily_metadata, cf_hourly_metadata
 
-
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
