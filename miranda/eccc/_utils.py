@@ -26,6 +26,7 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
             "scale_factor": 1e6 / (60 * 60),
             "add_offset": 0,
             "long_name": "RF1 Global Solar Radiation",
+            "standard_name": "solar_radiation_flux",
             "nc_name": "rf1_radiation",
         },
         "071": {
@@ -108,6 +109,22 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
             "standard_name": "relative_humidity",
             "nc_name": "hur",
         },
+        "081": {
+            "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Total Cloud Opacity",
+            "standard_name": "cloud_albedo",
+            "nc_name": "clo",
+        },
+        "082": {
+            "nc_units": "%",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Total Cloud Amount",
+            "standard_name": "cloud_area_fraction",
+            "nc_name": "clt",
+        },
         "089": {
             "nc_units": "1",
             "scale_factor": 1,
@@ -161,7 +178,7 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Total Rainfall",
-            "standard_name": "rainfall_amount",
+            "standard_name": "rainfall_flux",
             "nc_name": "rainfall",
         },
         "133": {
@@ -387,7 +404,7 @@ def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, fl
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Daily Total Rainfall",
-            "standard_name": "liquid_precipitation_flux",
+            "standard_name": "liquid_precipitation_amount",
             "nc_name": "prlptot",
         },
         "011": {
@@ -395,7 +412,7 @@ def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, fl
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Daily Total Snowfall",
-            "standard_name": "solid_precipitation_flux",
+            "standard_name": "solid_precipitation_amount",
             "nc_name": "prsntot",
         },
         "012": {
@@ -403,7 +420,7 @@ def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, fl
             "scale_factor": 0.1,
             "add_offset": 0,
             "long_name": "Daily Total Precipitation",
-            "standard_name": "precipitation_flux",
+            "standard_name": "precipitation_amount",
             "nc_name": "prcptot",
         },
         "013": {

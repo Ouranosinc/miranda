@@ -44,3 +44,19 @@ jobs:
       run: pip install tox
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: report coverage
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        flag-name: run-${{ matrix.tox-env }}
+        parallel: true
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel-finished: true

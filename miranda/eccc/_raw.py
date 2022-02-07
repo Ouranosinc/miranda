@@ -30,6 +30,7 @@ from miranda.scripting import LOGGING_CONFIG
 
 from ._utils import cf_daily_metadata, cf_hourly_metadata
 
+
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
@@ -104,7 +105,12 @@ def convert_hourly_flat_files(
                     names=col_names,
                     dtype={"year": int, "month": int, "day": int, "code_var": str},
                 )
-            except Exception:
+            except FileNotFoundError:
+                logging.error(f"File {fichier} was not found.")
+                errored_files.append(fichier)
+                continue
+
+            except (UnicodeDecodeError, Exception):
                 logging.error(
                     f"File {fichier} was unable to be read. This is probably an issue with the file."
                 )
@@ -534,7 +540,7 @@ def aggregate_stations(
                     chunks=dict(time=365),
                 )
 
-                # dask gives warnings about export 'object' datatypes
+                # dask gives warnings about export 'object' data types
                 ds["station_id"] = ds["station_id"].astype(str)
         if ds:
             station_file_codes = [x.name.split("_")[0] for x in nclist]
@@ -745,7 +751,7 @@ def merge_converted_variables(
     """
 
     def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
-        var, input_folder, output_folder = args
+        varia, input_folder, output_folder = args
 
         ncfiles = sorted(list(input_folder.glob("*.nc")))
         logging.info(
@@ -758,13 +764,13 @@ def merge_converted_variables(
         )
 
         outfile = output_folder.joinpath(
-            f'{ncfiles[0].name.split(f"_{variable}_")[0]}_{variable}_'
+            f'{ncfiles[0].name.split(f"_{varia}_")[0]}_{varia}_'
             f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
         )
         if not outfile.exists():
             logging.info(f"Merging to {outfile.name}")
             comp = dict(zlib=True, complevel=5)
-            encoding = {var: comp for var in ds.data_vars}
+            encoding = {varia: comp for varia in ds.data_vars}
             encoding["time"] = {"dtype": "single"}
             with ProgressBar():
                 ds.to_netcdf(outfile, encoding=encoding)

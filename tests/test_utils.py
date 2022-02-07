@@ -6,6 +6,7 @@ import pytest
 
 import miranda.eccc._utils
 from miranda import utils
+from miranda.eccc._utils import daily_metadata, hourly_metadata
 
 
 class TestWorkingDirectory:
