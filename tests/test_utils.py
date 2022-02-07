@@ -2,7 +2,7 @@ import os
 from datetime import date
 from pathlib import Path
 
-import pytest
+import pytest  # noqa
 
 import miranda.eccc._utils as eccc_utils  # noqa
 from miranda import utils
@@ -39,7 +39,7 @@ class TestEnvCanVariables:
             "atmospheric_pressure",
             "dry_bulb_temperature",
             "relative_humidity",
-            "rainfall_amount",
+            "rainfall_flux",
             "precipitation_flux",
         }
 
@@ -68,9 +68,9 @@ class TestEnvCanVariables:
             "air_temperature",
             "air_temperature_maximum",
             "air_temperature_minimum",
-            "precipitation_flux",
-            "liquid_precipitation_flux",
-            "solid_precipitation_flux",
+            "precipitation_amount",
+            "liquid_precipitation_amount",
+            "solid_precipitation_amount",
         }
 
 
