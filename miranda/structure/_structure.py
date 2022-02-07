@@ -5,9 +5,11 @@ import shutil
 
 import netCDF4
 
+from ..decode.metadata import CORDEX_INSTITUTES  # noqa
+
 logging.basicConfig(
-    filename="{}_cordex-na.log".format(
-        datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d")
+    filename="{}_{}.log".format(
+        datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d"), __file__
     ),
     level=logging.INFO,
 )
@@ -15,15 +17,6 @@ logging.basicConfig(
 path_origin = "/path/origin/"
 path_move = "/path/move/"
 
-rcm_institutions = {
-    "CanRCM4": "CCCMA",
-    "CRCM5": "UQAM",
-    "CRCM5-UQAM": "UQAM",
-    "HIRHAM5": "DMI",
-    "RCA4": "SMHI",
-    "RegCM4": "ISU",
-    "WRF": "NCAR",
-}
 
 driving_institutions = {
     "CanESM2": "CCCMA",
@@ -71,7 +64,7 @@ for root, dirs, files in os.walk(path_origin):
         move_path = os.path.join(
             path_move,
             "CORDEX-NA",
-            rcm_institutions[rcm],
+            CORDEX_INSTITUTES[rcm],
             rcm,
             experiment_tag,
             time_frequency,
