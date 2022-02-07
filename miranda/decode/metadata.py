@@ -114,6 +114,7 @@ def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
 
     facets = dict()
     facets["variable"] = variable
+    facets["domain"] = "global"
     facets["project_id"] = data.mip_era
     facets["institution"] = data.institution_id
     facets["frequency"] = data.frequency
@@ -133,6 +134,7 @@ def decode_cmip6_name(file: Union[Path, str]) -> dict:
 
     facets = dict()
     facets["variable"] = decode_file[0]
+    facets["domain"] = "global"
     facets["frequency"] = decode_file[1]
     if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
@@ -163,6 +165,7 @@ def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
 
     facets = dict()
     facets["variable"] = variable
+    facets["domain"] = "global"
     facets["project"] = data.project_id
     facets["institution"] = data.institute_id
     facets["frequency"] = data.frequency
@@ -181,6 +184,7 @@ def decode_cmip5_name(file: Union[Path, str]) -> dict:
 
     facets = dict()
     facets["variable"] = decode_file[0]
+    facets["domain"] = "global"
     facets["frequency"] = decode_file[1]
     if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
@@ -203,11 +207,14 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
     facets["project"] = data.project_id
     facets["institution"] = data.institute_id
     facets["model"] = data.model_id
-    facets["CORDEX_domain"] = data.CORDEX_domain
+    facets["domain"] = data.CORDEX_domain
     facets["frequency"] = data.frequency
     facets["driving_model"] = data.driving_model_id
     facets["experiment"] = data.experiment_id
-    facets["member"] = data.parent_experiment_rip
+    try:
+        facets["member"] = data.parent_experiment_rip
+    except KeyError:
+        facets["member"] = data.driving_model_ensemble_member
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -220,6 +227,7 @@ def decode_cordex_name(file: Union[Path, str]) -> dict:
     facets = dict()
     facets["project"] = "CORDEX"
     facets["variable"] = decode_file[0]
+    facets["domain"] = decode_file[1]
     facets["institution"] = decode_file[5].split("-")[0]
     facets["model"] = decode_file[5].split("-")[1:]
     facets["experiment"] = "_".join(decode_file[1:4])
