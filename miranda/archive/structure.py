@@ -12,8 +12,8 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-path_origin = "/expl7/smith/CORDEX/CORDEX-NA"
-path_move = "/expl7/smith/CORDEX/CORDEX-NA/structured"
+path_origin = "/path/origin/"
+path_move = "/path/move/"
 
 rcm_institutions = {
     "CanRCM4": "CCCMA",
