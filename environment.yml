@@ -3,34 +3,34 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - fabric
-  - paramiko>=2.6.0
-  - scp
-  - custom-inherit>=2.3.0
+  - bumpversion
   - cftime
-  - numpy
-  - requests
-  - netCDF4
-  - xarray
-  - rioxarray
+  - coverage
+  - custom-inherit >=2.3.0
   - dask
   - distributed
+  - fabric
   - fiona
-  - rasterio
-  - shapely
-  - pyproj
-  - geojson
-  - pandas
-  - geopandas
-  - pint
-  - h5netcdf
-  - pip
-  - wheel
-  - coverage
-  - pytest
-  - pytest-runner
   - flake8
-  - tox
+  - geojson
+  - geopandas
+  - h5netcdf
+  - netCDF4
+  - numpy
+  - pandas
+  - paramiko >=2.6.0
+  - pint
+  - pip
   - pre-commit
-  - autopep8
-  - bumpversion
+  - pyproj
+  - pytest
+  - python >=3.7
+  - rasterio
+  - requests
+  - rioxarray
+  - schema
+  - scp
+  - shapely
+  - tox
+  - xarray
+  - xclim

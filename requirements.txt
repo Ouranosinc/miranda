@@ -21,3 +21,4 @@ pint
 h5netcdf
 cdsapi
 ecmwf-api-client
+schema

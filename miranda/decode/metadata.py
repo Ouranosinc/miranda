@@ -1,10 +1,12 @@
 #!/bin/env python3
 import logging
 from logging import config
+from os import PathLike
 from pathlib import Path
 from typing import List, Union
 
 from netCDF4 import Dataset
+from schema import Schema
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -21,6 +23,8 @@ __all__ = [
     "decode_isimip_ft_name",
     "decode_isimip_ft_netcdf",
 ]
+
+schema = Schema([])
 
 
 def _from_netcdf(file: Union[Path, str]) -> (str, Dataset):
@@ -117,7 +121,15 @@ def decode_dimsvar(file: Union[Path, str]) -> dict:
     return dimsvar_dict
 
 
-def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
+def decode_era5_netcdf(file: Union[PathLike, str]) -> dict:
+    pass
+
+
+def decode__netcdf(file: Union[PathLike, str]) -> dict:
+    pass
+
+
+def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     variable, data = _from_netcdf(file=file)
 
     facets = dict()
@@ -137,7 +149,7 @@ def decode_cmip6_netcdf(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_cmip6_name(file: Union[Path, str]) -> dict:
+def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
@@ -169,7 +181,7 @@ def decode_cmip6_name(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
+def decode_cmip5_netcdf(file: Union[PathLike, str]) -> dict:
     variable, data = _from_netcdf(file=file)
 
     facets = dict()
@@ -188,7 +200,7 @@ def decode_cmip5_netcdf(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_cmip5_name(file: Union[Path, str]) -> dict:
+def decode_cmip5_name(file: Union[PathLike, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
@@ -210,7 +222,7 @@ def decode_cmip5_name(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
+def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
     variable, data = _from_netcdf(file=file)
 
     facets = dict()
@@ -238,7 +250,7 @@ def decode_cordex_netcdf(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_cordex_name(file: Union[Path, str]) -> dict:
+def decode_cordex_name(file: Union[PathLike, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
@@ -259,7 +271,7 @@ def decode_cordex_name(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
+def decode_isimip_ft_name(file: Union[PathLike, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
@@ -296,7 +308,7 @@ def decode_isimip_ft_name(file: Union[Path, str]) -> dict:
     return facets
 
 
-def decode_isimip_ft_netcdf(file):
+def decode_isimip_ft_netcdf(file: Union[PathLike, str]) -> dict:
     variable, data = _from_netcdf(file=file)
 
     facets = dict()
