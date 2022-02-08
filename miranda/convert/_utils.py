@@ -5,14 +5,14 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 import dask.config
-from dask import compute
-import zarr
 import netCDF4
 import numpy as np
 import regionmask
 import xarray
 import xarray as xr
+import zarr
 from clisops.core import subset
+from dask import compute
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar, units
 from xclim.indices import tas
@@ -27,11 +27,11 @@ dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
 
 # map xarray freq to CMIP6 controlled vocabulary : https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/CMIP6_frequency.json
 XR_FREQ_TO_CMIP6 = {
-    'H':'hr',
-    'D':'day',
-    'M':'mon',
-    'A':'yr',
-    'Q':'qtr' #TODO does this make sense? does not exist in cmip6 CV
+    "H": "hr",
+    "D": "day",
+    "M": "mon",
+    "A": "yr",
+    "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
 }
 
 PROJECT_INSTITUTES = {
@@ -96,9 +96,8 @@ def reanalysis_processing(
     domains: Optional[Sequence[str]] = None,
     start: Optional[str] = None,
     end: Optional[str] = None,
-    target_chunks:Optional[dict]=None,
-    output_format:Optional[str]='netcdf'
-
+    target_chunks: Optional[dict] = None,
+    output_format: Optional[str] = "netcdf",
 ) -> None:
     """
 
@@ -120,7 +119,7 @@ def reanalysis_processing(
     -------
     None
     """
-    with ProgressBar(), dask.config.set(**{'array.slicing.split_large_chunks': False}):
+    with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
         out_files = Path(output_folder)
         if domains is None:
             domains = [None]
@@ -145,13 +144,15 @@ def reanalysis_processing(
                     try:
                         chunks = chunks[var]
                     except:
-                        chunks = chunks['sd'] # era5 'sde' file has 'sd' variable??
+                        chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
                     logging.info("Resampling variable `%s`." % var)
 
                     if aggregate:
                         time_freq = aggregate
                     else:
-                        parse_freq = calendar.parse_offset(xr.infer_freq(xr.open_dataset(multi_files[0]).time))
+                        parse_freq = calendar.parse_offset(
+                            xr.infer_freq(xr.open_dataset(multi_files[0]).time)
+                        )
                         time_freq = f"{parse_freq[0]}{XR_FREQ_TO_CMIP6[parse_freq[1]]}"
 
                     institute = PROJECT_INSTITUTES[project]
@@ -209,28 +210,40 @@ def reanalysis_processing(
                     ds = variable_conversion(ds, project=project)
 
                     if time_freq.lower() == "daily":
-                        dataset = daily_aggregation(ds, project) #file_name, output_folder)
-                        freq = 'YS'
+                        dataset = daily_aggregation(
+                            ds, project
+                        )  # file_name, output_folder)
+                        freq = "YS"
                     else:
-                        outvar = list(ds.data_vars)[0] if len(list(ds.data_vars)) == 1 else None
-                        dataset = {outvar:ds}
-                        freq = 'MS'
+                        outvar = (
+                            list(ds.data_vars)[0]
+                            if len(list(ds.data_vars)) == 1
+                            else None
+                        )
+                        dataset = {outvar: ds}
+                        freq = "MS"
 
                     for key in dataset.keys():
                         ds = dataset[key]
-                        outvar = list(ds.data_vars)[0] if len(list(ds.data_vars)) == 1 else None
+                        outvar = (
+                            list(ds.data_vars)[0]
+                            if len(list(ds.data_vars)) == 1
+                            else None
+                        )
                         file_name1 = file_name.replace(f"{var}_", f"{outvar}_")
                         logging.info("Writing out fixed files for %s." % file_name1)
 
                         years, datasets = zip(*ds.resample(time=freq))
 
                         if output_format == "netcdf":
-                            if freq =='MS':
-                                format_str = '%Y-%m'
+                            if freq == "MS":
+                                format_str = "%Y-%m"
                             else:
-                                format_str = '%Y'
+                                format_str = "%Y"
                             out_filenames = [
-                                output_folder.joinpath(f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}.nc")
+                                output_folder.joinpath(
+                                    f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}.nc"
+                                )
                                 for year in years
                             ]
                         elif output_format == "zarr":
@@ -240,11 +253,18 @@ def reanalysis_processing(
                             ]
 
                         jobs = []
-                        for ii,d in enumerate(datasets):
-                            jobs.append(delayed_write(d, out_filenames[ii], target_chunks, output_format))
+                        for ii, d in enumerate(datasets):
+                            jobs.append(
+                                delayed_write(
+                                    d, out_filenames[ii], target_chunks, output_format
+                                )
+                            )
                         compute(jobs)
 
-def delayed_write(ds:xarray.Dataset, outfile:Path, target_chunks:dict, output_format:str):
+
+def delayed_write(
+    ds: xarray.Dataset, outfile: Path, target_chunks: dict, output_format: str
+):
     # Set correct chunks in encoding options
     kwargs = dict()
     kwargs["encoding"] = dict()
@@ -261,23 +281,23 @@ def delayed_write(ds:xarray.Dataset, outfile:Path, target_chunks:dict, output_fo
                 "chunksizes": chunks,
                 "zlib": True,
             }
-            kwargs['compute'] = False
+            kwargs["compute"] = False
         elif output_format == "zarr":
             ds = ds.chunk(target_chunks)
 
             if outfile.exists():
-                kwargs['append_dim'] = 'time'
+                kwargs["append_dim"] = "time"
             else:
                 kwargs["encoding"][name] = {
                     "chunks": chunks,
                     "compressor": zarr.Blosc(),
                 }
-            kwargs['compute'] = True
-    if kwargs['encoding']:
-        kwargs['encoding']['time'] = {'dtype':'int32'}
-
+            kwargs["compute"] = True
+    if kwargs["encoding"]:
+        kwargs["encoding"]["time"] = {"dtype": "int32"}
 
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
+
 
 def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
@@ -314,8 +334,8 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
             try:
 
                 d = d.rename({orig: new})
-                if new == 'lon' and np.any(d.lon>180):
-                    lon1 = d.lon.where(d.lon<=180.0, d.lon-360.0)
+                if new == "lon" and np.any(d.lon > 180):
+                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                     d[new] = lon1
                 sort_dims.append(new)
             except KeyError:
@@ -338,8 +358,8 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         key = "_transformation"
         dout = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
-            if p in metadata_definition['variable_entry'][vv][key].keys():
-                if metadata_definition['variable_entry'][vv][key][p] == "deaccumulate":
+            if p in metadata_definition["variable_entry"][vv][key].keys():
+                if metadata_definition["variable_entry"][vv][key][p] == "deaccumulate":
                     freq = xr.infer_freq(ds.time)
                     offset = (
                         float(calendar.parse_offset(freq)[0])
@@ -356,31 +376,38 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                         out = units.amount2rate(out)
                         out = out.shift(time=-1)
                     dout[out.name] = out
-                elif metadata_definition['variable_entry'][vv][key][p] == "amount2rate":
-                    out = units.amount2rate(d[vv], out_units=metadata_definition['variable_entry'][vv]['units'])
+                elif metadata_definition["variable_entry"][vv][key][p] == "amount2rate":
+                    out = units.amount2rate(
+                        d[vv],
+                        out_units=metadata_definition["variable_entry"][vv]["units"],
+                    )
                     dout[out.name] = out
                 else:
-                    raise NotImplementedError(f"Unknown transformation "
-                                              f"{metadata_definition['variable_entry'][vv][key][p]}")
+                    raise NotImplementedError(
+                        f"Unknown transformation "
+                        f"{metadata_definition['variable_entry'][vv][key][p]}"
+                    )
 
             else:
                 dout[vv] = d[vv]
         return dout
 
-            # elif any([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
-            #     raise ValueError(
-            #         f"dataset contains a mix of accumulated and non-accumulated variables : {list(d.data_vars)}"
-            #     )
-            # else:
-            #     return d
+        # elif any([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
+        #     raise ValueError(
+        #         f"dataset contains a mix of accumulated and non-accumulated variables : {list(d.data_vars)}"
+        #     )
+        # else:
+        #     return d
         # else:
         #     return d
 
-    def _correct_units_names(d: xarray.Dataset, p: str ):
+    def _correct_units_names(d: xarray.Dataset, p: str):
         key = "_corrected_units"
         for vv in d.data_vars:
-            if p in metadata_definition['variable_entry'][vv][key].keys():
-                    d[vv].attrs['units'] = metadata_definition['variable_entry'][vv][key][project]
+            if p in metadata_definition["variable_entry"][vv][key].keys():
+                d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
+                    project
+                ]
         return d
 
     if project in ["era5", "era5-single-levels", "era5-land"]:
@@ -399,21 +426,19 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     return ds
 
 
-def daily_aggregation(
-    ds, project: str
-) -> xr.Dataset:
+def daily_aggregation(ds, project: str) -> xr.Dataset:
     # Daily variable aggregation operations
-    #input_file = Path(input_file)
-    #output_folder = Path(output_folder)
+    # input_file = Path(input_file)
+    # output_folder = Path(output_folder)
     logging.info("Creating daily upscaled reanalyses.")
 
     daily_dataset = dict()
 
     for variable in ds.data_vars:
-        #input_file_parts = input_file.stem.split("_")
-        #input_file_parts[0] = variable
-        #input_file_parts[1] = "day"
-        #output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
+        # input_file_parts = input_file.stem.split("_")
+        # input_file_parts[0] = variable
+        # input_file_parts[1] = "day"
+        # output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
 
         # if any([f for f in output.glob("*")]):
         #     logging.info("Files for `%s` exist. Continuing..." % output.name)
