@@ -1,11 +1,10 @@
-autopep8
-bumpversion
-coverage
-flake8
 pip
-pre-commit
+wheel
+coverage
 pytest
 pytest-runner
+flake8
 tox
-tox-travis
-wheel
+pre-commit
+autopep8
+bumpversion

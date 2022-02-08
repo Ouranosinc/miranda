@@ -34,6 +34,7 @@ def archive_database(
     recursive: bool = False,
     use_grouping: bool = True,
     use_subdirectories: bool = True,
+    dry_run: bool = False,
 ) -> None:
     """
     Given a source, destination, and dependent on file size limit, create tarfile archives and transfer
@@ -65,14 +66,20 @@ def archive_database(
 
     connection = Connection(username=username, host=server, protocol="sftp")
 
+    if dry_run:
+        logging.info(
+            "Running archival functions in `dry_run` mode. No files will be transferred."
+        )
+
     try:
         successful_transfers = list()
         with connection as ctx:
             for group_name, members in file_groups.items():
                 remote_path = Path(destination, group_name)
 
-                if not remote_path.exists():
-                    create_remote_directory(remote_path, transport=ctx)
+                if not dry_run:
+                    if not remote_path.exists():
+                        create_remote_directory(remote_path, transport=ctx)
 
                 if use_grouping:
                     dated_groups = group_by_deciphered_date(members)
@@ -91,8 +98,10 @@ def archive_database(
                                     )
                                     continue
                                 logging.info("{} exists. Overwriting.".format(transfer))
-
-                            if transfer_file(archive_file, transfer, transport=ctx):
+                            if not dry_run:
+                                if transfer_file(archive_file, transfer, transport=ctx):
+                                    successful_transfers.append(archive_file)
+                            else:
                                 successful_transfers.append(archive_file)
 
                     elif use_grouping or not single_item_list(files):
@@ -100,7 +109,7 @@ def archive_database(
 
                         for i, sized_group in enumerate(sized_groups):
                             if len(sized_groups) > 1:
-                                part = "_{}".format(str(i + 1).zfill(3))
+                                part = f"_{str(i + 1).zfill(3)}"
                             else:
                                 part = ""
 
@@ -112,23 +121,22 @@ def archive_database(
                             if transfer.is_file():
                                 if not overwrite:
                                     logging.info(
-                                        'File "{}" exists. Skipping file.'.format(
-                                            transfer
-                                        )
+                                        f'File "{transfer}" exists. Skipping file.'
                                     )
                                     continue
-                                logging.info(
-                                    'File "{}" exists. Overwriting.'.format(transfer)
-                                )
+                                logging.info(f'File "{transfer}" exists. Overwriting.')
 
                             with working_directory(source_path):
-                                if create_archive(
-                                    sized_group,
-                                    transfer,
-                                    transport=ctx,
-                                    compression=compression,
-                                    recursive=recursive,
-                                ):
+                                if not dry_run:
+                                    if create_archive(
+                                        sized_group,
+                                        transfer,
+                                        transport=ctx,
+                                        compression=compression,
+                                        recursive=recursive,
+                                    ):
+                                        successful_transfers.extend(sized_group)
+                                else:
                                     successful_transfers.extend(sized_group)
                     else:
                         raise FileNotFoundError("No files found in grouping.")
@@ -142,15 +150,13 @@ def archive_database(
         )
 
     except Exception as e:
-        msg = "{}: Failed to transfer files.".format(e)
+        msg = f"{e}: Failed to transfer files."
         logging.error(msg)
         raise RuntimeError(msg) from e
 
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename="{}_{}.log".format(
-            dt.strftime(dt.now(), "%Y%m%d"), Path(__name__).stem
-        ),
+        filename=f"{dt.strftime(dt.now(), '%Y%m%d')}_{Path(__name__).stem}.log",
         level=logging.INFO,
     )

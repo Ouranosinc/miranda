@@ -28,7 +28,7 @@ from dask.diagnostics import ProgressBar
 
 from miranda.scripting import LOGGING_CONFIG
 
-from ._utils import daily_metadata, hourly_metadata
+from ._utils import cf_daily_metadata, cf_hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -65,7 +65,7 @@ def convert_hourly_flat_files(
         variables = [variables]
 
     for variable_code in variables:
-        info = hourly_metadata(variable_code)
+        info = cf_hourly_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         variable_name = info["standard_name"]
         variable_file_name = info["nc_name"]
@@ -265,7 +265,7 @@ def convert_daily_flat_files(
         variables = [variables]
 
     for variable_code in variables:
-        info = daily_metadata(variable_code)
+        info = cf_daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
         nc_name = info["nc_name"]
 
@@ -502,9 +502,9 @@ def aggregate_stations(
 
     for variable_code in variables:
         if hourly:
-            info = hourly_metadata(variable_code)
+            info = cf_hourly_metadata(variable_code)
         else:
-            info = daily_metadata(variable_code)
+            info = cf_daily_metadata(variable_code)
         variable_name = info["nc_name"]
         logging.info(
             "Merging `{}` using `{}` time step.".format(variable_name, time_step)
@@ -769,7 +769,7 @@ def merge_converted_variables(
         if not outfile.exists():
             logging.info(f"Merging to {outfile.name}")
             comp = dict(zlib=True, complevel=5)
-            encoding = {varia: comp for varia in ds.data_vars}
+            encoding = {data_var: comp for data_var in ds.data_vars}
             encoding["time"] = {"dtype": "single"}
             with ProgressBar():
                 ds.to_netcdf(outfile, encoding=encoding)
@@ -787,9 +787,9 @@ def merge_converted_variables(
             variables = [variables]
         for var in variables:
             try:
-                selected_variables.append(hourly_metadata(var))
+                selected_variables.append(cf_hourly_metadata(var))
             except KeyError:
-                selected_variables.append(hourly_metadata(var))
+                selected_variables.append(cf_hourly_metadata(var))
 
     variables_found = [x.name for x in source.iterdir() if x.is_dir()]
     if selected_variables:
