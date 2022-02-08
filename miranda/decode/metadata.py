@@ -1,14 +1,18 @@
 #!/bin/env python3
 import logging
+import re
 from logging import config
 from os import PathLike
 from pathlib import Path
 from typing import List, Union
 
+import pandas as pd
+import schema
 from netCDF4 import Dataset
-from schema import Schema
 
 from miranda.scripting import LOGGING_CONFIG
+
+from ._utils import date_parser
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -24,7 +28,43 @@ __all__ = [
     "decode_isimip_ft_netcdf",
 ]
 
-schema = Schema([])
+datetime_validation = r"\s*(?=\d{2}(?:\d{2})?)"
+FREQUENCY_TO_TIMEDELTA = {
+    "hourly": "1h",
+    "6-hourly": "6h",
+    "daily": "1d",
+    "day": "1d",
+    "weekly": "7d",
+}
+
+facet_schema = schema.Schema(
+    {
+        schema.Optional("simulation"): str,
+        "project": str,
+        "activity": str,
+        "institution": str,
+        "source": str,
+        schema.Optional("driving_institution"): str,
+        schema.Optional("driving_model"): str,
+        "experiment": str,
+        "frequency": schema.And(
+            str, lambda f: f in ["1hr", "3hr", "6hr", "day", "dec", "mon", "yr", "fx"]
+        ),
+        schema.Optional("domain"): str,
+        "member": str,
+        "variable": str,
+        "timedelta": pd.Timedelta,  # controlled set of pandas/xarray terms
+        schema.Optional("date"): schema.Regex(
+            datetime_validation, flags=re.I
+        ),  # OR datetime???
+        "date_start": schema.Regex(datetime_validation),  # OR datetime???
+        "date_end": schema.Regex(datetime_validation),  # OR datetime??
+        schema.Optional("processing_level"): str,
+        "format": {"netcdf", "zarr"},
+        "path": PathLike,
+    },
+    ignore_extra_keys=True,
+)
 
 
 def _from_netcdf(file: Union[Path, str]) -> (str, str, Dataset):
@@ -134,7 +174,7 @@ def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     variable, date, data = _from_netcdf(file=file)
 
     facets = dict()
-    facets["date"] = date
+    facets["date"] = date_parser(date)
     facets["domain"] = "global"
     facets["experiment"] = data.experiment_id
     facets["frequency"] = data.frequency
@@ -143,14 +183,17 @@ def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     facets["model"] = data.source_id
     facets["modeling_realm"] = data.realm
     facets["project_id"] = data.mip_era
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
     facets["variable"] = variable
     facets["version"] = data.version
 
     try:
-        facets["date_start"] = date.split("-")[0]
-        facets["date_end"] = date.split("-")[1]
+        facets["date_start"] = date_parser(date)
+        facets["date_end"] = date_parser(date, end_of_period=True)
     except IndexError:
         pass
+
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -168,6 +211,7 @@ def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
     facets["grid_label"] = decode_file[5]
     facets["member"] = decode_file[4]
     facets["model"] = decode_file[2]
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[1]])
     facets["variable"] = decode_file[0]
 
     if "mon" in facets["frequency"]:
@@ -179,10 +223,12 @@ def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
         logging.info(f"Unable to find Institute for model: {facets['model']}")
 
     try:
-        facets["date_start"] = decode_file[6].split("-")[0]
-        facets["date_end"] = decode_file[6].split("-")[1]
+        facets["date_start"] = date_parser(decode_file[-1])
+        facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
     except IndexError:
         pass
+
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -202,13 +248,16 @@ def decode_cmip5_netcdf(file: Union[PathLike, str]) -> dict:
     facets["model"] = data.model_id
     facets["modeling_realm"] = data.modeling_realm
     facets["project"] = data.project_id
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
     facets["variable"] = variable
 
     try:
-        facets["date_start"] = date.split("-")[0]
-        facets["date_end"] = date.split("-")[1]
+        facets["date_start"] = date_parser(date)
+        facets["date_end"] = date_parser(date, end_of_period=True)
     except IndexError:
         pass
+
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -219,18 +268,28 @@ def decode_cmip5_name(file: Union[PathLike, str]) -> dict:
     decode_file = _from_filename(file=file)
 
     facets = dict()
+
     facets["date"] = decode_file[-1]
     facets["domain"] = "global"
     facets["experiment"] = decode_file[3]
-    facets["frequency"] = decode_file[1]
-    facets["institution"] = CMIP5_GCM_PROVIDERS[facets["model"]]
-    facets["member"] = decode_file[4]
+    facets["frequency"] = decode_file[-2]
     facets["model"] = decode_file[2]
+    facets["member"] = decode_file[4]
     facets["modeling_realm"] = None
     facets["variable"] = decode_file[0]
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
+    facets["institution"] = CMIP5_GCM_PROVIDERS[facets["model"]]
 
     if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
+
+    try:
+        facets["date_start"] = date_parser(decode_file[-1])
+        facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
+    except IndexError:
+        pass
+
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -249,11 +308,12 @@ def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
     facets["institution"] = data.institute_id
     facets["model"] = data.model_id
     facets["project"] = data.project_id
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
     facets["variable"] = variable
 
     try:
-        facets["date_start"] = date.split("-")[0]
-        facets["date_end"] = date.split("-")[1]
+        facets["date_start"] = date_parser(date)
+        facets["date_end"] = date_parser(date, end_of_period=True)
     except IndexError:
         pass
 
@@ -266,6 +326,8 @@ def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
         facets["member"] = data.parent_experiment_rip
     except KeyError:
         facets["member"] = data.driving_model_ensemble_member
+
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -284,46 +346,18 @@ def decode_cordex_name(file: Union[PathLike, str]) -> dict:
     facets["frequency"] = decode_file[-2]
     facets["institution"] = decode_file[5].split("-")[0]
     facets["member"] = decode_file[4]
-    facets["model"] = decode_file[5].split("-")[1:]
+    facets["model"] = decode_file[5]
     facets["project"] = "CORDEX"
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
     facets["variable"] = decode_file[0]
 
-    logging.info(f"Deciphered the following from {file}: {facets.items()}")
+    try:
+        facets["date_start"] = date_parser(decode_file[-1])
+        facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
+    except IndexError:
+        pass
 
-    return facets
-
-
-def decode_isimip_ft_name(file: Union[PathLike, str]) -> dict:
-    decode_file = _from_filename(file=file)
-
-    facets = dict()
-    facets["date"] = decode_file[-1]
-    facets["co2_forcing_id"] = decode_file[4]
-    facets["experiment"] = decode_file[2]
-    facets["frequency"] = decode_file[-3]
-    facets["impact_model_id"] = decode_file[0]
-    facets["institution"] = decode_file[1].split("-")[0]
-    facets["model"] = "-".join(decode_file[1].split("-")[1:])
-    facets["project"] = "ISIMIP-FT"
-    facets["setup"] = "-".join([facets["model"], facets["experiment"]])
-    facets["soc_forcing_id"] = decode_file[3]
-    facets["variable"] = decode_file[-4]
-
-    if facets["co2_forcing_id"] == facets["variable"]:
-        if facets["soc_forcing"] in [
-            "nosoc",
-            "pressoc",
-            "ssp1soc",
-            "ssp2",
-            "ssp2soc",
-            "ssp3soc",
-            "ssp4soc",
-            "ssp5soc",
-        ]:
-            facets["co2_forcing_id"] = "NAco2"
-        elif facets["soc_forcing"] in ["co2", "nocco2", "pico2"]:
-            facets["co2_forcing"] = facets["soc_forcing"]
-            facets["soc_forcing"] = "NAsoc"
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -345,13 +379,62 @@ def decode_isimip_ft_netcdf(file: Union[PathLike, str]) -> dict:
     facets["modeling_realm"] = data.modeling_realm
     facets["project"] = str(data.project_id)
     facets["social_forcing_id"] = data.social_forcing_id
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
     facets["variable"] = variable
 
     try:
-        facets["date_start"] = date.split("-")[0]
-        facets["date_end"] = date.split("-")[1]
+        facets["date_start"] = date_parser(date)
+        facets["date_end"] = date_parser(date, end_of_period=True)
     except IndexError:
         pass
+
+    facet_schema.validate(facets)
+
+    logging.info(f"Deciphered the following from {file}: {facets.items()}")
+
+    return facets
+
+
+def decode_isimip_ft_name(file: Union[PathLike, str]) -> dict:
+    decode_file = _from_filename(file=file)
+
+    facets = dict()
+    facets["date"] = decode_file[-1]
+    facets["co2_forcing_id"] = decode_file[4]
+    facets["experiment"] = decode_file[2]
+    facets["frequency"] = decode_file[-3]
+    facets["impact_model_id"] = decode_file[0]
+    facets["institution"] = decode_file[1].split("-")[0]
+    facets["model"] = "-".join(decode_file[1].split("-")[1:])
+    facets["project"] = "ISIMIP-FT"
+    facets["setup"] = "-".join([facets["model"], facets["experiment"]])
+    facets["soc_forcing_id"] = decode_file[3]
+    facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-3]])
+    facets["variable"] = decode_file[-4]
+
+    if facets["co2_forcing_id"] == facets["variable"]:
+        if facets["soc_forcing"] in [
+            "nosoc",
+            "pressoc",
+            "ssp1soc",
+            "ssp2",
+            "ssp2soc",
+            "ssp3soc",
+            "ssp4soc",
+            "ssp5soc",
+        ]:
+            facets["co2_forcing_id"] = "NAco2"
+        elif facets["soc_forcing"] in ["co2", "nocco2", "pico2"]:
+            facets["co2_forcing"] = facets["soc_forcing"]
+            facets["soc_forcing"] = "NAsoc"
+
+    try:
+        facets["date_start"] = date_parser(decode_file[-1])
+        facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
+    except IndexError:
+        pass
+
+    facet_schema.validate(facets)
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
