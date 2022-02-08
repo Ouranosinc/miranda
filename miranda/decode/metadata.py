@@ -27,11 +27,12 @@ __all__ = [
 schema = Schema([])
 
 
-def _from_netcdf(file: Union[Path, str]) -> (str, Dataset):
+def _from_netcdf(file: Union[Path, str]) -> (str, str, Dataset):
     file_name = Path(file).stem
     variable_name = file_name.split("_")[0]
+    variable_date = file_name.split("_")[-1]
     data = Dataset(file)
-    return variable_name, data
+    return variable_name, variable_date, data
 
 
 def _from_filename(file: Union[Path, str]) -> List[str]:
@@ -112,7 +113,7 @@ def decode_dimsvar(file: Union[Path, str]) -> dict:
     -------
     dict
     """
-    _, data = _from_netcdf(file=file)
+    _, _, data = _from_netcdf(file=file)
 
     dimsvar_dict = dict()
     for var_name, varin in data.variables.items():
@@ -125,14 +126,15 @@ def decode_era5_netcdf(file: Union[PathLike, str]) -> dict:
     pass
 
 
-def decode__netcdf(file: Union[PathLike, str]) -> dict:
+def decode_generic_reanalysis(file: Union[PathLike, str]) -> dict:
     pass
 
 
 def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, data = _from_netcdf(file=file)
+    variable, date, data = _from_netcdf(file=file)
 
     facets = dict()
+    facets["date"] = date
     facets["domain"] = "global"
     facets["experiment"] = data.experiment_id
     facets["frequency"] = data.frequency
@@ -143,6 +145,12 @@ def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     facets["project_id"] = data.mip_era
     facets["variable"] = variable
     facets["version"] = data.version
+
+    try:
+        facets["date_start"] = date.split("-")[0]
+        facets["date_end"] = date.split("-")[1]
+    except IndexError:
+        pass
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -182,9 +190,10 @@ def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
 
 
 def decode_cmip5_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, data = _from_netcdf(file=file)
+    variable, date, data = _from_netcdf(file=file)
 
     facets = dict()
+    facets["date"] = date
     facets["domain"] = "global"
     facets["experiment"] = data.experiment_id
     facets["frequency"] = data.frequency
@@ -194,6 +203,12 @@ def decode_cmip5_netcdf(file: Union[PathLike, str]) -> dict:
     facets["modeling_realm"] = data.modeling_realm
     facets["project"] = data.project_id
     facets["variable"] = variable
+
+    try:
+        facets["date_start"] = date.split("-")[0]
+        facets["date_end"] = date.split("-")[1]
+    except IndexError:
+        pass
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
@@ -223,9 +238,10 @@ def decode_cmip5_name(file: Union[PathLike, str]) -> dict:
 
 
 def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, data = _from_netcdf(file=file)
+    variable, date, data = _from_netcdf(file=file)
 
     facets = dict()
+    facets["date"] = date
     facets["domain"] = data.CORDEX_domain
     facets["driving_institution"] = str(data.driving_model_id).split("-")[0]
     facets["driving_model"] = data.driving_model_id
@@ -234,6 +250,12 @@ def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
     facets["model"] = data.model_id
     facets["project"] = data.project_id
     facets["variable"] = variable
+
+    try:
+        facets["date_start"] = date.split("-")[0]
+        facets["date_end"] = date.split("-")[1]
+    except IndexError:
+        pass
 
     try:
         facets["experiment"] = data.experiment_id
@@ -309,9 +331,10 @@ def decode_isimip_ft_name(file: Union[PathLike, str]) -> dict:
 
 
 def decode_isimip_ft_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, data = _from_netcdf(file=file)
+    variable, date, data = _from_netcdf(file=file)
 
     facets = dict()
+    facets["date"] = date
     facets["co2_forcing_id"] = data.co2_forcing_id
     facets["experiment"] = data.experiment_id
     facets["frequency"] = data.time_frequency_id
@@ -323,6 +346,12 @@ def decode_isimip_ft_netcdf(file: Union[PathLike, str]) -> dict:
     facets["project"] = str(data.project_id)
     facets["social_forcing_id"] = data.social_forcing_id
     facets["variable"] = variable
+
+    try:
+        facets["date_start"] = date.split("-")[0]
+        facets["date_end"] = date.split("-")[1]
+    except IndexError:
+        pass
 
     logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
