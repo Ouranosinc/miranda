@@ -28,17 +28,17 @@
     "tmax": {
       "standard_name": "air_temperature",
       "units": "K",
-      "cell_methods": "time: max",
+      "cell_methods": "time: maximum",
       "long_name": "Maximum temperature",
-      "_cf_variable_name": "tas",
+      "_cf_variable_name": "tasmax",
       "_corrected_units": "degC"
     },
     "tmin": {
       "standard_name": "air_temperature",
       "units": "K",
-      "cell_methods": "time: min",
+      "cell_methods": "time: minimum",
       "long_name": "Minimum temperature",
-      "_cf_variable_name": "tas",
+      "_cf_variable_name": "tasmin",
       "_corrected_units": "degC"
     },
     "srad": {
@@ -53,7 +53,7 @@
     "rhstmax": {
       "standard_name": "relative_humidity",
       "units": "1",
-      "cell_methods": "time: point where tas time: maximum within days",
+      "cell_methods": "time: point",
       "long_name": "Relative Humidity at time of Maximum Temperature",
       "_cf_variable_name": "hurs"
     },
