@@ -1,8 +1,14 @@
+import logging
+from logging import config
 from typing import Union
 
 import cftime
 import pandas as pd
 from pandas.tseries import offsets
+
+from miranda.scripting import LOGGING_CONFIG
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["date_parser"]
 
@@ -13,15 +19,15 @@ def date_parser(
     end_of_period: bool = False,
     out_dtype: str = "str",
     strtime_format: str = "%Y-%m-%d",
-) -> Union[str, pd.Timestamp]:
+) -> Union[str, pd.Timestamp, pd._libs.tslibs.nattype.NaTType]:
     """Returns a datetime from a string.
 
     Parameters
     ----------
     date : str
-      Date to be converted
+      Date to be converted.
     end_of_period : bool
-      If True, the date will be the end of month or year depending on what's most appropriate
+      If True, the date will be the end of month or year depending on what's most appropriate.
     out_dtype: {"datetime", "str"}
       Returned object type.
     strtime_format: str
@@ -29,8 +35,8 @@ def date_parser(
 
     Returns
     -------
-    pd.Timestamp, str
-      Parsed date
+    pd.Timestamp or str or pd.NaT
+      Parsed date.
 
     Notes
     -----
@@ -58,10 +64,10 @@ def date_parser(
                 s = pd.to_datetime(d, format=fmt)
                 match = fmt
                 break
-            except Exception:  # TODO: Define this expected exception
+            except ValueError:
                 pass
         else:
-            raise ValueError(f"Can't parse date {d} with formats {fmts}.")
+            raise ValueError(f"Can't parse date {d} with supported formats {fmts}.")
         return s, match
 
     date_format = None
@@ -74,7 +80,13 @@ def date_parser(
                 date = dates[1]
                 end_date_found = True
 
-        date, date_format = _parse_date(date, formats[len(date)])
+        try:
+            possible_formats = formats[len(date)]
+            date, date_format = _parse_date(date, possible_formats)
+        except KeyError:
+            # Return NaT for fixed/missing/ill-formatted date strings
+            return pd.NaT
+
     elif isinstance(date, cftime.datetime):
         for n in range(3):
             try:
