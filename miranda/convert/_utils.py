@@ -72,13 +72,13 @@ LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
 
 
 # Needed pre-processing function
-def _drop_those_time_bnds(dataset: xr.Dataset):
+def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
     if "time_bnds" in dataset.variables:
         return dataset.drop_vars(["time_bnds"])
     return dataset
 
 
-def get_chunks_on_disk(ncfile):
+def get_chunks_on_disk(ncfile: Union[os.PathLike, str]) -> dict:
     ds = netCDF4.Dataset(ncfile)
     chunks = {}
     for v in ds.variables:
@@ -143,7 +143,7 @@ def reanalysis_processing(
                     chunks = get_chunks_on_disk(multi_files[0])
                     try:
                         chunks = chunks[var]
-                    except:
+                    except KeyError:
                         chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
                     logging.info("Resampling variable `%s`." % var)
 
