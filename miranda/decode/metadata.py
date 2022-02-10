@@ -181,7 +181,7 @@ def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     variable, date, data = _from_netcdf(file=file)
 
     facets = dict()
-    facets["activity"] = "CMIP6"
+    facets["activity"] = data.activity_id
     facets["date"] = date
     facets["domain"] = "global"
     facets["experiment"] = data.experiment_id
@@ -190,9 +190,11 @@ def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     facets["institution"] = data.institution_id
     facets["member"] = data.variant_label
     facets["modeling_realm"] = data.realm
+    facets["processing_level"] = "raw"
     facets["project"] = data.project
     facets["source"] = data.source_id
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+    facets["type"] = "simulation"
     facets["variable"] = variable
     facets["version"] = data.version
 
@@ -221,18 +223,20 @@ def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
     facets["frequency"] = decode_file[1]
     facets["grid_label"] = decode_file[5]
     facets["member"] = decode_file[4]
+    facets["processing_level"] = "raw"
     facets["project"] = "CMIP6"
     facets["source"] = decode_file[2]
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[1]])
+    facets["type"] = "simulation"
     facets["variable"] = decode_file[0]
 
     if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
 
     try:
-        facets["institution"] = CMIP6_GCM_PROVIDERS[facets["model_id"]]
+        facets["institution"] = CMIP6_GCM_PROVIDERS[facets["source"]]
     except KeyError:
-        logging.info(f"Unable to find Institute for model: {facets['model']}")
+        logging.info(f"Unable to find Institute for model: {facets['source']}")
 
     try:
         facets["date_start"] = date_parser(decode_file[-1])
@@ -260,9 +264,11 @@ def decode_cmip5_netcdf(file: Union[PathLike, str]) -> dict:
     facets["institution"] = data.institute_id
     facets["member"] = data.parent_experiment_rip
     facets["modeling_realm"] = data.modeling_realm
+    facets["processing_level"] = "raw"
     facets["project"] = data.project_id
     facets["source"] = data.model_id
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+    facets["type"] = "simulation"
     facets["variable"] = variable
 
     try:
@@ -290,10 +296,13 @@ def decode_cmip5_name(file: Union[PathLike, str]) -> dict:
     facets["frequency"] = decode_file[-2]
     facets["member"] = decode_file[4]
     facets["modeling_realm"] = None
+    facets["processing_level"] = "raw"
     facets["source"] = decode_file[2]
     facets["variable"] = decode_file[0]
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
-    facets["institution"] = CMIP5_GCM_PROVIDERS[facets["model"]]
+    facets["type"] = "simulation"
+
+    facets["institution"] = CMIP5_GCM_PROVIDERS[facets["source"]]
 
     if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
@@ -323,9 +332,11 @@ def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
     facets["format"] = "netcdf"
     facets["frequency"] = data.frequency
     facets["institution"] = data.institute_id
+    facets["processing_level"] = "raw"
     facets["project"] = data.project_id
     facets["source"] = data.model_id
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+    facets["type"] = "simulation"
     facets["variable"] = variable
 
     try:
@@ -365,9 +376,11 @@ def decode_cordex_name(file: Union[PathLike, str]) -> dict:
     facets["frequency"] = decode_file[-2]
     facets["institution"] = decode_file[5].split("-")[0]
     facets["member"] = decode_file[4]
+    facets["processing_level"] = "raw"
     facets["project"] = "CORDEX"
     facets["source"] = decode_file[5]
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
+    facets["type"] = "simulation"
     facets["variable"] = decode_file[0]
 
     try:
@@ -401,6 +414,7 @@ def decode_isimip_ft_netcdf(file: Union[PathLike, str]) -> dict:
     facets["social_forcing_id"] = data.social_forcing_id
     facets["source"] = data.model_id
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+    facets["type"] = "simulation"
     facets["variable"] = variable
 
     try:
@@ -429,11 +443,13 @@ def decode_isimip_ft_name(file: Union[PathLike, str]) -> dict:
     facets["impact_model_id"] = decode_file[0]
     facets["institution"] = decode_file[1].split("-")[0]
     facets["project"] = "ISIMIP-FT"
-    facets["setup"] = "-".join([facets["model"], facets["experiment"]])
     facets["soc_forcing_id"] = decode_file[3]
     facets["source"] = "-".join(decode_file[1].split("-")[1:])
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-3]])
+    facets["type"] = "simulation"
     facets["variable"] = decode_file[-4]
+
+    facets["setup"] = "-".join([facets["source"], facets["experiment"]])
 
     if facets["co2_forcing_id"] == facets["variable"]:
         if facets["soc_forcing"] in [
