@@ -190,7 +190,7 @@ def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
     facets["institution"] = data.institution_id
     facets["member"] = data.variant_label
     facets["modeling_realm"] = data.realm
-    facets["project"] = data.mip_era
+    facets["project"] = data.project
     facets["source"] = data.source_id
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
     facets["variable"] = variable
