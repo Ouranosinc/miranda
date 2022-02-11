@@ -153,7 +153,9 @@ def reanalysis_processing(
                             parse_freq = calendar.parse_offset(
                                 xr.infer_freq(xr.open_dataset(multi_files[0]).time)
                             )
-                            time_freq = f"{parse_freq[0]}{XR_FREQ_TO_CMIP6[parse_freq[1]]}"
+                            time_freq = (
+                                f"{parse_freq[0]}{XR_FREQ_TO_CMIP6[parse_freq[1]]}"
+                            )
 
                         institute = PROJECT_INSTITUTES[project]
                         file_name = "_".join([var, time_freq, institute, project])
@@ -239,10 +241,10 @@ def reanalysis_processing(
                                 format_str = "%Y-%m"
                             else:
                                 format_str = "%Y"
-                            if output_format == 'netcdf':
-                                suffix = '.nc'
-                            elif output_format == 'zarr':
-                                suffix = '.zarr'
+                            if output_format == "netcdf":
+                                suffix = ".nc"
+                            elif output_format == "zarr":
+                                suffix = ".zarr"
                             out_filenames = [
                                 output_folder.joinpath(
                                     f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}{suffix}"
@@ -254,12 +256,17 @@ def reanalysis_processing(
                             for ii, d in enumerate(datasets):
                                 jobs.append(
                                     delayed_write(
-                                        d, out_filenames[ii], target_chunks, output_format
+                                        d,
+                                        out_filenames[ii],
+                                        target_chunks,
+                                        output_format,
                                     )
                                 )
                             compute(jobs)
                     else:
                         logging.info(f"No files found for variable {var}.")
+
+
 def delayed_write(
     ds: xarray.Dataset, outfile: Path, target_chunks: dict, output_format: str
 ):

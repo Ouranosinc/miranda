@@ -45,7 +45,7 @@ def request_ecmwf(
     """
     # Variables of interest
     variable_reference = {}
-    variable_reference['era5-land'] = dict(
+    variable_reference["era5-land"] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
         u10="10m_u_component_of_wind",
@@ -56,18 +56,17 @@ def request_ecmwf(
         sd="snow_depth_water_equivalent",
         sf="snowfall",
     )
-    variable_reference['era5'] = dict(
+    variable_reference["era5"] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
         u10="10m_u_component_of_wind",
         d2m="2m_dewpoint_temperature",
         t2m="2m_temperature",
         pev="potential evaporation",
-        #sde= Not available for era5
+        # sde= Not available for era5
         sd="snow_depth",  # note difference in name vs era5-land cf_variable == snw
         sf="snowfall",
     )
-
 
     if year_end is None:
         year_end = date.today().year
@@ -82,10 +81,10 @@ def request_ecmwf(
     project_names = dict()
     if "era5" in projects:
         project_names["era5"] = "reanalysis-era5-single-levels"
-        #project_names.append("reanalysis-era5-single-levels")
+        # project_names.append("reanalysis-era5-single-levels")
     if "era5-land" in projects:
         project_names["era5-land"] = "reanalysis-era5-land"
-    #product = project_names[0].split("-")[0]
+    # product = project_names[0].split("-")[0]
 
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
