@@ -402,9 +402,6 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                 d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
                     project
                 ]
-                # if ds_units == 'm of water equivalent':
-                #     d[vv] = units.pint_multiply(d[vv], units.str2pint("1000 kg m-3"))
-
         return d
 
     if project in ["era5", "era5-single-levels", "era5-land"]:
