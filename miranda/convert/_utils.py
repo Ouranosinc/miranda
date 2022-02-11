@@ -211,7 +211,7 @@ def reanalysis_processing(
 
                         ds = variable_conversion(ds, project=project)
 
-                        if time_freq.lower() == "daily":
+                        if time_freq.lower() == "day":
                             dataset = daily_aggregation(
                                 ds, project
                             )  # file_name, output_folder)
