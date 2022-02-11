@@ -69,12 +69,12 @@
             "_transformation": {}
         },
         "sd": {
-            "standard_name": "surface_snow_thickness",
-            "units": "m",
+            "standard_name": "surface_snow_amount",
+            "units": "kg m-2",
             "cell_methods": "time: mean",
-            "long_name": "Snow depth",
-            "_cf_variable_name": "snd",
-            "_corrected_units": {"era5":"m"},
+            "long_name": "Surface Snow Amount",
+            "_cf_variable_name": "snw",
+            "_corrected_units": {"era5":"Mg m-2","era5-land":"Mg m-2"},
             "_transformation": {}
         },
         "u10": {

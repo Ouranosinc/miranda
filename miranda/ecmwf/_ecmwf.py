@@ -14,10 +14,10 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["request_era5"]
+__all__ = ["request_ecmwf"]
 
 
-def request_era5(
+def request_ecmwf(
     variables: Optional[Mapping[str, str]],
     projects: List[str],
     *,
@@ -44,7 +44,8 @@ def request_era5(
     None
     """
     # Variables of interest
-    variable_reference = dict(
+    variable_reference = {}
+    variable_reference['era5-land'] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
         u10="10m_u_component_of_wind",
@@ -52,16 +53,21 @@ def request_era5(
         t2m="2m_temperature",
         pev="potential evaporation",
         sde="snow_depth",
+        sd="snow_depth_water_equivalent",
+        sf="snowfall",
+    )
+    variable_reference['era5'] = dict(
+        tp="total_precipitation",
+        v10="10m_v_component_of_wind",
+        u10="10m_u_component_of_wind",
+        d2m="2m_dewpoint_temperature",
+        t2m="2m_temperature",
+        pev="potential evaporation",
+        #sde= Not available for era5
+        sd="snow_depth",  # note difference in name vs era5-land cf_variable == snw
         sf="snowfall",
     )
 
-    v_requested = dict()
-    if variables:
-        for v in variables:
-            if v in variable_reference:
-                v_requested[v] = variable_reference[v]
-    else:
-        v_requested = variable_reference
 
     if year_end is None:
         year_end = date.today().year
@@ -73,12 +79,13 @@ def request_era5(
         for m in months:
             yearmonth.append((y, m))
 
-    project_names = list()
+    project_names = dict()
     if "era5" in projects:
-        project_names.append("reanalysis-era5-single-levels")
+        project_names["era5"] = "reanalysis-era5-single-levels"
+        #project_names.append("reanalysis-era5-single-levels")
     if "era5-land" in projects:
-        project_names.append("reanalysis-era5-land")
-    product = project_names[0].split("-")[0]
+        project_names["era5-land"] = "reanalysis-era5-land"
+    #product = project_names[0].split("-")[0]
 
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
@@ -87,7 +94,15 @@ def request_era5(
     Path(target).mkdir(exist_ok=True)
     os.chdir(target)
 
-    for p in project_names:
+    for key, p in project_names.items():
+        product = p.split("-")[0]
+        v_requested = dict()
+        if variables:
+            for v in variables:
+                if v in variable_reference[key]:
+                    v_requested[v] = variable_reference[key][v]
+        else:
+            v_requested = variable_reference[key]
         proc = multiprocessing.Pool(processes=processes)
         func = functools.partial(_request_direct_era, v_requested, p, domain, product)
 

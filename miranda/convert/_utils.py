@@ -106,7 +106,7 @@ def reanalysis_processing(
     data: Dict[str, List[str]]
     output_folder: Union[str, os.PathLike]
     variables: Sequence[str]
-    aggregate: {"daily", False}
+    aggregate: {"day", False}
     domains: Sequence[str]
       Allowed options: {"QC", "CAN", "AMNO", None}
     start: str, optional
@@ -138,130 +138,128 @@ def reanalysis_processing(
                     logging.info(f"Processing {project} data.")
                 for var in variables:
                     # Select only for variable of interest
-                    multi_files = sorted(x for x in in_files if var in str(x))
+                    multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
+                    if multi_files:
+                        chunks = get_chunks_on_disk(multi_files[0])
+                        try:
+                            chunks = chunks[var]
+                        except KeyError:
+                            chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
+                        logging.info("Resampling variable `%s`." % var)
 
-                    chunks = get_chunks_on_disk(multi_files[0])
-                    try:
-                        chunks = chunks[var]
-                    except KeyError:
-                        chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
-                    logging.info("Resampling variable `%s`." % var)
+                        if aggregate:
+                            time_freq = aggregate
+                        else:
+                            parse_freq = calendar.parse_offset(
+                                xr.infer_freq(xr.open_dataset(multi_files[0]).time)
+                            )
+                            time_freq = f"{parse_freq[0]}{XR_FREQ_TO_CMIP6[parse_freq[1]]}"
 
-                    if aggregate:
-                        time_freq = aggregate
-                    else:
-                        parse_freq = calendar.parse_offset(
-                            xr.infer_freq(xr.open_dataset(multi_files[0]).time)
-                        )
-                        time_freq = f"{parse_freq[0]}{XR_FREQ_TO_CMIP6[parse_freq[1]]}"
+                        institute = PROJECT_INSTITUTES[project]
+                        file_name = "_".join([var, time_freq, institute, project])
+                        if domain is not None:
+                            file_name = f"{file_name}_{domain}"
 
-                    institute = PROJECT_INSTITUTES[project]
-                    file_name = "_".join([var, time_freq, institute, project])
-                    if domain is not None:
-                        file_name = f"{file_name}_{domain}"
+                        # Subsetting operations
+                        ds = None
+                        subset_time = False
+                        if domain is None:
+                            if start and end:
+                                subset_time = True
 
-                    # Subsetting operations
-                    ds = None
-                    subset_time = False
-                    if domain is None:
-                        if start and end:
-                            subset_time = True
+                        elif domain is not None:
+                            if domain.upper() == "AMNO":
+                                domain = "NAM"
+                            region = subsetting_domains(domain)
+                            lon_values = region[1], region[3]
+                            lat_values = region[0], region[2]
 
-                    elif domain is not None:
-                        if domain.upper() == "AMNO":
-                            domain = "NAM"
-                        region = subsetting_domains(domain)
-                        lon_values = region[1], region[3]
-                        lat_values = region[0], region[2]
-
-                        ds = subset.subset_bbox(
-                            xr.open_mfdataset(
+                            ds = subset.subset_bbox(
+                                xr.open_mfdataset(
+                                    multi_files,
+                                    chunks=chunks,
+                                    engine="netcdf4",
+                                    preprocess=_drop_those_time_bnds,
+                                ),
+                                lon_bnds=lon_values
+                                if project not in {"era5", "cfsr"}
+                                else lon_values + 360,
+                                lat_bnds=lat_values,
+                                start_date=start,
+                                end_date=end,
+                            )
+                        if subset_time:
+                            ds = subset.subset_time(
+                                xr.open_mfdataset(
+                                    multi_files,
+                                    chunks=chunks,
+                                    engine="netcdf4",
+                                    preprocess=_drop_those_time_bnds,
+                                ),
+                                start_date=start,
+                                end_date=end,
+                            )
+                        elif not any([subset_time, domain, ds]):
+                            ds = xr.open_mfdataset(
                                 multi_files,
                                 chunks=chunks,
                                 engine="netcdf4",
                                 preprocess=_drop_those_time_bnds,
-                            ),
-                            lon_bnds=lon_values
-                            if project not in {"era5", "cfsr"}
-                            else lon_values + 360,
-                            lat_bnds=lat_values,
-                            start_date=start,
-                            end_date=end,
-                        )
-                    if subset_time:
-                        ds = subset.subset_time(
-                            xr.open_mfdataset(
-                                multi_files,
-                                chunks=chunks,
-                                engine="netcdf4",
-                                preprocess=_drop_those_time_bnds,
-                            ),
-                            start_date=start,
-                            end_date=end,
-                        )
-                    elif not any([subset_time, domain, ds]):
-                        ds = xr.open_mfdataset(
-                            multi_files,
-                            chunks=chunks,
-                            engine="netcdf4",
-                            preprocess=_drop_those_time_bnds,
-                        )
+                            )
 
-                    ds = variable_conversion(ds, project=project)
+                        ds = variable_conversion(ds, project=project)
 
-                    if time_freq.lower() == "daily":
-                        dataset = daily_aggregation(
-                            ds, project
-                        )  # file_name, output_folder)
-                        freq = "YS"
-                    else:
-                        outvar = (
-                            list(ds.data_vars)[0]
-                            if len(list(ds.data_vars)) == 1
-                            else None
-                        )
-                        dataset = {outvar: ds}
-                        freq = "MS"
+                        if time_freq.lower() == "daily":
+                            dataset = daily_aggregation(
+                                ds, project
+                            )  # file_name, output_folder)
+                            freq = "YS"
+                        else:
+                            outvar = (
+                                list(ds.data_vars)[0]
+                                if len(list(ds.data_vars)) == 1
+                                else None
+                            )
+                            dataset = {outvar: ds}
+                            freq = "MS"
 
-                    for key in dataset.keys():
-                        ds = dataset[key]
-                        outvar = (
-                            list(ds.data_vars)[0]
-                            if len(list(ds.data_vars)) == 1
-                            else None
-                        )
-                        file_name1 = file_name.replace(f"{var}_", f"{outvar}_")
-                        logging.info("Writing out fixed files for %s." % file_name1)
+                        for key in dataset.keys():
+                            ds = dataset[key]
+                            outvar = (
+                                list(ds.data_vars)[0]
+                                if len(list(ds.data_vars)) == 1
+                                else None
+                            )
+                            file_name1 = file_name.replace(f"{var}_", f"{outvar}_")
+                            logging.info("Writing out fixed files for %s." % file_name1)
 
-                        years, datasets = zip(*ds.resample(time=freq))
+                            years, datasets = zip(*ds.resample(time=freq))
 
-                        if output_format == "netcdf":
                             if freq == "MS":
                                 format_str = "%Y-%m"
                             else:
                                 format_str = "%Y"
+                            if output_format == 'netcdf':
+                                suffix = '.nc'
+                            elif output_format == 'zarr':
+                                suffix = '.zarr'
                             out_filenames = [
                                 output_folder.joinpath(
-                                    f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}.nc"
+                                    f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}{suffix}"
                                 )
                                 for year in years
                             ]
-                        elif output_format == "zarr":
-                            out_filenames = [
-                                output_folder.joinpath(f"{file_name1}.zarr")
-                                for year in years
-                            ]
 
-                        jobs = []
-                        for ii, d in enumerate(datasets):
-                            jobs.append(
-                                delayed_write(
-                                    d, out_filenames[ii], target_chunks, output_format
+                            jobs = []
+                            for ii, d in enumerate(datasets):
+                                jobs.append(
+                                    delayed_write(
+                                        d, out_filenames[ii], target_chunks, output_format
+                                    )
                                 )
-                            )
-                        compute(jobs)
-
-
+                            compute(jobs)
+                    else:
+                        logging.info(f"No files found for variable {var}.")
 def delayed_write(
     ds: xarray.Dataset, outfile: Path, target_chunks: dict, output_format: str
 ):
@@ -284,15 +282,11 @@ def delayed_write(
             kwargs["compute"] = False
         elif output_format == "zarr":
             ds = ds.chunk(target_chunks)
-
-            if outfile.exists():
-                kwargs["append_dim"] = "time"
-            else:
-                kwargs["encoding"][name] = {
-                    "chunks": chunks,
-                    "compressor": zarr.Blosc(),
-                }
-            kwargs["compute"] = True
+            kwargs["encoding"][name] = {
+                "chunks": chunks,
+                "compressor": zarr.Blosc(),
+            }
+            kwargs["compute"] = False
     if kwargs["encoding"]:
         kwargs["encoding"]["time"] = {"dtype": "int32"}
 
@@ -374,7 +368,6 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                             d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
                         )
                         out = units.amount2rate(out)
-                        out = out.shift(time=-1)
                     dout[out.name] = out
                 elif metadata_definition["variable_entry"][vv][key][p] == "amount2rate":
                     out = units.amount2rate(
@@ -405,9 +398,13 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         key = "_corrected_units"
         for vv in d.data_vars:
             if p in metadata_definition["variable_entry"][vv][key].keys():
+                ds_units = d[vv].attrs["units"]
                 d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
                     project
                 ]
+                # if ds_units == 'm of water equivalent':
+                #     d[vv] = units.pint_multiply(d[vv], units.str2pint("1000 kg m-3"))
+
         return d
 
     if project in ["era5", "era5-single-levels", "era5-land"]:

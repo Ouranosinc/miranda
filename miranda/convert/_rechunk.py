@@ -31,6 +31,7 @@ ERA5_VARIABLES = [
     "d2m",
     "pev",
     "sde",
+    "sd",
     "sf",
     "t2m",
     "tp",

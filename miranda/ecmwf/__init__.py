@@ -1,2 +1,2 @@
-from .era5 import *
+from ._ecmwf import *
 from .tigge import *
