@@ -14,6 +14,7 @@ import zarr
 from clisops.core import subset
 from dask import compute
 from dask.diagnostics import ProgressBar
+from xarray import Dataset
 from xclim.core import calendar, units
 from xclim.indices import tas
 
@@ -25,7 +26,8 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
 
-# map xarray freq to CMIP6 controlled vocabulary : https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/CMIP6_frequency.json
+# map xarray freq to CMIP6 controlled vocabulary.
+# see: https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/CMIP6_frequency.json
 XR_FREQ_TO_CMIP6 = {
     "H": "hr",
     "D": "day",
@@ -47,28 +49,6 @@ PROJECT_LONS_FROM_0TO360 = ["era5", "cfsr"]
 
 LATLON_COORDINATE_TOLERANCE = dict()
 LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
-
-# HOURLY_ACCUMULATED_VARIABLES = dict()
-# HOURLY_ACCUMULATED_VARIABLES["era5-land"] = [
-#     "e",
-#     "evabs",
-#     "evaow",
-#     "evatc",
-#     "evavt",
-#     "pev",
-#     "ro",
-#     "sf",
-#     "slhf",
-#     "smlt",
-#     "sro",
-#     "sshf",
-#     "ssr",
-#     "ssrd",
-#     "ssro",
-#     "str",
-#     "strd",
-#     "tp",
-# ]
 
 
 # Needed pre-processing function
@@ -97,7 +77,7 @@ def reanalysis_processing(
     start: Optional[str] = None,
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
-    output_format: Optional[str] = "netcdf",
+    output_format: str = "netcdf",
 ) -> None:
     """
 
@@ -106,14 +86,12 @@ def reanalysis_processing(
     data: Dict[str, List[str]]
     output_folder: Union[str, os.PathLike]
     variables: Sequence[str]
-    aggregate: {"day", False}
-    domains: Sequence[str]
-      Allowed options: {"QC", "CAN", "AMNO", None}
+    aggregate: {"day", None}
+    domains: {"QC", "CAN", "AMNO", None}
     start: str, optional
     end: str, optional
     target_chunks: dict, optional
-    output_format:str
-     Allowed oprions: {"netcdf","zarr"}
+    output_format: {"netcdf", "zarr"}
 
     Returns
     -------
@@ -330,8 +308,8 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
 
     # For renaming lat and lon dims
     def _dims_conversion(d: xarray.Dataset):
+        sort_dims = []
         for orig, new in dict(longitude="lon", latitude="lat").items():
-            sort_dims = []
             try:
 
                 d = d.rename({orig: new})
@@ -354,10 +332,10 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
             d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
         return d
 
-    # for deaccumulation or conversion to flux
+    # for de-accumulation or conversion to flux
     def _transform(d: xarray.Dataset, p: str):
         key = "_transformation"
-        dout = xr.Dataset(coords=d.coords, attrs=d.attrs)
+        d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
             if p in metadata_definition["variable_entry"][vv][key].keys():
                 if metadata_definition["variable_entry"][vv][key][p] == "deaccumulate":
@@ -368,20 +346,20 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                         else 1.0
                     )
 
-                    # accumulated hourly to hourly flux (deaccumulation)
+                    # accumulated hourly to hourly flux (de-accumulation)
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
                         out = d[vv].where(
                             d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
                         )
                         out = units.amount2rate(out)
-                    dout[out.name] = out
+                    d_out[out.name] = out
                 elif metadata_definition["variable_entry"][vv][key][p] == "amount2rate":
                     out = units.amount2rate(
                         d[vv],
                         out_units=metadata_definition["variable_entry"][vv]["units"],
                     )
-                    dout[out.name] = out
+                    d_out[out.name] = out
                 else:
                     raise NotImplementedError(
                         f"Unknown transformation "
@@ -389,23 +367,14 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                     )
 
             else:
-                dout[vv] = d[vv]
-        return dout
-
-        # elif any([v in HOURLY_ACCUMULATED_VARIABLES[p] for v in d.data_vars]):
-        #     raise ValueError(
-        #         f"dataset contains a mix of accumulated and non-accumulated variables : {list(d.data_vars)}"
-        #     )
-        # else:
-        #     return d
-        # else:
-        #     return d
+                d_out[vv] = d[vv]
+        return d_out
 
     def _correct_units_names(d: xarray.Dataset, p: str):
         key = "_corrected_units"
         for vv in d.data_vars:
             if p in metadata_definition["variable_entry"][vv][key].keys():
-                ds_units = d[vv].attrs["units"]
+                # ds_units = d[vv].attrs["units"]  # FIXME: Is this needed anywhere ?
                 d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
                     project
                 ]
@@ -427,7 +396,7 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
     return ds
 
 
-def daily_aggregation(ds, project: str) -> xr.Dataset:
+def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
     # Daily variable aggregation operations
     # input_file = Path(input_file)
     # output_folder = Path(output_folder)
