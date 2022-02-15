@@ -68,7 +68,7 @@
       "units": "K",
       "cell_methods": "time: mean",
       "long_name": "2 metre dewpoint temperature",
-      "_cf_variable_name": "td",
+      "_cf_variable_name": "tdps",
       "_corrected_units": {},
       "_transformation": {}
     },

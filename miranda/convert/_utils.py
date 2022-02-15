@@ -61,9 +61,9 @@ def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
 
 def get_chunks_on_disk(ncfile: Union[os.PathLike, str]) -> dict:
     ds = netCDF4.Dataset(ncfile)
-    chunks = {}
+    chunks = dict()
     for v in ds.variables:
-        chunks[v] = {}
+        chunks[v] = dict()
         for ii, dim in enumerate(ds[v].dimensions):
             chunks[v][dim] = ds[v].chunking()[ii]
     return chunks
@@ -74,7 +74,7 @@ def reanalysis_processing(
     output_folder: Union[str, os.PathLike],
     variables: Sequence[str],
     aggregate: Union[str, bool] = False,
-    domains: Optional[Union[str, List[str]]] = None,
+    domains: Union[str, List[str]] = "_DEFAULT",
     start: Optional[str] = None,
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
@@ -88,7 +88,7 @@ def reanalysis_processing(
     output_folder: Union[str, os.PathLike]
     variables: Sequence[str]
     aggregate: {"day", None}
-    domains: {"QC", "CAN", "AMNO"}, optional
+    domains: {"QC", "CAN", "AMNO", "GLOBAL"}
     start: str, optional
     end: str, optional
     target_chunks: dict, optional
@@ -100,18 +100,23 @@ def reanalysis_processing(
     """
     with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
         out_files = Path(output_folder)
-        if domains is None or isinstance(domains, str):
+        if isinstance(domains, str):
             domains = [domains]
 
         for domain in domains:
-            if domain is not None:
+            if domain == "_DEFAULT":
+                logging.warning("No domain specified. proceeding with 'not-specified'")
+                output_folder = output_folder
+                domain = "not-specified"
+            elif isinstance(domain, str):
                 output_folder = out_files.joinpath(domain)  # noqa
             else:
-                output_folder = output_folder
+                raise NotImplementedError()
+
             output_folder.mkdir(exist_ok=True)
 
             for project, in_files in data.items():
-                if domain is not None:
+                if domain != "not_specified":
                     logging.info(f"Processing {project} data for domain {domain}.")
                 else:
                     logging.info(f"Processing {project} data.")
@@ -146,17 +151,16 @@ def reanalysis_processing(
 
                         institute = PROJECT_INSTITUTES[project]
                         file_name = "_".join([var, time_freq, institute, project])
-                        if domain is not None:
+                        if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
 
                         # Subsetting operations
                         ds = None
                         subset_time = False
-                        if domain is None:
+                        if domain.lower() in ["global", "not-specified"]:
                             if start and end:
                                 subset_time = True
-
-                        elif domain is not None:
+                        else:
                             if domain.upper() == "AMNO":
                                 domain = "NAM"
                             region = subsetting_domains(domain)
@@ -188,7 +192,10 @@ def reanalysis_processing(
                                 start_date=start,
                                 end_date=end,
                             )
-                        elif not any([subset_time, domain, ds]):
+                        elif not any([subset_time, ds]) and domain.lower() in [
+                            "global",
+                            "not-specified",
+                        ]:
                             ds = xr.open_mfdataset(
                                 multi_files,
                                 chunks=chunks,
@@ -196,7 +203,7 @@ def reanalysis_processing(
                                 preprocess=_drop_those_time_bnds,
                             )
 
-                        ds.attrs.update(dict(frequency=time_freq))
+                        ds.attrs.update(dict(frequency=time_freq, domain=domain))
                         ds = variable_conversion(
                             ds, project=project, output_format=output_format
                         )
@@ -461,7 +468,6 @@ def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
 
                 daily_dataset[v] = ds_out
                 del ds_out
-            daily_dataset.attrs.update(dict)
 
         elif variable in ["pr", "prsn", "snd", "snw"]:
             ds_out = xr.Dataset()
