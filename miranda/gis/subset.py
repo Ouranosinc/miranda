@@ -17,28 +17,28 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["subset_shape", "subsetting_domains"]
 
 
-def subsetting_domains(domain: str) -> List[float]:
+def subsetting_domains(domain: str) -> Tuple[float, float, float, float]:
     """Provides the bounding box coordinates for specific domains.
     Parameters
     ----------
     domain: {"global", "nam", "can", "qc", "mtl"}
     Returns
     -------
-    [float, float, float, float]
+    (float, float, float, float)
       North, West, South, and East coordinates
     """
     region = None
 
     if domain.upper() == "GLOBAL":
-        region = [90.0, -180.0, -90.0, 180.0]
+        region = (90.0, -180.0, -90.0, 180.0)
     elif domain.upper() in ["AMNO", "NAM"]:
-        region = [90.0, -180.0, 10.0, -10.0]
+        region = (90.0, -180.0, 10.0, -10.0)
     elif domain.upper() == "CAN":
-        region = [83.5, -141.0, 41.5, -52.5]
+        region = (83.5, -141.0, 41.5, -52.5)
     elif domain.upper() == "QC":
-        region = [63.0, -80.0, 44.5, -57.0]
+        region = (63.0, -80.0, 44.5, -57.0)
     elif domain.upper() == "MTL":
-        region = [45.75, -74.05, 45.3, -73.4]
+        region = (45.75, -74.05, 45.3, -73.4)
     if region is not None:
         return region
 

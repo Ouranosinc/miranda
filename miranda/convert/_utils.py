@@ -120,16 +120,17 @@ def reanalysis_processing(
 
                     if multi_files:
                         chunks = get_chunks_on_disk(multi_files[0])
+                        try:
+                            chunks = chunks[var]
+                        except KeyError:
+                            chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
+
                         if target_chunks is None:
                             logging.warning(
                                 f"No target_chunks set, proceeding with input chunks: {chunks}"
                             )
                             target_chunks = chunks.copy()
 
-                        try:
-                            chunks = chunks[var]
-                        except KeyError:
-                            chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
                         logging.info("Resampling variable `%s`." % var)
 
                         if aggregate:
