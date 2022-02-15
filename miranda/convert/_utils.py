@@ -117,8 +117,15 @@ def reanalysis_processing(
                 for var in variables:
                     # Select only for variable of interest
                     multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
+
                     if multi_files:
                         chunks = get_chunks_on_disk(multi_files[0])
+                        if target_chunks is None:
+                            logging.warning(
+                                f"No target_chunks set, proceeding with input chunks: {chunks}"
+                            )
+                            target_chunks = chunks.copy()
+
                         try:
                             chunks = chunks[var]
                         except KeyError:
@@ -326,7 +333,7 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
         return d
 
     # For converting variable units to standard workflow units
-    def _units_cf_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
+    def _units_cf_conversion(d: xarray.Dataset) -> xarray.Dataset:
         descriptions = metadata_definition["variable_entry"]
         for v in d.data_vars:
             d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
@@ -389,7 +396,7 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
 
     ds = _correct_units_names(ds, project)
     ds = _transform(ds, project)
-    ds = _units_cf_conversion(ds, project)
+    ds = _units_cf_conversion(ds)
     ds = _metadata_conversion(ds, project)
     ds = _dims_conversion(ds)
 
