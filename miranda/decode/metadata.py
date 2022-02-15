@@ -47,14 +47,14 @@ facet_schema = schema.Schema(
         "source": str,
         schema.Optional("driving_institution"): str,
         schema.Optional("driving_model"): str,
-        "experiment": str,
+        schema.Optional("experiment"): str,
         "frequency": schema.And(
             str, lambda f: f in ["1hr", "3hr", "6hr", "day", "dec", "mon", "yr", "fx"]
         ),
-        schema.Optional("domain"): str,
-        "member": str,
-        "variable": str,
-        "timedelta": schema.Or(pd.Timedelta, NaTType),
+        "domain": str,
+        schema.Optional("member"): str,
+        schema.Optional("variable"): str,
+        schema.Optional("timedelta"): schema.Or(pd.Timedelta, NaTType),
         schema.Optional("date"): schema.Or(
             schema.Regex(BASIC_DT_VALIDATION, flags=re.I), NaTType
         ),
