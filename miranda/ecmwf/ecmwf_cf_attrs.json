@@ -1,10 +1,14 @@
 {
   "Header": {
-    "data_specs_version": "00.00.01",
+    "data_specs_version": "00.00.02",
     "table_id": "ECMWF",
     "realm": "atmos",
-    "table_date": "18 January 2022",
-    "product": "reanalysis",
+    "table_date": "02 February 2022",
+    "processing_level": "raw",
+    "institution": "ECMWF",
+    "source": "ERA5",
+    "activity": "ERA",
+    "type": "reanalysis",
     "Conventions": "CF-1.8"
   },
   "variable_entry": {

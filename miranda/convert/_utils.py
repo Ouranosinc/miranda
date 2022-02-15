@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging.config
 import os
@@ -195,30 +196,33 @@ def reanalysis_processing(
                                 preprocess=_drop_those_time_bnds,
                             )
 
-                        ds = variable_conversion(ds, project=project)
+                        ds.attrs.update(dict(frequency=time_freq))
+                        ds = variable_conversion(
+                            ds, project=project, output_format=output_format
+                        )
 
                         if time_freq.lower() == "day":
-                            dataset = daily_aggregation(
-                                ds, project
-                            )  # file_name, output_folder)
+                            dataset = daily_aggregation(ds, project)
                             freq = "YS"
                         else:
-                            outvar = (
+                            out_variable = (
                                 list(ds.data_vars)[0]
                                 if len(list(ds.data_vars)) == 1
                                 else None
                             )
-                            dataset = {outvar: ds}
+                            dataset = {out_variable: ds}
                             freq = "MS"
 
                         for key in dataset.keys():
                             ds = dataset[key]
-                            outvar = (
+                            out_variable = (
                                 list(ds.data_vars)[0]
                                 if len(list(ds.data_vars)) == 1
                                 else None
                             )
-                            file_name1 = file_name.replace(f"{var}_", f"{outvar}_")
+                            file_name1 = file_name.replace(
+                                f"{var}_", f"{out_variable}_"
+                            )
                             logging.info("Writing out fixed files for %s." % file_name1)
 
                             years, datasets = zip(*ds.resample(time=freq))
@@ -286,59 +290,27 @@ def delayed_write(
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
 
 
-def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
+def variable_conversion(
+    ds: xarray.Dataset, project: str, output_format: str
+) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
 
-    # Add and update existing metadata fields
-    def _metadata_conversion(d: xarray.Dataset, p: str) -> xarray.Dataset:
-
-        # Add global attributes
-        d.attrs.update(metadata_definition["Header"])
-        d.attrs.update(dict(project=p))
-        descriptions = metadata_definition["variable_entry"]
-
-        # Add variable metadata
-        for v in d.data_vars:
-            descriptions[v].pop("_corrected_units")
-            descriptions[v].pop("_transformation")
-            d[v].attrs.update(descriptions[v])
-
-        # Rename data variables
-        for v in d.data_vars:
-            try:
-                cf_name = descriptions[v]["_cf_variable_name"]
-                d = d.rename({v: cf_name})
-                d[cf_name].attrs.update(dict(original_variable=v))
-                del d[cf_name].attrs["_cf_variable_name"]
-            except (ValueError, IndexError):
-                pass
+    def _correct_units_names(d: xarray.Dataset, p: str):
+        key = "_corrected_units"
+        for vv in d.data_vars:
+            if p in metadata_definition["variable_entry"][vv][key].keys():
+                # ds_units = d[vv].attrs["units"]  # FIXME: Is this needed anywhere ?
+                d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
+                    project
+                ]
         return d
 
-    # For renaming lat and lon dims
-    def _dims_conversion(d: xarray.Dataset):
-        sort_dims = []
-        for orig, new in dict(longitude="lon", latitude="lat").items():
-            try:
-
-                d = d.rename({orig: new})
-                if new == "lon" and np.any(d.lon > 180):
-                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
-                    d[new] = lon1
-                sort_dims.append(new)
-            except KeyError:
-                pass
-            if project in LATLON_COORDINATE_TOLERANCE.keys():
-                d[new] = d[new].round(LATLON_COORDINATE_TOLERANCE[project])
-        if sort_dims:
-            d = d.sortby(sort_dims)
-        return d
-
-    # For converting variable units to standard workflow units
-    def _units_cf_conversion(d: xarray.Dataset) -> xarray.Dataset:
-        descriptions = metadata_definition["variable_entry"]
-        for v in d.data_vars:
-            d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
-        return d
+    if project in ["era5", "era5-single-levels", "era5-land"]:
+        metadata_definition = json.load(
+            open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
+        )
+    else:
+        raise NotImplementedError()
 
     # for de-accumulation or conversion to flux
     def _transform(d: xarray.Dataset, p: str):
@@ -378,27 +350,66 @@ def variable_conversion(ds: xarray.Dataset, project: str) -> xarray.Dataset:
                 d_out[vv] = d[vv]
         return d_out
 
-    def _correct_units_names(d: xarray.Dataset, p: str):
-        key = "_corrected_units"
-        for vv in d.data_vars:
-            if p in metadata_definition["variable_entry"][vv][key].keys():
-                # ds_units = d[vv].attrs["units"]  # FIXME: Is this needed anywhere ?
-                d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
-                    project
-                ]
+    # For converting variable units to standard workflow units
+    def _units_cf_conversion(d: xarray.Dataset) -> xarray.Dataset:
+        descriptions = metadata_definition["variable_entry"]
+        for v in d.data_vars:
+            d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
         return d
 
-    if project in ["era5", "era5-single-levels", "era5-land"]:
-        metadata_definition = json.load(
-            open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
-        )
-    else:
-        raise NotImplementedError()
+    # Add and update existing metadata fields
+    def _metadata_conversion(d: xarray.Dataset, p: str, o: str) -> xarray.Dataset:
+
+        # Add global attributes
+        d.attrs.update(metadata_definition["Header"])
+        d.attrs.update(dict(project=p, output_format=o))
+
+        # Date-based versioning
+        version = datetime.datetime.now().strftime("%Y.%m.%d")
+        d.attrs.update(dict(version=version))
+
+        descriptions = metadata_definition["variable_entry"]
+
+        # Add variable metadata
+        for v in d.data_vars:
+            descriptions[v].pop("_corrected_units")
+            descriptions[v].pop("_transformation")
+            d[v].attrs.update(descriptions[v])
+
+        # Rename data variables
+        for v in d.data_vars:
+            try:
+                cf_name = descriptions[v]["_cf_variable_name"]
+                d = d.rename({v: cf_name})
+                d[cf_name].attrs.update(dict(original_variable=v))
+                del d[cf_name].attrs["_cf_variable_name"]
+            except (ValueError, IndexError):
+                pass
+        return d
+
+    # For renaming lat and lon dims
+    def _dims_conversion(d: xarray.Dataset):
+        sort_dims = []
+        for orig, new in dict(longitude="lon", latitude="lat").items():
+            try:
+
+                d = d.rename({orig: new})
+                if new == "lon" and np.any(d.lon > 180):
+                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+                    d[new] = lon1
+                sort_dims.append(new)
+            except KeyError:
+                pass
+            if project in LATLON_COORDINATE_TOLERANCE.keys():
+                d[new] = d[new].round(LATLON_COORDINATE_TOLERANCE[project])
+        if sort_dims:
+            d = d.sortby(sort_dims)
+        return d
 
     ds = _correct_units_names(ds, project)
     ds = _transform(ds, project)
     ds = _units_cf_conversion(ds)
-    ds = _metadata_conversion(ds, project)
+    ds = _metadata_conversion(ds, project, output_format)
     ds = _dims_conversion(ds)
 
     return ds
@@ -450,6 +461,7 @@ def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
 
                 daily_dataset[v] = ds_out
                 del ds_out
+            daily_dataset.attrs.update(dict)
 
         elif variable in ["pr", "prsn", "snd", "snw"]:
             ds_out = xr.Dataset()
