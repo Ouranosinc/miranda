@@ -45,7 +45,7 @@ PROJECT_INSTITUTES = {
     "sc-earth": "usask",
     "wfdei-gem-capa": "usask",
 }
-PROJECT_LONS_FROM_0TO360 = ["era5-single-levels", "cfsr"]
+PROJECT_LONS_FROM_0TO360 = ["cfsr"]
 
 LATLON_COORDINATE_TOLERANCE = dict()
 LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
