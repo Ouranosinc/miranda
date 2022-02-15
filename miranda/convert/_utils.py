@@ -38,14 +38,14 @@ XR_FREQ_TO_CMIP6 = {
 
 PROJECT_INSTITUTES = {
     "cfsr": "ncar",
-    "era5": "ecmwf",
+    "era5-single-levels": "ecmwf",
     "era5-land": "ecmwf",
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",
     "sc-earth": "usask",
     "wfdei-gem-capa": "usask",
 }
-PROJECT_LONS_FROM_0TO360 = ["era5", "cfsr"]
+PROJECT_LONS_FROM_0TO360 = ["era5-single-levels", "cfsr"]
 
 LATLON_COORDINATE_TOLERANCE = dict()
 LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
@@ -170,7 +170,7 @@ def reanalysis_processing(
                                     preprocess=_drop_those_time_bnds,
                                 ),
                                 lon_bnds=lon_values
-                                if project not in {"era5-single-levels", "cfsr"}
+                                if project not in PROJECT_LONS_FROM_0TO360
                                 else lon_values + 360,
                                 lat_bnds=lat_values,
                                 start_date=start,
