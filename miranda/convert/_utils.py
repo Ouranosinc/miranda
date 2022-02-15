@@ -73,7 +73,7 @@ def reanalysis_processing(
     output_folder: Union[str, os.PathLike],
     variables: Sequence[str],
     aggregate: Union[str, bool] = False,
-    domains: Optional[str, List[str]] = None,
+    domains: Optional[Union[str, List[str]]] = None,
     start: Optional[str] = None,
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
