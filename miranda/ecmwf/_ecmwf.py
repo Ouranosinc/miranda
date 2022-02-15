@@ -44,7 +44,7 @@ def request_ecmwf(
     None
     """
     # Variables of interest
-    variable_reference = {}
+    variable_reference = dict()
     variable_reference["era5-land"] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
