@@ -159,8 +159,8 @@ def reanalysis_processing(
                             if domain.upper() == "AMNO":
                                 domain = "NAM"
                             region = subsetting_domains(domain)
-                            lon_values = region[1], region[3]
-                            lat_values = region[0], region[2]
+                            lon_values = np.array([region[1], region[3]])
+                            lat_values = np.array([region[0], region[2]])
 
                             ds = subset.subset_bbox(
                                 xr.open_mfdataset(
