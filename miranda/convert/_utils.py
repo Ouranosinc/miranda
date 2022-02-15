@@ -73,7 +73,7 @@ def reanalysis_processing(
     output_folder: Union[str, os.PathLike],
     variables: Sequence[str],
     aggregate: Union[str, bool] = False,
-    domains: Optional[Sequence[str]] = None,
+    domains: Optional[str, List[str]] = None,
     start: Optional[str] = None,
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
@@ -87,7 +87,7 @@ def reanalysis_processing(
     output_folder: Union[str, os.PathLike]
     variables: Sequence[str]
     aggregate: {"day", None}
-    domains: {"QC", "CAN", "AMNO", None}
+    domains: {"QC", "CAN", "AMNO"}, optional
     start: str, optional
     end: str, optional
     target_chunks: dict, optional
@@ -99,8 +99,8 @@ def reanalysis_processing(
     """
     with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
         out_files = Path(output_folder)
-        if domains is None:
-            domains = [None]
+        if domains is None or isinstance(domains, str):
+            domains = [domains]
 
         for domain in domains:
             if domain is not None:
