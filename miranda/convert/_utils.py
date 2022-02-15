@@ -170,7 +170,7 @@ def reanalysis_processing(
                                     preprocess=_drop_those_time_bnds,
                                 ),
                                 lon_bnds=lon_values
-                                if project not in {"era5", "cfsr"}
+                                if project not in {"era5-single-levels", "cfsr"}
                                 else lon_values + 360,
                                 lat_bnds=lat_values,
                                 start_date=start,
@@ -238,7 +238,7 @@ def reanalysis_processing(
                                 for year in years
                             ]
 
-                            jobs = []
+                            jobs = list()
                             for ii, d in enumerate(datasets):
                                 jobs.append(
                                     delayed_write(

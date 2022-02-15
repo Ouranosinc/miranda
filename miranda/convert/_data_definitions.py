@@ -44,7 +44,7 @@ def gather_era5(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     infiles_era5 = list()
     for v in ERA5_VARIABLES:
         infiles_era5.extend(list(sorted(source_era5.rglob(f"{v}_*.nc"))))
-    return dict(era5=infiles_era5)
+    return {"era5-single-levels": infiles_era5}
 
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
