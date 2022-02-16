@@ -135,7 +135,9 @@ def reanalysis_processing(
                             logging.warning(
                                 f"No target_chunks set, proceeding with input chunks: {chunks}"
                             )
-                            target_chunks = chunks.copy()
+                            output_chunks = chunks.copy()
+                        else:
+                            output_chunks = target_chunks
 
                         logging.info("Resampling variable `%s`." % var)
 
@@ -255,7 +257,7 @@ def reanalysis_processing(
                                     delayed_write(
                                         d,
                                         out_filenames[ii],
-                                        target_chunks,
+                                        output_chunks,
                                         output_format,
                                     )
                                 )
