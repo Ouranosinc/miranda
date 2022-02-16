@@ -244,9 +244,17 @@ def reanalysis_processing(
                             ]
 
                             jobs = list()
+
+                            if overwrite:
+                                logging.warning(
+                                    f"Removing existing {output_format} files for {var}."
+                                )
                             for ii, d in enumerate(datasets):
                                 if out_filenames[ii].exists() and overwrite:
-                                    if output_format == "zarr":
+                                    if (
+                                        out_filenames[ii].is_dir()
+                                        and output_format == "zarr"
+                                    ):
                                         shutil.rmtree(out_filenames[ii])
                                     else:
                                         out_filenames[ii].unlink()
@@ -377,8 +385,8 @@ def variable_conversion(
         d.attrs.update(dict(version=VERSION))
 
         history = (
-            f"{d.attrs['history']}\n"
-            f"{datetime.datetime.now()}: Converted to {o} and modified metadata for CF-like compliance."
+            f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o}"
+            " with modified metadata for CF-like compliance."
         )
         d.attrs.update(dict(history=history))
 

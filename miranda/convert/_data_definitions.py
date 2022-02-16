@@ -13,15 +13,15 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = [
     "gather_agcfsr",
     "gather_agmerra",
-    "gather_era5",
     "gather_era5_land",
+    "gather_era5_single_levels",
     "gather_nrcan_gridded_obs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
 ]
 
 
-def gather_era5(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_era5_single_levels(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # ERA5 source data
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())

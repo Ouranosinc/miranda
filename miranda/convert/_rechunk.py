@@ -16,9 +16,7 @@ from ._data import project_institutes
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = [
-    "rechunk_reanalysis",  # noqa
-]
+__all__ = ["rechunk_reanalysis"]
 
 
 def rechunk_reanalysis(
@@ -38,7 +36,7 @@ def rechunk_reanalysis(
     project : {"era5", "era5-land", "era5-single-levels"}
     input_folder : str or os.PathLike
     output_folder : str or os.PathLike
-    time_step : {"hourly", "daily"}, optional
+    time_step : {"1hr", "day"}, optional
       Time step of the input data. Parsed from filename if not set.
     target_chunks : dict
       Must include "time", optionally "latitude" and "longitude"
@@ -58,7 +56,7 @@ def rechunk_reanalysis(
         test_file = next(input_folder.glob("*"))
         file_parts = str(test_file.name).split("_")
         time_step = file_parts[1]
-        if time_step not in ["hourly", "daily"]:
+        if time_step not in ["1hr", "day"]:
             raise NotImplementedError()
 
     if project.startswith("era5") and variables is None:
@@ -85,9 +83,9 @@ def rechunk_reanalysis(
                 output_folder.mkdir(exist_ok=True)
                 out = output_folder / f"{file.stem}.nc"
             elif output_format == "zarr":
-                outpath = output_folder / "temp"
-                outpath.mkdir(exist_ok=True, parents=True)
-                out = outpath / f"{file.stem}.zarr"
+                output_path = output_folder / "temp"
+                output_path.mkdir(exist_ok=True, parents=True)
+                out = output_path / f"{file.stem}.zarr"
             else:
                 raise NotImplementedError()
 
@@ -106,13 +104,13 @@ def rechunk_reanalysis(
             if target_chunks is None:
                 # ~35 Mo chunks
                 if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
-                    if time_step == "hourly":
+                    if time_step == "1hr":
                         target_chunks = {
                             "time": 24 * 7,
                             "latitude": 225,
                             "longitude": 252,
                         }
-                    elif time_step == "daily":
+                    elif time_step == "day":
                         target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
                     else:
                         raise NotImplementedError()
@@ -168,12 +166,14 @@ def rechunk_reanalysis(
 
         ds = xr.open_mfdataset(files, parallel=True, engine="zarr")
 
-        if time_step == "hourly":
+        if time_step == "1hr":
             # Four months of hours
             ds = ds.chunk(dict(time=2922))
-        else:
+        elif time_step == "day":
             # Five years of days
             ds = ds.chunk(dict(time=1825))
+        else:
+            raise NotImplementedError()
 
         for var in ds.data_vars.values():
             del var.encoding["chunks"]
