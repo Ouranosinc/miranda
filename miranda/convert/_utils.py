@@ -2,6 +2,7 @@ import datetime
 import json
 import logging.config
 import os
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
@@ -62,6 +63,7 @@ def reanalysis_processing(
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
     output_format: str = "netcdf",
+    overwrite: bool = False,
     # n_workers: int = 4,
     # **dask_kwargs,
 ) -> None:
@@ -78,6 +80,7 @@ def reanalysis_processing(
     end: str, optional
     target_chunks: dict, optional
     output_format: {"netcdf", "zarr"}
+    overwrite: bool
 
     Returns
     -------
@@ -238,14 +241,22 @@ def reanalysis_processing(
 
                             jobs = list()
                             for ii, d in enumerate(datasets):
-                                jobs.append(
-                                    delayed_write(
-                                        d,
-                                        out_filenames[ii],
-                                        output_chunks,
-                                        output_format,
+                                if out_filenames[ii].exists() and overwrite:
+                                    if output_format == "netcdf":
+                                        out_filenames[ii].unlink()
+                                    else:
+                                        shutil.rmtree(out_filenames[ii])
+
+                                if not out_filenames[ii].exists():
+                                    jobs.append(
+                                        delayed_write(
+                                            d,
+                                            out_filenames[ii],
+                                            output_chunks,
+                                            output_format,
+                                        )
                                     )
-                                )
+
                             compute(jobs)
                     else:
                         logging.info(f"No files found for variable {var}.")
@@ -415,6 +426,9 @@ def variable_conversion(
 
 
 def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
+
+    # FIXME: Checks for existing files should happen somewhere else.
+
     # Daily variable aggregation operations
     # input_file = Path(input_file)
     # output_folder = Path(output_folder)
