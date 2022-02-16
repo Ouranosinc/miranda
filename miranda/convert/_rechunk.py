@@ -8,35 +8,16 @@ from typing import Dict, Optional, Sequence, Union
 import xarray as xr
 import zarr
 
+from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
+
+from . import project_institutes
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 __all__ = [
     "rechunk_reanalysis",  # noqa
-]
-
-PROJECT_INSTITUTES = {
-    "cfsr": "ncar",
-    "era5": "ecmwf",
-    "era5-single-levels": "ecmwf",
-    "era5-land": "ecmwf",
-    "merra2": "nasa",
-    "nrcan-gridded-10km": "nrcan",
-    "wfdei-gem-capa": "usask",
-}
-
-ERA5_VARIABLES = [
-    "d2m",
-    "pev",
-    "sde",
-    "sd",
-    "sf",
-    "t2m",
-    "tp",
-    "u10",
-    "v10",
 ]
 
 
@@ -81,7 +62,7 @@ def rechunk_reanalysis(
             raise NotImplementedError()
 
     if project.startswith("era5") and variables is None:
-        variables = ERA5_VARIABLES
+        variables = ecmwf_variables.copy()
 
     errored = list()
     start_all = time.perf_counter()
@@ -181,7 +162,7 @@ def rechunk_reanalysis(
 
         files = sorted(
             (output_folder / "temp").glob(
-                f"{variable}_{time_step}_{PROJECT_INSTITUTES[project]}_{project}_reanalysis_*.zarr"
+                f"{variable}_{time_step}_{project_institutes[project]}_{project}_reanalysis_*.zarr"
             )
         )
 

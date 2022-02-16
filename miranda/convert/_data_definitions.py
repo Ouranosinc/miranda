@@ -3,7 +3,10 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 
+from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
+
+from . import nasa_ag_variables, sc_earth_variables, wfdei_gem_capa_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -17,32 +20,13 @@ __all__ = [
     "gather_wfdei_gem_capa",
 ]
 
-ERA5_VARIABLES = [
-    "d2m",
-    "pev",
-    "sde",
-    "sd",
-    "sf",
-    "t2m",
-    "tp",
-    "u10",
-    "v10",
-]
-
-
-NASA_AG_VARIABLES = ["prate", "rhstmax", "srad", "tavg", "tmax", "tmin", "wndpsd"]
-
-WFDEI_GEM_CAPA_VARIABLES = ["huss", "pr", "ps", "rlds", "rsds", "sfcWind", "tas"]
-
-SC_EARTH_VARIABLES = ["prcp", "tdew", "tmean", "trange", "wind"]
-
 
 def gather_era5(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # ERA5 source data
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
     infiles_era5 = list()
-    for v in ERA5_VARIABLES:
+    for v in ecmwf_variables:
         infiles_era5.extend(list(sorted(source_era5.rglob(f"{v}_*.nc"))))
     return {"era5-single-levels": infiles_era5}
 
@@ -62,7 +46,7 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     source_era5l = Path(path)
     logging.info("Gathering ERA5-Land from %s" % source_era5l.as_posix())
     infiles_era5l = list()
-    for v in ERA5_VARIABLES:
+    for v in ecmwf_variables:
         infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}_*.nc"))))
     return {"era5-land": infiles_era5l}
 
@@ -72,7 +56,7 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     source_agmerra = Path(path)
     logging.info("Gathering agMERRA from %s" % source_agmerra.as_posix())
     infiles_agmerra = list()
-    for v in NASA_AG_VARIABLES:
+    for v in nasa_ag_variables:
         infiles_agmerra.extend(list(sorted(source_agmerra.rglob(f"AgMERRA_*_{v}.nc4"))))
     return dict(cfsr=infiles_agmerra)
 
@@ -82,7 +66,7 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     source_agcfsr = Path(path)
     logging.info("Gathering CFSR from %s" % source_agcfsr.as_posix())
     infiles_agcfsr = list()
-    for v in NASA_AG_VARIABLES:
+    for v in nasa_ag_variables:
         infiles_agcfsr.extend(list(sorted(source_agcfsr.rglob(f"AgCFSR_*_{v}.nc4"))))
     return dict(cfsr=infiles_agcfsr)
 
@@ -104,7 +88,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
     source_wfdei = Path(path)
     logging.info("Gathering WFDEI-GEM_CaPa from %s" % source_wfdei.as_posix())
     infiles_wfdei = list()
-    for v in WFDEI_GEM_CAPA_VARIABLES:
+    for v in wfdei_gem_capa_variables:
         infiles_wfdei.extend(list(sorted(source_wfdei.rglob(f"{v}_*.nc"))))
     return {"wfdei-gem-capa": infiles_wfdei}
 
@@ -114,7 +98,7 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     source_sc_earth = Path(path)
     logging.info("Gathering SC-Earth from %s" % source_sc_earth.as_posix())
     infiles_sc_earth = list()
-    for v in SC_EARTH_VARIABLES:
+    for v in sc_earth_variables:
         infiles_sc_earth.extend(
             list(sorted(source_sc_earth.rglob(f"SC-Earth_{v}_*.nc")))
         )

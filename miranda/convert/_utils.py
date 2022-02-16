@@ -15,7 +15,6 @@ import zarr
 from clisops.core import subset
 from dask import compute
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client
 from xarray import Dataset
 from xclim.core import calendar, units
 from xclim.indices import tas
@@ -23,34 +22,18 @@ from xclim.indices import tas
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
+from . import project_institutes, xarray_frequencies_to_cmip6
+
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
 
-# map xarray freq to CMIP6 controlled vocabulary.
-# see: https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/CMIP6_frequency.json
-XR_FREQ_TO_CMIP6 = {
-    "H": "hr",
-    "D": "day",
-    "M": "mon",
-    "A": "yr",
-    "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
-}
 
-PROJECT_INSTITUTES = {
-    "cfsr": "ncar",
-    "era5-single-levels": "ecmwf",
-    "era5-land": "ecmwf",
-    "merra2": "nasa",
-    "nrcan-gridded-10km": "nrcan",
-    "sc-earth": "usask",
-    "wfdei-gem-capa": "usask",
-}
 PROJECT_LONS_FROM_0TO360 = ["cfsr"]
 
-LATLON_COORDINATE_TOLERANCE = dict()
-LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
+LATLON_COORDINATE_PRECISION = dict()
+LATLON_COORDINATE_PRECISION["era5-land"] = 4
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
@@ -156,11 +139,9 @@ def reanalysis_processing(
                             parse_freq = calendar.parse_offset(
                                 xr.infer_freq(xr.open_dataset(multi_files[0]).time)
                             )
-                            time_freq = (
-                                f"{parse_freq[0]}{XR_FREQ_TO_CMIP6[parse_freq[1]]}"
-                            )
+                            time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6[parse_freq[1]]}"
 
-                        institute = PROJECT_INSTITUTES[project]
+                        institute = project_institutes[project]
                         file_name = "_".join([var, time_freq, institute, project])
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
@@ -423,8 +404,8 @@ def variable_conversion(
                 sort_dims.append(new)
             except KeyError:
                 pass
-            if project in LATLON_COORDINATE_TOLERANCE.keys():
-                d[new] = d[new].round(LATLON_COORDINATE_TOLERANCE[project])
+            if project in LATLON_COORDINATE_PRECISION.keys():
+                d[new] = d[new].round(LATLON_COORDINATE_PRECISION[project])
         if sort_dims:
             d = d.sortby(sort_dims)
         return d
