@@ -15,6 +15,7 @@ import zarr
 from clisops.core import subset
 from dask import compute
 from dask.diagnostics import ProgressBar
+from dask.distributed import Client
 from xarray import Dataset
 from xclim.core import calendar, units
 from xclim.indices import tas
@@ -79,6 +80,8 @@ def reanalysis_processing(
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
     output_format: str = "netcdf",
+    n_workers: int = 4,
+    **dask_kwargs,
 ) -> None:
     """
 
@@ -93,6 +96,8 @@ def reanalysis_processing(
     end: str, optional
     target_chunks: dict, optional
     output_format: {"netcdf", "zarr"}
+    n_workers: int
+    dask_kwargs: kwargs
 
     Returns
     -------
@@ -126,11 +131,7 @@ def reanalysis_processing(
 
                     if multi_files:
                         chunks = get_chunks_on_disk(multi_files[0])
-                        try:
-                            chunks = chunks[var]
-                        except KeyError:
-                            # FIXME: This workaround should go somewhere else.
-                            chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
+                        chunks = chunks[var]
 
                         if target_chunks is None:
                             output_chunks = dict()
@@ -269,7 +270,8 @@ def reanalysis_processing(
                                         output_format,
                                     )
                                 )
-                            compute(jobs)
+                            with Client(n_workers=n_workers, **dask_kwargs):
+                                compute(jobs)
                     else:
                         logging.info(f"No files found for variable {var}.")
 

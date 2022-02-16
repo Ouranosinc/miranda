@@ -21,7 +21,10 @@
       "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
       "_cf_variable_name": "evspsbl",
       "_corrected_units": {},
-      "_transformation": {}
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate"
+      }
     },
     "tp": {
       "original_long_name": "Total Precipitation",
