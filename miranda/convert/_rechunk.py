@@ -47,7 +47,7 @@ def rechunk_reanalysis(
     time_step: Optional[str] = None,
     target_chunks: Optional[Dict[str, int]] = None,
     variables: Optional[Sequence[str]] = None,
-    output_format: str = "netcdf",
+    output_format: str = "zarr",
     overwrite: bool = False,
 ):
     """Rechunks ERA5 dataset for better loading/reading performance.
@@ -63,6 +63,7 @@ def rechunk_reanalysis(
       Must include "time", optionally "latitude" and "longitude"
     variables : Sequence[str]
     output_format : {"netcdf", "zarr"}
+      Default: "zarr".
     overwrite : bool
 
     Returns
@@ -141,7 +142,7 @@ def rechunk_reanalysis(
             encoding = dict()
             try:
                 for name, da in ds.data_vars.items():
-                    chunks = []
+                    chunks = list()
                     for dim in da.dims:
                         if dim in target_chunks.keys():
                             chunks.append(target_chunks[str(dim)])

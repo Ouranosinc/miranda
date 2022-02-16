@@ -1,9 +1,8 @@
 {
   "Header": {
-    "data_specs_version": "00.00.02",
-    "table_id": "ECMWF",
+    "data_specs_version": "00.00.03",
     "realm": "atmos",
-    "table_date": "02 February 2022",
+    "table_date": "16 February 2022",
     "processing_level": "raw",
     "institution": "ECMWF",
     "source": "ERA5",

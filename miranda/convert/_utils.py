@@ -52,6 +52,8 @@ PROJECT_LONS_FROM_0TO360 = ["cfsr"]
 LATLON_COORDINATE_TOLERANCE = dict()
 LATLON_COORDINATE_TOLERANCE["era5-land"] = 4
 
+VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
+
 
 # Needed pre-processing function
 def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
@@ -80,8 +82,8 @@ def reanalysis_processing(
     end: Optional[str] = None,
     target_chunks: Optional[dict] = None,
     output_format: str = "netcdf",
-    n_workers: int = 4,
-    **dask_kwargs,
+    # n_workers: int = 4,
+    # **dask_kwargs,
 ) -> None:
     """
 
@@ -96,8 +98,6 @@ def reanalysis_processing(
     end: str, optional
     target_chunks: dict, optional
     output_format: {"netcdf", "zarr"}
-    n_workers: int
-    dask_kwargs: kwargs
 
     Returns
     -------
@@ -270,8 +270,7 @@ def reanalysis_processing(
                                         output_format,
                                     )
                                 )
-                            with Client(n_workers=n_workers, **dask_kwargs):
-                                compute(jobs)
+                            compute(jobs)
                     else:
                         logging.info(f"No files found for variable {var}.")
 
@@ -384,8 +383,13 @@ def variable_conversion(
         d.attrs.update(dict(project=p, output_format=o))
 
         # Date-based versioning
-        version = datetime.datetime.now().strftime("%Y.%m.%d")
-        d.attrs.update(dict(version=version))
+        d.attrs.update(dict(version=VERSION))
+
+        history = (
+            f"{d.attrs['history']}\n"
+            f"{datetime.datetime.now()}: Converted to {o} and modified metadata for CF-like compliance."
+        )
+        d.attrs.update(dict(history=history))
 
         descriptions = metadata_definition["variable_entry"]
 
