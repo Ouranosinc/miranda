@@ -29,9 +29,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
 
-
-PROJECT_LONS_FROM_0TO360 = ["cfsr"]
-
 LATLON_COORDINATE_PRECISION = dict()
 LATLON_COORDINATE_PRECISION["era5-land"] = 4
 
@@ -166,9 +163,7 @@ def reanalysis_processing(
                                     engine="netcdf4",
                                     preprocess=_drop_those_time_bnds,
                                 ),
-                                lon_bnds=lon_values
-                                if project not in PROJECT_LONS_FROM_0TO360
-                                else lon_values + 360,
+                                lon_bnds=lon_values,
                                 lat_bnds=lat_values,
                                 start_date=start,
                                 end_date=end,
@@ -536,11 +531,6 @@ def threshold_land_sea_mask(
     except KeyError:
         raise ValueError("No 'project' found for given dataset.")
 
-    if project in PROJECT_LONS_FROM_0TO360:
-        add_lon_values = 360
-    else:
-        add_lon_values = 0
-
     if project in land_sea_mask.keys():
         logging.info(
             f"Masking variable with land-sea mask at {land_sea_percentage} % cutoff."
@@ -552,7 +542,7 @@ def threshold_land_sea_mask(
         except ValueError:
             raise
 
-        lon_bounds = np.array([ds.lon.min(), ds.lon.max()]) + add_lon_values
+        lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
         lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
 
         lsm = subset.subset_bbox(
