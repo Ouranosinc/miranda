@@ -23,7 +23,7 @@ from xclim.indices import tas
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
-from . import project_institutes, xarray_frequencies_to_cmip6
+from ._data import project_institutes, xarray_frequencies_to_cmip6
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -228,10 +228,14 @@ def reanalysis_processing(
                                 format_str = "%Y-%m"
                             else:
                                 format_str = "%Y"
+
                             if output_format == "netcdf":
                                 suffix = ".nc"
                             elif output_format == "zarr":
                                 suffix = ".zarr"
+                            else:
+                                raise NotImplementedError()
+
                             out_filenames = [
                                 output_folder.joinpath(
                                     f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}{suffix}"
@@ -242,10 +246,10 @@ def reanalysis_processing(
                             jobs = list()
                             for ii, d in enumerate(datasets):
                                 if out_filenames[ii].exists() and overwrite:
-                                    if output_format == "netcdf":
-                                        out_filenames[ii].unlink()
-                                    else:
+                                    if output_format == "zarr":
                                         shutil.rmtree(out_filenames[ii])
+                                    else:
+                                        out_filenames[ii].unlink()
 
                                 if not out_filenames[ii].exists():
                                     jobs.append(
@@ -269,7 +273,7 @@ def delayed_write(
     kwargs = dict()
     kwargs["encoding"] = dict()
     for name, da in ds.data_vars.items():
-        chunks = []
+        chunks = list()
         for dim in da.dims:
             if dim in target_chunks.keys():
                 chunks.append(target_chunks[str(dim)])
@@ -426,29 +430,13 @@ def variable_conversion(
 
 
 def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
-
-    # FIXME: Checks for existing files should happen somewhere else.
-
-    # Daily variable aggregation operations
-    # input_file = Path(input_file)
-    # output_folder = Path(output_folder)
     logging.info("Creating daily upscaled reanalyses.")
 
     daily_dataset = dict()
-
     for variable in ds.data_vars:
-        # input_file_parts = input_file.stem.split("_")
-        # input_file_parts[0] = variable
-        # input_file_parts[1] = "day"
-        # output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
-
-        # if any([f for f in output.glob("*")]):
-        #     logging.info("Files for `%s` exist. Continuing..." % output.name)
-        #     return
-
         if variable == "tas":
             # Some looping to deal with memory consumption issues
-            # TODO: Add cell methods for tasmax and tasmin
+
             for v, func in {
                 "tasmax": "max",
                 "tasmin": "min",
@@ -459,12 +447,14 @@ def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
                 else:
                     v_desired = "tas"
 
-                # input_file_parts[0] = v
-                # output = output_folder.joinpath(f"{'_'.join(input_file_parts)}")
-
                 ds_out = xr.Dataset()
                 ds_out.attrs = ds.attrs.copy()
                 ds_out.attrs["frequency"] = "day"
+
+                # TODO: Add cell methods for tasmax and tasmin
+                #
+                #
+
                 if v == "tas" and not hasattr(ds, "tas"):
                     ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
                 else:

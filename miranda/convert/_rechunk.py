@@ -11,7 +11,7 @@ import zarr
 from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
 
-from . import project_institutes
+from ._data import project_institutes
 
 logging.config.dictConfig(LOGGING_CONFIG)
 

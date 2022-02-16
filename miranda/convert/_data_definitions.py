@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
 
-from . import nasa_ag_variables, sc_earth_variables, wfdei_gem_capa_variables
+from ._data import nasa_ag_variables, sc_earth_variables, wfdei_gem_capa_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
