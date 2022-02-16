@@ -129,13 +129,21 @@ def reanalysis_processing(
                         try:
                             chunks = chunks[var]
                         except KeyError:
+                            # FIXME: This workaround should go somewhere else.
                             chunks = chunks["sd"]  # era5 'sde' file has 'sd' variable??
 
                         if target_chunks is None:
+                            output_chunks = dict()
+                            mappings = dict(longitude="lon", latitude="lat")
+                            for k, v in chunks.items():
+                                if k in mappings.keys():
+                                    output_chunks[mappings[k]] = v
+                                else:
+                                    output_chunks[k] = v
+
                             logging.warning(
-                                f"No target_chunks set, proceeding with input chunks: {chunks}"
+                                f"No target_chunks set, proceeding with following chunks: {output_chunks}"
                             )
-                            output_chunks = chunks.copy()
                         else:
                             output_chunks = target_chunks
 
