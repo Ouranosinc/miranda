@@ -471,7 +471,7 @@ def daily_aggregation(ds) -> Dict[str, Dataset]:
                     ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
                 else:
                     # Thanks for the help, xclim contributors
-                    r = ds[variable].resample(time="D", keep_attrs=True)
+                    r = ds[variable].resample(time="D")
                     ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
 
                 daily_dataset[v] = ds_out
