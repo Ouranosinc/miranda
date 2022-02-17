@@ -49,7 +49,7 @@
       "_cf_variable_name": "prsn",
       "_corrected_units": {
         "era5-land": "m",
-        "era5": "m"
+        "era5-single-levels": "m"
       },
       "_transformation": {
         "era5-land": "deaccumulate",
