@@ -86,6 +86,13 @@ def reanalysis_processing(
     -------
     None
     """
+    if output_format == "netcdf":
+        suffix = ".nc"
+    elif output_format == "zarr":
+        suffix = ".zarr"
+    else:
+        raise NotImplementedError(f"`output_format`: '{output_format}")
+
     with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
         out_files = Path(output_folder)
         if isinstance(domains, str):
@@ -197,7 +204,7 @@ def reanalysis_processing(
                         )
 
                         if time_freq.lower() == "day":
-                            dataset = daily_aggregation(ds, project)
+                            dataset = daily_aggregation(ds)
                             freq = "YS"
                         else:
                             out_variable = (
@@ -209,7 +216,10 @@ def reanalysis_processing(
                             freq = "MS"
 
                         if len(dataset) == 0:
-                            logging.warning()
+                            logging.warning(
+                                f"Daily aggregation methods for variable `{var}` are not supported. "
+                                "Continuing..."
+                            )
 
                         for key in dataset.keys():
                             ds = dataset[key]
@@ -221,7 +231,7 @@ def reanalysis_processing(
                             file_name1 = file_name.replace(
                                 f"{var}_", f"{out_variable}_"
                             )
-                            logging.info("Writing out fixed files for %s." % file_name1)
+                            logging.info(f"Writing out fixed files for {file_name1}.")
 
                             years, datasets = zip(*ds.resample(time=freq))
 
@@ -229,13 +239,6 @@ def reanalysis_processing(
                                 format_str = "%Y-%m"
                             else:
                                 format_str = "%Y"
-
-                            if output_format == "netcdf":
-                                suffix = ".nc"
-                            elif output_format == "zarr":
-                                suffix = ".zarr"
-                            else:
-                                raise NotImplementedError()
 
                             out_filenames = [
                                 output_folder.joinpath(
