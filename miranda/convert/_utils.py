@@ -126,12 +126,13 @@ def reanalysis_processing(
                                     output_chunks[k] = v
 
                             logging.warning(
-                                f"No target_chunks set, proceeding with following chunks: {output_chunks}"
+                                "No target_chunks set."
+                                f" Proceeding with following found chunks: {output_chunks}"
                             )
                         else:
                             output_chunks = target_chunks
 
-                        logging.info("Resampling variable `%s`." % var)
+                        logging.info(f"Resampling variable `{var}`.")
 
                         if aggregate:
                             time_freq = aggregate
@@ -147,14 +148,11 @@ def reanalysis_processing(
                             file_name = f"{file_name}_{domain}"
 
                         # Subsetting operations
-                        ds = None
                         subset_time = False
                         if domain.lower() in ["global", "not-specified"]:
                             if start and end:
                                 subset_time = True
                         else:
-                            if domain.upper() == "AMNO":
-                                domain = "NAM"
                             region = subsetting_domains(domain)
                             lon_values = np.array([region[1], region[3]])
                             lat_values = np.array([region[0], region[2]])
@@ -209,6 +207,9 @@ def reanalysis_processing(
                             )
                             dataset = {out_variable: ds}
                             freq = "MS"
+
+                        if len(dataset) == 0:
+                            logging.warning()
 
                         for key in dataset.keys():
                             ds = dataset[key]
@@ -268,8 +269,13 @@ def reanalysis_processing(
                                             output_format,
                                         )
                                     )
-
-                            compute(jobs)
+                            if len(jobs) == 0:
+                                logging.warning(
+                                    f"All output files for `{var}` currently exist."
+                                    " To overwrite them, set `overwrite=True`. Continuing..."
+                                )
+                            else:
+                                compute(jobs)
                     else:
                         logging.info(f"No files found for variable {var}.")
 
@@ -437,37 +443,32 @@ def variable_conversion(
     return ds
 
 
-def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
+def daily_aggregation(ds) -> Dict[str, Dataset]:
     logging.info("Creating daily upscaled reanalyses.")
 
     daily_dataset = dict()
     for variable in ds.data_vars:
-        if variable == "tas":
+        if variable in ["tas", "tdps"]:
             # Some looping to deal with memory consumption issues
-
             for v, func in {
-                "tasmax": "max",
-                "tasmin": "min",
-                "tas": "mean",
+                f"{variable}max": "max",
+                f"{variable}min": "min",
+                f"{variable}": "mean",
             }.items():
-                if project in ["cfsr", "nrcan"]:
-                    v_desired = v
-                else:
-                    v_desired = "tas"
-
                 ds_out = xr.Dataset()
                 ds_out.attrs = ds.attrs.copy()
                 ds_out.attrs["frequency"] = "day"
 
-                # TODO: Add cell methods for tasmax and tasmin
-                #
-                #
+                method = (
+                    f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
+                )
+                ds_out.attrs["cell_methods"] = method
 
                 if v == "tas" and not hasattr(ds, "tas"):
                     ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
                 else:
                     # Thanks for the help, xclim contributors
-                    r = ds[v_desired].resample(time="D", keep_attrs=True)
+                    r = ds[variable].resample(time="D", keep_attrs=True)
                     ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
 
                 daily_dataset[v] = ds_out
@@ -477,7 +478,8 @@ def daily_aggregation(ds, project: str) -> Dict[str, Dataset]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
             ds_out.attrs["frequency"] = "day"
-            logging.info(f"Converting {variable} to daily time step (daily mean)")
+            ds_out.attrs["cell_methods"] = "time: mean (interval: 1 day)"
+            logging.info(f"Converting {variable} to daily time step (daily mean).")
             ds_out[variable] = (
                 ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
             )
