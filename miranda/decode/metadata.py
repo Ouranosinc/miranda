@@ -9,7 +9,7 @@ from typing import List, Union
 import pandas as pd
 import schema
 from netCDF4 import Dataset
-from pandas._libs.tslibs import NaTType
+from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -18,13 +18,18 @@ from ._utils import date_parser
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "decode_dimsvar",
+    "CMIP5_GCM_PROVIDERS",
+    "CMIP5_INSTITUTES",
+    "CMIP6_GCM_PROVIDERS",
+    "CMIP6_INSTITUTES",
+    "CORDEX_INSTITUTES",
     "decode_cmip5_name",
     "decode_cmip5_netcdf",
     "decode_cmip6_name",
     "decode_cmip6_netcdf",
     "decode_cordex_name",
     "decode_cordex_netcdf",
+    "decode_dimsvar",
     "decode_isimip_ft_name",
     "decode_isimip_ft_netcdf",
 ]
@@ -99,18 +104,22 @@ CORDEX_INSTITUTES = {
 }
 
 CMIP5_INSTITUTES = {
-    "CSIRO-BOM": ["ACCESS1-0", "ACCESS1-3"],
     "BCC": ["bcc-csm1-1"],
     "CCCMA": ["CanAM4", "CanCM4", "CanESM2"],
     "CNRM-CERFACS": ["CNRM-CM5", "CNRM-CM5-2"],
+    "CSIRO-BOM": ["ACCESS1-0", "ACCESS1-3"],
     "CSIRO-QCCCE": ["CSIRO-Mk3-6-0"],
-    "MOHC": ["HadCM3", "HadGEM2-ES"],
+    "ECMWF": ["ERAINT"],
+    "ICHEC": ["EC-EARTH"],
     "INM": ["inmcm4"],
     "IPSL": ["IPSL-CM5A-LR"],
     "MIROC": ["MIROC4h"],
-    "MPI-M": ["MPI-ESM-LR"],
+    "MOHC": ["HadCM3", "HadGEM2-ES"],
+    "MPI-M": ["MPI-ESM-LR", "MPI-ESM-MR"],
     "MRI": ["MRI-CGCM3"],
     "NCC": ["NorESM1-M"],
+    "NOAA-GFDL": ["GFDL-ESM2M"],
+    "UQAM": ["GEMatm-Can", "GEMatm-MPI"],
 }
 
 CMIP6_INSTITUTES = {
@@ -174,6 +183,18 @@ def decode_era5_netcdf(file: Union[PathLike, str]) -> dict:
 
 
 def decode_generic_reanalysis(file: Union[PathLike, str]) -> dict:
+    pass
+
+
+def decode_eccc_obs(file: Union[PathLike, str]) -> dict:
+    pass
+
+
+def decode_ahccd_obs(file: Union[PathLike, str]) -> dict:
+    pass
+
+
+def decode_melcc_obs(file: Union[PathLike, str]) -> dict:
     pass
 
 

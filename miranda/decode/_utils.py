@@ -4,7 +4,7 @@ from typing import Union
 
 import cftime
 import pandas as pd
-from pandas.tseries import offsets
+from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -19,7 +19,7 @@ def date_parser(
     end_of_period: bool = False,
     out_dtype: str = "str",
     strtime_format: str = "%Y-%m-%d",
-) -> Union[str, pd.Timestamp, pd._libs.tslibs.nattype.NaTType]:
+) -> Union[str, pd.Timestamp, NaTType]:
     """Returns a datetime from a string.
 
     Parameters
