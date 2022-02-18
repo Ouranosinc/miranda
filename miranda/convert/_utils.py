@@ -583,8 +583,7 @@ def threshold_land_sea_mask(
             out = output_folder / file_name
             ds.to_netcdf(out)
             return out
-        else:
-            return ds
+        return ds
     else:
         logging.warning("Project was not found.")
         raise RuntimeError()

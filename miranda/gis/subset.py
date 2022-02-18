@@ -75,8 +75,8 @@ def _read_geometries(
         logging.exception("Unable to read shape.")
         raise
 
-    if len(geom):
-        logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
+    if len(geom) > 0:
+        logging.info(f"Shapes found are: {', '.join(set(geometry_types))}.")
         return geom, shape_crs
     else:
         raise RuntimeError("No geometries found.")
