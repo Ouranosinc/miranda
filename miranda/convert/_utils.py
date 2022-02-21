@@ -239,13 +239,11 @@ def reanalysis_processing(
                             ]
 
                             jobs = list()
-
-                            if overwrite:
-                                logging.warning(
-                                    f"Removing existing {output_format} files for {var}."
-                                )
                             for i, d in enumerate(datasets):
                                 if out_filenames[i].exists() and overwrite:
+                                    logging.warning(
+                                        f"Removing existing {output_format} files for {var}."
+                                    )
                                     if out_filenames[i].is_file():
                                         out_filenames[i].unlink()
 
