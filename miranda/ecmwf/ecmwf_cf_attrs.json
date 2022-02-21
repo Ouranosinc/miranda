@@ -18,7 +18,7 @@
       "cell_methods": "time: mean",
       "long_name": "Potential evapotranspiration",
       "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
-      "_cf_variable_name": "evspsbl",
+      "_cf_variable_name": "evspsblpot",
       "_corrected_units": {},
       "_transformation": {
         "era5-land": "deaccumulate",
