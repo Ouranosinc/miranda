@@ -22,6 +22,7 @@ from xclim.indices import tas
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
+from miranda.utils import chunk_iterables
 
 from ._data import project_institutes, xarray_frequencies_to_cmip6
 
@@ -253,21 +254,21 @@ def reanalysis_processing(
                                 logging.warning(
                                     f"Removing existing {output_format} files for {var}."
                                 )
-                            for ii, d in enumerate(datasets):
-                                if out_filenames[ii].exists() and overwrite:
+                            for i, d in enumerate(datasets):
+                                if out_filenames[i].exists() and overwrite:
                                     if (
-                                        out_filenames[ii].is_dir()
+                                        out_filenames[i].is_dir()
                                         and output_format == "zarr"
                                     ):
-                                        shutil.rmtree(out_filenames[ii])
+                                        shutil.rmtree(out_filenames[i])
                                     else:
-                                        out_filenames[ii].unlink()
+                                        out_filenames[i].unlink()
 
-                                if not out_filenames[ii].exists():
+                                if not out_filenames[i].exists():
                                     jobs.append(
                                         delayed_write(
                                             d,
-                                            out_filenames[ii],
+                                            out_filenames[i],
                                             output_chunks,
                                             output_format,
                                         )
@@ -278,7 +279,9 @@ def reanalysis_processing(
                                     " To overwrite them, set `overwrite=True`. Continuing..."
                                 )
                             else:
-                                compute(jobs)
+                                chunked_jobs = chunk_iterables(jobs, 10)
+                                for chunk in chunked_jobs:
+                                    compute(chunk)
                     else:
                         logging.info(f"No files found for variable {var}.")
 
