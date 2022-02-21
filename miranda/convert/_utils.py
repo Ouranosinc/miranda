@@ -246,23 +246,23 @@ def reanalysis_processing(
                                 )
                             for i, d in enumerate(datasets):
                                 if out_filenames[i].exists() and overwrite:
-                                    if (
-                                        out_filenames[i].is_dir()
-                                        and output_format == "zarr"
-                                    ):
-                                        shutil.rmtree(out_filenames[i])
-                                    else:
+                                    if out_filenames[i].is_file():
                                         out_filenames[i].unlink()
 
-                                if not out_filenames[i].exists():
+                                if (
+                                    not out_filenames[i].exists()
+                                    or out_filenames[i].is_dir()
+                                ):
                                     jobs.append(
                                         delayed_write(
                                             d,
                                             out_filenames[i],
                                             output_chunks,
                                             output_format,
+                                            overwrite,
                                         )
                                     )
+
                             if len(jobs) == 0:
                                 logging.warning(
                                     f"All output files for `{var}` currently exist."
@@ -281,7 +281,11 @@ def reanalysis_processing(
 
 
 def delayed_write(
-    ds: xarray.Dataset, outfile: Path, target_chunks: dict, output_format: str
+    ds: xarray.Dataset,
+    outfile: Path,
+    target_chunks: dict,
+    output_format: str,
+    overwrite: bool,
 ):
     # Set correct chunks in encoding options
     kwargs = dict()
@@ -300,6 +304,8 @@ def delayed_write(
                 "zlib": True,
             }
             kwargs["compute"] = False
+            if overwrite:
+                kwargs["mode"] = "w"
         elif output_format == "zarr":
             ds = ds.chunk(target_chunks)
             kwargs["encoding"][name] = {
@@ -307,6 +313,9 @@ def delayed_write(
                 "compressor": zarr.Blosc(),
             }
             kwargs["compute"] = False
+            if overwrite:
+                kwargs["mode"] = "w"
+
     if kwargs["encoding"]:
         kwargs["encoding"]["time"] = {"dtype": "int32"}
 
