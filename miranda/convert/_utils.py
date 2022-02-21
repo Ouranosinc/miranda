@@ -123,8 +123,8 @@ def reanalysis_processing(
                     multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
 
                     if multi_files:
-                        chunks = get_chunks_on_disk(multi_files[0])
-                        chunks = chunks[var]
+                        all_chunks = get_chunks_on_disk(multi_files[0])
+                        chunks = all_chunks[var]
 
                         if target_chunks is None:
                             output_chunks = dict()
@@ -136,8 +136,8 @@ def reanalysis_processing(
                                     output_chunks[k] = v
 
                             logging.warning(
-                                "No target_chunks set."
-                                f" Proceeding with following found chunks: {output_chunks}"
+                                "No `target_chunks` set. "
+                                f"Proceeding with following found chunks: {output_chunks}"
                             )
                         else:
                             output_chunks = target_chunks
@@ -212,6 +212,8 @@ def reanalysis_processing(
 
                         for key in dataset.keys():
                             ds = dataset[key]
+
+                            # TODO: What do we do about multivariable files. Are they even allowed?
                             out_variable = (
                                 list(ds.data_vars)[0]
                                 if len(list(ds.data_vars)) == 1
@@ -220,10 +222,9 @@ def reanalysis_processing(
                             file_name1 = file_name.replace(
                                 f"{var}_", f"{out_variable}_"
                             )
+
                             logging.info(f"Writing out fixed files for {file_name1}.")
-
                             years, datasets = zip(*ds.resample(time=freq))
-
                             if freq == "MS":
                                 format_str = "%Y-%m"
                                 iterable_chunks = 12
@@ -271,8 +272,10 @@ def reanalysis_processing(
                                 logging.info(
                                     f"Processing {len(chunked_jobs)} jobs for variable `{var}`."
                                 )
-                                for i, chunk in enumerate(chunked_jobs):
-                                    logging.info(f"Writing out job {i}.")
+                                iterations = 0
+                                for chunk in chunked_jobs:
+                                    iterations += 1
+                                    logging.info(f"Writing out job {iterations}.")
                                     compute(chunk)
                     else:
                         logging.info(f"No files found for variable {var}.")
@@ -302,8 +305,8 @@ def delayed_write(
                 "zlib": True,
             }
             kwargs["compute"] = False
-            if overwrite:
-                kwargs["mode"] = "w"
+            if not overwrite:
+                kwargs["mode"] = "a"
         elif output_format == "zarr":
             ds = ds.chunk(target_chunks)
             kwargs["encoding"][name] = {
@@ -313,7 +316,6 @@ def delayed_write(
             kwargs["compute"] = False
             if overwrite:
                 kwargs["mode"] = "w"
-
     if kwargs["encoding"]:
         kwargs["encoding"]["time"] = {"dtype": "int32"}
 
@@ -335,7 +337,7 @@ def variable_conversion(
                 ]
         return d
 
-    if project in ["era5", "era5-single-levels", "era5-land"]:
+    if project in ["era5-single-levels", "era5-land"]:
         metadata_definition = json.load(
             open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
         )
