@@ -226,8 +226,10 @@ def reanalysis_processing(
 
                             if freq == "MS":
                                 format_str = "%Y-%m"
+                                iterable_chunks = 12
                             else:
                                 format_str = "%Y"
+                                iterable_chunks = 10
 
                             out_filenames = [
                                 output_folder.joinpath(
@@ -267,8 +269,12 @@ def reanalysis_processing(
                                     " To overwrite them, set `overwrite=True`. Continuing..."
                                 )
                             else:
-                                chunked_jobs = chunk_iterables(jobs, 10)
-                                for chunk in chunked_jobs:
+                                chunked_jobs = chunk_iterables(jobs, iterable_chunks)
+                                logging.info(
+                                    f"Processing {len(chunked_jobs)} jobs for variable `{var}`."
+                                )
+                                for i, chunk in enumerate(chunked_jobs):
+                                    logging.info(f"Writing out job {i}.")
                                     compute(chunk)
                     else:
                         logging.info(f"No files found for variable {var}.")
@@ -475,7 +481,7 @@ def daily_aggregation(ds) -> Dict[str, Dataset]:
                 daily_dataset[v] = ds_out
                 del ds_out
 
-        elif variable in ["pr", "prsn", "snd", "snw"]:
+        elif variable in ["pev", "pr", "prsn", "snd", "snw"]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
             ds_out.attrs["frequency"] = "day"
