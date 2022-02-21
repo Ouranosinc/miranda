@@ -346,11 +346,18 @@ def variable_conversion(
             if p in metadata_definition["variable_entry"][vv][key].keys():
                 if metadata_definition["variable_entry"][vv][key][p] == "deaccumulate":
                     freq = xr.infer_freq(ds.time)
-                    offset = (
-                        float(calendar.parse_offset(freq)[0])
-                        if calendar.parse_offset(freq)[0] != ""
-                        else 1.0
-                    )
+                    try:
+                        offset = (
+                            float(calendar.parse_offset(freq)[0])
+                            if calendar.parse_offset(freq)[0] != ""
+                            else 1.0
+                        )
+                    except TypeError:
+                        logging.error(
+                            f"Unable to parse the time frequency for variable `{vv}`. "
+                            "Verify data integrity before retrying."
+                        )
+                        raise
 
                     # accumulated hourly to hourly flux (de-accumulation)
                     with xr.set_options(keep_attrs=True):
