@@ -65,6 +65,7 @@ def reanalysis_processing(
     target_chunks: Optional[dict] = None,
     output_format: str = "netcdf",
     overwrite: bool = False,
+    engine: str = "h5netcdf"
     # n_workers: int = 4,
     # **dask_kwargs,
 ) -> None:
@@ -82,6 +83,7 @@ def reanalysis_processing(
     target_chunks: dict, optional
     output_format: {"netcdf", "zarr"}
     overwrite: bool
+    engine: {"netcdf4", "h5netcdf"}
 
     Returns
     -------
@@ -155,48 +157,34 @@ def reanalysis_processing(
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
 
+                        xr_kwargs = dict(
+                            chunks=chunks,
+                            engine=engine,
+                            preprocess=_drop_those_time_bnds,
+                            parallel=True,
+                        )
+
                         # Subsetting operations
-                        subset_time = False
                         if domain.lower() in ["global", "not-specified"]:
-                            if start and end:
-                                subset_time = True
+                            if start or end:
+                                ds = subset.subset_time(
+                                    xr.open_mfdataset(multi_files, **xr_kwargs),
+                                    start_date=start,
+                                    end_date=end,
+                                )
+                            else:
+                                ds = xr.open_mfdataset(multi_files, **xr_kwargs)
                         else:
                             region = subsetting_domains(domain)
                             lon_values = np.array([region[1], region[3]])
                             lat_values = np.array([region[0], region[2]])
 
                             ds = subset.subset_bbox(
-                                xr.open_mfdataset(
-                                    multi_files,
-                                    chunks=chunks,
-                                    engine="netcdf4",
-                                    preprocess=_drop_those_time_bnds,
-                                ),
+                                xr.open_mfdataset(multi_files, **xr_kwargs),
                                 lon_bnds=lon_values,
                                 lat_bnds=lat_values,
                                 start_date=start,
                                 end_date=end,
-                            )
-                        if subset_time:
-                            ds = subset.subset_time(
-                                xr.open_mfdataset(
-                                    multi_files,
-                                    chunks=chunks,
-                                    engine="netcdf4",
-                                    preprocess=_drop_those_time_bnds,
-                                ),
-                                start_date=start,
-                                end_date=end,
-                            )
-                        elif not any([subset_time, ds]) and domain.lower() in [
-                            "global",
-                            "not-specified",
-                        ]:
-                            ds = xr.open_mfdataset(
-                                multi_files,
-                                chunks=chunks,
-                                engine="netcdf4",
-                                preprocess=_drop_those_time_bnds,
                             )
 
                         ds.attrs.update(dict(frequency=time_freq, domain=domain))
