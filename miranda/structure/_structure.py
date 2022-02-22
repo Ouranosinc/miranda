@@ -1,11 +1,24 @@
-import logging
 import logging.config
 import os
-
-# import shutil
 from pathlib import Path
 from typing import List, Mapping, Union
 
+from miranda.decode import (
+    decode_ahccd_obs,
+    decode_cmip5_name,
+    decode_cmip5_netcdf,
+    decode_cmip6_name,
+    decode_cmip6_netcdf,
+    decode_cordex_name,
+    decode_cordex_netcdf,
+    decode_dimsvar,
+    decode_eccc_obs,
+    decode_era5,
+    decode_generic_reanalysis,
+    decode_isimip_ft_name,
+    decode_isimip_ft_netcdf,
+    decode_melcc_obs,
+)
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -51,7 +64,12 @@ def _build_path_from_schema(
             / schema["frequency"]
         )
     elif schema["type"] == "simulation":
-        # FIXME: This currently only works for CORDEX-like data
+        # TODO: Verify whether this is how we want to structure this
+        if schema["project"] == "CORDEX":
+            model = schema["driving_model"]
+        else:
+            model = schema["member"]
+
         return (
             Path(output_folder)
             / schema["type"]
@@ -60,7 +78,7 @@ def _build_path_from_schema(
             / schema["domain"]
             / schema["institute"]
             / schema["source"]
-            / schema["driving_model"]
+            / model
             / schema["experiment"]
             / schema["member"]
             / schema["frequency"]
@@ -70,7 +88,10 @@ def _build_path_from_schema(
 def structure_datasets(
     input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]]],
     output_folder: Union[str, os.PathLike],
-    move: bool = False,
+    *,
+    project: str,
+    move: bool,
+    filename_pattern: str = "*",
 ) -> Mapping[str, Path]:
     """
 
@@ -78,10 +99,19 @@ def structure_datasets(
     ----------
     input_files: str or Path or list of str or Path
     output_folder: str or Path
+    project: {"simulation", "reanalysis", "forecast", "gridded-obs, "station-obs"}
     move: bool
+    filename_pattern: str
 
     Returns
     -------
     dict
     """
-    pass
+    if isinstance(input_files, (Path, str)):
+        input_files = Path(input_files)
+        if input_files.is_dir():
+            input_files = sorted(list(input_files.glob(filename_pattern)))
+    elif isinstance(input_files, list):
+        input_files = sorted(Path(p) for p in input_files)
+    else:
+        raise NotImplementedError()

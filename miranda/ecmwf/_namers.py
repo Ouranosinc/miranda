@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -39,6 +40,11 @@ def rename_ecmwf_files(path: Union[os.PathLike, str]) -> None:
         projects = [name for name in names if name in ECMWF_PROJECT_NAMES]
         if len(projects) == 1:
             project = projects[0]
+        elif len(projects) > 1:
+            logging.warning(
+                f"More than one project identified for file {f.name}. Verify file naming."
+            )
+            continue
         else:
             continue
 
@@ -57,4 +63,6 @@ def rename_ecmwf_files(path: Union[os.PathLike, str]) -> None:
             date,
         ]
         new_name = f"{'_'.join(new_name_parts)}.nc"
+        logging.info(f"Moving {f.name} to {new_name}")
+
         shutil.move(f, Path(path).joinpath(new_name))

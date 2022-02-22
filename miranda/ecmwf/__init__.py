@@ -1,4 +1,5 @@
 from ._ecmwf import *
+from ._namers import *
 from .tigge import *
 
 ecmwf_variables = [

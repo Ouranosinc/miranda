@@ -6,9 +6,10 @@ from os import PathLike
 from pathlib import Path
 from typing import List, Union
 
+import netCDF4 as nc
 import pandas as pd
 import schema
-from netCDF4 import Dataset
+import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
@@ -22,14 +23,18 @@ __all__ = [
     "CMIP5_INSTITUTES",
     "CMIP6_GCM_PROVIDERS",
     "CMIP6_INSTITUTES",
-    "CORDEX_INSTITUTES",
+    "decode_eccc_obs",
+    "decode_ahccd_obs",
+    "decode_melcc_obs",
+    "decode_generic_reanalysis",
+    "decode_era5",
     "decode_cmip5_name",
     "decode_cmip5_netcdf",
     "decode_cmip6_name",
     "decode_cmip6_netcdf",
     "decode_cordex_name",
     "decode_cordex_netcdf",
-    "decode_dimsvar",
+    "decode_primary_variable",
     "decode_isimip_ft_name",
     "decode_isimip_ft_netcdf",
 ]
@@ -78,30 +83,66 @@ facet_schema = schema.Schema(
     ignore_extra_keys=True,
 )
 
-
-def _from_netcdf(file: Union[Path, str]) -> (str, str, Dataset):
-    file_name = Path(file).stem
-    variable_name = file_name.split("_")[0]
-    variable_date = file_name.split("_")[-1]
-    data = Dataset(file)
-    return variable_name, variable_date, data
-
-
-def _from_filename(file: Union[Path, str]) -> List[str]:
-    file_name = Path(file).stem
-    decode_file = file_name.split("_")
-    return decode_file
-
-
-CORDEX_INSTITUTES = {
-    "CanRCM4": "CCCMA",
-    "CRCM5": "UQAM",
-    "CRCM5-UQAM": "UQAM",
-    "HIRHAM5": "DMI",
-    "RCA4": "SMHI",
-    "RegCM4": "ISU",
-    "WRF": "NCAR",
-}
+CORDEX_MODELS = [
+    "ALADIN52",
+    "ALADIN53",
+    "ALADIN63",
+    "ALADIN64",
+    "ALARO-0",
+    "BOM-SDM",
+    "CCAM",
+    "CCAM-1704",
+    "CCAM-2008",
+    "CCLM-0-9",
+    "CCLM4-21-2",
+    "CCLM4-8-17",
+    "CCLM4-8-17-CLM3-5",
+    "CCLM5-0-15",
+    "CCLM5-0-2",
+    "CCLM5-0-6",
+    "CCLM5-0-9",
+    "COSMO-crCLIM-v1-1",
+    "CRCM5",
+    "CRCM5-SN",
+    "CanRCM4",
+    "Eta",
+    "HIRHAM5",
+    "HadGEM3-RA",
+    "HadREM3-GA7-05",
+    "HadRM3P",
+    "MAR311",
+    "MAR36",
+    "RA",
+    "RACMO21P",
+    "RACMO22E",
+    "RACMO22T",
+    "RCA4",
+    "RCA4-SN",
+    "REMO2009",
+    "REMO2015",
+    "RRCM",
+    "RegCM4",
+    "RegCM4-0",
+    "RegCM4-2",
+    "RegCM4-3",
+    "RegCM4-4",
+    "RegCM4-6",
+    "RegCM4-7",
+    "SNURCM",
+    "VRF370",
+    "WRF",
+    "WRF331",
+    "WRF331F",
+    "WRF331G",
+    "WRF341E",
+    "WRF341I",
+    "WRF351",
+    "WRF360J",
+    "WRF360K",
+    "WRF360L",
+    "WRF361H",
+    "WRF381P",
+]
 
 CMIP5_INSTITUTES = {
     "BCC": ["bcc-csm1-1"],
@@ -157,9 +198,23 @@ CMIP5_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP5_INSTITUTES.items() for i i
 CMIP6_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP6_INSTITUTES.items() for i in ids}
 
 
-def decode_dimsvar(file: Union[Path, str]) -> dict:
-    """
-    see: https://gist.github.com/guziy/8543562
+def _from_dataset(file: Union[Path, str]) -> (str, str, nc.Dataset):
+    file_name = Path(file).stem
+
+    variable_name = decode_primary_variable(file)
+    variable_date = file_name.split("_")[-1]
+    data = nc.Dataset(file)
+    return variable_name, variable_date, data
+
+
+def _from_filename(file: Union[Path, str]) -> List[str]:
+    file_name = Path(file).stem
+    decode_file = file_name.split("_")
+    return decode_file
+
+
+def decode_primary_variable(file: Union[Path, str]) -> str:
+    """Attempts to find the primary variable of a netCDF
 
     Parameters
     ----------
@@ -167,18 +222,30 @@ def decode_dimsvar(file: Union[Path, str]) -> dict:
 
     Returns
     -------
-    dict
+    str
     """
-    _, _, data = _from_netcdf(file=file)
 
     dimsvar_dict = dict()
-    for var_name, varin in data.variables.items():
-        dimsvar_dict[var_name] = {k: varin.getncattr(k) for k in varin.ncattrs()}
+    coords = ("time", "lat", "lon")
 
-    return dimsvar_dict
+    if file.is_file() and file.suffix in ["nc", "nc4"]:
+        data = nc.Dataset(file, mode="r")
+        for var_name, var_attrs in data.variables.items():
+            dimsvar_dict[var_name] = {
+                k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
+            }
+        for k in dimsvar_dict.keys():
+            if not str(k).startswith(coords):
+                return str(k)
+
+    elif file.is_dir() and file.suffix == "zarr":
+        data = zarr.open(file, mode="r")
+        for k in data.array_keys():
+            if not str(k).startswith(coords):
+                return str(k)
 
 
-def decode_era5_netcdf(file: Union[PathLike, str]) -> dict:
+def decode_era5(file: Union[PathLike, str]) -> dict:
     pass
 
 
@@ -199,7 +266,7 @@ def decode_melcc_obs(file: Union[PathLike, str]) -> dict:
 
 
 def decode_cmip6_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, date, data = _from_netcdf(file=file)
+    variable, date, data = _from_dataset(file=file)
 
     facets = dict()
     facets["activity"] = data.activity_id
@@ -273,7 +340,7 @@ def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
 
 
 def decode_cmip5_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, date, data = _from_netcdf(file=file)
+    variable, date, data = _from_dataset(file=file)
 
     facets = dict()
     facets["activity"] = "CMIP5"
@@ -342,7 +409,7 @@ def decode_cmip5_name(file: Union[PathLike, str]) -> dict:
 
 
 def decode_cordex_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, date, data = _from_netcdf(file=file)
+    variable, date, data = _from_dataset(file=file)
 
     facets = dict()
     facets["activity"] = "CORDEX"
@@ -418,7 +485,7 @@ def decode_cordex_name(file: Union[PathLike, str]) -> dict:
 
 
 def decode_isimip_ft_netcdf(file: Union[PathLike, str]) -> dict:
-    variable, date, data = _from_netcdf(file=file)
+    variable, date, data = _from_dataset(file=file)
 
     facets = dict()
     facets["activity"] = "ISIMP-FT"
