@@ -3,7 +3,19 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.2.0-beta"
 
 
-from miranda import archive, ecmwf, ops, remove, scripting, utils
+from miranda import (
+    archive,
+    convert,
+    decode,
+    deh_melcc,
+    eccc,
+    ecmwf,
+    hq,
+    ops,
+    remove,
+    scripting,
+    utils,
+)
 
 from .archiver import archive_database
 from .connect import Connection

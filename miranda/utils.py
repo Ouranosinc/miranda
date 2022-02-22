@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Sequence, Union
 
 from . import scripting
 
@@ -16,6 +16,7 @@ GiB = int(pow(2, 30))
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
+    "chunk_iterables",
     "creation_date",
     "find_filepaths",
     "GiB",
@@ -35,6 +36,26 @@ def ingest(files: Union[GeneratorType, List]) -> List:
         files = [f for f in files]
     files.sort()
     return files
+
+
+def chunk_iterables(iterable: Sequence, chunk_size: int) -> List:
+    """Generates lists of `chunk_size` elements from `iterable`.
+
+    Notes
+    -----
+    Adapted from eidord (2012) https://stackoverflow.com/a/12797249/7322852 (https://creativecommons.org/licenses/by-sa/4.0/)
+    """
+    iterable = iter(iterable)
+    while True:
+        chunk = list()
+        try:
+            for _ in range(chunk_size):
+                chunk.append(next(iterable))
+            yield chunk
+        except StopIteration:
+            if chunk:
+                yield chunk
+            break
 
 
 def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
