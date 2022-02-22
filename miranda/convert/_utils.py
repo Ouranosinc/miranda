@@ -269,13 +269,11 @@ def reanalysis_processing(
                                 )
                             else:
                                 chunked_jobs = chunk_iterables(jobs, iterable_chunks)
-                                logging.info(
-                                    f"Processing {len(chunked_jobs)} jobs for variable `{var}`."
-                                )
+                                logging.info(f"Processing jobs for variable `{var}`.")
                                 iterations = 0
                                 for chunk in chunked_jobs:
                                     iterations += 1
-                                    logging.info(f"Writing out job {iterations}.")
+                                    logging.info(f"Writing out job chunk {iterations}.")
                                     compute(chunk)
                     else:
                         logging.info(f"No files found for variable {var}.")
