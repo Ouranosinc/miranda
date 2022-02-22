@@ -15,15 +15,12 @@ numpy
 pandas
 paramiko>=2.6.0
 pint
-h5netcdf
-cdsapi
-ecmwf-api-client
-schema
 pyproj
 rasterio
-requests
 regionmask
+requests
 rioxarray
+schema
 scp
 shapely
 xarray
