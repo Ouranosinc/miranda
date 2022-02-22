@@ -122,7 +122,7 @@ def _request_direct_era(
     """Launch formatted request."""
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]
-    times = ["{}:00".format(str(t).zfill(2)) for t in range(24)]
+    times = [f"{str(t).zfill(2)}:00" for t in range(24)]
 
     if domain.upper() == "AMNO":
         domain = "NAM"
