@@ -1,0 +1,166 @@
+{
+  "Header": {
+    "data_specs_version": "00.00.01",
+    "table_id": "ECCC",
+    "realm": "atmos",
+    "table_date": "30 January 2020",
+    "missing_value": "1e20",
+    "int_missing_value": "-999",
+    "product": "station-obs",
+    "Conventions": "CF-1.7"
+  },
+  "variable_entry": {
+    "001": {
+      "nc_units": "K",
+      "scale_factor": 0.1,
+      "add_offset": 273.15,
+      "long_name": "Daily Maximum Temperature",
+      "standard_name": "air_temperature_maximum",
+      "nc_name": "tasmax"
+    },
+    "002": {
+      "nc_units": "K",
+      "scale_factor": 0.1,
+      "add_offset": 273.15,
+      "long_name": "Daily Minimum Temperature",
+      "standard_name": "air_temperature_minimum",
+      "nc_name": "tasmin"
+    },
+    "003": {
+      "nc_units": "K",
+      "scale_factor": 0.1,
+      "add_offset": 273.15,
+      "long_name": "Daily Mean Temperature",
+      "standard_name": "air_temperature",
+      "nc_name": "tas"
+    },
+    "010": {
+      "nc_units": "mm d-1",
+      "scale_factor": 0.1,
+      "add_offset": 0,
+      "long_name": "Total Rainfall",
+      "standard_name": "liquid_precipitation_flux",
+      "nc_name": "prlptot"
+    },
+    "011": {
+      "nc_units": "cm d-1",
+      "scale_factor": 0.1,
+      "add_offset": 0,
+      "long_name": "Total Snowfall",
+      "standard_name": "solid_precipitation_flux",
+      "nc_name": "prsntot"
+    },
+    "012": {
+      "nc_units": "mm d-1",
+      "scale_factor": 0.1,
+      "add_offset": 0,
+      "long_name": "Total Precipitation",
+      "standard_name": "precipitation_flux",
+      "nc_name": "prcptot"
+    },
+    "013": {
+      "nc_units": "m",
+      "scale_factor": 0.01,
+      "add_offset": 0,
+      "long_name": "Snow on the Ground",
+      "standard_name": "surface_snow_thickness",
+      "nc_name": "sndtot"
+    },
+    "014": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Thunderstorms",
+      "standard_name": "thunderstorm_presence",
+      "nc_name": "thunder"
+    },
+    "015": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Freezing rain or drizzle",
+      "standard_name": "freeze_rain_drizzle_presence",
+      "nc_name": "freezing_rain_drizzle"
+    },
+    "016": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Hail",
+      "standard_name": "hail_presence",
+      "nc_name": "hail"
+    },
+    "017": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Fog or Ice Fog",
+      "standard_name": "fog_ice_fog_presence",
+      "nc_name": "fog_ice_fog"
+    },
+    "018": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Smoke or Haze",
+      "standard_name": "smoke_haze_presence",
+      "nc_name": "smoke_haze"
+    },
+    "019": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Blowing Dust or Sand",
+      "standard_name": "blowing_dust_sand_presence",
+      "nc_name": "blowing_dust_sand"
+    },
+    "020": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Blowing snow",
+      "standard_name": "blowing_snow_presence",
+      "nc_name": "blow_snow"
+    },
+    "021": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Wind speed >= 28 Knots",
+      "standard_name": "wind_exceeding_28_knots",
+      "nc_name": "wind_gt_28kt"
+    },
+    "022": {
+      "nc_units": "1",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "Wind speed >= 34 Knots",
+      "standard_name": "wind_exceeding_34_knots",
+      "nc_name": "wind_gt_34kt"
+    },
+    "023": {
+      "nc_units": "degree",
+      "scale_factor": 10,
+      "add_offset": 0,
+      "long_name": "Direction of extreme gust (16 pts) to December 1976",
+      "standard_name": "wind_to_direction",
+      "nc_name": "gust_dir"
+    },
+    "024": {
+      "nc_units": "m s-1",
+      "scale_factor": 0.2777778,
+      "add_offset": 0,
+      "long_name": "Speed of extreme gust",
+      "standard_name": "wind_speed_of_gust",
+      "nc_name": "gust_speed"
+    },
+    "025": {
+      "nc_units": "h",
+      "scale_factor": 1,
+      "add_offset": 0,
+      "long_name": "UTC hour of extreme gust",
+      "standard_name": "hour_of_extreme_gust",
+      "nc_name": "gust_hour"
+    }
+  }
+}
