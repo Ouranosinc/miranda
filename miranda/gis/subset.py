@@ -78,5 +78,4 @@ def _read_geometries(
     if len(geom) > 0:
         logging.info(f"Shapes found are: {', '.join(set(geometry_types))}.")
         return geom, shape_crs
-    else:
-        raise RuntimeError("No geometries found.")
+    raise RuntimeError("No geometries found.")

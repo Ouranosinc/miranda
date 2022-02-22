@@ -227,7 +227,7 @@ def reanalysis_processing(
                             years, datasets = zip(*ds.resample(time=freq))
                             if freq == "MS":
                                 format_str = "%Y-%m"
-                                iterable_chunks = 12
+                                iterable_chunks = 36
                             else:
                                 format_str = "%Y"
                                 iterable_chunks = 10
@@ -333,7 +333,6 @@ def variable_conversion(
         key = "_corrected_units"
         for vv in d.data_vars:
             if p in metadata_definition["variable_entry"][vv][key].keys():
-                # ds_units = d[vv].attrs["units"]  # FIXME: Is this needed anywhere ?
                 d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
                     project
                 ]
@@ -599,6 +598,5 @@ def threshold_land_sea_mask(
             ds.to_netcdf(out)
             return out
         return ds
-    else:
-        logging.warning("Project was not found.")
-        raise RuntimeError()
+    logging.warning("Project was not found.")
+    raise RuntimeError()
