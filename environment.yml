@@ -3,12 +3,16 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - autopep8
   - bumpversion
+  - cdsapi
   - cftime
+  - clisops
   - coverage
   - custom-inherit >=2.3.0
   - dask
   - distributed
+  - ecmwf-api-client
   - fabric
   - fiona
   - flake8
@@ -24,13 +28,17 @@ dependencies:
   - pre-commit
   - pyproj
   - pytest
+  - pytest-runner
   - python >=3.7
   - rasterio
+  - regionmask
   - requests
   - rioxarray
   - schema
   - scp
   - shapely
   - tox
+  - wheel
   - xarray
   - xclim
+  - zarr
