@@ -13,7 +13,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 def _build_path_from_schema(
     schema: dict, output_folder: Union[str, os.PathLike]
 ) -> Path:
-    """Build a filepath based on a validated data schema.
+    """Build a filepath based on a valid data schema.
 
     Parameters
     ----------
@@ -29,12 +29,13 @@ def _build_path_from_schema(
     if schema["type"] == "station-obs":
         folder_tree = (
             Path(output_folder)
-            / schema["project"]
             / schema["type"]
+            / schema["project"]
             / schema["institution"]
             / schema["project"]
             / schema["version"]  # This suggests "date_created"
             / schema["frequency"]
+            / schema["variable"]
         )
         if hasattr(schema, "member"):
             return folder_tree / schema["member"]
@@ -44,12 +45,13 @@ def _build_path_from_schema(
     elif schema["type"] in ["forecast", "gridded-obs", "reanalysis"]:
         return (
             Path(output_folder)
-            / schema["project"]
             / schema["type"]
+            / schema["project"]
             / schema["institution"]
             / schema["source"]
             / schema["domain"]
             / schema["frequency"]
+            / schema["variable"]
         )
     elif schema["type"] == "simulation":
         # TODO: Verify whether this is how we want to structure this
@@ -60,8 +62,8 @@ def _build_path_from_schema(
 
         return (
             Path(output_folder)
-            / schema["project"]
             / schema["type"]
+            / schema["project"]
             / schema["processing_level"]
             / schema["project"]
             / schema["domain"]
@@ -71,6 +73,7 @@ def _build_path_from_schema(
             / schema["experiment"]
             / schema["member"]
             / schema["frequency"]
+            / schema["variable"]
         )
 
 

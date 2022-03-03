@@ -34,18 +34,24 @@ DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
 TIME_UNITS_TO_FREQUENCY = {
     "hourly": "1hr",
     "hours": "1hr",
+    "hr": "1hr",
     "6-hourly": "6hr",
     "daily": "day",
     "days": "day",
+    "day": "day",
     "weekly": "sem",
     "weeks": "sem",
+    "sem": "sem",
     "monthly": "mon",
     "months": "mon",
+    "mon": "mon",
     "yearly": "yr",
     "years": "yr",
     "annual": "yr",
+    "yr": "yr",
     "decadal": "dec",
     "decades": "dec",
+    "dec": "dec",
     "fixed": "fx",
 }
 
@@ -58,6 +64,7 @@ TIME_UNITS_TO_TIMEDELTA = {
     "days": "1d",
     "weekly": "7d",
     "weeks": "7d",
+    "sem": "7d",
 }
 
 facet_schema = schema.Schema(
@@ -79,7 +86,7 @@ facet_schema = schema.Schema(
         schema.Optional("variable"): str,
         schema.Optional("timedelta"): schema.Or(pd.Timedelta, NaTType),
         schema.Optional("date"): schema.Or(
-            schema.Regex(BASIC_DT_VALIDATION, flags=re.I), NaTType
+            schema.Regex(BASIC_DT_VALIDATION, flags=re.I), "fx"
         ),
         schema.Optional("date_start"): schema.Or(
             schema.Regex(DATE_VALIDATION, flags=re.I), NaTType
@@ -317,6 +324,8 @@ PROJECT_MODELS = dict(
         "RegCM4-6",
         "RegCM4-7",
         "SNURCM",
+        "UQAM-CRCM5",  # Needed for internal-ish CORDEX data
+        "UQAM-CRCM5-SN",  # Needed for internal-ish CORDEX data
         "VRF370",
         "WRF",
         "WRF331",
@@ -485,6 +494,7 @@ class Decoder:
         str
         """
 
+        # FIXME: This doesn't always grab the right variable!
         dimsvar_dict = dict()
         coords = ("time", "lat", "lon")
 
@@ -512,7 +522,7 @@ class Decoder:
         data: Optional[nc.Dataset] = None,
         *,
         field: str,
-    ) -> str:
+    ) -> Union[str, NaTType]:
         """
 
         Parameters
@@ -540,6 +550,10 @@ class Decoder:
         if isinstance(file, list):
             potential_times = [segment in file for segment in time_dictionary.keys()]
             if potential_times:
+                if potential_times[0] in ["fx", "fixed"]:
+                    if field == "timedelta":
+                        return pd.NaT
+                    return "fx"
                 if field == "timedelta":
                     return pd.to_timedelta(time_dictionary[potential_times[0]])
                 return time_dictionary[potential_times[0]]
@@ -548,8 +562,14 @@ class Decoder:
             if frequency == "":
                 time_units = data["time"].units
                 frequency = time_units.split()[0]
+            if frequency in ["fx", "fixed", "mon", "Amon", "Emon"]:
+                if field == "timedelta":
+                    return pd.NaT
+                return "fx"
             if field == "timedelta":
                 return pd.to_timedelta(time_dictionary[frequency])
+            if frequency in ["day"]:
+                return frequency
             return time_dictionary[frequency]
 
     @staticmethod
@@ -728,6 +748,7 @@ class Decoder:
     def decode_cordex_netcdf(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
+        # FIXME: What to do about our internal data that breaks all established conventions?
         facets = dict()
         facets["activity"] = "CORDEX"
         facets["date"] = date
@@ -752,7 +773,12 @@ class Decoder:
             facets["institution"] = data.institute_id.strip()
 
         facets["processing_level"] = "raw"
-        facets["project"] = data.project_id
+
+        if data.project_id == "":
+            facets["project"] = "internal"
+        else:
+            facets["project"] = data.project_id
+
         facets["source"] = data.model_id
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
