@@ -29,8 +29,9 @@ def _build_path_from_schema(
     if schema["type"] == "station-obs":
         folder_tree = (
             Path(output_folder)
+            / schema["project"]
             / schema["type"]
-            / schema["institute"]
+            / schema["institution"]
             / schema["project"]
             / schema["version"]  # This suggests "date_created"
             / schema["frequency"]
@@ -43,8 +44,9 @@ def _build_path_from_schema(
     elif schema["type"] in ["forecast", "gridded-obs", "reanalysis"]:
         return (
             Path(output_folder)
+            / schema["project"]
             / schema["type"]
-            / schema["institute"]
+            / schema["institution"]
             / schema["source"]
             / schema["domain"]
             / schema["frequency"]
@@ -58,11 +60,12 @@ def _build_path_from_schema(
 
         return (
             Path(output_folder)
+            / schema["project"]
             / schema["type"]
             / schema["processing_level"]
             / schema["project"]
             / schema["domain"]
-            / schema["institute"]
+            / schema["institution"]
             / schema["source"]
             / model
             / schema["experiment"]
