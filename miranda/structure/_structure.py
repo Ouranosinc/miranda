@@ -11,13 +11,13 @@ from miranda.decode import (
     decode_cmip6_netcdf,
     decode_cordex_name,
     decode_cordex_netcdf,
-    decode_dimsvar,
     decode_eccc_obs,
     decode_era5,
     decode_generic_reanalysis,
     decode_isimip_ft_name,
     decode_isimip_ft_netcdf,
     decode_melcc_obs,
+    decode_primary_variable,
 )
 from miranda.scripting import LOGGING_CONFIG
 

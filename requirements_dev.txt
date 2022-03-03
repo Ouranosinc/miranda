@@ -7,5 +7,4 @@ pre-commit
 pytest
 pytest-runner
 tox
-tox-travis
 wheel

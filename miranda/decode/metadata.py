@@ -83,6 +83,177 @@ facet_schema = schema.Schema(
     ignore_extra_keys=True,
 )
 
+CMIP5_MODELS = [
+    "ACCESS1.0",
+    "ACCESS1.3",
+    "CCSM4",
+    "CFSv2-2011",
+    "CMCC-CESM",
+    "CMCC-CM",
+    "CMCC-CMS",
+    "CNRM-CM5",
+    "CNRM-CM5-2",
+    "CSIRO-Mk3.6.0",
+    "CSIRO-Mk3L-1-2",
+    "CanAM4",
+    "CanCM4",
+    "CanESM2",
+    "EC-EARTH",
+    "FGOALS-g2",
+    "FGOALS-gl",
+    "FGOALS-s2",
+    "GEOS-5",
+    "GFDL-CM2.1",
+    "GFDL-CM3",
+    "GFDL-ESM2G",
+    "GFDL-ESM2M",
+    "GFDL-HIRAM-C180",
+    "GFDL-HIRAM-C360",
+    "GISS-E2-H",
+    "GISS-E2-H-CC",
+    "GISS-E2-R",
+    "GISS-E2-R-CC",
+    "HadCM3",
+    "HadGEM2-A",
+    "HadGEM2-AO",
+    "HadGEM2-CC",
+    "HadGEM2-ES",
+    "INM-CM4",
+    "IPSL-CM5A-LR",
+    "IPSL-CM5A-MR",
+    "IPSL-CM5B-LR",
+    "MIROC-ESM",
+    "MIROC-ESM-CHEM",
+    "MIROC4h",
+    "MIROC5",
+    "MPI-ESM-LR",
+    "MPI-ESM-MR",
+    "MPI-ESM-P",
+    "MRI-AGCM3.2H",
+    "MRI-AGCM3.2S",
+    "MRI-CGCM3",
+    "MRI-ESM1",
+    "NICAM-09",
+    "NorESM1-M",
+    "NorESM1-ME",
+]
+
+CMIP6_MODELS = [
+    "4AOP-v1-5",
+    "ACCESS-CM2",
+    "ACCESS-ESM1-5",
+    "ACCESS-OM2",
+    "ACCESS-OM2-025",
+    "ARTS-2-3",
+    "AWI-CM-1-1-HR",
+    "AWI-CM-1-1-LR",
+    "AWI-CM-1-1-MR",
+    "AWI-ESM-1-1-LR",
+    "BCC-CSM2-HR",
+    "BCC-CSM2-MR",
+    "BCC-ESM1",
+    "CAMS-CSM1-0",
+    "CAS-ESM2-0",
+    "CESM1-1-CAM5-CMIP5",
+    "CESM1-CAM5-SE-HR",
+    "CESM1-CAM5-SE-LR",
+    "CESM1-WACCM-SC",
+    "CESM2",
+    "CESM2-FV2",
+    "CESM2-WACCM",
+    "CESM2-WACCM-FV2",
+    "CIESM",
+    "CMCC-CM2-HR4",
+    "CMCC-CM2-SR5",
+    "CMCC-CM2-VHR4",
+    "CMCC-ESM2",
+    "CNRM-CM6-1",
+    "CNRM-CM6-1-HR",
+    "CNRM-ESM2-1",
+    "CanESM5",
+    "CanESM5-CanOE",
+    "E3SM-1-0",
+    "E3SM-1-1",
+    "E3SM-1-1-ECA",
+    "EC-Earth3",
+    "EC-Earth3-AerChem",
+    "EC-Earth3-CC",
+    "EC-Earth3-LR",
+    "EC-Earth3-Veg",
+    "EC-Earth3-Veg-LR",
+    "EC-Earth3P",
+    "EC-Earth3P-HR",
+    "EC-Earth3P-VHR",
+    "ECMWF-IFS-HR",
+    "ECMWF-IFS-LR",
+    "ECMWF-IFS-MR",
+    "FGOALS-f3-H",
+    "FGOALS-f3-L",
+    "FGOALS-g3",
+    "FIO-ESM-2-0",
+    "GFDL-AM4",
+    "GFDL-CM4",
+    "GFDL-CM4C192",
+    "GFDL-ESM2M",
+    "GFDL-ESM4",
+    "GFDL-GRTCODE",
+    "GFDL-OM4p5B",
+    "GFDL-RFM-DISORT",
+    "GISS-E2-1-G",
+    "GISS-E2-1-G-CC",
+    "GISS-E2-1-H",
+    "GISS-E2-2-G",
+    "GISS-E2-2-H",
+    "GISS-E3-G",
+    "HadGEM3-GC31-HH",
+    "HadGEM3-GC31-HM",
+    "HadGEM3-GC31-LL",
+    "HadGEM3-GC31-LM",
+    "HadGEM3-GC31-MH",
+    "HadGEM3-GC31-MM",
+    "HiRAM-SIT-HR",
+    "HiRAM-SIT-LR",
+    "ICON-ESM-LR",
+    "IITM-ESM",
+    "INM-CM4-8",
+    "INM-CM5-0",
+    "INM-CM5-H",
+    "IPSL-CM5A2-INCA",
+    "IPSL-CM6A-ATM-HR",
+    "IPSL-CM6A-LR",
+    "IPSL-CM6A-LR-INCA",
+    "KACE-1-0-G",
+    "KIOST-ESM",
+    "LBLRTM-12-8",
+    "MCM-UA-1-0",
+    "MIROC-ES2H",
+    "MIROC-ES2L",
+    "MIROC6",
+    "MPI-ESM-1-2-HAM",
+    "MPI-ESM1-2-HR",
+    "MPI-ESM1-2-LR",
+    "MPI-ESM1-2-XR",
+    "MRI-AGCM3-2-H",
+    "MRI-AGCM3-2-S",
+    "MRI-ESM2-0",
+    "NESM3",
+    "NICAM16-7S",
+    "NICAM16-8S",
+    "NICAM16-9S",
+    "NorCPM1",
+    "NorESM1-F",
+    "NorESM2-LM",
+    "NorESM2-MM",
+    "RRTMG-LW-4-91",
+    "RRTMG-SW-4-02",
+    "RTE-RRTMGP-181204",
+    "SAM0-UNICON",
+    "TaiESM1",
+    "TaiESM1-TIMCOM",
+    "TaiESM1-TIMCOM2",
+    "UKESM1-0-LL",
+]
+
 CORDEX_MODELS = [
     "ALADIN52",
     "ALADIN53",
@@ -144,6 +315,7 @@ CORDEX_MODELS = [
     "WRF381P",
 ]
 
+# These mappings are not exhaustive. Some models/institutes may be missing.
 CMIP5_INSTITUTES = {
     "BCC": ["bcc-csm1-1"],
     "CCCMA": ["CanAM4", "CanCM4", "CanESM2"],
@@ -163,6 +335,7 @@ CMIP5_INSTITUTES = {
     "UQAM": ["GEMatm-Can", "GEMatm-MPI"],
 }
 
+# These mappings are not exhaustive. Some models/institutes may be missing.
 CMIP6_INSTITUTES = {
     "AWI": ["AWI-CM-1-1-MR"],
     "BCC": ["BCC-CSM2-MR", "BCC-ESM1"],
@@ -243,6 +416,8 @@ def decode_primary_variable(file: Union[Path, str]) -> str:
         for k in data.array_keys():
             if not str(k).startswith(coords):
                 return str(k)
+    else:
+        raise NotImplementedError()
 
 
 def decode_era5(file: Union[PathLike, str]) -> dict:
@@ -322,6 +497,7 @@ def decode_cmip6_name(file: Union[PathLike, str]) -> dict:
         facets["frequency"] = "mon"
 
     try:
+        logging.warning("Using model to guess institute. Results may not be accurate.")
         facets["institution"] = CMIP6_GCM_PROVIDERS[facets["source"]]
     except KeyError:
         logging.info(f"Unable to find Institute for model: {facets['source']}")
@@ -390,7 +566,11 @@ def decode_cmip5_name(file: Union[PathLike, str]) -> dict:
     facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
     facets["type"] = "simulation"
 
-    facets["institution"] = CMIP5_GCM_PROVIDERS[facets["source"]]
+    try:
+        logging.warning("Using model to guess institute. Results may not be accurate.")
+        facets["institution"] = CMIP5_GCM_PROVIDERS[facets["source"]]
+    except KeyError:
+        logging.info(f"Unable to find Institute for model: {facets['source']}")
 
     if "mon" in facets["frequency"]:
         facets["frequency"] = "mon"
