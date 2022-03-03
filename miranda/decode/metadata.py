@@ -496,7 +496,7 @@ class Decoder:
 
         # FIXME: This doesn't always grab the right variable!
         dimsvar_dict = dict()
-        coords = ("time", "lat", "lon")
+        coords = ("time", "lat", "lon", "rlat", "rlon", "height")
 
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
             data = nc.Dataset(file, mode="r")
