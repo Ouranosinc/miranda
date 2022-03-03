@@ -30,12 +30,16 @@ __all__ = [
 
 BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
 DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
-FREQUENCY_TO_TIMEDELTA = {
+
+TIME_UNITS_TO_FREQUENCY = {
     "hourly": "1h",
+    "hours": "1h",
     "6-hourly": "6h",
     "daily": "1d",
     "day": "1d",
+    "days": "1d",
     "weekly": "7d",
+    "weeks": "7d",
 }
 
 facet_schema = schema.Schema(
@@ -373,7 +377,7 @@ def guess_project(file: Union[Path, str]) -> str:
     for project, models in PROJECT_MODELS.items():
         if any([model in potential_names for model in models]):
             return project
-    raise KeyError("Unable to determine project from file name.")
+    raise KeyError(f"Unable to determine project from file name: {file_name}.")
 
 
 class Decoder:
@@ -409,9 +413,12 @@ class Decoder:
                         raise
                     else:
                         continue
-                _file_facets.update(
-                    getattr(self, f"decode_{project.lower()}_netcdf")(Path(file))
-                )
+            else:
+                project = self.project
+
+            _file_facets.update(
+                getattr(self, f"decode_{project.lower()}_netcdf")(Path(file))
+            )
         self._file_facets.update(_file_facets)
 
     def facets_table(self):
@@ -461,7 +468,7 @@ class Decoder:
         dimsvar_dict = dict()
         coords = ("time", "lat", "lon")
 
-        if file.is_file() and file.suffix in ["nc", "nc4"]:
+        if file.is_file() and file.suffix in [".nc", ".nc4"]:
             data = nc.Dataset(file, mode="r")
             for var_name, var_attrs in data.variables.items():
                 dimsvar_dict[var_name] = {
@@ -471,13 +478,36 @@ class Decoder:
                 if not str(k).startswith(coords):
                     return str(k)
 
-        elif file.is_dir() and file.suffix == "zarr":
+        elif file.is_dir() and file.suffix == ".zarr":
             data = zarr.open(file, mode="r")
             for k in data.array_keys():
                 if not str(k).startswith(coords):
                     return str(k)
         else:
             raise NotImplementedError()
+
+    @staticmethod
+    def _decode_time_freq(
+        file: Optional[Union[PathLike, str, List[str]]] = None,
+        data: Optional[nc.Dataset] = None,
+    ) -> str:
+        if not file and not data:
+            raise ValueError()
+
+        if isinstance(file, (str, PathLike)):
+            file = Path(file).name.split("_")
+        if isinstance(file, list):
+            potential_times = [
+                segment in file for segment in TIME_UNITS_TO_FREQUENCY.keys()
+            ]
+            if potential_times:
+                return TIME_UNITS_TO_FREQUENCY[potential_times[0]]
+        elif data:
+            frequency = data.frequency
+            if frequency == "":
+                time_units = data["time"].units
+                frequency = time_units.split()[0]
+            return TIME_UNITS_TO_FREQUENCY[frequency]
 
     @staticmethod
     def decode_era5(file: Union[PathLike, str]) -> dict:
@@ -509,14 +539,14 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = data.experiment_id
         facets["format"] = "netcdf"
-        facets["frequency"] = data.frequency
+        facets["frequency"] = cls._decode_time_freq(data=data)
         facets["institution"] = data.institution_id
         facets["member"] = data.variant_label
         facets["modeling_realm"] = data.realm
         facets["processing_level"] = "raw"
         facets["project"] = data.project
         facets["source"] = data.source_id
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = variable
         facets["version"] = data.version
@@ -543,13 +573,13 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = decode_file[3]
         facets["format"] = "netcdf"
-        facets["frequency"] = decode_file[1]
+        facets["frequency"] = cls._decode_time_freq(file=decode_file)
         facets["grid_label"] = decode_file[5]
         facets["member"] = decode_file[4]
         facets["processing_level"] = "raw"
         facets["project"] = "CMIP6"
         facets["source"] = decode_file[2]
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[1]])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = decode_file[0]
 
@@ -586,14 +616,14 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = data.experiment_id
         facets["format"] = "netcdf"
-        facets["frequency"] = data.frequency
+        facets["frequency"] = cls._decode_time_freq(data=data)
         facets["institution"] = data.institute_id
         facets["member"] = data.parent_experiment_rip
         facets["modeling_realm"] = data.modeling_realm
         facets["processing_level"] = "raw"
         facets["project"] = data.project_id
         facets["source"] = data.model_id
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -619,13 +649,13 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = decode_file[3]
         facets["format"] = "netcdf"
-        facets["frequency"] = decode_file[-2]
+        facets["frequency"] = cls._decode_time_freq(file=decode_file)
         facets["member"] = decode_file[4]
         facets["modeling_realm"] = None
         facets["processing_level"] = "raw"
         facets["source"] = decode_file[2]
         facets["variable"] = decode_file[0]
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
 
         try:
@@ -658,16 +688,25 @@ class Decoder:
         facets = dict()
         facets["activity"] = "CORDEX"
         facets["date"] = date
-        facets["domain"] = data.CORDEX_domain
+
+        try:
+            facets["domain"] = data.CORDEX_domain
+        except AttributeError:
+            try:
+                facets["domain"] = data.ouranos_domain_name
+            except AttributeError:
+                logging.error(f"File {Path(file).name} has a nonstandard domain name.")
+                raise NotImplementedError()
+
         facets["driving_institution"] = str(data.driving_model_id).split("-")[0]
         facets["driving_model"] = data.driving_model_id
         facets["format"] = "netcdf"
-        facets["frequency"] = data.frequency
+        facets["frequency"] = cls._decode_time_freq(data=data)
         facets["institution"] = data.institute_id
         facets["processing_level"] = "raw"
         facets["project"] = data.project_id
         facets["source"] = data.model_id
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -679,12 +718,12 @@ class Decoder:
 
         try:
             facets["experiment"] = data.experiment_id
-        except KeyError:
+        except AttributeError:
             facets["experiment"] = data.driving_experiment_name
 
         try:
             facets["member"] = data.parent_experiment_rip
-        except KeyError:
+        except AttributeError:
             facets["member"] = data.driving_model_ensemble_member
 
         facet_schema.validate(facets)
@@ -705,13 +744,13 @@ class Decoder:
         facets["driving_institution"] = decode_file[2].split("-")[0]
         facets["experiment"] = decode_file[3]
         facets["format"] = "netcdf"
-        facets["frequency"] = decode_file[-2]
+        facets["frequency"] = cls._decode_time_freq(file=decode_file)
         facets["institution"] = decode_file[5].split("-")[0]
         facets["member"] = decode_file[4]
         facets["processing_level"] = "raw"
         facets["project"] = "CORDEX"
         facets["source"] = decode_file[5]
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-2]])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = decode_file[0]
 
@@ -737,7 +776,7 @@ class Decoder:
         facets["co2_forcing_id"] = data.co2_forcing_id
         facets["experiment"] = data.experiment_id
         facets["format"] = "netcdf"
-        facets["frequency"] = data.time_frequency_id
+        facets["frequency"] = cls._decode_time_freq(data=data)
         facets["impact_model"] = data.impact_model_id
         facets["institution"] = data.institute_id
         facets["member"] = data.driving_model_ensemble_member
@@ -745,7 +784,7 @@ class Decoder:
         facets["project"] = str(data.project_id)
         facets["social_forcing_id"] = data.social_forcing_id
         facets["source"] = data.model_id
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[data.frequency])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -771,13 +810,13 @@ class Decoder:
         facets["co2_forcing_id"] = decode_file[4]
         facets["experiment"] = decode_file[2]
         facets["format"] = "netcdf"
-        facets["frequency"] = decode_file[-3]
+        facets["frequency"] = cls._decode_time_freq(file=decode_file)
         facets["impact_model_id"] = decode_file[0]
         facets["institution"] = decode_file[1].split("-")[0]
         facets["project"] = "ISIMIP-FT"
         facets["soc_forcing_id"] = decode_file[3]
         facets["source"] = "-".join(decode_file[1].split("-")[1:])
-        facets["timedelta"] = pd.to_timedelta(FREQUENCY_TO_TIMEDELTA[decode_file[-3]])
+        facets["timedelta"] = pd.to_timedelta(facets["frequency"])
         facets["type"] = "simulation"
         facets["variable"] = decode_file[-4]
 

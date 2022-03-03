@@ -75,10 +75,10 @@ def structure_datasets(
     input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]]],
     output_folder: Union[str, os.PathLike],
     *,
-    project: Optional[str],
+    project: Optional[str] = None,
     guess: bool = True,
     copy: bool = False,
-    filename_pattern: str = "*",
+    filename_pattern: str = "*.nc",
 ) -> Mapping[str, Path]:
     """
 
@@ -100,7 +100,7 @@ def structure_datasets(
     if isinstance(input_files, (Path, str)):
         input_files = Path(input_files)
         if input_files.is_dir():
-            input_files = sorted(list(input_files.glob(filename_pattern)))
+            input_files = sorted(list(input_files.rglob(filename_pattern)))
     elif isinstance(input_files, list):
         input_files = sorted(Path(p) for p in input_files)
     else:
