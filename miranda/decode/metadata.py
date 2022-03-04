@@ -44,6 +44,7 @@ TIME_UNITS_TO_FREQUENCY = {
     "months": "mon",
     "mon": "mon",
     "monC": "monC",
+    "Amon": "mon",
     "yearly": "yr",
     "years": "yr",
     "annual": "yr",
@@ -53,6 +54,7 @@ TIME_UNITS_TO_FREQUENCY = {
     "decades": "dec",
     "dec": "dec",
     "fixed": "fx",
+    "fx": "fx",
 }
 
 TIME_UNITS_TO_TIMEDELTA = {
@@ -67,6 +69,7 @@ TIME_UNITS_TO_TIMEDELTA = {
     "sem": "7d",
     "mon": "30d",
     "monC": "30d",
+    "Amon": "30d",
     "QS": "90d",
     "qtr": "90d",
     "yearly": "365d",
@@ -85,8 +88,7 @@ facet_schema = schema.Schema(
         schema.Optional("experiment"): str,
         "frequency": schema.And(
             str,
-            lambda f: f
-            in ["1hr", "3hr", "6hr", "day", "sem", "mon", "yr", "dec", "fx"],
+            lambda f: f in set(TIME_UNITS_TO_FREQUENCY.values()),
         ),
         "domain": str,
         schema.Optional("member"): str,
@@ -263,6 +265,7 @@ class Decoder:
 
         if isinstance(file, (str, PathLike)):
             file = Path(file).name.split("_")
+
         if isinstance(file, list):
             potential_times = [segment in file for segment in time_dictionary.keys()]
             if potential_times:
@@ -274,19 +277,16 @@ class Decoder:
                     return pd.to_timedelta(time_dictionary[potential_times[0]])
                 return time_dictionary[potential_times[0]]
         elif data:
-            frequency = data.frequency
-            if frequency == "":
+            potential_time = data.frequency
+            if potential_time == "":
                 time_units = data["time"].units
-                frequency = time_units.split()[0]
-            if frequency in ["fx", "fixed", "mon", "Amon", "Emon"]:
-                if field == "timedelta":
-                    return pd.NaT
-                return "fx"
+                potential_time = time_units.split()[0]
             if field == "timedelta":
-                return pd.to_timedelta(time_dictionary[frequency])
-            if frequency in ["day"]:
-                return frequency
-            return time_dictionary[frequency]
+                if potential_time in ["fx", "fixed"]:
+                    return pd.NaT
+                else:
+                    return pd.to_timedelta(time_dictionary[potential_time])
+            return time_dictionary[potential_time]
 
     @staticmethod
     def decode_era5(file: Union[PathLike, str]) -> dict:
