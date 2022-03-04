@@ -4,21 +4,70 @@ import shutil
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
+import schema
+
 from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+STATION_OBS_SCHEMA = schema.Schema(
+    {
+        "project": str,
+        "institution": str,
+        "source": str,
+        "frequency": str,
+        "variable": str,
+        "version": str,
+        "type": "station-obs",
+    },
+    ignore_extra_keys=True,
+)
+
+
+GRIDDED_SCHEMA = schema.Schema(
+    {
+        "project": str,
+        "institution": str,
+        "source": str,
+        "domain": str,
+        "frequency": str,
+        "variable": str,
+        "type": schema.And(
+            str,
+            lambda f: f in ["forecast", "gridded-obs", "reanalysis"],
+        ),
+    },
+    ignore_extra_keys=True,
+)
+
+SIMULATION_SCHEMA = schema.Schema(
+    {
+        "type": "simulation",
+        "processing_level": schema.And(str, lambda f: f in ["raw", "biasadjusted"]),
+        "project": str,
+        "institution": str,
+        "source": str,
+        "domain": str,
+        schema.Or("driving_model", "member"): str,
+        "experiment": str,
+        "frequency": str,
+        "member": str,
+        "variable": str,
+    },
+    ignore_extra_keys=True,
+)
+
 
 def _build_path_from_schema(
-    schema: dict, output_folder: Union[str, os.PathLike]
+    facets: dict, output_folder: Union[str, os.PathLike]
 ) -> Path:
     """Build a filepath based on a valid data schema.
 
     Parameters
     ----------
-    schema: dict
-      Validated facet schema for a given dataset.
+    facets: dict
+      Facets for a given dataset.
     output_folder
       Parent folder on which to extend the filetree structure.
 
@@ -26,54 +75,55 @@ def _build_path_from_schema(
     -------
     Path
     """
-    if schema["type"] == "station-obs":
+    if facets["type"] == "station-obs":
+        STATION_OBS_SCHEMA.validate(facets)
         folder_tree = (
             Path(output_folder)
-            / schema["type"]
-            / schema["project"]
-            / schema["institution"]
-            / schema["project"]
-            / schema["version"]  # This suggests "date_created"
-            / schema["frequency"]
-            / schema["variable"]
+            / facets["type"]
+            / facets["project"]
+            / facets["institution"]
+            / facets["version"]  # This suggests "date_created"
+            / facets["frequency"]
+            / facets["variable"]
         )
-        if hasattr(schema, "member"):
-            return folder_tree / schema["member"]
+        if hasattr(facets, "member"):
+            return folder_tree / facets["member"]
         else:
             return folder_tree
 
-    elif schema["type"] in ["forecast", "gridded-obs", "reanalysis"]:
+    elif facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
+        GRIDDED_SCHEMA.validate(facets)
         return (
             Path(output_folder)
-            / schema["type"]
-            / schema["project"]
-            / schema["institution"]
-            / schema["source"]
-            / schema["domain"]
-            / schema["frequency"]
-            / schema["variable"]
+            / facets["type"]
+            / facets["project"]
+            / facets["institution"]
+            / facets["source"]
+            / facets["domain"]
+            / facets["frequency"]
+            / facets["variable"]
         )
-    elif schema["type"] == "simulation":
+    elif facets["type"] == "simulation":
         # TODO: Verify whether this is how we want to structure this
-        if schema["project"] == "CORDEX":
-            model = schema["driving_model"]
+        SIMULATION_SCHEMA.validate(facets)
+        if facets["project"] == "CORDEX":
+            model = facets["driving_model"]
         else:
-            model = schema["member"]
+            model = facets["member"]
 
         return (
             Path(output_folder)
-            / schema["type"]
-            / schema["project"]
-            / schema["processing_level"]
-            / schema["project"]
-            / schema["domain"]
-            / schema["institution"]
-            / schema["source"]
+            / facets["type"]
+            / facets["processing_level"]
+            / facets["project"]
+            / facets["domain"]
+            / facets["institution"]
+            / facets["source"]
             / model
-            / schema["experiment"]
-            / schema["member"]
-            / schema["frequency"]
-            / schema["variable"]
+            / facets["experiment"]
+            / facets["member"]
+            / facets["frequency"]
+            / facets["variable"]
         )
 
 

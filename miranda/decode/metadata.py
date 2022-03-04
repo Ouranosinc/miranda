@@ -60,7 +60,14 @@ TIME_UNITS_TO_FREQUENCY = {
 TIME_UNITS_TO_TIMEDELTA = {
     "hourly": "1h",
     "hours": "1h",
+    "1hr": "1h",
+    "1hrCM": "1h",
+    "1hrPt": "1h",
+    "3hr": "3h",
+    "3hrPt": "3h",
     "6-hourly": "6h",
+    "6hr": "6h",
+    "6hrPt": "6h",
     "daily": "1d",
     "day": "1d",
     "days": "1d",
@@ -69,12 +76,15 @@ TIME_UNITS_TO_TIMEDELTA = {
     "sem": "7d",
     "mon": "30d",
     "monC": "30d",
+    "monPt": "30d",
     "Amon": "30d",
     "QS": "90d",
     "qtr": "90d",
     "yearly": "365d",
     "years": "365d",
     "year": "365d",
+    "yr": "365d",
+    "yrPt": "365d",
 }
 
 facet_schema = schema.Schema(
@@ -514,7 +524,7 @@ class Decoder:
         try:
             facets["member"] = data.parent_experiment_rip.strip()
         except AttributeError:
-            facets["member"] = data.driving_model_id.strip()
+            facets["member"] = data.driving_model_ensemble_member.strip()
 
         facet_schema.validate(facets)
 
