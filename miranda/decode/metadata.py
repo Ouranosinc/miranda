@@ -135,7 +135,9 @@ def guess_project(file: Union[Path, str]) -> str:
     for project, models in PROJECT_MODELS.items():
         if any([model in potential_names for model in models]):
             return project
-    raise DecoderException(f"Unable to determine project from file name: {file_name}.")
+    raise DecoderException(
+        f"Unable to determine project from file name: '{file_name}'."
+    )
 
 
 class Decoder:
@@ -148,9 +150,18 @@ class Decoder:
 
     def decode(
         self,
-        files: Union[os.PathLike, str, List[Union[str, os.PathLike]]],
-        raise_error=False,
+        files: Union[Path, str, List[Union[str, os.PathLike]]],
+        method: str = "netcdf",
+        raise_error: bool = False,
     ):
+        """Decode facets from file or list of files.
+
+        Parameters
+        ----------
+        files: Union[str, Path, List[Union[str, Path]]]
+        method: {"netcdf", "name"}
+        raise_error: bool
+        """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
         if self.project is None:
@@ -174,7 +185,7 @@ class Decoder:
             else:
                 project = self.project
 
-            _file_facets[file] = getattr(self, f"decode_{project.lower()}_netcdf")(
+            _file_facets[file] = getattr(self, f"decode_{project.lower()}_{method}")(
                 Path(file)
             )
         self._file_facets.update(_file_facets)
@@ -196,12 +207,22 @@ class Decoder:
         raise DecoderException("Unable to determine project from file name.")
 
     @classmethod
-    def _from_dataset(cls, file: Union[Path, str]) -> (str, str, nc.Dataset):
+    def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
         file_name = Path(file).stem
 
         variable_name = cls._decode_primary_variable(file)
         variable_date = file_name.split("_")[-1]
-        data = nc.Dataset(file)
+
+        if file.is_file() and file.suffix in [".nc", ".nc4"]:
+            ds = nc.Dataset(file)
+            data = dict()
+            for k in ds.ncattrs():
+                data[k] = getattr(ds, k)
+        elif file.is_dir() and file.suffix == ".zarr":
+            ds = zarr.open(file, mode="r")
+            data = ds.attrs.asdict()
+        else:
+            raise DecoderException("Unable to read dataset.")
         return variable_name, variable_date, data
 
     @staticmethod
@@ -247,7 +268,7 @@ class Decoder:
     @staticmethod
     def _decode_time_info(
         file: Optional[Union[PathLike, str, List[str]]] = None,
-        data: Optional[nc.Dataset] = None,
+        data: Optional[Dict] = None,
         *,
         field: str,
     ) -> Union[str, NaTType]:
@@ -287,7 +308,7 @@ class Decoder:
                     return pd.to_timedelta(time_dictionary[potential_times[0]])
                 return time_dictionary[potential_times[0]]
         elif data:
-            potential_time = data.frequency
+            potential_time = data["frequency"]
             if potential_time == "":
                 time_units = data["time"].units
                 potential_time = time_units.split()[0]
@@ -298,12 +319,31 @@ class Decoder:
                     return pd.to_timedelta(time_dictionary[potential_time])
             return time_dictionary[potential_time]
 
-    @staticmethod
-    def decode_era5(file: Union[PathLike, str]) -> dict:
-        raise NotImplementedError()
+    @classmethod
+    def decode_reanalysis_netcdf(cls, file: Union[PathLike, str]) -> dict:
+        variable, date, data = cls._from_dataset(file=file)
 
-    @staticmethod
-    def decode_generic_reanalysis(self, file: Union[PathLike, str]) -> dict:
+        facets = dict()
+        facets.update(data)
+        facets["date"] = date
+        facets["format"] = data["output_format"]
+        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["variable"] = variable
+
+        try:
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderException:
+            pass
+
+        facet_schema.validate(facets)
+
+        logging.info(f"Deciphered the following from {file}: {facets.items()}")
+
+        return facets
+
+    @classmethod
+    def decode_reanalysis_name(cls, file: Union[PathLike, str]) -> dict:
         raise NotImplementedError()
 
     @staticmethod
@@ -480,32 +520,33 @@ class Decoder:
         facets["date"] = date
 
         try:
-            facets["domain"] = data.CORDEX_domain.strip()
+            facets["domain"] = data["CORDEX_domain"].strip()
         except AttributeError:
             try:
-                facets["domain"] = data.ouranos_domain_name.strip()
+                facets["domain"] = data["ouranos_domain_name"].strip()
             except AttributeError:
-                logging.error(f"File {Path(file).name} has a nonstandard domain name.")
-                raise NotImplementedError()
+                msg = f"File {Path(file).name} has a nonstandard domain name."
+                logging.error(msg)
+                raise NotImplementedError(msg)
 
-        facets["driving_institution"] = str(data.driving_model_id).split("-")[0]
-        facets["driving_model"] = data.driving_model_id
+        facets["driving_institution"] = str(data["driving_model_id"]).split("-")[0]
+        facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
 
-        if data.institute_id.strip() == "Our.":
+        if data["institute_id"].strip() == "Our.":
             facets["institution"] = "Ouranos"
         else:
-            facets["institution"] = data.institute_id.strip()
+            facets["institution"] = data["institute_id"].strip()
 
         facets["processing_level"] = "raw"
 
-        if data.project_id == "":
+        if data["project_id"] == "":
             facets["project"] = "internal"
         else:
-            facets["project"] = data.project_id
+            facets["project"] = data["project_id"]
 
-        facets["source"] = data.model_id
+        facets["source"] = data["model_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
         facets["variable"] = variable
@@ -513,18 +554,18 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         try:
-            facets["experiment"] = data.experiment_id.strip()
-        except AttributeError:
-            facets["experiment"] = data.driving_experiment_name.strip()
+            facets["experiment"] = data["experiment_id"].strip()
+        except KeyError:
+            facets["experiment"] = data["driving_experiment_name"].strip()
 
         try:
-            facets["member"] = data.parent_experiment_rip.strip()
-        except AttributeError:
-            facets["member"] = data.driving_model_ensemble_member.strip()
+            facets["member"] = data["parent_experiment_rip"].strip()
+        except KeyError:
+            facets["member"] = data["driving_model_ensemble_member"].strip()
 
         facet_schema.validate(facets)
 

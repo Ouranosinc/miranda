@@ -329,29 +329,20 @@ def variable_conversion(
 ) -> xarray.Dataset:
     """Convert variables to CF-compliant format"""
 
-    def _correct_units_names(d: xarray.Dataset, p: str):
+    def _correct_units_names(d: xarray.Dataset, p: str, m: Dict):
         key = "_corrected_units"
         for vv in d.data_vars:
-            if p in metadata_definition["variable_entry"][vv][key].keys():
-                d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
-                    project
-                ]
+            if p in m["variable_entry"][vv][key].keys():
+                d[vv].attrs["units"] = m["variable_entry"][vv][key][project]
         return d
 
-    if project in ["era5-single-levels", "era5-land"]:
-        metadata_definition = json.load(
-            open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
-        )
-    else:
-        raise NotImplementedError()
-
     # for de-accumulation or conversion to flux
-    def _transform(d: xarray.Dataset, p: str):
+    def _transform(d: xarray.Dataset, p: str, m: Dict):
         key = "_transformation"
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
-            if p in metadata_definition["variable_entry"][vv][key].keys():
-                if metadata_definition["variable_entry"][vv][key][p] == "deaccumulate":
+            if p in m["variable_entry"][vv][key].keys():
+                if m["variable_entry"][vv][key][p] == "deaccumulate":
                     freq = xr.infer_freq(ds.time)
                     try:
                         offset = (
@@ -374,16 +365,15 @@ def variable_conversion(
                         )
                         out = units.amount2rate(out)
                     d_out[out.name] = out
-                elif metadata_definition["variable_entry"][vv][key][p] == "amount2rate":
+                elif m["variable_entry"][vv][key][p] == "amount2rate":
                     out = units.amount2rate(
                         d[vv],
-                        out_units=metadata_definition["variable_entry"][vv]["units"],
+                        out_units=m["variable_entry"][vv]["units"],
                     )
                     d_out[out.name] = out
                 else:
                     raise NotImplementedError(
-                        f"Unknown transformation "
-                        f"{metadata_definition['variable_entry'][vv][key][p]}"
+                        f"Unknown transformation " f"{m['variable_entry'][vv][key][p]}"
                     )
 
             else:
@@ -391,17 +381,19 @@ def variable_conversion(
         return d_out
 
     # For converting variable units to standard workflow units
-    def _units_cf_conversion(d: xarray.Dataset) -> xarray.Dataset:
-        descriptions = metadata_definition["variable_entry"]
+    def _units_cf_conversion(d: xarray.Dataset, m: Dict) -> xarray.Dataset:
+        descriptions = m["variable_entry"]
         for v in d.data_vars:
             d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
         return d
 
     # Add and update existing metadata fields
-    def _metadata_conversion(d: xarray.Dataset, p: str, o: str) -> xarray.Dataset:
+    def _metadata_conversion(
+        d: xarray.Dataset, p: str, o: str, m: Dict
+    ) -> xarray.Dataset:
 
         # Add global attributes
-        d.attrs.update(metadata_definition["Header"])
+        d.attrs.update(m["Header"])
         d.attrs.update(dict(project=p, output_format=o))
 
         # Date-based versioning
@@ -412,8 +404,7 @@ def variable_conversion(
             " with modified metadata for CF-like compliance."
         )
         d.attrs.update(dict(history=history))
-
-        descriptions = metadata_definition["variable_entry"]
+        descriptions = m["variable_entry"]
 
         # Add variable metadata
         for v in d.data_vars:
@@ -451,10 +442,17 @@ def variable_conversion(
             d = d.sortby(sort_dims)
         return d
 
-    ds = _correct_units_names(ds, project)
-    ds = _transform(ds, project)
-    ds = _units_cf_conversion(ds)
-    ds = _metadata_conversion(ds, project, output_format)
+    if project in ["era5-single-levels", "era5-land"]:
+        metadata_definition = json.load(
+            open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
+        )
+    else:
+        raise NotImplementedError()
+
+    ds = _correct_units_names(ds, project, metadata_definition)
+    ds = _transform(ds, project, metadata_definition)
+    ds = _units_cf_conversion(ds, metadata_definition)
+    ds = _metadata_conversion(ds, project, output_format, metadata_definition)
     ds = _dims_conversion(ds)
 
     return ds

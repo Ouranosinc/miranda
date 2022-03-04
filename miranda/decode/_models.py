@@ -1,3 +1,8 @@
+from miranda.ecmwf._namers import ECMWF_PROJECT_NAMES
+
+REANALYSIS = list()
+REANALYSIS.extend(ECMWF_PROJECT_NAMES)
+
 PROJECT_MODELS = dict(
     CMIP5=[
         "ACCESS1.0",
@@ -230,6 +235,7 @@ PROJECT_MODELS = dict(
         "WRF361H",
         "WRF381P",
     ],
+    REANALYSIS=REANALYSIS,
 )
 CMIP5_INSTITUTES = {
     "BCC": ["bcc-csm1-1"],
