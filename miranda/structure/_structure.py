@@ -133,9 +133,11 @@ def structure_datasets(
     *,
     project: Optional[str] = None,
     guess: bool = True,
+    dry_run: bool = True,
     copy: bool = False,
+    make_dirs: bool = False,
     filename_pattern: str = "*.nc",
-) -> Mapping[str, Path]:
+) -> Mapping[Path, Path]:
     """
 
     Parameters
@@ -145,9 +147,14 @@ def structure_datasets(
     project: {"cordex", "cmip5", "cmip6", "isimip-ft"}, optional
     guess: bool
       If project not supplied, suggest to decoder that project is the same for all input_files. Default: True.
+    dry_run: bool
+      Prints changes that would have been made without performing them. Default: True.
     copy: bool
       Make a copy of files to intended location. Default: False.
+    make_dirs:
+      Make folder tree if it does not already exist. Default: False.
     filename_pattern: str
+      If given a path to a directory, will 'glob' with provided pattern.
 
     Returns
     -------
@@ -171,9 +178,20 @@ def structure_datasets(
     all_file_paths = dict()
     for file, facets in decoder.file_facets().items():
         output_filepath = _build_path_from_schema(facets, output_folder)
-        all_file_paths.update({Path(file).name: output_filepath})
+        all_file_paths.update({Path(file): output_filepath})
 
+    if make_dirs:
+        for new_paths in set(all_file_paths.values()):
+            Path(new_paths).mkdir(exist_ok=True, parents=True)
+
+    for file, output_filepath in all_file_paths.items():
         if copy:
-            shutil.copy(file, output_filepath)
+            print(f"Copied {file} to {output_filepath}.")
+            if not dry_run:
+                shutil.copy(file, output_filepath)
+        else:
+            print(f"Moved {file} to {output_filepath}.")
+            if not dry_run:
+                shutil.move(file, output_filepath)
 
     return all_file_paths
