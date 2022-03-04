@@ -15,15 +15,12 @@ from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
 
-from ._utils import date_parser
+from ._models import CMIP5_GCM_PROVIDERS, CMIP6_GCM_PROVIDERS, PROJECT_MODELS
+from ._utils import DecoderException, date_parser
 
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "CMIP5_GCM_PROVIDERS",
-    "CMIP5_INSTITUTES",
-    "CMIP6_GCM_PROVIDERS",
-    "CMIP6_INSTITUTES",
     "Decoder",
     "guess_project",
 ]
@@ -32,6 +29,7 @@ BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
 DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
 
 TIME_UNITS_TO_FREQUENCY = {
+    "subhrPt": "sub-hr",
     "hourly": "1hr",
     "hours": "1hr",
     "hr": "1hr",
@@ -45,10 +43,12 @@ TIME_UNITS_TO_FREQUENCY = {
     "monthly": "mon",
     "months": "mon",
     "mon": "mon",
+    "monC": "monC",
     "yearly": "yr",
     "years": "yr",
     "annual": "yr",
     "yr": "yr",
+    "yrPt": "yrPt",
     "decadal": "dec",
     "decades": "dec",
     "dec": "dec",
@@ -65,6 +65,13 @@ TIME_UNITS_TO_TIMEDELTA = {
     "weekly": "7d",
     "weeks": "7d",
     "sem": "7d",
+    "mon": "30d",
+    "monC": "30d",
+    "QS": "90d",
+    "qtr": "90d",
+    "yearly": "365d",
+    "years": "365d",
+    "year": "365d",
 }
 
 facet_schema = schema.Schema(
@@ -108,296 +115,6 @@ facet_schema = schema.Schema(
     ignore_extra_keys=True,
 )
 
-PROJECT_MODELS = dict(
-    CMIP5=[
-        "ACCESS1.0",
-        "ACCESS1.3",
-        "CCSM4",
-        "CFSv2-2011",
-        "CMCC-CESM",
-        "CMCC-CM",
-        "CMCC-CMS",
-        "CNRM-CM5",
-        "CNRM-CM5-2",
-        "CSIRO-Mk3.6.0",
-        "CSIRO-Mk3L-1-2",
-        "CanAM4",
-        "CanCM4",
-        "CanESM2",
-        "EC-EARTH",
-        "FGOALS-g2",
-        "FGOALS-gl",
-        "FGOALS-s2",
-        "GEOS-5",
-        "GFDL-CM2.1",
-        "GFDL-CM3",
-        "GFDL-ESM2G",
-        "GFDL-ESM2M",
-        "GFDL-HIRAM-C180",
-        "GFDL-HIRAM-C360",
-        "GISS-E2-H",
-        "GISS-E2-H-CC",
-        "GISS-E2-R",
-        "GISS-E2-R-CC",
-        "HadCM3",
-        "HadGEM2-A",
-        "HadGEM2-AO",
-        "HadGEM2-CC",
-        "HadGEM2-ES",
-        "INM-CM4",
-        "IPSL-CM5A-LR",
-        "IPSL-CM5A-MR",
-        "IPSL-CM5B-LR",
-        "MIROC-ESM",
-        "MIROC-ESM-CHEM",
-        "MIROC4h",
-        "MIROC5",
-        "MPI-ESM-LR",
-        "MPI-ESM-MR",
-        "MPI-ESM-P",
-        "MRI-AGCM3.2H",
-        "MRI-AGCM3.2S",
-        "MRI-CGCM3",
-        "MRI-ESM1",
-        "NICAM-09",
-        "NorESM1-M",
-        "NorESM1-ME",
-    ],
-    CMIP6=[
-        "4AOP-v1-5",
-        "ACCESS-CM2",
-        "ACCESS-ESM1-5",
-        "ACCESS-OM2",
-        "ACCESS-OM2-025",
-        "ARTS-2-3",
-        "AWI-CM-1-1-HR",
-        "AWI-CM-1-1-LR",
-        "AWI-CM-1-1-MR",
-        "AWI-ESM-1-1-LR",
-        "BCC-CSM2-HR",
-        "BCC-CSM2-MR",
-        "BCC-ESM1",
-        "CAMS-CSM1-0",
-        "CAS-ESM2-0",
-        "CESM1-1-CAM5-CMIP5",
-        "CESM1-CAM5-SE-HR",
-        "CESM1-CAM5-SE-LR",
-        "CESM1-WACCM-SC",
-        "CESM2",
-        "CESM2-FV2",
-        "CESM2-WACCM",
-        "CESM2-WACCM-FV2",
-        "CIESM",
-        "CMCC-CM2-HR4",
-        "CMCC-CM2-SR5",
-        "CMCC-CM2-VHR4",
-        "CMCC-ESM2",
-        "CNRM-CM6-1",
-        "CNRM-CM6-1-HR",
-        "CNRM-ESM2-1",
-        "CanESM5",
-        "CanESM5-CanOE",
-        "E3SM-1-0",
-        "E3SM-1-1",
-        "E3SM-1-1-ECA",
-        "EC-Earth3",
-        "EC-Earth3-AerChem",
-        "EC-Earth3-CC",
-        "EC-Earth3-LR",
-        "EC-Earth3-Veg",
-        "EC-Earth3-Veg-LR",
-        "EC-Earth3P",
-        "EC-Earth3P-HR",
-        "EC-Earth3P-VHR",
-        "ECMWF-IFS-HR",
-        "ECMWF-IFS-LR",
-        "ECMWF-IFS-MR",
-        "FGOALS-f3-H",
-        "FGOALS-f3-L",
-        "FGOALS-g3",
-        "FIO-ESM-2-0",
-        "GFDL-AM4",
-        "GFDL-CM4",
-        "GFDL-CM4C192",
-        "GFDL-ESM2M",
-        "GFDL-ESM4",
-        "GFDL-GRTCODE",
-        "GFDL-OM4p5B",
-        "GFDL-RFM-DISORT",
-        "GISS-E2-1-G",
-        "GISS-E2-1-G-CC",
-        "GISS-E2-1-H",
-        "GISS-E2-2-G",
-        "GISS-E2-2-H",
-        "GISS-E3-G",
-        "HadGEM3-GC31-HH",
-        "HadGEM3-GC31-HM",
-        "HadGEM3-GC31-LL",
-        "HadGEM3-GC31-LM",
-        "HadGEM3-GC31-MH",
-        "HadGEM3-GC31-MM",
-        "HiRAM-SIT-HR",
-        "HiRAM-SIT-LR",
-        "ICON-ESM-LR",
-        "IITM-ESM",
-        "INM-CM4-8",
-        "INM-CM5-0",
-        "INM-CM5-H",
-        "IPSL-CM5A2-INCA",
-        "IPSL-CM6A-ATM-HR",
-        "IPSL-CM6A-LR",
-        "IPSL-CM6A-LR-INCA",
-        "KACE-1-0-G",
-        "KIOST-ESM",
-        "LBLRTM-12-8",
-        "MCM-UA-1-0",
-        "MIROC-ES2H",
-        "MIROC-ES2L",
-        "MIROC6",
-        "MPI-ESM-1-2-HAM",
-        "MPI-ESM1-2-HR",
-        "MPI-ESM1-2-LR",
-        "MPI-ESM1-2-XR",
-        "MRI-AGCM3-2-H",
-        "MRI-AGCM3-2-S",
-        "MRI-ESM2-0",
-        "NESM3",
-        "NICAM16-7S",
-        "NICAM16-8S",
-        "NICAM16-9S",
-        "NorCPM1",
-        "NorESM1-F",
-        "NorESM2-LM",
-        "NorESM2-MM",
-        "RRTMG-LW-4-91",
-        "RRTMG-SW-4-02",
-        "RTE-RRTMGP-181204",
-        "SAM0-UNICON",
-        "TaiESM1",
-        "TaiESM1-TIMCOM",
-        "TaiESM1-TIMCOM2",
-        "UKESM1-0-LL",
-    ],
-    CORDEX=[
-        "ALADIN52",
-        "ALADIN53",
-        "ALADIN63",
-        "ALADIN64",
-        "ALARO-0",
-        "BOM-SDM",
-        "CCAM",
-        "CCAM-1704",
-        "CCAM-2008",
-        "CCLM-0-9",
-        "CCLM4-21-2",
-        "CCLM4-8-17",
-        "CCLM4-8-17-CLM3-5",
-        "CCLM5-0-15",
-        "CCLM5-0-2",
-        "CCLM5-0-6",
-        "CCLM5-0-9",
-        "COSMO-crCLIM-v1-1",
-        "CRCM5",
-        "CRCM5-SN",
-        "CanRCM4",
-        "Eta",
-        "HIRHAM5",
-        "HadGEM3-RA",
-        "HadREM3-GA7-05",
-        "HadRM3P",
-        "MAR311",
-        "MAR36",
-        "RA",
-        "RACMO21P",
-        "RACMO22E",
-        "RACMO22T",
-        "RCA4",
-        "RCA4-SN",
-        "REMO2009",
-        "REMO2015",
-        "RRCM",
-        "RegCM4",
-        "RegCM4-0",
-        "RegCM4-2",
-        "RegCM4-3",
-        "RegCM4-4",
-        "RegCM4-6",
-        "RegCM4-7",
-        "SNURCM",
-        "UQAM-CRCM5",  # Needed for internal-ish CORDEX data
-        "UQAM-CRCM5-SN",  # Needed for internal-ish CORDEX data
-        "VRF370",
-        "WRF",
-        "WRF331",
-        "WRF331F",
-        "WRF331G",
-        "WRF341E",
-        "WRF341I",
-        "WRF351",
-        "WRF360J",
-        "WRF360K",
-        "WRF360L",
-        "WRF361H",
-        "WRF381P",
-    ],
-)
-
-
-# These mappings are not exhaustive. Some models/institutes may be missing.
-CMIP5_INSTITUTES = {
-    "BCC": ["bcc-csm1-1"],
-    "CCCMA": ["CanAM4", "CanCM4", "CanESM2"],
-    "CNRM-CERFACS": ["CNRM-CM5", "CNRM-CM5-2"],
-    "CSIRO-BOM": ["ACCESS1-0", "ACCESS1-3"],
-    "CSIRO-QCCCE": ["CSIRO-Mk3-6-0"],
-    "ECMWF": ["ERAINT"],
-    "ICHEC": ["EC-EARTH"],
-    "INM": ["inmcm4"],
-    "IPSL": ["IPSL-CM5A-LR"],
-    "MIROC": ["MIROC4h"],
-    "MOHC": ["HadCM3", "HadGEM2-ES"],
-    "MPI-M": ["MPI-ESM-LR", "MPI-ESM-MR"],
-    "MRI": ["MRI-CGCM3"],
-    "NCC": ["NorESM1-M"],
-    "NOAA-GFDL": ["GFDL-ESM2M"],
-    "UQAM": ["GEMatm-Can", "GEMatm-MPI"],
-}
-
-# These mappings are not exhaustive. Some models/institutes may be missing.
-CMIP6_INSTITUTES = {
-    "AWI": ["AWI-CM-1-1-MR"],
-    "BCC": ["BCC-CSM2-MR", "BCC-ESM1"],
-    "CAMS": ["CAMS-CSM1-0"],
-    "CAS": ["FGOALS-f3-L"],
-    "CCCR-IITM": ["IITM-ESM"],
-    "CCCma": ["CanESM5"],
-    "CMCC": ["CMCC-CM2-HR4", "CMCC-CM2-VHR4"],
-    "CNRM-CERFACS": ["CNRM-CM6-1", "CNRM-CM6-1-HR", "CNRM-ESM2-1"],
-    # "DKRZ": ["MPI-ESM1-2-HR"],
-    "E3SM-Project": ["E3SM-1-0"],
-    "EC-Earth-Consortium": ["EC-Earth3", "EC-Earth3-Veg"],
-    "ECMWF": ["ECMWF-IFS-HR", "ECMWF-IFS-LR"],
-    "IPSL": ["IPSL-CM6A-ATM-HR", "IPSL-CM6A-LR"],
-    "MIROC": ["NICAM16-7S", "MIROC-ES2L", "MIROC6"],
-    "MOHC": [
-        "UKESM1-0-LL",
-        "HadGEM3-GC31-HM",
-        "HadGEM3-GC31-LL",
-        "HadGEM3-GC31-LM",
-        "HadGEM3-GC31-MM",
-    ],
-    "MPI-M": ["MPI-ESM1-2-HR", "MPI-ESM1-2-XR"],
-    "MRI": ["MRI-AGCM3-2-H", "MRI-AGCM3-2-S", "MRI-ESM2-0"],
-    "NASA-GISS": ["GISS-E2-1-G", "GISS-E2-1-H"],
-    "NCAR": ["CESM2", "CESM2-WACCM"],
-    "NOAA-GFDL": ["GFDL-AM4", "GFDL-CM4", "GFDL-CM4C192", "GFDL-ESM4", "GFDL-OM4p5B"],
-    "NUIST": ["NESM3"],
-    "SNU": ["SAM0-UNICON"],
-}
-
-CMIP5_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP5_INSTITUTES.items() for i in ids}
-CMIP6_GCM_PROVIDERS = {i: cat for (cat, ids) in CMIP6_INSTITUTES.items() for i in ids}
-
 
 def guess_project(file: Union[Path, str]) -> str:
     file_name = Path(file).stem
@@ -406,7 +123,7 @@ def guess_project(file: Union[Path, str]) -> str:
     for project, models in PROJECT_MODELS.items():
         if any([model in potential_names for model in models]):
             return project
-    raise KeyError(f"Unable to determine project from file name: {file_name}.")
+    raise DecoderException(f"Unable to determine project from file name: {file_name}.")
 
 
 class Decoder:
@@ -434,7 +151,7 @@ class Decoder:
             if self.project is None:
                 try:
                     project = guess_project(file)
-                except KeyError:
+                except DecoderException:
                     logging.error(
                         f"Signature for 'project' must be set manually for file: {file}."
                     )
@@ -464,7 +181,7 @@ class Decoder:
         for project, models in PROJECT_MODELS.items():
             if any([model in potential_names for model in models]):
                 return project
-        raise KeyError("Unable to determine project from file name.")
+        raise DecoderException("Unable to determine project from file name.")
 
     @classmethod
     def _from_dataset(cls, file: Union[Path, str]) -> (str, str, nc.Dataset):
@@ -482,7 +199,7 @@ class Decoder:
         return decode_file
 
     @staticmethod
-    def _decode_primary_variable(file: Union[Path, str]) -> str:
+    def _decode_primary_variable(file: Path) -> str:
         """Attempts to find the primary variable of a netCDF
 
         Parameters
@@ -493,10 +210,9 @@ class Decoder:
         -------
         str
         """
-
-        # FIXME: This doesn't always grab the right variable!
         dimsvar_dict = dict()
-        coords = ("time", "lat", "lon", "rlat", "rlon", "height")
+        coords = ("time", "lat", "lon", "rlat", "rlon", "height", "lev", "rotated_pole")
+        suggested_variable = file.name.split("_")[0]
 
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
             data = nc.Dataset(file, mode="r")
@@ -505,13 +221,13 @@ class Decoder:
                     k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
                 }
             for k in dimsvar_dict.keys():
-                if not str(k).startswith(coords):
+                if not str(k).startswith(coords) and suggested_variable == k:
                     return str(k)
 
         elif file.is_dir() and file.suffix == ".zarr":
-            data = zarr.open(file, mode="r")
+            data = zarr.open(str(file), mode="r")
             for k in data.array_keys():
-                if not str(k).startswith(coords):
+                if not str(k).startswith(coords) and suggested_variable == k:
                     return str(k)
         else:
             raise NotImplementedError()
@@ -617,7 +333,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -660,7 +376,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -693,7 +409,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -735,7 +451,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -831,7 +547,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -865,7 +581,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -915,7 +631,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except IndexError:
+        except DecoderException:
             pass
 
         facet_schema.validate(facets)
@@ -923,23 +639,3 @@ class Decoder:
         logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
         return facets
-
-
-class DecoderException(Exception):
-    pass
-
-
-class CORDEXDecoder(Decoder):
-    pass
-
-
-class CMIP5Decoder(Decoder):
-    pass
-
-
-class CMIP6Decoder(Decoder):
-    pass
-
-
-class ISIMIPDecorder(Decoder):
-    pass

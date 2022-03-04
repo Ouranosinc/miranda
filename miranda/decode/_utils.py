@@ -10,7 +10,11 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["date_parser"]
+__all__ = ["date_parser", "DecoderException"]
+
+
+class DecoderException(Exception):
+    pass
 
 
 def date_parser(
@@ -67,7 +71,9 @@ def date_parser(
             except ValueError:
                 pass
         else:
-            raise ValueError(f"Can't parse date {d} with supported formats {fmts}.")
+            raise DecoderException(
+                "Can't parse date {d} with supported formats {fmts}."
+            )
         return s, match
 
     date_format = None
@@ -96,11 +102,11 @@ def date_parser(
             else:
                 break
         else:
-            raise ValueError(
+            raise DecoderException(
                 "Unable to parse cftime date {date}, even when moving back 2 days."
             )
     elif not isinstance(date, pd.Timestamp):
-        date = pd.Timestamp(date)
+        date = pd.Timestamp(date)  # noqa
 
     if end_of_period and date_format and not end_date_found:
         if "m" not in date_format:
