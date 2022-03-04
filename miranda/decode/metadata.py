@@ -151,7 +151,7 @@ class Decoder:
     def decode(
         self,
         files: Union[Path, str, List[Union[str, os.PathLike]]],
-        method: str = "netcdf",
+        method: str = "data",
         raise_error: bool = False,
     ):
         """Decode facets from file or list of files.
@@ -159,7 +159,7 @@ class Decoder:
         Parameters
         ----------
         files: Union[str, Path, List[Union[str, Path]]]
-        method: {"netcdf", "name"}
+        method: {"data", "name"}
         raise_error: bool
         """
         if isinstance(files, (str, os.PathLike)):
@@ -320,13 +320,17 @@ class Decoder:
             return time_dictionary[potential_time]
 
     @classmethod
-    def decode_reanalysis_netcdf(cls, file: Union[PathLike, str]) -> dict:
+    def decode_reanalysis_data(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
         facets.update(data)
+        del facets["history"]
+
         facets["date"] = date
-        facets["format"] = data["output_format"]
+        facets["format"] = data[
+            "output_format"
+        ]  # FIXME: This should be adjusted in files.
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["variable"] = variable
 
@@ -359,7 +363,7 @@ class Decoder:
         raise NotImplementedError()
 
     @classmethod
-    def decode_cmip6_netcdf(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip6_data(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -436,22 +440,22 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip5_netcdf(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip5_data(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
         facets["activity"] = "CMIP5"
         facets["date"] = date
         facets["domain"] = "global"
-        facets["experiment"] = data.experiment_id
+        facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
-        facets["institution"] = data.institute_id
-        facets["member"] = data.parent_experiment_rip
-        facets["modeling_realm"] = data.modeling_realm
+        facets["institution"] = data["institute_id"]
+        facets["member"] = data["parent_experiment_rip"]
+        facets["modeling_realm"] = data["modeling_realm"]
         facets["processing_level"] = "raw"
-        facets["project"] = data.project_id
-        facets["source"] = data.model_id
+        facets["project"] = data["project_id"]
+        facets["source"] = data["model_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
         facets["variable"] = variable
@@ -511,7 +515,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cordex_netcdf(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cordex_data(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         # FIXME: What to do about our internal data that breaks all established conventions?
@@ -608,23 +612,23 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_isimip_ft_netcdf(cls, file: Union[PathLike, str]) -> dict:
+    def decode_isimip_ft_data(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
         facets["activity"] = "ISIMP-FT"
         facets["date"] = date
-        facets["co2_forcing_id"] = data.co2_forcing_id
-        facets["experiment"] = data.experiment_id
+        facets["co2_forcing_id"] = data["co2_forcing_id"]
+        facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
-        facets["impact_model"] = data.impact_model_id
-        facets["institution"] = data.institute_id
-        facets["member"] = data.driving_model_ensemble_member
-        facets["modeling_realm"] = data.modeling_realm
-        facets["project"] = str(data.project_id)
-        facets["social_forcing_id"] = data.social_forcing_id
-        facets["source"] = data.model_id
+        facets["impact_model"] = data["impact_model_id"]
+        facets["institution"] = data["institute_id"]
+        facets["member"] = data["driving_model_ensemble_member"]
+        facets["modeling_realm"] = data["modeling_realm"]
+        facets["project"] = data["project_id"]
+        facets["social_forcing_id"] = data["social_forcing_id"]
+        facets["source"] = data["model_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
         facets["variable"] = variable

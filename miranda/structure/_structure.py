@@ -96,9 +96,9 @@ def _build_path_from_schema(
         return (
             Path(output_folder)
             / facets["type"]
-            / facets["project"]
             / facets["institution"]
             / facets["source"]
+            / facets["project"]
             / facets["domain"]
             / facets["frequency"]
             / facets["variable"]
