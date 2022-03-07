@@ -1,6 +1,7 @@
 import logging.config
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
@@ -132,8 +133,8 @@ def structure_datasets(
     *,
     project: Optional[str] = None,
     guess: bool = True,
-    dry_run: bool = True,
-    method: str = "move",
+    dry_run: bool = False,
+    method: str = "copy",
     make_dirs: bool = False,
     filename_pattern: str = "*.nc",
 ) -> Mapping[Path, Path]:
@@ -147,7 +148,7 @@ def structure_datasets(
     guess: bool
       If project not supplied, suggest to decoder that project is the same for all input_files. Default: True.
     dry_run: bool
-      Prints changes that would have been made without performing them. Default: True.
+      Prints changes that would have been made without performing them. Default: False.
     method: {"move", "copy"}
       Method to transfer files to intended location. Default: "move".
     make_dirs:
@@ -186,8 +187,16 @@ def structure_datasets(
     for file, output_filepath in all_file_paths.items():
         if method.lower() in ["move", "copy"]:
             meth = "Moved" if method.lower() == "move" else "Copied"
+            if file.is_dir():
+                method = "copytree"
+            output_file = output_filepath.joinpath(file.name)
+
             if not dry_run:
-                getattr(shutil, method)(file, output_filepath)
-            logging.info(f"{meth} {file} to {output_filepath}.")
+                if sys.version_info < (3, 9):
+                    getattr(shutil, method)(str(file), str(output_file))
+                else:
+                    getattr(shutil, method)(file, output_file)
+
+            logging.info(f"{meth} {file.name} to {output_file}.")
 
     return all_file_paths

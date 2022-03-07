@@ -32,9 +32,7 @@ def file_emptier(*, file_list: List[Union[str, Path]]) -> None:
     file_list = ingest(file_list)
 
     logging.info(
-        "Found {} files totalling {}".format(
-            len(file_list), report_file_size(file_list)
-        )
+        f"Found {len(file_list)} files totalling {report_file_size(file_list)}."
     )
 
     for file in file_list:
@@ -89,7 +87,7 @@ def delete_by_date(
     nc_files = list(nc_files)
     nc_files.sort()
 
-    logging.info(f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}")
+    logging.info(f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}.")
 
     context = None
     if server:
@@ -112,9 +110,7 @@ def delete_by_date(
             deleted_files += 1
 
     logging.info(
-        "Removed {} files totalling {}".format(
-            deleted_files, report_file_size(freed_space)
-        )
+        f"Removed {deleted_files} files totalling {report_file_size(freed_space)}"
     )
 
     if server:
@@ -170,9 +166,7 @@ def delete_duplicates(
 
     nc_file_duplicates.sort()
     logging.info(
-        "Found {} files totalling {}".format(
-            len(nc_file_duplicates), report_file_size(nc_file_duplicates)
-        )
+        f"Found {len(nc_file_duplicates)} files totalling {report_file_size(nc_file_duplicates)}"
     )
 
     freed_space = 0
@@ -186,9 +180,7 @@ def delete_duplicates(
                 deleted_files += 1
 
     logging.info(
-        "Removed {} files totalling {}".format(
-            deleted_files, report_file_size(freed_space)
-        )
+        f"Removed { deleted_files} files totalling {report_file_size(freed_space)}."
     )
     return
 
@@ -245,9 +237,7 @@ def delete_by_variable(
         nc_files.sort()
 
         logging.info(
-            "Found {} files totalling {}".format(
-                len(nc_files), report_file_size(nc_files)
-            )
+            f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}"
         )
 
         with connection as context:
@@ -259,8 +249,6 @@ def delete_by_variable(
                     context.remove(file)
 
     logging.info(
-        "Removed {} files totalling {}".format(
-            deleted_files, report_file_size(freed_space)
-        )
+        f"Removed {deleted_files} files totalling {report_file_size(freed_space)}"
     )
     return
