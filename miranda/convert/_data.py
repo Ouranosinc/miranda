@@ -1,11 +1,13 @@
 __all__ = [
     "nasa_ag_variables",
+    "nrcan_variables",
     "project_institutes",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
     "xarray_frequencies_to_cmip6",
 ]
 
+nrcan_variables = ["tasmin", "tasmax", "pr"]
 nasa_ag_variables = ["prate", "rhstmax", "srad", "tavg", "tmax", "tmin", "wndpsd"]
 wfdei_gem_capa_variables = ["huss", "pr", "ps", "rlds", "rsds", "sfcWind", "tas"]
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]

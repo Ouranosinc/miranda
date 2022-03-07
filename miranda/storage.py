@@ -26,7 +26,6 @@ from typing import List, Union
 from .scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
-_CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
 
 __all__ = [
@@ -287,6 +286,7 @@ def report_file_size(
     This function will parse the contents of a list or generator of files and return the
     size in bytes of a file or a list of files in pretty formatted text.
     """
+    _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
     def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
         """

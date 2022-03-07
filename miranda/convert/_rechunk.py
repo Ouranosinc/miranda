@@ -71,11 +71,13 @@ def rechunk_reanalysis(
             logging.warning("No files found for %s. Continuing..." % variable)
             continue
 
-        # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along time.
+        # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along the time dimension.
         start_var = time.perf_counter()
 
         for file in sorted(
-            input_folder.glob(f"{variable}_{time_step}_ecmwf_{project}_reanalysis_*.nc")
+            input_folder.glob(
+                f"{variable}_{time_step}_{project_institutes[project]}_{project}_reanalysis_*.nc"
+            )
         ):
             start = time.perf_counter()
 
@@ -155,7 +157,7 @@ def rechunk_reanalysis(
             f"First step done for {variable} in {(time.perf_counter() - start_all) / 3600:.2f} h"
         )
 
-        # STEP 2 : Merge all years, chunking along time.
+        # STEP 2 : Merge all years, chunking along the time dimension.
         start = time.perf_counter()
 
         files = sorted(
@@ -179,7 +181,8 @@ def rechunk_reanalysis(
             del var.encoding["chunks"]
 
         merged_zarr = Path(
-            output_folder / f"{variable}_{time_step}_ecmwf_{project}_reanalysis.zarr"
+            output_folder
+            / f"{variable}_{time_step}_{project_institutes[project]}_{project}_reanalysis.zarr"
         )
         try:
             ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
