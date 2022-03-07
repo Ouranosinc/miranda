@@ -1,4 +1,4 @@
-from miranda.ecmwf._namers import ECMWF_PROJECT_NAMES
+from miranda.ecmwf._namers import ECMWF_PROJECT_NAMES  # noqa
 
 REANALYSIS = list()
 REANALYSIS.extend(ECMWF_PROJECT_NAMES)

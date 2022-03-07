@@ -29,6 +29,17 @@ logging.config.dictConfig(LOGGING_CONFIG)
 _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
 
+__all__ = [
+    "DiskSpaceError",
+    "FileMeta",
+    "StorageState",
+    "file_size",
+    "report_file_size",
+    "size_division",
+    "size_evaluation",
+]
+
+
 class DiskSpaceError(Exception):
     pass
 
@@ -75,7 +86,6 @@ class FileMeta:
             return False
 
 
-#
 class StorageState:
     """Information regarding the storage capacity of a disk."""
 
@@ -134,7 +144,6 @@ class StorageState:
             self.free_space = free_space
 
 
-#
 def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
     """Total size of files.
 
@@ -164,7 +173,6 @@ def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
         return 0
 
 
-#
 def size_division(
     files_to_divide: Union[List, FileMeta, Path],
     size_limit: int = 0,

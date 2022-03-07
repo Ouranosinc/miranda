@@ -2,7 +2,6 @@ import datetime
 import json
 import logging.config
 import os
-import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
@@ -65,9 +64,9 @@ def reanalysis_processing(
     target_chunks: Optional[dict] = None,
     output_format: str = "netcdf",
     overwrite: bool = False,
-    engine: str = "h5netcdf"
-    # n_workers: int = 4,
-    # **dask_kwargs,
+    engine: str = "h5netcdf",
+    n_workers: int = 4,
+    **dask_kwargs,
 ) -> None:
     """
 
@@ -84,6 +83,7 @@ def reanalysis_processing(
     output_format: {"netcdf", "zarr"}
     overwrite: bool
     engine: {"netcdf4", "h5netcdf"}
+    n_workers: int
 
     Returns
     -------
@@ -96,7 +96,11 @@ def reanalysis_processing(
     else:
         raise NotImplementedError(f"`output_format`: '{output_format}")
 
-    with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
+    with ProgressBar(), dask.config.set(
+        **{"array.slicing.split_large_chunks": False},
+        n_workers=n_workers,
+        **dask_kwargs,
+    ):
         out_files = Path(output_folder)
         if isinstance(domains, str):
             domains = [domains]
@@ -596,5 +600,4 @@ def threshold_land_sea_mask(
             ds.to_netcdf(out)
             return out
         return ds
-    logging.warning("Project was not found.")
-    raise RuntimeError()
+    raise RuntimeError("'Project' was not found.")

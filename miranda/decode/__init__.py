@@ -1,2 +1,2 @@
-from ._utils import *
+from ._time import *
 from .metadata import *

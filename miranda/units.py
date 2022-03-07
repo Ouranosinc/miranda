@@ -68,3 +68,8 @@ def units2pint(value: str) -> u.Unit:
         pint.DimensionalityError,
     ):  # Convert from CF-units to pint-compatible
         return u.parse_expression(_transform(value)).units
+
+
+KiB = int(pow(2, 10))
+MiB = int(pow(2, 20))
+GiB = int(pow(2, 30))

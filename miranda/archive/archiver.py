@@ -6,18 +6,16 @@ from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Union
 
-from .archive.groupings import (
-    group_by_deciphered_date,
-    group_by_size,
-    group_by_subdirectories,
-)
-from .connect import Connection
-from .ops import create_archive, create_remote_directory, transfer_file
-from .scripting import LOGGING_CONFIG
-from .storage import report_file_size
-from .utils import find_filepaths, single_item_list, working_directory
+from miranda.archive.ops import create_archive, create_remote_directory, transfer_file
+from miranda.connect import Connection
+from miranda.scripting import LOGGING_CONFIG
+from miranda.storage import report_file_size
+from miranda.utils import find_filepaths, single_item_list, working_directory
+
+from .groupings import group_by_deciphered_date, group_by_size, group_by_subdirectories
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
 __all__ = ["archive_database"]
 
 

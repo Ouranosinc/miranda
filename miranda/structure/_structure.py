@@ -104,7 +104,6 @@ def _build_path_from_schema(
             / facets["variable"]
         )
     elif facets["type"] == "simulation":
-        # TODO: Verify whether this is how we want to structure this
         SIMULATION_SCHEMA.validate(facets)
         if facets["project"] == "CORDEX":
             model = facets["driving_model"]
@@ -186,11 +185,11 @@ def structure_datasets(
 
     for file, output_filepath in all_file_paths.items():
         if copy:
-            print(f"Copied {file} to {output_filepath}.")
+            logging.info(f"Copied {file} to {output_filepath}.")
             if not dry_run:
                 shutil.copy(file, output_filepath)
         else:
-            print(f"Moved {file} to {output_filepath}.")
+            logging.info(f"Moved {file} to {output_filepath}.")
             if not dry_run:
                 shutil.move(file, output_filepath)
 

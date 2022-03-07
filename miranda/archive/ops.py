@@ -11,8 +11,8 @@ import fabric
 from paramiko import SFTPClient, SSHClient, SSHException
 from scp import SCPClient, SCPException
 
-from .connect import Connection
-from .scripting import LOGGING_CONFIG
+from miranda.connect import Connection
+from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["create_archive", "create_remote_directory", "transfer_file", "url_validate"]

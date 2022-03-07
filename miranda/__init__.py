@@ -11,13 +11,12 @@ from miranda import (
     eccc,
     ecmwf,
     hq,
-    ops,
-    remove,
     scripting,
     utils,
 )
+from miranda.archive.archiver import archive_database
 
-from .archiver import archive_database
+from .archive import ops, remove
 from .connect import Connection
 from .data import DataBase
 from .decode import metadata

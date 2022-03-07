@@ -19,9 +19,11 @@ from pathlib import Path
 from types import GeneratorType
 from typing import List, Optional, Tuple, Union
 
-from .ops import url_validate
+from miranda.archive import url_validate
+
 from .scripting import LOGGING_CONFIG
-from .utils import GiB, find_filepaths
+from .units import GiB
+from .utils import find_filepaths
 
 logging.config.dictConfig(LOGGING_CONFIG)
 

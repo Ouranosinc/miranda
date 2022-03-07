@@ -10,10 +10,78 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["date_parser", "DecoderException"]
+__all__ = [
+    "date_parser",
+    "DecoderError",
+    "BASIC_DT_VALIDATION",
+    "DATE_VALIDATION",
+    "TIME_UNITS_TO_FREQUENCY",
+    "TIME_UNITS_TO_TIMEDELTA",
+]
 
 
-class DecoderException(Exception):
+BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
+DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+TIME_UNITS_TO_FREQUENCY = {
+    "subhrPt": "sub-hr",
+    "hourly": "1hr",
+    "hours": "1hr",
+    "hr": "1hr",
+    "6-hourly": "6hr",
+    "daily": "day",
+    "days": "day",
+    "day": "day",
+    "weekly": "sem",
+    "weeks": "sem",
+    "sem": "sem",
+    "monthly": "mon",
+    "months": "mon",
+    "mon": "mon",
+    "monC": "monC",
+    "Amon": "mon",
+    "yearly": "yr",
+    "years": "yr",
+    "annual": "yr",
+    "yr": "yr",
+    "yrPt": "yrPt",
+    "decadal": "dec",
+    "decades": "dec",
+    "dec": "dec",
+    "fixed": "fx",
+    "fx": "fx",
+}
+TIME_UNITS_TO_TIMEDELTA = {
+    "hourly": "1h",
+    "hours": "1h",
+    "1hr": "1h",
+    "1hrCM": "1h",
+    "1hrPt": "1h",
+    "3hr": "3h",
+    "3hrPt": "3h",
+    "6-hourly": "6h",
+    "6hr": "6h",
+    "6hrPt": "6h",
+    "daily": "1d",
+    "day": "1d",
+    "days": "1d",
+    "weekly": "7d",
+    "weeks": "7d",
+    "sem": "7d",
+    "mon": "30d",
+    "monC": "30d",
+    "monPt": "30d",
+    "Amon": "30d",
+    "QS": "90d",
+    "qtr": "90d",
+    "yearly": "365d",
+    "years": "365d",
+    "year": "365d",
+    "yr": "365d",
+    "yrPt": "365d",
+}
+
+
+class DecoderError(Exception):
     pass
 
 
@@ -71,9 +139,7 @@ def date_parser(
             except ValueError:
                 pass
         else:
-            raise DecoderException(
-                "Can't parse date {d} with supported formats {fmts}."
-            )
+            raise DecoderError("Can't parse date {d} with supported formats {fmts}.")
         return s, match
 
     date_format = None
@@ -102,7 +168,7 @@ def date_parser(
             else:
                 break
         else:
-            raise DecoderException(
+            raise DecoderError(
                 "Unable to parse cftime date {date}, even when moving back 2 days."
             )
     elif not isinstance(date, pd.Timestamp):

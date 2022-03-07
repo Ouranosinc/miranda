@@ -38,16 +38,17 @@ from logging import config
 from pathlib import Path
 from typing import List
 
-from .ops import transfer_file
-from .scripting import LOGGING_CONFIG
-from .storage import (
+from miranda.archive.ops import transfer_file
+from miranda.scripting import LOGGING_CONFIG
+from miranda.storage import (
     DiskSpaceError,
     FileMeta,
     StorageState,
     size_division,
     size_evaluation,
 )
-from .utils import GiB, find_filepaths, verbose_fn, yesno_prompt
+from miranda.units import GiB
+from miranda.utils import find_filepaths, yesno_prompt
 
 DiskSpaceEvent = threading.Event()
 
@@ -221,7 +222,7 @@ def rstdmf_divisions(
         else:
             files_for_rstdmf.append(file_to_restore)
     if not files_for_rstdmf:
-        verbose_fn("All files are already on disk, or nonexistant.", verbose)
+        logging.warning("All files are already on disk, or nonexistant.")
         return
     # Divide files to satisfy rstdmf constraints
     if (max_size_on_disk != 0) and (max_size_on_disk < rstdmf_size_limit):
@@ -268,12 +269,12 @@ def rstdmf_divisions(
         ) or ((max_size_on_disk != 0) and (local_storage.free_space < size_of_files)):
             DiskSpaceEvent.set()
             if storage.free_space - disk_space_margin < size_of_files:
-                verbose_fn(
+                logging.warning(
                     "Disk space running low! Starting wait loop ({} s)".format(
                         disk_refresh_time
                     )
                 )
-                verbose_fn(
+                logging.warning(
                     "Disk space: {} GB, Disk space to maintain: {} GiB, ".format(
                         str(float(storage.free_space) / GiB),
                         str(disk_space_margin / GiB),
@@ -281,7 +282,7 @@ def rstdmf_divisions(
                     + f"Restore size: {str(size_of_files / GiB)} GiB"
                 )
             elif local_storage.free_space < size_of_files:
-                verbose_fn(
+                logging.warning(
                     "Reached size limit of files on disk ({} GiB).".format(
                         str(float(max_size_on_disk) / GiB)
                     )

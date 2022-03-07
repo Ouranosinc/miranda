@@ -16,7 +16,14 @@ from pandas._libs.tslibs import NaTType  # noqa
 from miranda.scripting import LOGGING_CONFIG
 
 from ._models import CMIP5_GCM_PROVIDERS, CMIP6_GCM_PROVIDERS, PROJECT_MODELS
-from ._utils import DecoderException, date_parser
+from ._time import (
+    BASIC_DT_VALIDATION,
+    DATE_VALIDATION,
+    TIME_UNITS_TO_FREQUENCY,
+    TIME_UNITS_TO_TIMEDELTA,
+    DecoderError,
+    date_parser,
+)
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -24,68 +31,6 @@ __all__ = [
     "Decoder",
     "guess_project",
 ]
-
-BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
-DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
-
-TIME_UNITS_TO_FREQUENCY = {
-    "subhrPt": "sub-hr",
-    "hourly": "1hr",
-    "hours": "1hr",
-    "hr": "1hr",
-    "6-hourly": "6hr",
-    "daily": "day",
-    "days": "day",
-    "day": "day",
-    "weekly": "sem",
-    "weeks": "sem",
-    "sem": "sem",
-    "monthly": "mon",
-    "months": "mon",
-    "mon": "mon",
-    "monC": "monC",
-    "Amon": "mon",
-    "yearly": "yr",
-    "years": "yr",
-    "annual": "yr",
-    "yr": "yr",
-    "yrPt": "yrPt",
-    "decadal": "dec",
-    "decades": "dec",
-    "dec": "dec",
-    "fixed": "fx",
-    "fx": "fx",
-}
-
-TIME_UNITS_TO_TIMEDELTA = {
-    "hourly": "1h",
-    "hours": "1h",
-    "1hr": "1h",
-    "1hrCM": "1h",
-    "1hrPt": "1h",
-    "3hr": "3h",
-    "3hrPt": "3h",
-    "6-hourly": "6h",
-    "6hr": "6h",
-    "6hrPt": "6h",
-    "daily": "1d",
-    "day": "1d",
-    "days": "1d",
-    "weekly": "7d",
-    "weeks": "7d",
-    "sem": "7d",
-    "mon": "30d",
-    "monC": "30d",
-    "monPt": "30d",
-    "Amon": "30d",
-    "QS": "90d",
-    "qtr": "90d",
-    "yearly": "365d",
-    "years": "365d",
-    "year": "365d",
-    "yr": "365d",
-    "yrPt": "365d",
-}
 
 facet_schema = schema.Schema(
     {
@@ -135,9 +80,7 @@ def guess_project(file: Union[Path, str]) -> str:
     for project, models in PROJECT_MODELS.items():
         if any([model in potential_names for model in models]):
             return project
-    raise DecoderException(
-        f"Unable to determine project from file name: '{file_name}'."
-    )
+    raise DecoderError(f"Unable to determine project from file name: '{file_name}'.")
 
 
 class Decoder:
@@ -174,7 +117,7 @@ class Decoder:
             if self.project is None:
                 try:
                     project = guess_project(file)
-                except DecoderException:
+                except DecoderError:
                     logging.error(
                         f"Signature for 'project' must be set manually for file: {file}."
                     )
@@ -204,7 +147,7 @@ class Decoder:
         for project, models in PROJECT_MODELS.items():
             if any([model in potential_names for model in models]):
                 return project
-        raise DecoderException("Unable to determine project from file name.")
+        raise DecoderError("Unable to determine project from file name.")
 
     @classmethod
     def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
@@ -222,7 +165,7 @@ class Decoder:
             ds = zarr.open(file, mode="r")
             data = ds.attrs.asdict()
         else:
-            raise DecoderException("Unable to read dataset.")
+            raise DecoderError("Unable to read dataset.")
         return variable_name, variable_date, data
 
     @staticmethod
@@ -337,7 +280,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -387,7 +330,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -430,7 +373,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -463,7 +406,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -505,7 +448,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -558,7 +501,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         try:
@@ -602,7 +545,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -636,7 +579,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)
@@ -686,7 +629,7 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderException:
+        except DecoderError:
             pass
 
         facet_schema.validate(facets)

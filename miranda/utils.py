@@ -9,21 +9,14 @@ from typing import Dict, Iterable, List, Optional, Sequence, Union
 
 from . import scripting
 
-KiB = int(pow(2, 10))
-MiB = int(pow(2, 20))
-GiB = int(pow(2, 30))
-
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
     "chunk_iterables",
     "creation_date",
     "find_filepaths",
-    "GiB",
     "ingest",
-    "KiB",
     "list_paths_with_elements",
-    "MiB",
     "read_privileges",
     "single_item_list",
     "working_directory",
@@ -110,7 +103,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
             msg = f"Ensure read privileges for `{location}`."
         else:
             msg = f"`{location}` is an invalid path."
-        raise OSError
+        raise OSError()
 
     except OSError:
         logging.exception(msg)
