@@ -143,7 +143,7 @@ def structure_datasets(
     ----------
     input_files: str or Path or list of str or Path
     output_folder: str or Path
-    project: {"cordex", "cmip5", "cmip6", "isimip-ft"}, optional
+    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis"}, optional
     guess: bool
       If project not supplied, suggest to decoder that project is the same for all input_files. Default: True.
     dry_run: bool
@@ -186,8 +186,8 @@ def structure_datasets(
     for file, output_filepath in all_file_paths.items():
         if method.lower() in ["move", "copy"]:
             meth = "Moved" if method.lower() == "move" else "Copied"
-            logging.info(f"{meth} {file} to {output_filepath}.")
             if not dry_run:
                 getattr(shutil, method)(file, output_filepath)
+            logging.info(f"{meth} {file} to {output_filepath}.")
 
     return all_file_paths
