@@ -133,7 +133,7 @@ def structure_datasets(
     project: Optional[str] = None,
     guess: bool = True,
     dry_run: bool = True,
-    copy: bool = False,
+    method: str = "move",
     make_dirs: bool = False,
     filename_pattern: str = "*.nc",
 ) -> Mapping[Path, Path]:
@@ -148,8 +148,8 @@ def structure_datasets(
       If project not supplied, suggest to decoder that project is the same for all input_files. Default: True.
     dry_run: bool
       Prints changes that would have been made without performing them. Default: True.
-    copy: bool
-      Make a copy of files to intended location. Default: False.
+    method: {"move", "copy"}
+      Method to transfer files to intended location. Default: "move".
     make_dirs:
       Make folder tree if it does not already exist. Default: False.
     filename_pattern: str
@@ -184,13 +184,10 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     for file, output_filepath in all_file_paths.items():
-        if copy:
-            logging.info(f"Copied {file} to {output_filepath}.")
+        if method.lower() in ["move", "copy"]:
+            meth = "Moved" if method.lower() == "move" else "Copied"
+            logging.info(f"{meth} {file} to {output_filepath}.")
             if not dry_run:
-                shutil.copy(file, output_filepath)
-        else:
-            logging.info(f"Moved {file} to {output_filepath}.")
-            if not dry_run:
-                shutil.move(file, output_filepath)
+                getattr(shutil, method)(file, output_filepath)
 
     return all_file_paths
