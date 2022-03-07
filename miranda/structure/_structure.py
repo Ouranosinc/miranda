@@ -185,18 +185,25 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     for file, output_filepath in all_file_paths.items():
+        method_mod = ""
+        if file.is_dir():
+            method_mod = "tree"
         if method.lower() in ["move", "copy"]:
             meth = "Moved" if method.lower() == "move" else "Copied"
-            if file.is_dir():
-                method = "copytree"
+
             output_file = output_filepath.joinpath(file.name)
-
-            if not dry_run:
-                if sys.version_info < (3, 9):
-                    getattr(shutil, method)(str(file), str(output_file))
-                else:
-                    getattr(shutil, method)(file, output_file)
-
-            logging.info(f"{meth} {file.name} to {output_file}.")
+            try:
+                if not dry_run:
+                    if sys.version_info < (3, 9):
+                        getattr(shutil, f"{method}{method_mod}")(
+                            str(file), str(output_file)
+                        )
+                    else:
+                        getattr(shutil, f"{method}{method_mod}")(file, output_file)
+                logging.info(f"{meth} {file.name} to {output_file}.")
+            except FileExistsError:
+                logging.warning(
+                    f"{file.name} already exists at location. Continuing..."
+                )
 
     return all_file_paths
