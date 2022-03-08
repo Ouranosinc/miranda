@@ -1,51 +1,63 @@
 {
   "Header": {
-    "data_specs_version": "00.00.03",
-    "realm": "atmos",
-    "table_date": "16 February 2022",
-    "processing_level": "raw",
-    "institution": "ECMWF",
-    "source": "ERA5",
+    "Conventions": "CF-1.8",
     "activity": "ERA",
-    "type": "reanalysis",
-    "Conventions": "CF-1.8"
+    "data_specs_version": "00.00.03",
+    "institution": "ECMWF",
+    "processing_level": "raw",
+    "realm": "atmos",
+    "source": "ERA5",
+    "table_date": "16 February 2022",
+    "type": "reanalysis"
   },
   "variable_entry": {
-    "pev": {
-      "original_long_name": "Potential Evaporation",
-      "standard_name": "water_evapotranspiration_flux",
-      "units": "kg m-2 s-1",
+    "d2m": {
+      "_cf_variable_name": "tdps",
+      "_corrected_units": {},
+      "_transformation": {},
       "cell_methods": "time: mean",
-      "long_name": "Potential evapotranspiration",
-      "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
+      "long_name": "2 metre dewpoint temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "pev": {
       "_cf_variable_name": "evspsblpot",
       "_corrected_units": {},
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate"
-      }
-    },
-    "tp": {
-      "original_long_name": "Total Precipitation",
-      "standard_name": "precipitation_flux",
-      "units": "kg m-2 s-1",
+      },
       "cell_methods": "time: mean",
-      "long_name": "Precipitation",
-      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
-      "_cf_variable_name": "pr",
-      "_corrected_units": {},
-      "_transformation": {
-        "era5-land": "deaccumulate",
-        "era5-single-levels": "amount2rate"
-      }
+      "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
+      "long_name": "Potential evapotranspiration",
+      "original_long_name": "Potential Evaporation",
+      "standard_name": "water_evapotranspiration_flux",
+      "units": "kg m-2 s-1"
+    },
+    "sd": {
+      "_cf_variable_name": "snw",
+      "_corrected_units": {
+        "era5-land": "Mg m-2",
+        "era5-single-levels": "Mg m-2"
+      },
+      "_transformation": {},
+      "cell_methods": "time: mean",
+      "long_name": "Surface Snow Amount",
+      "standard_name": "surface_snow_amount",
+      "units": "kg m-2"
+    },
+    "sde": {
+      "_cf_variable_name": "snd",
+      "_corrected_units": {
+        "era5-land": "m"
+      },
+      "_transformation": {},
+      "cell_methods": "time: mean",
+      "long_name": "Snow depth",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
     },
     "sf": {
-      "original_long_name": "Snowfall",
-      "standard_name": "snowfall_flux",
-      "units": "kg m-2 s-1",
-      "cell_methods": "time: mean",
-      "long_name": "Snowfall flux",
-      "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
       "_cf_variable_name": "prsn",
       "_corrected_units": {
         "era5-land": "m",
@@ -54,68 +66,56 @@
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate"
-      }
+      },
+      "cell_methods": "time: mean",
+      "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
+      "long_name": "Snowfall flux",
+      "original_long_name": "Snowfall",
+      "standard_name": "snowfall_flux",
+      "units": "kg m-2 s-1"
     },
     "t2m": {
-      "standard_name": "air_temperature",
-      "units": "K",
-      "cell_methods": "time: mean",
-      "long_name": "2 metre temperature",
       "_cf_variable_name": "tas",
       "_corrected_units": {},
-      "_transformation": {}
-    },
-    "d2m": {
-      "standard_name": "dew_point_temperature",
-      "units": "K",
+      "_transformation": {},
       "cell_methods": "time: mean",
-      "long_name": "2 metre dewpoint temperature",
-      "_cf_variable_name": "tdps",
+      "long_name": "2 metre temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tp": {
+      "_cf_variable_name": "pr",
       "_corrected_units": {},
-      "_transformation": {}
-    },
-    "sde": {
-      "standard_name": "surface_snow_thickness",
-      "units": "m",
-      "cell_methods": "time: mean",
-      "long_name": "Snow depth",
-      "_cf_variable_name": "snd",
-      "_corrected_units": {
-        "era5-land": "m"
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate"
       },
-      "_transformation": {}
-    },
-    "sd": {
-      "standard_name": "surface_snow_amount",
-      "units": "kg m-2",
       "cell_methods": "time: mean",
-      "long_name": "Surface Snow Amount",
-      "_cf_variable_name": "snw",
-      "_corrected_units": {
-        "era5-single-levels": "Mg m-2",
-        "era5-land": "Mg m-2"
-      },
-      "_transformation": {}
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "original_long_name": "Total Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
     },
     "u10": {
-      "standard_name": "eastward_wind",
-      "units": "m s-1",
-      "cell_methods": "time: mean",
-      "long_name": "10 metre eastward wind",
-      "comments": "Converted from 10 metre U wind component.",
       "_cf_variable_name": "uas",
       "_corrected_units": {},
-      "_transformation": {}
+      "_transformation": {},
+      "cell_methods": "time: mean",
+      "comments": "Converted from 10 metre U wind component.",
+      "long_name": "10 metre eastward wind",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
     },
     "v10": {
-      "standard_name": "northward_wind",
-      "units": "m s-1",
-      "cell_methods": "time: mean",
-      "long_name": "10 metre northward wind",
-      "comments": "Converted from 10 metre V wind component.",
       "_cf_variable_name": "vas",
       "_corrected_units": {},
-      "_transformation": {}
+      "_transformation": {},
+      "cell_methods": "time: mean",
+      "comments": "Converted from 10 metre V wind component.",
+      "long_name": "10 metre northward wind",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
     }
   }
 }
