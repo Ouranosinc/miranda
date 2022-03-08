@@ -8,9 +8,12 @@ repos:
       - id: trailing-whitespace
         exclude: setup.cfg
       - id: end-of-file-fixer
+      - id: check-json
       - id: check-yaml
         args: ['--allow-multiple-documents']
       - id: debug-statements
+      - id: pretty-format-json
+        args: ['--autofix', '--no-ensure-ascii']
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:

@@ -5,62 +5,20 @@ import sys
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
-import schema
-
 from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG
+from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-STATION_OBS_SCHEMA = schema.Schema(
-    {
-        "project": str,
-        "institution": str,
-        "source": str,
-        "frequency": str,
-        "variable": str,
-        "version": str,
-        "type": "station-obs",
-    },
-    ignore_extra_keys=True,
-)
+__all__ = [
+    "build_path_from_schema",
+    "guess_project",
+    "structure_datasets",
+]
 
 
-GRIDDED_SCHEMA = schema.Schema(
-    {
-        "project": str,
-        "institution": str,
-        "source": str,
-        "domain": str,
-        "frequency": str,
-        "variable": str,
-        "type": schema.And(
-            str,
-            lambda f: f in ["forecast", "gridded-obs", "reanalysis"],
-        ),
-    },
-    ignore_extra_keys=True,
-)
-
-SIMULATION_SCHEMA = schema.Schema(
-    {
-        "type": "simulation",
-        "processing_level": schema.And(str, lambda f: f in ["raw", "biasadjusted"]),
-        "project": str,
-        "institution": str,
-        "source": str,
-        "domain": str,
-        schema.Or("driving_model", "member"): str,
-        "experiment": str,
-        "frequency": str,
-        "member": str,
-        "variable": str,
-    },
-    ignore_extra_keys=True,
-)
-
-
-def _build_path_from_schema(
+def build_path_from_schema(
     facets: dict, output_folder: Union[str, os.PathLike]
 ) -> Path:
     """Build a filepath based on a valid data schema.
@@ -177,7 +135,7 @@ def structure_datasets(
 
     all_file_paths = dict()
     for file, facets in decoder.file_facets().items():
-        output_filepath = _build_path_from_schema(facets, output_folder)
+        output_filepath = build_path_from_schema(facets, output_folder)
         all_file_paths.update({Path(file): output_filepath})
 
     if make_dirs:
