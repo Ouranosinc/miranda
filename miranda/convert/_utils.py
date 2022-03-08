@@ -23,7 +23,7 @@ from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
-from ._data import project_institutes, xarray_frequencies_to_cmip6
+from ._data import project_institutes, xarray_frequencies_to_cmip6like
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -43,8 +43,8 @@ def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
     return dataset
 
 
-def get_chunks_on_disk(ncfile: Union[os.PathLike, str]) -> dict:
-    ds = netCDF4.Dataset(ncfile)
+def get_chunks_on_disk(nc_file: Union[os.PathLike, str]) -> dict:
+    ds = netCDF4.Dataset(nc_file)
     chunks = dict()
     for v in ds.variables:
         chunks[v] = dict()
@@ -118,10 +118,9 @@ def reanalysis_processing(
             output_folder.mkdir(exist_ok=True)
 
             for project, in_files in data.items():
-                if domain != "not_specified":
-                    logging.info(f"Processing {project} data for domain {domain}.")
-                else:
-                    logging.info(f"Processing {project} data.")
+                logging.info(
+                    f"Processing {project} data{f' for domain {domain}' if domain !='not_specified' else ''}."
+                )
                 for var in variables:
                     # Select only for variable of interest
                     multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
@@ -154,7 +153,7 @@ def reanalysis_processing(
                             parse_freq = calendar.parse_offset(
                                 xr.infer_freq(xr.open_dataset(multi_files[0]).time)
                             )
-                            time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6[parse_freq[1]]}"
+                            time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6like[parse_freq[1]]}"
 
                         institute = project_institutes[project]
                         file_name = "_".join([var, time_freq, institute, project])

@@ -13,15 +13,10 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = [
     "date_parser",
     "DecoderError",
-    "BASIC_DT_VALIDATION",
-    "DATE_VALIDATION",
     "TIME_UNITS_TO_FREQUENCY",
     "TIME_UNITS_TO_TIMEDELTA",
 ]
 
-
-BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
-DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
 TIME_UNITS_TO_FREQUENCY = {
     "subhrPt": "sub-hr",
     "hourly": "1hr",

@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import warnings
 from logging import config
 from os import PathLike
@@ -9,16 +8,14 @@ from typing import Dict, List, Optional, Union
 
 import netCDF4 as nc  # noqa
 import pandas as pd
-import schema
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
+from miranda.metadata import PROJECT_MODELS
 from miranda.scripting import LOGGING_CONFIG
+from miranda.validators import FACETS_SCHEMA
 
-from ._models import CMIP5_GCM_PROVIDERS, CMIP6_GCM_PROVIDERS, PROJECT_MODELS
 from ._time import (
-    BASIC_DT_VALIDATION,
-    DATE_VALIDATION,
     TIME_UNITS_TO_FREQUENCY,
     TIME_UNITS_TO_TIMEDELTA,
     DecoderError,
@@ -31,46 +28,6 @@ __all__ = [
     "Decoder",
     "guess_project",
 ]
-
-facet_schema = schema.Schema(
-    {
-        schema.Optional("project"): str,
-        "activity": str,
-        "institution": str,
-        "source": str,
-        schema.Optional("driving_institution"): str,
-        schema.Optional("driving_model"): str,
-        schema.Optional("experiment"): str,
-        "frequency": schema.And(
-            str,
-            lambda f: f in set(TIME_UNITS_TO_FREQUENCY.values()),
-        ),
-        "domain": str,
-        schema.Optional("member"): str,
-        schema.Optional("variable"): str,
-        schema.Optional("timedelta"): schema.Or(pd.Timedelta, NaTType),
-        schema.Optional("date"): schema.Or(
-            schema.Regex(BASIC_DT_VALIDATION, flags=re.I), "fx"
-        ),
-        schema.Optional("date_start"): schema.Or(
-            schema.Regex(DATE_VALIDATION, flags=re.I), NaTType
-        ),
-        schema.Optional("date_end"): schema.Or(
-            schema.Regex(DATE_VALIDATION, flags=re.I), NaTType
-        ),
-        schema.Optional("processing_level"): schema.And(
-            str, lambda f: f in ["raw", "biasadjusted"]
-        ),
-        "format": schema.And(str, lambda f: f in ["netcdf", "zarr"]),
-        schema.Optional("version"): str,
-        "type": schema.And(
-            str,
-            lambda f: f
-            in ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"],
-        ),
-    },
-    ignore_extra_keys=True,
-)
 
 
 def guess_project(file: Union[Path, str]) -> str:
@@ -119,7 +76,7 @@ class Decoder:
                     project = guess_project(file)
                 except DecoderError:
                     logging.error(
-                        f"Signature for 'project' must be set manually for file: {file}."
+                        f"Unable to determine 'project': Signature for 'project' must be set manually for file: {file}."
                     )
                     if raise_error:
                         raise
@@ -131,6 +88,11 @@ class Decoder:
             _file_facets[file] = getattr(self, f"decode_{project.lower()}_{method}")(
                 Path(file)
             )
+            FACETS_SCHEMA.validate(_file_facets[file])
+            logging.info(
+                f"Deciphered the following from {file}: {_file_facets[file].items()}"
+            )
+
         self._file_facets.update(_file_facets)
 
     def facets_table(self):
@@ -283,10 +245,6 @@ class Decoder:
         except DecoderError:
             pass
 
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
-
         return facets
 
     @classmethod
@@ -333,10 +291,6 @@ class Decoder:
         except DecoderError:
             pass
 
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
-
         return facets
 
     @classmethod
@@ -362,23 +316,16 @@ class Decoder:
         if "mon" in facets["frequency"]:
             facets["frequency"] = "mon"
 
-        try:
-            logging.warning(
-                "Using model to guess institute. Results may not be accurate."
-            )
-            facets["institution"] = CMIP6_GCM_PROVIDERS[facets["source"]]
-        except KeyError:
-            logging.info(f"Unable to find Institute for model: {facets['source']}")
+        logging.warning(
+            f"Cannot accurately find institute for model: {facets['source']} based on model name. "
+            f"Consider parsing this information from the metadata."
+        )
 
         try:
             facets["date_start"] = date_parser(decode_file[-1])
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
         except DecoderError:
             pass
-
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
         return facets
 
@@ -409,10 +356,6 @@ class Decoder:
         except DecoderError:
             pass
 
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
-
         return facets
 
     @classmethod
@@ -434,13 +377,10 @@ class Decoder:
         facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
         facets["type"] = "simulation"
 
-        try:
-            logging.warning(
-                "Using model to guess institute. Results may not be accurate."
-            )
-            facets["institution"] = CMIP5_GCM_PROVIDERS[facets["source"]]
-        except KeyError:
-            logging.info(f"Unable to find Institute for model: {facets['source']}")
+        logging.warning(
+            f"Cannot accurately find institute for model: {facets['source']} based on model name. "
+            f"Consider parsing this information from the metadata."
+        )
 
         if "mon" in facets["frequency"]:
             facets["frequency"] = "mon"
@@ -450,10 +390,6 @@ class Decoder:
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
         except DecoderError:
             pass
-
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
         return facets
 
@@ -514,10 +450,6 @@ class Decoder:
         except KeyError:
             facets["member"] = data["driving_model_ensemble_member"].strip()
 
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
-
         return facets
 
     @classmethod
@@ -548,10 +480,6 @@ class Decoder:
         except DecoderError:
             pass
 
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
-
         return facets
 
     @classmethod
@@ -581,10 +509,6 @@ class Decoder:
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
             pass
-
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
         return facets
 
@@ -631,9 +555,5 @@ class Decoder:
             facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
         except DecoderError:
             pass
-
-        facet_schema.validate(facets)
-
-        logging.info(f"Deciphered the following from {file}: {facets.items()}")
 
         return facets

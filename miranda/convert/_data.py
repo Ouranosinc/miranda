@@ -4,7 +4,7 @@ __all__ = [
     "project_institutes",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
-    "xarray_frequencies_to_cmip6",
+    "xarray_frequencies_to_cmip6like",
 ]
 
 nrcan_variables = ["tasmin", "tasmax", "pr"]
@@ -25,7 +25,7 @@ project_institutes = {
 
 # map xarray freq to CMIP6 controlled vocabulary.
 # see: https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/CMIP6_frequency.json
-xarray_frequencies_to_cmip6 = {
+xarray_frequencies_to_cmip6like = {
     "H": "hr",
     "D": "day",
     "M": "mon",

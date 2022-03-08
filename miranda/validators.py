@@ -4,53 +4,57 @@ import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
+from miranda.metadata import CMIP6_ACTIVITIES, INSTITUTIONS, WCRP_FREQUENCIES
+
 TYPE_NAMES = ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"]
 PROCESSING_LEVELS = ["raw", "biasadjusted"]
 BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
 DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
-CMIP6_FREQUENCIES = [
-    "subhrPt",
-    "1hr",
-    "1hrCM",
-    "1hrPt",
-    "3hr",
-    "3hrPt",
-    "6hr",
-    "6hrPt",
-    "day",
-    "sem",
-    "mon",
-    "monC",
-    "monPT",
-    "yr",
-    "yrPt",
-    "dec",
-    "fx",
-]
-
 
 FACETS_SCHEMA = Schema(
     {
         Literal(
             "type",
             description="An Ouranos internal code used for classifying datasets.",
-        ): Or(TYPE_NAMES),
+        ): Or(*TYPE_NAMES),
         Optional(
             Literal(
                 "project",
                 description="The parent project name according to the institute/authority coordinating it.",
             )
         ): str,
-        "activity": str,
+        Literal(
+            "activity",
+            description="The common climate modelling activity. "
+            "Derived from 'activity_id' in WCRP-CMIP CVs",
+        ): Or(*CMIP6_ACTIVITIES),
         Literal(
             "institution",
-            description="The institution that created the dataset. Typically derived from 'institution_id'.",
+            description="The institution that created the dataset. Derived from 'institution_id' in WCRP-CMIP CVs.",
         ): str,
         "source": str,
-        Optional("driving_institution"): str,
-        Optional("driving_model"): str,
-        Optional("experiment"): str,
-        "frequency": Or(*CMIP6_FREQUENCIES),
+        Optional(
+            Literal(
+                "driving_institution",
+                description="Institute name of the global climate model driver data. "
+                "Specific to regional climate model metadata.",
+            )
+        ): str,
+        Optional(
+            Literal(
+                "driving_model",
+                description="Model name of the global climate model driver data. "
+                "Specific to regional climate model metadata.",
+            )
+        ): str,
+        Optional(
+            Literal(
+                "experiment",
+                description="The common experiment name. "
+                "Derived from 'experiment_id' in WCRP-CMIP CVs.",
+            )
+        ): str,
+        "frequency": Or(*WCRP_FREQUENCIES),
         "domain": str,
         Optional("member"): str,
         Optional("variable"): str,
@@ -98,7 +102,7 @@ SIMULATION_SCHEMA = Schema(
         "type": "simulation",
         "processing_level": Or(*PROCESSING_LEVELS),
         "project": str,
-        "institution": str,
+        Or("institution", "driving_institution"): Or(*INSTITUTIONS),
         "source": str,
         "domain": str,
         Or("driving_model", "member"): str,
