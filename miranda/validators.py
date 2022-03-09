@@ -4,7 +4,7 @@ import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
-from miranda.metadata import CMIP6_ACTIVITIES, INSTITUTIONS, WCRP_FREQUENCIES
+from miranda.metadata import ACTIVITIES, INSTITUTIONS, WCRP_FREQUENCIES
 
 TYPE_NAMES = ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"]
 PROCESSING_LEVELS = ["raw", "biasadjusted"]
@@ -27,7 +27,7 @@ FACETS_SCHEMA = Schema(
             "activity",
             description="The common climate modelling activity. "
             "Derived from 'activity_id' in WCRP-CMIP CVs",
-        ): Or(*CMIP6_ACTIVITIES),
+        ): Or(*ACTIVITIES),
         Literal(
             "institution",
             description="The institution that created the dataset. Derived from 'institution_id' in WCRP-CMIP CVs.",
