@@ -7,17 +7,18 @@ from miranda import (
     archive,
     convert,
     decode,
-    deh_melcc,
     eccc,
     ecmwf,
-    hq,
+    metadata,
     scripting,
+    units,
     utils,
+    validators,
 )
 from miranda.archive.archiver import archive_database
 
 from .archive import ops, remove
 from .connect import Connection
 from .data import DataBase
-from .decode import metadata
+from .decode import Decoder
 from .storage import FileMeta, StorageState

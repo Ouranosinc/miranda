@@ -12,8 +12,10 @@ from miranda.units import u
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+__all__ = ["open_txt"]
+
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "deh_cf_attrs.json"))[  # noqa
+cmor = json.load(open(Path(__file__).parent / "data" / "deh_cf_attrs.json"))[  # noqa
     "variable_entry"
 ]
 

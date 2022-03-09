@@ -8,15 +8,32 @@ from typing import Dict, Optional, Sequence, Union
 import xarray as xr
 import zarr
 
-from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
 
-from ._data import project_institutes
+from ._data import era5_variables, project_institutes
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 __all__ = ["rechunk_reanalysis"]
+
+
+def _rechunk_configurator(project, time_step):
+    # ~35 Mo chunks
+    if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
+        if time_step == "1hr":
+            target_chunks = {
+                "time": 24 * 7,
+                "latitude": 225,
+                "longitude": 252,
+            }
+        elif time_step == "day":
+            target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
+        else:
+            raise NotImplementedError()
+    else:
+        raise NotImplementedError()
+    return target_chunks
 
 
 def rechunk_reanalysis(
@@ -60,7 +77,7 @@ def rechunk_reanalysis(
             raise NotImplementedError()
 
     if project.startswith("era5") and variables is None:
-        variables = ecmwf_variables.copy()
+        variables = era5_variables.copy()
 
     errored = list()
     start_all = time.perf_counter()
@@ -104,20 +121,7 @@ def rechunk_reanalysis(
             )
 
             if target_chunks is None:
-                # ~35 Mo chunks
-                if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
-                    if time_step == "1hr":
-                        target_chunks = {
-                            "time": 24 * 7,
-                            "latitude": 225,
-                            "longitude": 252,
-                        }
-                    elif time_step == "day":
-                        target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
-                    else:
-                        raise NotImplementedError()
-                else:
-                    raise NotImplementedError()
+                target_chunks = _rechunk_configurator(project, time_step)
 
             # Set correct chunks in encoding options
             encoding = dict()

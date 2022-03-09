@@ -1,30 +1,25 @@
 import functools
-import itertools as it
 import logging.config
 import multiprocessing
 import os
-import shutil
-import tempfile
 from datetime import datetime as dt
 from datetime import timedelta as td
 from pathlib import Path
 from typing import List, Optional
 
-import xarray
-from dask.diagnostics import ProgressBar
 from ecmwfapi import ECMWFDataServer
 
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["tigge_convert", "tigge_request"]
+__all__ = ["request_tigge"]
 
 
-def tigge_request(
-    *,
-    variables: List[str] = None,
+def request_tigge(
+    variables: List[str],
     providers: Optional[List[str]] = None,
+    *,
     forecast_type: str = "pf",
     times: Optional[List[str]] = None,
     dates: Optional[List[str]] = None,
@@ -56,15 +51,15 @@ def tigge_request(
         variable_name: str,
         variable_code: str,
         time: str,
-        forecast_type: str,
+        fc_type: str,
         provider: str,
-        numbers: Optional[int],
+        nums: Optional[int],
         date: str,
     ):
         """Launch formatted request."""
         number_range = ""
-        if numbers:
-            number_range = "/".join([str(n) for n in range(1, numbers + 1)])
+        if nums:
+            number_range = "/".join([str(n) for n in range(1, nums + 1)])
         output_name = (
             f"{variable_name}_{provider}_{'-'.join(time.split('/'))}_tigge_reanalysis_6h_"
             f"{date.split('/')[0]}_{date.split('/')[-1]}.grib2"
@@ -92,10 +87,10 @@ def tigge_request(
             "param": variable_code,
             "step": steps,
             "time": time,
-            "type": forecast_type,
+            "type": fc_type,
             "target": output_name,
         }
-        if numbers:
+        if nums:
             request.update({"number": number_range})
 
         server = ECMWFDataServer()
@@ -177,70 +172,3 @@ def tigge_request(
                     proc.map(func, dates)
                     proc.close()
                     proc.join()
-
-
-def tigge_convert(
-    source: Optional[os.PathLike] = None,
-    target: Optional[os.PathLike] = None,
-    processes: int = 8,
-) -> None:
-    """Convert grib2 file to netCDF format.
-
-    Parameters
-    ----------
-    source : os.PathLike, optional
-    target : os.PathLike, optional
-    processes : int
-
-    Returns
-    -------
-    None
-    """
-
-    def _tigge_convert(fn):
-        """Launch reformatting function."""
-        infile, output_folder = fn
-        try:
-            for f in Path(infile.parent).glob(infile.name.replace(".grib", "*.idx")):
-                f.unlink(missing_ok=True)
-
-            ds = xarray.open_dataset(
-                infile,
-                engine="cfgrib",
-                chunks="auto",
-            )
-
-            encoding = {var: dict(zlib=True) for var in ds.data_vars}
-            encoding["time"] = {"dtype": "single"}
-            tmpfile = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
-
-            with ProgressBar():
-                print("converting ", infile.name)
-                ds.to_netcdf(
-                    tmpfile.name, format="NETCDF4", engine="netcdf4", encoding=encoding
-                )
-
-            shutil.move(
-                tmpfile.name,
-                output_folder.joinpath(infile.name.replace(".grib", ".nc")).as_posix(),
-            )
-
-        except ValueError:
-            print(f"error converting {infile.name} : File may be corrupted")
-
-    if source is None:
-        source = Path().cwd().joinpath("download")
-    if target is None:
-        target = Path().cwd().joinpath("converted")
-
-    all_files = Path(source).glob("*.grib2")
-
-    target = Path(target)
-    target.mkdir(exist_ok=True)
-
-    p = multiprocessing.Pool(processes=processes)
-
-    combs = list(it.product(*[all_files, [target]]))
-    p.map(_tigge_convert, combs)
-    p.close()
-    p.join()

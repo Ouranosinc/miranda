@@ -84,8 +84,8 @@ def date_parser(
     date: str,
     *,
     end_of_period: bool = False,
-    out_dtype: str = "str",
-    strtime_format: str = "%Y-%m-%d",
+    output_type: str = "str",
+    strtime_format: str = "%Y-%m-%d"
 ) -> Union[str, pd.Timestamp, NaTType]:
     """Returns a datetime from a string.
 
@@ -95,10 +95,10 @@ def date_parser(
       Date to be converted.
     end_of_period : bool
       If True, the date will be the end of month or year depending on what's most appropriate.
-    out_dtype: {"datetime", "str"}
+    output_type: {"datetime", "str"}
       Returned object type.
     strtime_format: str
-      If out_dtype=='str', this sets the strftime format.
+      If output_type=='str', this sets the strftime format.
 
     Returns
     -------
@@ -176,7 +176,7 @@ def date_parser(
             date = date + pd.tseries.offsets.MonthEnd(1)
         # TODO: Implement sub-daily?
 
-    if out_dtype == "str":
+    if output_type == "str":
         return date.strftime(strtime_format)
 
     return date

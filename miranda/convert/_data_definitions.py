@@ -3,11 +3,11 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 
-from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 
 from ._data import (
+    era5_variables,
     nasa_ag_variables,
     nrcan_variables,
     sc_earth_variables,
@@ -32,7 +32,7 @@ def gather_era5_single_levels(path: Union[str, os.PathLike]) -> Dict[str, List[P
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
     infiles_era5 = list()
-    for v in ecmwf_variables:
+    for v in era5_variables:
         infiles_era5.extend(list(sorted(source_era5.rglob(f"{v}_*.nc"))))
     logging.info(
         f"Found {len(infiles_era5)} files, totalling {report_file_size(infiles_era5)}."
@@ -46,7 +46,6 @@ def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
     except StopIteration:
         logging.error("No land_sea_mask found for ERA5.")
         raise FileNotFoundError()
-
     return land_sea_mask
 
 
@@ -55,7 +54,7 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     source_era5l = Path(path)
     logging.info("Gathering ERA5-Land from %s" % source_era5l.as_posix())
     infiles_era5l = list()
-    for v in ecmwf_variables:
+    for v in era5_variables:
         infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}_*.nc"))))
     logging.info(
         f"Found {len(infiles_era5l)} files, totalling {report_file_size(infiles_era5l)}."
@@ -86,7 +85,6 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     logging.info(
         f"Found {len(infiles_agcfsr)} files, totalling {report_file_size(infiles_agcfsr)}."
     )
-
     return dict(cfsr=infiles_agcfsr)
 
 
@@ -113,7 +111,6 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
     logging.info(
         f"Found {len(infiles_wfdei)} files, totalling {report_file_size(infiles_wfdei)}."
     )
-
     return {"wfdei-gem-capa": infiles_wfdei}
 
 
@@ -129,5 +126,4 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     logging.info(
         f"Found {len(infiles_sc_earth)} files, totalling {report_file_size(infiles_sc_earth)}."
     )
-
     return {"wfdei-gem-capa": infiles_sc_earth}

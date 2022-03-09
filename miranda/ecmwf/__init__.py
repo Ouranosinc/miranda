@@ -1,15 +1,2 @@
-from ._ecmwf import *
-from ._namers import *
-from .tigge import *
-
-ecmwf_variables = [
-    "d2m",
-    "pev",
-    "sde",
-    "sd",
-    "sf",
-    "t2m",
-    "tp",
-    "u10",
-    "v10",
-]
+from ._era5 import *
+from ._tigge import *

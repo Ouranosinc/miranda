@@ -1,12 +1,16 @@
 import functools
+import logging
 import logging.config
 import multiprocessing
 import os
+import re
+import shutil
 from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Mapping, Optional, Tuple, Union
 
+import xarray as xr
 from cdsapi import Client
 
 from miranda.gis.subset import subsetting_domains
@@ -14,10 +18,20 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["request_ecmwf"]
+__all__ = ["request_era5", "rename_era5_files", "ERA5_PROJECT_NAMES"]
 
 
-def request_ecmwf(
+ERA5_PROJECT_NAMES = [
+    "era5-land",
+    "era5-land-monthly-means",
+    "era5-pressure-levels",
+    "era5-pressure-levels-preliminary-back-extension",
+    "era5-single-levels",
+    "era5-single-levels-preliminary-back-extension",
+]
+
+
+def request_era5(
     variables: Optional[Mapping[str, str]],
     projects: List[str],
     *,
@@ -33,7 +47,7 @@ def request_ecmwf(
     ----------
     variables: Mapping[str, str]
     projects : List[{"era5", "era5-land"}]
-    domain : {"GLOBAL", "AMNO", "CAN", "QC", "MTL"}
+    domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     output_folder : str or os.PathLike, optional
     year_start : int
     year_end : int, optional
@@ -163,3 +177,52 @@ def _request_direct_era(
             request_kwargs,
             netcdf_name,
         )
+
+
+def rename_era5_files(path: Union[os.PathLike, str]) -> None:
+    files = [f for f in Path(path).glob("*.nc")]
+    for f in files:
+        file_name = str(f.stem)
+
+        ds = xr.open_dataset(f, cache=False)
+        var = [d for d in ds.data_vars]
+        var_name = str(var[0])
+
+        try:
+            x = re.search(r"\d{6}", file_name)
+            date_found = x.group()
+        except AttributeError:
+            year = int(ds.isel(time=0).time.dt.year)
+            month = int(ds.isel(time=0).time.dt.month)
+            date_found = f"{year}{str(month).zfill(2)}"
+
+        names = file_name.split("_")
+        projects = [name for name in names if name in ERA5_PROJECT_NAMES]
+        if len(projects) == 1:
+            project = projects[0]
+        elif len(projects) > 1:
+            logging.warning(
+                f"More than one project identified for file {f.name}. Verify file naming."
+            )
+            continue
+        else:
+            continue
+
+        product = "reanalysis"
+        freq = "1hr"
+        domain = "NAM"
+        institute = "ecmwf"
+
+        new_name_parts = [
+            var_name,
+            freq,
+            institute,
+            project,
+            product,
+            domain,
+            date_found,
+        ]
+        new_name = f"{'_'.join(new_name_parts)}.nc"
+        logging.info(f"Moving {f.name} to {new_name}")
+
+        shutil.move(f, Path(path).joinpath(new_name))

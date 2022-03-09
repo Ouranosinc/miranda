@@ -9,7 +9,7 @@
   },
   "variable_entry": {
     "d2m": {
-      "_cf_variable_name": "td",
+      "_cf_variable_name": "tdps",
       "cell_methods": "time: mean",
       "long_name": "2 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",

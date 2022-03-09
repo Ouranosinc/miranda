@@ -1,6 +1,8 @@
 {
   "Header": {
     "Conventions": "CF-1.7 CMIP-6.2",
+    "data_specs_version": "00.00.01",
+    "institution": "DEH",
     "product": "station-obs",
     "realm": "land",
     "table_date": "2021-10-26",

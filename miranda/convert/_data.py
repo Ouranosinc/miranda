@@ -1,4 +1,5 @@
 __all__ = [
+    "era5_variables",
     "nasa_ag_variables",
     "nrcan_variables",
     "project_institutes",
@@ -7,10 +8,22 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
+
+era5_variables = [
+    "d2m",
+    "pev",
+    "sde",
+    "sd",
+    "sf",
+    "t2m",
+    "tp",
+    "u10",
+    "v10",
+]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
 nasa_ag_variables = ["prate", "rhstmax", "srad", "tavg", "tmax", "tmin", "wndpsd"]
-wfdei_gem_capa_variables = ["huss", "pr", "ps", "rlds", "rsds", "sfcWind", "tas"]
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
+wfdei_gem_capa_variables = ["huss", "pr", "ps", "rlds", "rsds", "sfcWind", "tas"]
 
 
 project_institutes = {
