@@ -232,9 +232,10 @@ class Decoder:
         del facets["history"]
 
         facets["date"] = date
-        facets["format"] = data[
-            "output_format"
-        ]  # FIXME: This should be adjusted in files.
+        try:  # FIXME: This should be adjusted in files.
+            facets["format"] = data["output_format"]
+        except KeyError:
+            facets["format"] = data["format"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["variable"] = variable
 
@@ -488,6 +489,7 @@ class Decoder:
         facets = dict()
         facets["activity"] = "ISIMP-FT"
         facets["date"] = date
+        facets["domain"] = "global"
         facets["co2_forcing_id"] = data["co2_forcing_id"]
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
@@ -518,6 +520,7 @@ class Decoder:
         facets = dict()
         facets["activity"] = "ISIMP-FT"
         facets["date"] = decode_file[-1]
+        facets["domain"] = "global"
         facets["co2_forcing_id"] = decode_file[4]
         facets["experiment"] = decode_file[2]
         facets["format"] = "netcdf"

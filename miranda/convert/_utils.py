@@ -142,7 +142,7 @@ def variable_conversion(
 
         # Add global attributes
         d.attrs.update(m["Header"])
-        d.attrs.update(dict(project=p, output_format=o))
+        d.attrs.update(dict(project=p, format=o))
 
         # Date-based versioning
         d.attrs.update(dict(version=VERSION))
