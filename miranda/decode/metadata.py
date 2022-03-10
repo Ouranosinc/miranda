@@ -4,6 +4,7 @@ import warnings
 from logging import config
 from os import PathLike
 from pathlib import Path
+from types import GeneratorType
 from typing import Dict, List, Optional, Union
 
 import netCDF4 as nc  # noqa
@@ -46,11 +47,11 @@ class Decoder:
     _file_facets = dict()
 
     def __init__(self, project: Optional[str]):
-        self.project = project
+        self.project = project.lower()
 
     def decode(
         self,
-        files: Union[Path, str, List[Union[str, os.PathLike]]],
+        files: Union[Path, str, List[Union[str, os.PathLike]], GeneratorType],
         method: str = "data",
         raise_error: bool = False,
     ):

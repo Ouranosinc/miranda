@@ -119,7 +119,10 @@ def structure_datasets(
     if isinstance(input_files, (Path, str)):
         input_files = Path(input_files)
         if input_files.is_dir():
-            input_files = sorted(list(input_files.glob(filename_pattern)))
+            if filename_pattern == "*.zarr":
+                input_files = sorted(list(input_files.glob(filename_pattern)))
+            else:
+                input_files = input_files.rglob(filename_pattern)
     elif isinstance(input_files, list):
         input_files = sorted(Path(p) for p in input_files)
     else:
