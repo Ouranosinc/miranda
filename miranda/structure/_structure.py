@@ -110,7 +110,8 @@ def structure_datasets(
     make_dirs:
       Make folder tree if it does not already exist. Default: False.
     filename_pattern: str
-      If given a path to a directory, will 'glob' with provided pattern.
+      If pattern ends with "zarr", will 'glob' with provided pattern.
+      Otherwise, will perform an 'rglob' (recursive) operation.
 
     Returns
     -------
@@ -119,7 +120,7 @@ def structure_datasets(
     if isinstance(input_files, (Path, str)):
         input_files = Path(input_files)
         if input_files.is_dir():
-            if filename_pattern == "*.zarr":
+            if filename_pattern.endswith("zarr"):
                 input_files = sorted(list(input_files.glob(filename_pattern)))
             else:
                 input_files = input_files.rglob(filename_pattern)

@@ -47,7 +47,7 @@ class Decoder:
     _file_facets = dict()
 
     def __init__(self, project: Optional[str]):
-        self.project = project.lower()
+        self.project = project
 
     def decode(
         self,
@@ -403,10 +403,10 @@ class Decoder:
 
         try:
             facets["domain"] = data["CORDEX_domain"].strip()
-        except AttributeError:
+        except KeyError:
             try:
                 facets["domain"] = data["ouranos_domain_name"].strip()
-            except AttributeError:
+            except KeyError:
                 msg = f"File {Path(file).name} has a nonstandard domain name."
                 logging.error(msg)
                 raise NotImplementedError(msg)

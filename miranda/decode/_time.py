@@ -34,6 +34,7 @@ TIME_UNITS_TO_FREQUENCY = {
     "mon": "mon",
     "monC": "monC",
     "Amon": "mon",
+    "Omon": "mon",
     "yearly": "yr",
     "years": "yr",
     "annual": "yr",

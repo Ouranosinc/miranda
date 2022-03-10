@@ -88,7 +88,7 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     Returns
     -------
     bool
-      Whether or not the current user shell has read privileges
+      Whether the current user shell has read privileges
     """
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
