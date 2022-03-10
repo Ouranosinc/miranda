@@ -3,7 +3,7 @@ from tempfile import tempdir
 
 from dask.distributed import Client
 
-from miranda.ecmwf import rechunk_ecmwf
+from miranda.convert import rechunk_reanalysis
 
 if __name__ == "__main__":
     step = "hourly"  # "daily
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         memory_limit="4GB",
         local_directory=Path(tempdir),
     ):
-        rechunk_ecmwf(
+        rechunk_reanalysis(
             project=target_project,
             input_folder=base_path,
             output_folder=new_path,

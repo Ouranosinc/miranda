@@ -13,7 +13,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "build_path_from_schema",
-    "guess_project",
     "structure_datasets",
 ]
 
@@ -47,8 +46,7 @@ def build_path_from_schema(
         )
         if hasattr(facets, "member"):
             return folder_tree / facets["member"]
-        else:
-            return folder_tree
+        return folder_tree
 
     elif facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
         GRIDDED_SCHEMA.validate(facets)

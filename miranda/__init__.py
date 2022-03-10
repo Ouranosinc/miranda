@@ -3,7 +3,7 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.2.0-beta"
 
 
-from miranda import (
+from . import (
     archive,
     convert,
     decode,
@@ -15,9 +15,8 @@ from miranda import (
     utils,
     validators,
 )
-from miranda.archive.archiver import archive_database
-
 from .archive import ops, remove
+from .archive.archiver import archive_database
 from .connect import Connection
 from .data import DataBase
 from .decode import Decoder

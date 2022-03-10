@@ -178,30 +178,30 @@ def size_division(
     file_limit: int = 0,
     check_name_repetition: bool = False,
     preserve_order: bool = False,
-):
+) -> List[list]:
     """Divide files according to size and number limits.
 
     Parameters
     ----------
     files_to_divide : Union[List, FileMeta, Path]
     size_limit : int
-        size limit of divisions in bytes (default: no limit).
+      size limit of divisions in bytes (default: no limit).
     file_limit : int
-        number of files limit of divisions (default: no limit).
+      number of files limit of divisions (default: no limit).
     check_name_repetition : bool
-        flag to prevent file name repetitions (default: off).
+      flag to prevent file name repetitions (default: off).
     preserve_order : bool
-        flag to force files to be restored in the order they are given
-        (default: off).
+      flag to force files to be restored in the order they are given
+      (default: off).
 
     Returns
     -------
-    out - 2d nested lists
-        list of divisions (each division is a list of FileMeta objects).
+    List[list]
+      list of divisions (each division is a list of FileMeta objects).
 
     """
 
-    divisions = []
+    divisions = list()
     for file_divide in files_to_divide:
         # If file paths are given, convert to FileMeta objects first
         if not isinstance(file_divide, FileMeta):
@@ -281,7 +281,7 @@ def report_file_size(
     file_path_or_bytes: Union[Path, str, int, List[Union[str, Path]], GeneratorType],
     use_binary: bool = True,
     significant_digits: int = 2,
-) -> str or None:
+) -> str:
     """
     This function will parse the contents of a list or generator of files and return the
     size in bytes of a file or a list of files in pretty formatted text.

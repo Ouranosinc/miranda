@@ -59,10 +59,12 @@ def create_remote_directory(
     None
 
     """
+    if isinstance(directory, str):
+        directory = Path(directory)
     logging.info(f"Creating remote path: {directory}")
 
     ownership = "0775"
-    command = f"mkdir -p -m {ownership} '{directory}'"
+    command = f"mkdir -p -m {ownership} '{directory.as_posix()}'"
     if isinstance(transport, (fabric.Connection, Connection)):
         with transport:
             transport.run(command)
@@ -151,28 +153,22 @@ def transfer_file(
             logging.info(f"Beginning transfer of {source_file}")
             transport.put(str(source_file), str(destination_file))
             logging.info(
-                "Transferred {} to {}".format(
-                    Path(destination_file).name, Path(destination_file).parent
-                )
+                f"Transferred { Path(destination_file).name} to {Path(destination_file).parent}"
             )
 
-        except SCPException or SSHException or IOError or OSError as e:
-            msg = 'File "{}" failed to be transferred: {}.'.format(
-                destination_file.name, e
-            )
+        except (SCPException, SSHException, OSError) as e:
+            msg = f'File "{destination_file.name}" failed to be transferred: {e}.'
             logging.warning(msg)
             return False
 
         logging.info(
-            "Transferred {} to {}".format(
-                Path(destination_file).name, Path(destination_file).parent
-            )
+            f"Transferred {Path(destination_file).name} to {Path(destination_file).parent}"
         )
 
     else:
         try:
             destination_file.write_bytes(source_file.read_bytes())
-        except Exception as e:
+        except (SCPException, SSHException, OSError) as e:
             msg = f'File "{source_file.name}" failed to be copied: {e}'
             logging.error(msg)
             return False

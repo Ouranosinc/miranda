@@ -80,8 +80,7 @@ class Decoder:
                     )
                     if raise_error:
                         raise
-                    else:
-                        continue
+                    continue
             else:
                 project = self.project
 
@@ -220,8 +219,7 @@ class Decoder:
             if field == "timedelta":
                 if potential_time in ["fx", "fixed"]:
                     return pd.NaT
-                else:
-                    return pd.to_timedelta(time_dictionary[potential_time])
+                return pd.to_timedelta(time_dictionary[potential_time])
             return time_dictionary[potential_time]
 
     @classmethod
