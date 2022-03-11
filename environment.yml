@@ -26,6 +26,7 @@ dependencies:
   - pint
   - pip
   - pre-commit
+  - pyessv
   - pyproj
   - pytest
   - pytest-runner

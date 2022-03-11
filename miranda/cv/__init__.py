@@ -1,13 +1,4 @@
-from ._institutions import *
-from ._models import *
-from .cmip import *
-from .cmip import CMIP6_ACTIVITIES
-from .cordex import *
-
-ACTIVITIES = list()
-ACTIVITIES.extend(CMIP6_ACTIVITIES)
-ACTIVITIES.extend(["ERA"])
-
+from ._controlled_vocabulary import *
 
 WCRP_FREQUENCIES = [
     "subhrPt",

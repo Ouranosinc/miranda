@@ -15,6 +15,7 @@ numpy
 pandas
 paramiko>=2.6.0
 pint
+pyessv
 pyproj
 rasterio
 regionmask
