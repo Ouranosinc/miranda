@@ -14,6 +14,7 @@ __all__ = [
     "get_chunks_on_disk",
     "add_ar6_regions",
     "daily_aggregation",
+    "delayed_write",
     "variable_conversion",
 ]
 

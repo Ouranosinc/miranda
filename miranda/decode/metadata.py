@@ -273,7 +273,7 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = data.experiment_id
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+        facets["frequency"] = data.frequency
         facets["institution"] = data.institution_id
         facets["member"] = data.variant_label
         facets["modeling_realm"] = data.realm
