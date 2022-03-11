@@ -12,7 +12,7 @@ import pandas as pd
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
-from miranda.metadata import PROJECT_MODELS
+from miranda.cv import PROJECT_MODELS
 from miranda.scripting import LOGGING_CONFIG
 from miranda.validators import FACETS_SCHEMA
 

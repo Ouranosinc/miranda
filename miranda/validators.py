@@ -4,7 +4,7 @@ import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
-from miranda.metadata import ACTIVITIES, INSTITUTIONS, WCRP_FREQUENCIES
+from miranda.cv import ACTIVITIES, INSTITUTIONS, WCRP_FREQUENCIES
 
 TYPE_NAMES = ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"]
 PROCESSING_LEVELS = ["raw", "biasadjusted"]

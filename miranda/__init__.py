@@ -6,10 +6,10 @@ __version__ = "0.2.0-beta"
 from . import (
     archive,
     convert,
+    cv,
     decode,
     eccc,
     ecmwf,
-    metadata,
     scripting,
     units,
     utils,
