@@ -254,17 +254,17 @@ def file_size(
     try:
         if isinstance(file_path_or_bytes, int):
             total = file_path_or_bytes
+        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
+            total = reduce(
+                (lambda x, y: x + y),
+                map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
+            )
         elif Path(file_path_or_bytes).is_file():
             total = Path(file_path_or_bytes).stat().st_size
         elif Path(file_path_or_bytes).is_dir():
             total = reduce(
                 (lambda x, y: x + y),
                 [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")],
-            )
-        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
-            total = reduce(
-                (lambda x, y: x + y),
-                map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
             )
         else:
             raise FileNotFoundError
