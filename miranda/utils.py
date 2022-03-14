@@ -14,6 +14,7 @@ logging.config.dictConfig(scripting.LOGGING_CONFIG)
 __all__ = [
     "chunk_iterables",
     "creation_date",
+    "filefolder_iterator",
     "find_filepaths",
     "ingest",
     "list_paths_with_elements",
@@ -22,6 +23,37 @@ __all__ = [
     "working_directory",
     "yesno_prompt",
 ]
+
+
+def filefolder_iterator(
+    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
+    pattern: str,
+) -> Union[List[os.PathLike], GeneratorType]:
+    """
+
+    Parameters
+    ----------
+    input_files: str or Path or List[Union[str, Path]] or GeneratorType
+    pattern: str
+
+    Returns
+    -------
+
+    """
+    if isinstance(input_files, (Path, str)):
+        input_files = Path(input_files)
+        if input_files.is_dir():
+            if pattern.endswith("zarr"):
+                input_files = sorted(list(input_files.glob(pattern)))
+            else:
+                input_files = input_files.rglob(pattern)
+    elif isinstance(input_files, list):
+        input_files = sorted(Path(p) for p in input_files)
+    elif isinstance(input_files, GeneratorType):
+        pass
+    else:
+        raise NotImplementedError(f"input_files: {type(input_files)}")
+    return input_files
 
 
 def ingest(files: Union[GeneratorType, List]) -> List:

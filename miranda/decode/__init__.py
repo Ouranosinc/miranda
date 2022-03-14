@@ -1,2 +1,2 @@
+from ._decoder import *
 from ._time import *
-from .metadata import *

@@ -3,10 +3,12 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from types import GeneratorType
+from typing import Iterable, List, Mapping, Optional, Union
 
 from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG
+from miranda.utils import filefolder_iterator
 from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -48,7 +50,7 @@ def build_path_from_schema(
             return folder_tree / facets["member"]
         return folder_tree
 
-    elif facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
+    if facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
         GRIDDED_SCHEMA.validate(facets)
         return (
             Path(output_folder)
@@ -60,13 +62,13 @@ def build_path_from_schema(
             / facets["frequency"]
             / facets["variable"]
         )
-    elif facets["type"] == "simulation":
+
+    if facets["type"] == "simulation":
         SIMULATION_SCHEMA.validate(facets)
         if facets["project"] == "CORDEX":
             model = facets["driving_model"]
         else:
             model = facets["member"]
-
         return (
             Path(output_folder)
             / facets["type"]
@@ -82,9 +84,11 @@ def build_path_from_schema(
             / facets["variable"]
         )
 
+    raise ValueError("No appropriate data schemas found.")
+
 
 def structure_datasets(
-    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]]],
+    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
     output_folder: Union[str, os.PathLike],
     *,
     project: Optional[str] = None,
@@ -98,7 +102,7 @@ def structure_datasets(
 
     Parameters
     ----------
-    input_files: str or Path or list of str or Path
+    input_files: str or Path or list of str or Path or GeneratorType
     output_folder: str or Path
     project: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis"}, optional
     guess: bool
@@ -117,23 +121,20 @@ def structure_datasets(
     -------
     dict
     """
-    if isinstance(input_files, (Path, str)):
-        input_files = Path(input_files)
-        if input_files.is_dir():
-            if filename_pattern.endswith("zarr"):
-                input_files = sorted(list(input_files.glob(filename_pattern)))
-            else:
-                input_files = input_files.rglob(filename_pattern)
-    elif isinstance(input_files, list):
-        input_files = sorted(Path(p) for p in input_files)
-    else:
-        raise NotImplementedError()
+    input_files = filefolder_iterator(input_files, filename_pattern)
 
     if not project and guess:
-        project = guess_project(input_files[0])
-
-    decoder = Decoder(project)
-    decoder.decode(input_files)
+        for f in input_files:
+            project = guess_project(f)
+            decoder = Decoder(project)
+            decoder.decode(f)
+            break
+        else:
+            raise FileNotFoundError()
+        decoder.decode(input_files)
+    else:
+        decoder = Decoder(project)
+        decoder.decode(input_files)
 
     all_file_paths = dict()
     for file, facets in decoder.file_facets().items():

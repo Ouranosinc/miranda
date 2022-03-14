@@ -1,6 +1,6 @@
 import pyessv
 
-from ..ecmwf._era5 import ERA5_PROJECT_NAMES  # noqa
+from miranda.ecmwf._era5 import ERA5_PROJECT_NAMES  # noqa
 
 __all__ = [
     "ACTIVITIES",
@@ -14,9 +14,30 @@ __all__ = [
     "INSTITUTIONS",
     "PROJECT_MODELS",
     "REANALYSIS_ACTIVITIES",
+    "WCRP_FREQUENCIES",
     "WCRP_INSTITUTIONS",
 ]
 
+
+WCRP_FREQUENCIES = [
+    "subhrPt",
+    "1hr",
+    "1hrCM",
+    "1hrPt",
+    "3hr",
+    "3hrPt",
+    "6hr",
+    "6hrPt",
+    "day",
+    "sem",
+    "mon",
+    "monC",
+    "monPT",
+    "yr",
+    "yrPt",
+    "dec",
+    "fx",
+]
 
 # Controlled Vocabularies supplied via pyessv
 
@@ -47,8 +68,15 @@ CORDEX_MODELS = list()
 CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_name.terms])
 CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_model.terms])
 CORDEX_MODELS.extend(
-    ["UQAM-CRCM5", "UQAM-CRCM5-SN"]
-)  # Needed for internal-ish CORDEX data
+    ["UQAM-CRCM5", "UQAM-CRCM5-SN"]  # Needed for internal-ish CORDEX data
+)
+
+# Time Frequencies
+
+WCRP_FREQUENCIES = list()
+CMIP5_FREQUENCIES = [f.raw_name for f in CMIP5.time_frequency.terms]
+CMIP6_FREQUENCIES = [f.raw_name for f in CMIP6.frequency.terms]
+CORDEX_FREQUENCIES = [f.raw_name for f in CMIP5.time_frequency.terms]
 
 REANALYSIS = list()
 REANALYSIS.extend(ERA5_PROJECT_NAMES)
