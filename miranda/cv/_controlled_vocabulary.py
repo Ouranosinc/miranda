@@ -27,7 +27,7 @@ CORDEX_ADJUST = pyessv.WCRP.CORDEX_ADJUST  # noqa
 
 # Institutes
 
-CMIP5_INSTITUTES = [f.raw_name for f in CMIP5.institution_id.terms]
+CMIP5_INSTITUTES = [f.raw_name for f in CMIP5.institute.terms]
 CMIP6_INSTITUTES = [f.raw_name for f in CMIP6.institution_id.terms]
 CORDEX_INSTITUTES = [f.raw_name for f in CORDEX.institute.terms]
 CORDEX_ADJUST_INSTITUTES = [f.raw_name for f in CORDEX_ADJUST.institute.terms]
