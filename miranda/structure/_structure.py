@@ -4,7 +4,7 @@ import shutil
 import sys
 from pathlib import Path
 from types import GeneratorType
-from typing import Iterable, List, Mapping, Optional, Union
+from typing import List, Mapping, Optional, Union
 
 from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG

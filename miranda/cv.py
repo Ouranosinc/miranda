@@ -18,27 +18,6 @@ __all__ = [
     "WCRP_INSTITUTIONS",
 ]
 
-
-WCRP_FREQUENCIES = [
-    "subhrPt",
-    "1hr",
-    "1hrCM",
-    "1hrPt",
-    "3hr",
-    "3hrPt",
-    "6hr",
-    "6hrPt",
-    "day",
-    "sem",
-    "mon",
-    "monC",
-    "monPT",
-    "yr",
-    "yrPt",
-    "dec",
-    "fx",
-]
-
 # Controlled Vocabularies supplied via pyessv
 
 CMIP5 = pyessv.WCRP.CMIP5  # noqa

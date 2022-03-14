@@ -36,12 +36,20 @@ project_institutes = {
     "wfdei-gem-capa": "usask",
 }
 
-# map xarray freq to CMIP6 controlled vocabulary.
-# see: https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/CMIP6_frequency.json
+# Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
+# see: https://github.com/ES-DOC/pyessv-archive
 xarray_frequencies_to_cmip6like = {
-    "H": "hr",
+    "H": "1hr",
+    "3H": "3hr",
+    "6H": "6hr",
     "D": "day",
+    "W": "sem",
+    "7D": "sem",
     "M": "mon",
-    "A": "yr",
+    "3OD": "mon",
     "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
+    "A": "yr",
+    "Y": "yr",
+    "10A": "dec",
+    "10Y": "dec",
 }
