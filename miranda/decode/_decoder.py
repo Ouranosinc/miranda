@@ -33,25 +33,6 @@ __all__ = [
 ]
 
 
-def _decoder(d: dict, m: str, fail_early: bool, proj: str, lock, file: str):
-    with lock:
-        if proj is None:
-            try:
-                proj = guess_project(file)
-            except DecoderError:
-                print(
-                    f"Unable to determine 'project': Signature for 'project' must be set manually for file: {file}."
-                )
-                if fail_early:
-                    raise
-
-        _deciphered = getattr(Decoder, f"decode_{proj.lower()}_{m}")(Path(file))
-        FACETS_SCHEMA.validate(_deciphered)
-
-        print(f"Deciphered the following from {file}: {_deciphered.items()}")
-        d[file] = _deciphered
-
-
 def guess_project(file: Union[os.PathLike, str]) -> str:
     file_name = Path(file).stem
 
@@ -69,6 +50,25 @@ class Decoder:
 
     def __init__(self, project: Optional[str]):
         self.project = project
+
+    @staticmethod
+    def _decoder(d: dict, m: str, fail_early: bool, proj: str, lock, file: str):
+        with lock:
+            if proj is None:
+                try:
+                    proj = guess_project(file)
+                except DecoderError:
+                    print(
+                        f"Unable to determine 'project': Signature for 'project' must be set manually for file: {file}."
+                    )
+                    if fail_early:
+                        raise
+
+            _deciphered = getattr(Decoder, f"decode_{proj.lower()}_{m}")(Path(file))
+            FACETS_SCHEMA.validate(_deciphered)
+
+            print(f"Deciphered the following from {file}: {_deciphered.items()}")
+            d[file] = _deciphered
 
     def decode(
         self,
@@ -98,34 +98,14 @@ class Decoder:
         lock = manager.Lock()
 
         pool = mp.Pool()
-        func = partial(_decoder, _file_facets, method, raise_error, self.project, lock)
+        func = partial(
+            self._decoder, _file_facets, method, raise_error, self.project, lock
+        )
         pool.map(func, [f for f in files])
         pool.close()
         pool.join()
 
         self._file_facets.update(_file_facets)
-
-        # for file in files:
-        #     if self.project is None:
-        #         try:
-        #             project = guess_project(file)
-        #         except DecoderError:
-        #             logging.error(
-        #                 f"Unable to determine 'project': Signature for 'project' must be set manually for file: {file}."
-        #             )
-        #             if raise_error:
-        #                 raise
-        #             continue
-        #     else:
-        #         project = self.project
-        #
-        #     _file_facets[file] = getattr(self, f"decode_{project.lower()}_{method}")(
-        #         Path(file)
-        #     )
-        #     FACETS_SCHEMA.validate(_file_facets[file])
-        #     logging.info(
-        #         f"Deciphered the following from {file}: {_file_facets[file].items()}"
-        #     )
 
     def facets_table(self):
         raise NotImplementedError()
