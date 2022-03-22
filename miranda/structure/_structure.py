@@ -22,7 +22,9 @@ __all__ = [
 ]
 
 
-def _structure_datasets(in_file: Path, out_path: Path, method: str, dry_run: bool = False):
+def _structure_datasets(
+    in_file: Path, out_path: Path, method: str, dry_run: bool = False
+):
     method_mod = ""
     if in_file.is_dir():
         method_mod = "tree"
@@ -39,9 +41,7 @@ def _structure_datasets(in_file: Path, out_path: Path, method: str, dry_run: boo
                     getattr(shutil, f"{method}{method_mod}")(in_file, output_file)
             logging.info(f"{meth} {in_file.name} to {output_file}.")
         except FileExistsError:
-            logging.warning(
-                f"{in_file.name} already exists at location. Continuing..."
-            )
+            logging.warning(f"{in_file.name} already exists at location. Continuing...")
 
 
 def build_path_from_schema(
@@ -173,9 +173,7 @@ def structure_datasets(
     # multiprocessing copy
     func = partial(_structure_datasets, dict(method=method, dry_run=dry_run))
     pool = multiprocessing.Pool()
-    pool.starmap(
-        func, zip(all_file_paths.keys(), all_file_paths.values())
-    )
+    pool.starmap(func, zip(all_file_paths.keys(), all_file_paths.values()))
     pool.close()
     pool.join()
 
