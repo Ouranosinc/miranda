@@ -123,6 +123,7 @@ def structure_datasets(
     -------
     dict
     """
+
     def _structure_datasets(in_file, out_path, m):
         method_mod = ""
         if in_file.is_dir():
@@ -170,7 +171,9 @@ def structure_datasets(
 
     # multiprocessing copy
     pool = multiprocessing.Pool()
-    pool.starmap(_structure_datasets, zip(all_file_paths.keys(), all_file_paths.values()))
+    pool.starmap(
+        _structure_datasets, zip(all_file_paths.keys(), all_file_paths.values())
+    )
     pool.close()
     pool.join()
 
