@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import shutil
 import sys
+from functools import partial
 from pathlib import Path
 from types import GeneratorType
 from typing import List, Mapping, Optional, Union
@@ -19,6 +20,28 @@ __all__ = [
     "build_path_from_schema",
     "structure_datasets",
 ]
+
+
+def _structure_datasets(in_file: Path, out_path: Path, method: str, dry_run: bool = False):
+    method_mod = ""
+    if in_file.is_dir():
+        method_mod = "tree"
+    if method.lower() in ["move", "copy"]:
+        meth = "Moved" if method.lower() == "move" else "Copied"
+        output_file = out_path.joinpath(in_file.name)
+        try:
+            if not dry_run:
+                if sys.version_info < (3, 9):
+                    getattr(shutil, f"{method}{method_mod}")(
+                        str(in_file), str(output_file)
+                    )
+                else:
+                    getattr(shutil, f"{method}{method_mod}")(in_file, output_file)
+            logging.info(f"{meth} {in_file.name} to {output_file}.")
+        except FileExistsError:
+            logging.warning(
+                f"{in_file.name} already exists at location. Continuing..."
+            )
 
 
 def build_path_from_schema(
@@ -123,28 +146,6 @@ def structure_datasets(
     -------
     dict
     """
-
-    def _structure_datasets(in_file, out_path, m):
-        method_mod = ""
-        if in_file.is_dir():
-            method_mod = "tree"
-        if m.lower() in ["move", "copy"]:
-            meth = "Moved" if m.lower() == "move" else "Copied"
-            output_file = out_path.joinpath(in_file.name)
-            try:
-                if not dry_run:
-                    if sys.version_info < (3, 9):
-                        getattr(shutil, f"{m}{method_mod}")(
-                            str(in_file), str(output_file)
-                        )
-                    else:
-                        getattr(shutil, f"{m}{method_mod}")(in_file, output_file)
-                logging.info(f"{meth} {in_file.name} to {output_file}.")
-            except FileExistsError:
-                logging.warning(
-                    f"{in_file.name} already exists at location. Continuing..."
-                )
-
     input_files = filefolder_iterator(input_files, filename_pattern)
     if not project and guess:
         # Examine the first file from a list or generator
@@ -170,9 +171,10 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     # multiprocessing copy
+    func = partial(_structure_datasets, dict(method=method, dry_run=dry_run))
     pool = multiprocessing.Pool()
     pool.starmap(
-        _structure_datasets, zip(all_file_paths.keys(), all_file_paths.values())
+        func, zip(all_file_paths.keys(), all_file_paths.values())
     )
     pool.close()
     pool.join()
