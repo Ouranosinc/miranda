@@ -8,7 +8,15 @@ from typing import Dict, Optional, Union
 import netCDF4
 import numpy as np
 import regionmask
-import xarray
+import xarray as xr
+import zarr
+from clisops.core import subset
+from xclim.core import calendar, units
+from xclim.indices import tas
+
+from miranda.scripting import LOGGING_CONFIG
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "get_chunks_on_disk",
@@ -17,18 +25,6 @@ __all__ = [
     "delayed_write",
     "variable_conversion",
 ]
-
-
-import xarray as xr
-import zarr
-from clisops.core import subset
-from xarray import Dataset
-from xclim.core import calendar, units
-from xclim.indices import tas
-
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
 
 LATLON_COORDINATE_PRECISION = dict()
 LATLON_COORDINATE_PRECISION["era5-land"] = 4
@@ -57,7 +53,7 @@ def get_chunks_on_disk(nc_file: Union[os.PathLike, str]) -> dict:
     return chunks
 
 
-def add_ar6_regions(ds: xarray.Dataset) -> xarray.Dataset:
+def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     """Add the IPCC AR6 Regions to dataset.
 
     Parameters
@@ -73,12 +69,10 @@ def add_ar6_regions(ds: xarray.Dataset) -> xarray.Dataset:
     return ds
 
 
-def variable_conversion(
-    ds: xarray.Dataset, project: str, output_format: str
-) -> xarray.Dataset:
+def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
 
-    def _correct_units_names(d: xarray.Dataset, p: str, m: Dict):
+    def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
@@ -86,14 +80,16 @@ def variable_conversion(
         return d
 
     # for de-accumulation or conversion to flux
-    def _transform(d: xarray.Dataset, p: str, m: Dict):
+    def _transform(d: xr.Dataset, p: str, m: Dict):
         key = "_transformation"
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 if m["variable_entry"][vv][key][p] == "deaccumulate":
-                    freq = xr.infer_freq(ds.time)
                     try:
+                        freq = xr.infer_freq(ds.time)
+                        if freq is None:
+                            raise TypeError()
                         offset = (
                             float(calendar.parse_offset(freq)[0])
                             if calendar.parse_offset(freq)[0] != ""
@@ -122,7 +118,7 @@ def variable_conversion(
                     d_out[out.name] = out
                 else:
                     raise NotImplementedError(
-                        f"Unknown transformation " f"{m['variable_entry'][vv][key][p]}"
+                        f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
                     )
 
             else:
@@ -130,16 +126,14 @@ def variable_conversion(
         return d_out
 
     # For converting variable units to standard workflow units
-    def _units_cf_conversion(d: xarray.Dataset, m: Dict) -> xarray.Dataset:
+    def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
         descriptions = m["variable_entry"]
         for v in d.data_vars:
             d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
         return d
 
     # Add and update existing metadata fields
-    def _metadata_conversion(
-        d: xarray.Dataset, p: str, o: str, m: Dict
-    ) -> xarray.Dataset:
+    def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
 
         # Add global attributes
         d.attrs.update(m["Header"])
@@ -173,7 +167,7 @@ def variable_conversion(
         return d
 
     # For renaming lat and lon dims
-    def _dims_conversion(d: xarray.Dataset):
+    def _dims_conversion(d: xr.Dataset):
         sort_dims = []
         for orig, new in dict(longitude="lon", latitude="lat").items():
             try:
@@ -207,7 +201,7 @@ def variable_conversion(
     return ds
 
 
-def daily_aggregation(ds) -> Dict[str, Dataset]:
+def daily_aggregation(ds) -> Dict[str, xr.Dataset]:
     logging.info("Creating daily upscaled climate variables.")
 
     daily_dataset = dict()
@@ -333,7 +327,7 @@ def threshold_land_sea_mask(
 
 
 def delayed_write(
-    ds: xarray.Dataset,
+    ds: xr.Dataset,
     outfile: Path,
     target_chunks: dict,
     output_format: str,

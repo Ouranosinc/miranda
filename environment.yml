@@ -24,9 +24,7 @@ dependencies:
   - pandas
   - paramiko >=2.6.0
   - pint
-  - pip
   - pre-commit
-  - pyessv
   - pyproj
   - pytest
   - pytest-runner
@@ -43,3 +41,6 @@ dependencies:
   - xarray
   - xclim
   - zarr
+  - pip
+  - pip:
+    - pyessv
