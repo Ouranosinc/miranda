@@ -7,7 +7,6 @@ from typing import Dict, List, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
-from miranda.utils import ingest
 
 dictConfig(LOGGING_CONFIG)
 Nested_List = List[List[Path]]
