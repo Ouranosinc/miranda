@@ -22,7 +22,6 @@ import pandas as pd
 import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
