@@ -1,3 +1,4 @@
+from os import getenv
 from pathlib import Path
 from tempfile import tempdir
 
@@ -10,8 +11,11 @@ if __name__ == "__main__":
     target_project = "era5-land"  # "era5-single-levels"
     outfmt = "nc"  # "zarr"
 
-    base_path = Path(f"/path/to/{target_project}/downloaded/")
-    new_path = Path(f"/path/to/{target_project}/rechunked/")
+    in_files = getenv("in")
+    out_files = getenv("out")
+
+    input_path = Path(in_files)
+    output_path = Path(out_files)
 
     with Client(
         n_workers=2,
@@ -22,8 +26,8 @@ if __name__ == "__main__":
     ):
         rechunk_reanalysis(
             project=target_project,
-            input_folder=base_path,
-            output_folder=new_path,
+            input_folder=input_path,
+            output_folder=output_path,
             time_step=step,
             output_format=outfmt,
         )

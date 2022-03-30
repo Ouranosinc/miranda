@@ -10,12 +10,12 @@ import fabric
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
-from miranda.utils import creation_date, ingest
+from miranda.utils import creation_date
 
 config.dictConfig(LOGGING_CONFIG)
 
 
-def file_emptier(*, file_list: List[Union[str, Path]]) -> None:
+def file_emptier(*, file_list: Union[List[Union[str, Path]], GeneratorType]) -> None:
     """
     Provided a list of file paths, will open and overwrite them in order to delete data while preserving the file name.
 
@@ -29,7 +29,8 @@ def file_emptier(*, file_list: List[Union[str, Path]]) -> None:
     None
     """
 
-    file_list = ingest(file_list)
+    file_list = [Path(f) for f in file_list]
+    file_list.sort()
 
     logging.info(
         f"Found {len(file_list)} files totalling {report_file_size(file_list)}."

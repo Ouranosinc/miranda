@@ -16,7 +16,6 @@ __all__ = [
     "creation_date",
     "filefolder_iterator",
     "find_filepaths",
-    "ingest",
     "list_paths_with_elements",
     "read_privileges",
     "single_item_list",
@@ -38,7 +37,7 @@ def filefolder_iterator(
 
     Returns
     -------
-
+    list or generator
     """
     if isinstance(input_files, (Path, str)):
         input_files = Path(input_files)
@@ -54,13 +53,6 @@ def filefolder_iterator(
     else:
         raise NotImplementedError(f"input_files: {type(input_files)}")
     return input_files
-
-
-def ingest(files: Union[GeneratorType, List]) -> List:
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
-    files.sort()
-    return files
 
 
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> List:

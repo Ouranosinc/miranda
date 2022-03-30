@@ -205,9 +205,10 @@ def _read_multiple_daily_summaries(
     station_meta = None
     datafull = None
 
-    files = ingest(files)
+    file_list = [Path(f) for f in files]
+    file_list.sort()
 
-    for f in files:
+    for f in file_list:
         station_meta, data = _read_single_daily_summaries(f)
         if datafull is None:
             datafull = data

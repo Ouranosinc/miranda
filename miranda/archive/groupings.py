@@ -25,13 +25,14 @@ __all__ = [
 
 
 def group_by_length(
-    files: Union[GeneratorType, List], size: int = 10
+    files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10
 ) -> List[List[Path]]:
     """
     This function groups files by an arbitrary number of file entries
     """
     logging.info(f"Creating groups of {size} files")
-    files = ingest(files)
+    files = [Path(f) for f in files]
+    files.sort()
     grouped_list = list()
     group = list()
     for i, f in enumerate(files):
@@ -49,7 +50,7 @@ def group_by_length(
 
 
 def group_by_deciphered_date(
-    files: Union[GeneratorType, List]
+    files: Union[GeneratorType, List[Union[str, Path]]]
 ) -> Dict[str, List[Path]]:
     """
     This function attempts to find a common date and groups files based on year and month
@@ -61,7 +62,8 @@ def group_by_deciphered_date(
         r"(?P<year>[0-9]{4})-?(?P<month>[0-9]{2})-?(?P<day>[0-9]{2})?.*\.(?P<suffix>nc)$"
     )
 
-    files = ingest(files)
+    files = [Path(f) for f in files]
+    files.sort()
     dates = dict()
     total = 0
     for f in files:
@@ -93,7 +95,7 @@ def group_by_deciphered_date(
 
 
 def group_by_size(
-    files: Union[GeneratorType, List], size: int = 10 * GiB
+    files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10 * GiB
 ) -> List[List[Path]]:
     """
     This function will group files up until a desired size and save it as a grouping within a list
@@ -104,7 +106,8 @@ def group_by_size(
         )
     )
 
-    files = ingest(files)
+    files = [Path(f) for f in files]
+    files.sort()
     grouped_list = list()
     group = list()
     total = 0
@@ -127,7 +130,7 @@ def group_by_size(
 
 
 def group_by_subdirectories(
-    files: Union[GeneratorType, List], within: str or Path = None
+    files: Union[GeneratorType, List[Union[str, Path]]], within: str or Path = None
 ) -> Dict[str, List[Path]]:
     """
     This function will group files based on the parent folder that they are located within.
@@ -135,7 +138,8 @@ def group_by_subdirectories(
     if not within:
         within = Path.cwd()
 
-    files = ingest(files)
+    files = [Path(f) for f in files]
+    files.sort()
     groups = dict()
     for f in files:
         group_name = Path(f).relative_to(within).parent
