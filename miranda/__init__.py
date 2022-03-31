@@ -11,6 +11,7 @@ from miranda import (
     eccc,
     ecmwf,
     hq,
+    ncar,
     ops,
     remove,
     scripting,
