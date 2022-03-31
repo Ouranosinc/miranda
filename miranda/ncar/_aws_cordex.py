@@ -10,6 +10,7 @@ import intake
 import schema
 import xarray as xr
 from dask.diagnostics import ProgressBar
+from xclim.core import calendar as xcal  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -49,6 +50,31 @@ _allowed_args = schema.Schema(
         ),
     }
 )
+
+
+# FIXME: Integrate this function to optionally correct on download/write
+def fix_cordex_na(ds):
+    """AWS-stored CORDEX datasets are all on the same standard calendar, this converts
+    the data back to the original calendar, removing added NaNs.
+
+    Credit: Pascal Bourgault (@aulemahal)
+    """
+    orig_calendar = ds.attrs.get("original_calendar", "standard")
+
+    if orig_calendar in ["365_day", "360_day"]:
+        logging.info(f"Converting calendar to {orig_calendar}")
+        ds = xcal.convert_calendar(ds, "noleap")  # drops Feb 29th
+        if orig_calendar == "360_day":
+            time = xcal.date_range_like(ds.time, calendar="360_day")
+            ds = ds.where(
+                ~ds.time.dt.dayofyear.isin([31, 90, 151, 243, 304]), drop=True
+            )
+            if ds.time.size != time.size:
+                raise ValueError(
+                    "I thought I had it woups. Conversion to 360_day failed."
+                )
+            ds["time"] = time
+    return ds
 
 
 def cordex_aws_download(
