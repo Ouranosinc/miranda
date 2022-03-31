@@ -4,7 +4,7 @@ import logging
 import logging.config
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import intake
 import schema
@@ -52,7 +52,7 @@ _allowed_args = schema.Schema(
 
 
 def cordex_aws_download(
-    target_folder: Union[str, Path], *, search: Dict[str, Union[str, list[str]]]
+    target_folder: Union[str, Path], *, search: Dict[str, Union[str, List[str]]]
 ):
     schema.Schema(_allowed_args).validate(search)
 
