@@ -34,3 +34,5 @@ dependencies:
   - pre-commit
   - autopep8
   - bumpversion
+  - intake
+  - schema

@@ -10,6 +10,7 @@ fiona
 geojson
 geopandas
 h5netcdf
+intake
 netCDF4
 numpy
 pandas
@@ -20,6 +21,7 @@ rasterio
 requests
 regionmask
 rioxarray
+schema
 scp
 shapely
 xarray
