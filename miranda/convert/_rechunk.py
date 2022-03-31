@@ -10,7 +10,8 @@ import zarr
 
 from miranda.scripting import LOGGING_CONFIG
 
-from ._data import era5_variables, project_institutes
+from . import reanalysis_project_institutes
+from ._data_definitions import era5_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -93,7 +94,7 @@ def rechunk_reanalysis(
 
         for file in sorted(
             input_folder.glob(
-                f"{variable}_{time_step}_{project_institutes[project]}_{project}_reanalysis_*.nc"
+                f"{variable}_{time_step}_{reanalysis_project_institutes[project]}_{project}_reanalysis_*.nc"
             )
         ):
             start = time.perf_counter()
@@ -166,7 +167,7 @@ def rechunk_reanalysis(
 
         files = sorted(
             (output_folder / "temp").glob(
-                f"{variable}_{time_step}_{project_institutes[project]}_{project}_reanalysis_*.zarr"
+                f"{variable}_{time_step}_{reanalysis_project_institutes[project]}_{project}_reanalysis_*.zarr"
             )
         )
 
@@ -186,7 +187,7 @@ def rechunk_reanalysis(
 
         merged_zarr = Path(
             output_folder
-            / f"{variable}_{time_step}_{project_institutes[project]}_{project}_reanalysis.zarr"
+            / f"{variable}_{time_step}_{reanalysis_project_institutes[project]}_{project}_reanalysis.zarr"
         )
         try:
             ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
