@@ -44,6 +44,7 @@ def get_chunks_on_disk(nc_file: Union[os.PathLike, str]) -> dict:
     dict
     """
     # FIXME: This does not support zarr
+    # TODO: This needs to be optimized for dask. See: https://github.com/Ouranosinc/miranda/pull/24/files#r840617216
     ds = netCDF4.Dataset(nc_file)
     chunks = dict()
     for v in ds.variables:

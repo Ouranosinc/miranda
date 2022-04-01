@@ -23,12 +23,14 @@ def _rechunk_configurator(project, time_step):
     # ~35 Mo chunks
     if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
         if time_step == "1hr":
+            # TODO: confirm new chunks.
             target_chunks = {
-                "time": 24 * 7,
-                "latitude": 225,
-                "longitude": 252,
+                "time": 24 * 7,  # "time": 24 * 30,
+                "latitude": 225,  # "lat" : 50
+                "longitude": 252,  # "lon" : 50
             }
         elif time_step == "day":
+            # TODO: confirm new chunks: target_chunks = {"time": 365, "latitude": 50, "longitude": 50}
             target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
         else:
             raise NotImplementedError()
