@@ -52,7 +52,6 @@ _allowed_args = schema.Schema(
 )
 
 
-# FIXME: Integrate this function to optionally correct on download/write
 def cordex_aws_calendar_correction(ds) -> Optional[xr.Dataset]:
     """AWS-stored CORDEX datasets are all on the same standard calendar, this converts
     the data back to the original calendar, removing added NaNs.
@@ -129,8 +128,7 @@ def cordex_aws_download(
                 if correct_times:
                     try:
                         ds = cordex_aws_calendar_correction(ds)
-                    except ValueError as e:
-                        logging.error(e)
+                    except ValueError:
                         logging.warning(
                             f"Calendar failed to convert for {member.values} and variable {var_out}. Skipping..."
                         )
