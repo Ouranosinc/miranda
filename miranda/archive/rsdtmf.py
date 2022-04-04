@@ -225,8 +225,9 @@ def rstdmf_divisions(
         else:
             files_for_rstdmf.append(file_to_restore)
     if not files_for_rstdmf:
-        logging.warning("All files are already on disk, or nonexistant.")
+        logging.warning("All files are already on disk or nonexistent.")
         return
+
     # Divide files to satisfy rstdmf constraints
     if (max_size_on_disk != 0) and (max_size_on_disk < rstdmf_size_limit):
         division_size_limit = max_size_on_disk

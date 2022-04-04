@@ -9,6 +9,7 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+import datetime
 import os
 import sys
 
@@ -59,7 +60,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Miranda"
-copyright = "2019, Trevor James Smith"
+copyright = f"2019-{datetime.date.today().year}, Trevor James Smith"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
