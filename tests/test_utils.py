@@ -2,8 +2,9 @@ import os
 from datetime import date
 from pathlib import Path
 
-import pytest
+import pytest  # noqa
 
+import miranda.eccc._utils as eccc_utils  # noqa
 from miranda import utils
 
 
@@ -25,21 +26,20 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = utils.eccc_cf_hourly_metadata(key)
+            variables[key] = eccc_utils.cf_hourly_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"] == "dry_bulb_temperature":
                 assert variables[key]["add_offset"] == 273.15
             else:
                 assert variables[key]["add_offset"] == 0
             assert variables[key]["missing_flags"] == "M"
-            assert variables[key]["least_significant_digit"] is None
 
         assert set(codes) == {
             "wind_speed_u2a",
             "atmospheric_pressure",
             "dry_bulb_temperature",
             "relative_humidity",
-            "rainfall_amount",
+            "rainfall_flux",
             "precipitation_flux",
         }
 
@@ -56,22 +56,21 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = utils.eccc_cf_daily_metadata(key)
+            variables[key] = eccc_utils.cf_daily_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"].startswith("air_temperature"):
                 assert variables[key]["add_offset"] == 273.15
             else:
                 assert variables[key]["add_offset"] == 0
             assert variables[key]["missing_flags"] == "M"
-            assert variables[key]["least_significant_digit"] is None
 
         assert set(codes) == {
             "air_temperature",
             "air_temperature_maximum",
             "air_temperature_minimum",
-            "precipitation_flux",
-            "liquid_precipitation_flux",
-            "solid_precipitation_flux",
+            "precipitation_amount",
+            "liquid_precipitation_amount",
+            "solid_precipitation_amount",
         }
 
 

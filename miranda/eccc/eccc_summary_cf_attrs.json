@@ -11,7 +11,7 @@
     },
     "variable_entry": {
         "pr": {
-            "original_field": "Total Precip (mm)",
+            "original_variable": "Total Precip (mm)",
             "frequency": "day",
             "standard_name": "precipitation_flux",
             "units": "kg m-2 s-1",
@@ -25,7 +25,7 @@
             "scale_factor": 1.1574074074074073e-05
         },
         "prsn": {
-            "original_field": "Total Snow (cm)",
+            "original_variable": "Total Snow (cm)",
             "frequency": "day",
             "standard_name": "snowfall_flux",
             "units": "kg m-2 s-1",
@@ -39,7 +39,7 @@
             "scale_factor": 1.1574074074074073e-05
         },
         "prlp": {
-            "original_field": "Total Rain (mm)",
+            "original_variable": "Total Rain (mm)",
             "frequency": "day",
             "standard_name": "rainfall_flux",
             "units": "kg m-2 s-1",
@@ -53,7 +53,7 @@
             "scale_factor": 1.1574074074074073e-05
         },
         "tas": {
-            "original_field": "Mean Temp (°C)",
+            "original_variable": "Mean Temp (°C)",
             "frequency": "day",
             "standard_name": "air_temperature",
             "units": "K",
@@ -67,7 +67,7 @@
             "scale_factor": 1
         },
         "tasmin": {
-            "original_field": "Min Temp (°C)",
+            "original_variable": "Min Temp (°C)",
             "frequency": "day",
             "standard_name": "air_temperature",
             "units": "K",
@@ -81,7 +81,7 @@
             "scale_factor": 1
         },
         "tasmax": {
-            "original_field": "Max Temp (°C)",
+            "original_variable": "Max Temp (°C)",
             "frequency": "day",
             "standard_name": "air_temperature",
             "units": "K",
@@ -95,7 +95,7 @@
             "scale_factor": 1
         },
         "sfcWindMax": {
-            "original_field": "Spd of Max Gust (km/h)",
+            "original_variable": "Spd of Max Gust (km/h)",
             "frequency": "day",
             "standard_name": "wind_speed_of_gust maximum",
             "units": "m s-1",
@@ -109,7 +109,7 @@
             "scale_factor": 0.2777777777777778
         },
         "sfcWindAz": {
-            "original_field": "Dir of Max Gust (10s deg)",
+            "original_variable": "Dir of Max Gust (10s deg)",
             "frequency": "day",
             "standard_name": "wind_direction",
             "units": "degree",
@@ -123,7 +123,7 @@
             "scale_factor": 1
         },
         "hdd": {
-            "original_field": "Heat Deg Days (°C)",
+            "original_variable": "Heat Deg Days (°C)",
             "frequency": "day",
             "standard_name": "heating_degree_days",
             "units": "C",
@@ -137,7 +137,7 @@
             "scale_factor": 1
         },
         "cdd": {
-            "original_field": "Heat Deg Days (°C)",
+            "original_variable": "Heat Deg Days (°C)",
             "frequency": "day",
             "standard_name": "cooling_degree_days",
             "units": "C",
@@ -151,7 +151,7 @@
             "scale_factor": 1
         },
         "snd": {
-            "original_field": "Snow on Grnd (cm)",
+            "original_variable": "Snow on Grnd (cm)",
             "frequency": "day",
             "standard_name": "surface_snow_thickness",
             "units": "m",

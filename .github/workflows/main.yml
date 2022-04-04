@@ -7,33 +7,39 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  lint_and_docs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [black, docs]
+        tox-env:
+          - black
+          - docs
     steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.7"
       - name: Install tox
         run: pip install tox
-      - name: Run linting suite
+      - name: Run lint and docs testing suite
         run: tox -e ${{ matrix.tox-env }}
 
   test:
-    needs: lint
+    needs: lint_and_docs
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - tox-env: py37
-            python-version: 3.7
+            python-version: "3.7"
           - tox-env: py38
-            python-version: 3.8
+            python-version: "3.8"
           - tox-env: py39
-            python-version: 3.9
+            python-version: "3.9"
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
