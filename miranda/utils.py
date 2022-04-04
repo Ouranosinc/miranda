@@ -250,26 +250,25 @@ def list_paths_with_elements(
     Parameters
     ----------
     base_paths : List[str]
-        list of paths from which to start the search.
+      list of paths from which to start the search.
     elements : List[str]
-        ordered list of the expected elements.
+      ordered list of the expected elements.
 
     Returns
     -------
     List[Dict]
-        the keys are 'path' and each of the members of the given elements,
-        the path is the absolute path.
+      The keys are 'path' and each of the members of the given elements, the path is the absolute path.
 
     Notes
     -----
-    Suppose you have the following structure:
-    /base_path/{color}/{shape}
-    The resulting list would look like:
-    [{'path':/base_path/red/square, 'color':'red', 'shape':'square'},
-     {'path':/base_path/red/circle, 'color':'red', 'shape':'circle'},
-     {'path':/base_path/blue/triangle, 'color':'blue', 'shape':'triangle'},
-     ...
-    ]
+    Suppose you have the following structure: /base_path/{color}/{shape}
+    The resulting list would look like::
+
+         [{'path':/base_path/red/square, 'color':'red', 'shape':'square'},
+         {'path':/base_path/red/circle, 'color':'red', 'shape':'circle'},
+         {'path':/base_path/blue/triangle, 'color':'blue', 'shape':'triangle'},
+         ...]
+
     Obviously, 'path' should not be in the input list of elements.
     """
 
