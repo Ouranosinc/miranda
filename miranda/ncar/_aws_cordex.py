@@ -4,7 +4,7 @@ import logging
 import logging.config
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import intake
 import schema
@@ -53,7 +53,7 @@ _allowed_args = schema.Schema(
 
 
 # FIXME: Integrate this function to optionally correct on download/write
-def fix_cordex_na(ds):
+def cordex_aws_calendar_correction(ds, return_ds: bool = True) -> Optional[xr.Dataset]:
     """AWS-stored CORDEX datasets are all on the same standard calendar, this converts
     the data back to the original calendar, removing added NaNs.
 
@@ -70,15 +70,18 @@ def fix_cordex_na(ds):
                 ~ds.time.dt.dayofyear.isin([31, 90, 151, 243, 304]), drop=True
             )
             if ds.time.size != time.size:
-                raise ValueError(
-                    "I thought I had it woups. Conversion to 360_day failed."
-                )
+                raise ValueError("Conversion of dataset to 360_day calendar failed.")
             ds["time"] = time
-    return ds
+
+    if return_ds:
+        return ds
 
 
 def cordex_aws_download(
-    target_folder: Union[str, Path], *, search: Dict[str, Union[str, List[str]]]
+    target_folder: Union[str, Path],
+    *,
+    search: Dict[str, Union[str, List[str]]],
+    correct_times: bool = False,
 ):
     schema.Schema(_allowed_args).validate(search)
 
@@ -125,13 +128,28 @@ def cordex_aws_download(
                         new_attrs[key] = vals[0]
 
                 years, datasets = zip(*ds.isel(member_id=i).groupby("time.year"))
+
+                failed = False
                 for d in datasets:
                     d.attrs.update(new_attrs)
+                    if correct_times:
+                        try:
+                            cordex_aws_calendar_correction(d, return_ds=False)
+                        except ValueError as e:
+                            logging.error(e)
+                            failed = True
+                            break
+
+                if failed:
+                    logging.warning(
+                        f"Calendar failed to convert for {member.values} and variable {var_out}. Skipping..."
+                    )
+                    continue
 
                 out_folder = target_folder.joinpath(f"{member.values}_{scen}")
                 out_folder.mkdir(exist_ok=True)
 
-                file_name_pattern = f"{var_out}_{member.values}_day_{scen}_{search['grid']}_{search['bias_correction']} "
+                file_name_pattern = f"{var_out}_{member.values}_day_{scen}_{search['grid']}_{search['bias_correction']}"
 
                 logging.info(f"Writing out files for {file_name_pattern}.")
                 paths = [
