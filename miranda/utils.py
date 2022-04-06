@@ -30,6 +30,12 @@ __all__ = [
     "yesno_prompt",
 ]
 
+# For datetime validation
+ISO_8601 = (
+    r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])"
+    r"T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$"
+)
+
 
 def ingest(files: Union[GeneratorType, List]) -> List:
     if isinstance(files, GeneratorType):

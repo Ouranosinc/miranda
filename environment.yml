@@ -34,3 +34,7 @@ dependencies:
   - pre-commit
   - autopep8
   - bumpversion
+  - intake
+  - intake-esm
+  - schema
+  - s3fs
