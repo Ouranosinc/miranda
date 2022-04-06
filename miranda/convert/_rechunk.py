@@ -54,16 +54,21 @@ def rechunk_reanalysis(
     Parameters
     ----------
     project : {"era5", "era5-land", "era5-single-levels"}
+      Supported reanalysis projects.
     input_folder : str or os.PathLike
+      Folder to be examined. Performs globbing.
     output_folder : str or os.PathLike
+      Target folder.
     time_step : {"1hr", "day"}, optional
       Time step of the input data. Parsed from filename if not set.
     target_chunks : dict
       Must include "time", optionally "latitude" and "longitude"
-    variables : Sequence[str]
+    variables : Sequence[str], optional
+      If no variables set, will attempt to process all variables supported based on project name.
     output_format : {"netcdf", "zarr"}
       Default: "zarr".
     overwrite : bool
+      Will overwrite files. For zarr, existing folders will be removed before writing.
 
     Returns
     -------
@@ -88,7 +93,7 @@ def rechunk_reanalysis(
         try:
             next(input_folder.glob(f"{variable}*"))
         except StopIteration:
-            logging.warning("No files found for %s. Continuing..." % variable)
+            logging.warning(f"No files found for {variable}. Continuing...")
             continue
 
         # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along the time dimension.
@@ -158,6 +163,9 @@ def rechunk_reanalysis(
             logging.info(f"Done for {file.stem} in {time.perf_counter() - start:.2f} s")
 
         if output_format == "netcdf":
+            logging.info(
+                f"{variable} rechunked in {(time.perf_counter() - start_all) / 3600:.2f} h"
+            )
             continue
 
         logging.info(
