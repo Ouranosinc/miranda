@@ -9,14 +9,18 @@
   },
   "variable_entry": {
     "d2m": {
-      "_cf_variable_name": "tdps",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "tdps"
+      },
       "cell_methods": "time: mean",
       "long_name": "2 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",
       "units": "K"
     },
     "pev": {
-      "_cf_variable_name": "evspsbl",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "evspsbl"
+      },
       "cell_methods": "time: mean",
       "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
       "long_name": "Potential evapotranspiration",
@@ -25,14 +29,18 @@
       "units": "kg m-2 s-1"
     },
     "sde": {
-      "_cf_variable_name": "snd",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "snd"
+      },
       "cell_methods": "time: mean",
       "long_name": "Snow depth",
       "standard_name": "surface_snow_thickness",
       "units": "m"
     },
     "sf": {
-      "_cf_variable_name": "prsn",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "prsn"
+      },
       "cell_methods": "time: mean",
       "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
       "long_name": "Snowfall flux",
@@ -41,14 +49,18 @@
       "units": "kg m-2 s-1"
     },
     "t2m": {
-      "_cf_variable_name": "tas",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "tas"
+      },
       "cell_methods": "time: mean",
       "long_name": "2 metre temperature",
       "standard_name": "air_temperature",
       "units": "K"
     },
     "tp": {
-      "_cf_variable_name": "pr",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "pr"
+      },
       "cell_methods": "time: mean",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
       "long_name": "Precipitation",
@@ -57,7 +69,9 @@
       "units": "kg m-2 s-1"
     },
     "u10": {
-      "_cf_variable_name": "uas",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "uas"
+      },
       "cell_methods": "time: mean",
       "comments": "Converted from 10 metre U wind component.",
       "long_name": "Snow Depth",
@@ -65,7 +79,9 @@
       "units": "m s-1"
     },
     "v10": {
-      "_cf_variable_name": "vas",
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "vas"
+      },
       "cell_methods": "time: mean",
       "comments": "Converted from 10 metre V wind component.",
       "long_name": "Snow Depth",

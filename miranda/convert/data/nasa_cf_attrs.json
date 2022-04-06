@@ -10,7 +10,10 @@
   },
   "variable_entry": {
     "prate": {
-      "_cf_variable_name": "pr",
+      "_cf_variable_name": {
+        "agcfsr": "pr",
+        "agmerra2": "pr"
+      },
       "_corrected_units": "mm d-1",
       "cell_methods": "time: mean",
       "long_name": "Precipitation rate",
@@ -18,14 +21,20 @@
       "units": "kg m-2 s-1"
     },
     "rhstmax": {
-      "_cf_variable_name": "hurs",
+      "_cf_variable_name": {
+        "agcfsr": "hurs",
+        "agmerra2": "hurs"
+      },
       "cell_methods": "time: point",
       "long_name": "Relative Humidity at time of Maximum Temperature",
       "standard_name": "relative_humidity",
       "units": "1"
     },
     "srad": {
-      "_cf_variable_name": "rxds",
+      "_cf_variable_name": {
+        "agcfsr": "rxds",
+        "agmerra2": "rxds"
+      },
       "_corrected_units": "MJ m-2 d-1",
       "cell_methods": "time: mean within days",
       "comment": "Combined longwave and shortwave radiation based on NASA/GEWEX SRB",
@@ -34,7 +43,10 @@
       "units": "W m-2 d-1"
     },
     "tavg": {
-      "_cf_variable_name": "tas",
+      "_cf_variable_name": {
+        "agcfsr": "tas",
+        "agmerra2": "tas"
+      },
       "_corrected_units": "degC",
       "cell_methods": "time: mean",
       "long_name": "Average temperature",
@@ -45,7 +57,10 @@
       "units": "days since 1980-01-01 12:00:00"
     },
     "tmax": {
-      "_cf_variable_name": "tasmax",
+      "_cf_variable_name": {
+        "agcfsr": "tasmax",
+        "agmerra2": "tasmax"
+      },
       "_corrected_units": "degC",
       "cell_methods": "time: maximum",
       "long_name": "Maximum temperature",
@@ -53,7 +68,10 @@
       "units": "K"
     },
     "tmin": {
-      "_cf_variable_name": "tasmin",
+      "_cf_variable_name": {
+        "agcfsr": "tasmin",
+        "agmerra2": "tasmin"
+      },
       "_corrected_units": "degC",
       "cell_methods": "time: minimum",
       "long_name": "Minimum temperature",
@@ -61,7 +79,10 @@
       "units": "K"
     },
     "wndspd": {
-      "_cf_variable_name": "sfcWind",
+      "_cf_variable_name": {
+        "agcfsr": "sfcWind",
+        "agmerra2": "sfcWind"
+      },
       "_corrected_units": "m s-1",
       "cell_methods": "time: point",
       "long_name": "Wind speed",

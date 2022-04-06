@@ -37,7 +37,7 @@ def load_json_data_mappings(project: str) -> dict:
 
     if project in ["era5-single-levels", "era5-land"]:
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
-    elif project in ["cfsr", "merra2"]:  # This should handle the AG versions:
+    elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         raise NotImplementedError()
     elif project == "nrcan-gridded-10km":
         raise NotImplementedError()
@@ -146,8 +146,13 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
     # For converting variable units to standard workflow units
     def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
         descriptions = m["variable_entry"]
+
+        if "time" in m["variable_entry"].keys():
+            d["time"]["units"] = m["variable_entry"]["time"]["units"]
+
         for v in d.data_vars:
             d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
+
         return d
 
     # Add and update existing metadata fields
