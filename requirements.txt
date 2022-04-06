@@ -10,7 +10,10 @@ fiona
 geojson
 geopandas
 h5netcdf
+intake
+intake-esm
 netCDF4
+numcodecs
 numpy
 pandas
 paramiko>=2.6.0
@@ -21,6 +24,7 @@ rasterio
 regionmask
 requests
 rioxarray
+s3fs
 schema
 scp
 shapely

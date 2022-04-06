@@ -10,6 +10,7 @@ from . import (
     decode,
     eccc,
     ecmwf,
+    ncar,
     scripting,
     units,
     utils,
