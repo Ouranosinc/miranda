@@ -17,6 +17,7 @@ __all__ = [
     "TIME_UNITS_TO_TIMEDELTA",
 ]
 
+# FIXME: This is causing decoding errors. Investigate.
 TIME_UNITS_TO_FREQUENCY = {
     "subhrPt": "sub-hr",
     "hourly": "1hr",
