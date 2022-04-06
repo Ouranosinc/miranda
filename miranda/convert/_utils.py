@@ -32,6 +32,23 @@ LATLON_COORDINATE_PRECISION["era5-land"] = 4
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 
+def load_json_data_mappings(project: str) -> dict:
+    data_folder = Path(__file__).parent / "data"
+
+    if project in ["era5-single-levels", "era5-land"]:
+        metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+    elif project in ["cfsr", "merra2"]:  # This should handle the AG versions:
+        raise NotImplementedError()
+    elif project == "nrcan-gridded-10km":
+        raise NotImplementedError()
+    elif project == "wfdei-gem-capa":
+        metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
+    else:
+        raise NotImplementedError()
+
+    return metadata_definition
+
+
 def get_chunks_on_disk(nc_file: Union[os.PathLike, str]) -> dict:
     """
 
@@ -186,13 +203,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
             d = d.sortby(sort_dims)
         return d
 
-    if project in ["era5-single-levels", "era5-land"]:
-        metadata_definition = json.load(
-            open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
-        )
-    else:
-        raise NotImplementedError()
-
+    metadata_definition = load_json_data_mappings(project)
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)

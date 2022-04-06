@@ -157,9 +157,8 @@ def rechunk_reanalysis(
                 errored.append(file)
                 continue
 
-            # Write yearly file
+            # Write out rechunked files at the same output frequencies as they were read.
             getattr(ds, f"to_{output_format}")(out, encoding=encoding)
-
             logging.info(f"Done for {file.stem} in {time.perf_counter() - start:.2f} s")
 
         if output_format == "netcdf":
