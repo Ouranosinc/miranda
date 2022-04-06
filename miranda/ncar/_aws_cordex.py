@@ -109,6 +109,8 @@ def cordex_aws_download(
     with ProgressBar():
         for ds in dds:
             scen = ds.attrs["experiment_id"]
+            grid = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-2]
+            bias_correction = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-1]
             for i, member in enumerate(ds.member_id):
                 for var in ds.variables:
                     if var in search["variable"]:
@@ -142,7 +144,9 @@ def cordex_aws_download(
                 out_folder = target_folder.joinpath(f"{member.values}_{scen}")
                 out_folder.mkdir(exist_ok=True)
 
-                file_name_pattern = f"{var_out}_{member.values}_day_{scen}_{search['grid']}_{search['bias_correction']}"
+                file_name_pattern = (
+                    f"{var_out}_{member.values}_day_{scen}_{grid}_{bias_correction}"
+                )
 
                 logging.info(f"Writing out files for {file_name_pattern}.")
                 paths = [
