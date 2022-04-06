@@ -11,6 +11,7 @@ geojson
 geopandas
 h5netcdf
 intake
+intake-esm
 netCDF4
 numpy
 pandas
@@ -21,6 +22,7 @@ rasterio
 requests
 regionmask
 rioxarray
+s3fs
 schema
 scp
 shapely

@@ -15,13 +15,13 @@ if __name__ == "__main__":
 
     out_files = getenv("out")
 
-    target_folder = Path(out_files)
+    target_folder = Path(out_files).expanduser()
 
     search = dict(
         variable=["tasmax", "tasmin", "tas", "pr"],
         scenario=["rcp45", "rcp85", "hist"],
-        grid="NAM-22i",
-        bias_correction="raw",
+        grid=["NAM-22i"],
+        bias_correction=["raw"],
     )
 
     cordex_aws_download(target_folder, search=search)
