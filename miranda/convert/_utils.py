@@ -92,9 +92,12 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
 
     def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
-        for vv in d.data_vars:
-            if p in m["variable_entry"][vv][key].keys():
-                d[vv].attrs["units"] = m["variable_entry"][vv][key][project]
+        variables = list(d.data_vars)
+        variables.append("time")
+
+        for v in variables:
+            if p in m["variable_entry"][v][key].keys():
+                d[v].attrs["units"] = m["variable_entry"][v][key][project]
         return d
 
     # for de-accumulation or conversion to flux
@@ -171,6 +174,9 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         )
         d.attrs.update(dict(history=history))
         descriptions = m["variable_entry"]
+
+        if "time" in m["variable_entry"].keys():
+            descriptions["time"].pop("_corrected_units")
 
         # Add variable metadata
         for v in d.data_vars:
