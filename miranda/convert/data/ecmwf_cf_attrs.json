@@ -11,17 +11,6 @@
     "type": "reanalysis"
   },
   "variable_entry": {
-    "_VERIFY_NAME_": {
-      "_cf_corrected_name": "ssd",
-      "_corrected_units": {},
-      "_transformation": {},
-      "cell_methods": "time: mean",
-      "comments": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
-      "long_name": "Surface snow density",
-      "original_long_name": "Snow density",
-      "standard_name": "surface_snow_density",
-      "units": "kg m-3"
-    },
     "d2m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {},
@@ -36,7 +25,8 @@
       "_corrected_units": {},
       "_transformation": {
         "era5-land": "deaccumulate",
-        "era5-single-levels": "amount2rate"
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean",
       "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
@@ -45,11 +35,27 @@
       "standard_name": "water_evapotranspiration_flux",
       "units": "kg m-2 s-1"
     },
+    "rsn": {
+      "_cf_corrected_name": "ssd",
+      "_corrected_units": {
+        "era5-land": "kg m-3",
+        "era5-single-levels": "kg m-3",
+        "era5-single-levels-preliminary-back-extension": "kg m-3"
+      },
+      "_transformation": {},
+      "cell_methods": "time: mean",
+      "comments": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
+      "long_name": "Surface snow density",
+      "original_long_name": "Snow density",
+      "standard_name": "surface_snow_density",
+      "units": "kg m-3"
+    },
     "sd": {
       "_cf_variable_name": "snw",
       "_corrected_units": {
         "era5-land": "Mg m-2",
-        "era5-single-levels": "Mg m-2"
+        "era5-single-levels": "Mg m-2",
+        "era5-single-levels-preliminary-back-extension": "Mg m-2"
       },
       "_transformation": {},
       "cell_methods": "time: mean",
@@ -72,11 +78,13 @@
       "_cf_variable_name": "prsn",
       "_corrected_units": {
         "era5-land": "m",
-        "era5-single-levels": "m"
+        "era5-single-levels": "m",
+        "era5-single-levels-preliminary-back-extension": "m"
       },
       "_transformation": {
         "era5-land": "deaccumulate",
-        "era5-single-levels": "amount2rate"
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean",
       "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
@@ -99,7 +107,8 @@
       "_corrected_units": {},
       "_transformation": {
         "era5-land": "deaccumulate",
-        "era5-single-levels": "amount2rate"
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",

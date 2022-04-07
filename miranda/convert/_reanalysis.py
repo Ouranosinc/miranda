@@ -62,7 +62,7 @@ def reanalysis_processing(
     output_folder: Union[str, os.PathLike]
     variables: Sequence[str]
     aggregate: {"day", None}
-    domains: {"QC", "CAN", "AMNO", "GLOBAL"}
+    domains: {"QC", "CAN", "AMNO", "NAM", "GLOBAL"}
     start: str, optional
     end: str, optional
     target_chunks: dict, optional
