@@ -14,7 +14,10 @@
         "agcfsr": "pr",
         "agmerra2": "pr"
       },
-      "_corrected_units": "mm d-1",
+      "_corrected_units": {
+        "agcfsr": "mm d-1",
+        "agmerra2": "mm d-1"
+      },
       "cell_methods": "time: mean",
       "long_name": "Precipitation rate",
       "standard_name": "precipitation_flux",
@@ -35,7 +38,10 @@
         "agcfsr": "rxds",
         "agmerra2": "rxds"
       },
-      "_corrected_units": "MJ m-2 d-1",
+      "_corrected_units": {
+        "agcfsr": "MJ m-2 d-1",
+        "agmerra2": "MJ m-2 d-1"
+      },
       "cell_methods": "time: mean within days",
       "comment": "Combined longwave and shortwave radiation based on NASA/GEWEX SRB",
       "long_name": "Solar radiation flux",
@@ -47,21 +53,30 @@
         "agcfsr": "tas",
         "agmerra2": "tas"
       },
-      "_corrected_units": "degC",
+      "_corrected_units": {
+        "agcfsr": "degC",
+        "agmerra2": "degC"
+      },
       "cell_methods": "time: mean",
       "long_name": "Average temperature",
       "standard_name": "air_temperature",
       "units": "K"
     },
     "time": {
-      "_corrected_units": "days since 1980-01-01 12:00:00"
+      "_corrected_units": {
+        "agcfsr": "days since 1980-01-01 12:00:00",
+        "agmerra2": "days since 1980-01-01 12:00:00"
+      }
     },
     "tmax": {
       "_cf_variable_name": {
         "agcfsr": "tasmax",
         "agmerra2": "tasmax"
       },
-      "_corrected_units": "degC",
+      "_corrected_units": {
+        "agcfsr": "degC",
+        "agmerra2": "degC"
+      },
       "cell_methods": "time: maximum",
       "long_name": "Maximum temperature",
       "standard_name": "air_temperature",
@@ -72,7 +87,10 @@
         "agcfsr": "tasmin",
         "agmerra2": "tasmin"
       },
-      "_corrected_units": "degC",
+      "_corrected_units": {
+        "agcfsr": "degC",
+        "agmerra2": "degC"
+      },
       "cell_methods": "time: minimum",
       "long_name": "Minimum temperature",
       "standard_name": "air_temperature",
@@ -83,7 +101,10 @@
         "agcfsr": "sfcWind",
         "agmerra2": "sfcWind"
       },
-      "_corrected_units": "m s-1",
+      "_corrected_units": {
+        "agcfsr": "m s-1",
+        "agmerra2": "m s-1"
+      },
       "cell_methods": "time: point",
       "long_name": "Wind speed",
       "standard_name": "wind_speed",
