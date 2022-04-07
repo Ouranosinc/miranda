@@ -1,3 +1,4 @@
+import json
 import logging.config
 import os
 from pathlib import Path
@@ -25,24 +26,23 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-era5_variables = [
-    "d2m",
-    "pev",
-    "sde",
-    "sd",
-    "sf",
-    "t2m",
-    "tp",
-    "u10",
-    "v10",
-]
+data_folder = Path(__file__).parent / "data"
+era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
+    "variable_entry"
+].keys()
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = ["prate", "rhstmax", "srad", "tavg", "tmax", "tmin", "wndpsd"]
+nasa_ag_variables = json.load(open(data_folder / "nasa_cf_attrs.json"))[
+    "variable_entry"
+].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
-wfdei_gem_capa_variables = ["huss", "pr", "ps", "rlds", "rsds", "sfcWind", "tas"]
+wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
+    "variable_entry"
+].keys()
+
 reanalysis_project_institutes = {
     "cfsr": "ncar",
     "era5": "ecmwf",
+    "era5-single-levels-preliminary-back-extension": "ecmwf",
     "era5-single-levels": "ecmwf",
     "era5-land": "ecmwf",
     "merra2": "nasa",
