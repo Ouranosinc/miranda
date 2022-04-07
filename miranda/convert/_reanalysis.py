@@ -241,9 +241,8 @@ def reanalysis_processing(
                                 ):
                                     out_filenames[i].unlink()
 
-                                if (
-                                    not out_filenames[i].exists()
-                                    or out_filenames[i].is_dir()
+                                if not out_filenames[i].exists() or (
+                                    out_filenames[i].is_dir() and overwrite
                                 ):
                                     jobs.append(
                                         delayed_write(
