@@ -276,6 +276,38 @@ class Decoder:
         raise NotImplementedError()
 
     @classmethod
+    def decode_pcic_candcs_u6_data(cls, file: Union[PathLike, str]) -> dict:
+        variable, date, data = cls._from_dataset(file=file)
+
+        facets = dict()
+        facets["activity"] = data.activity_id
+        facets["date"] = date
+        facets["domain"] = data.domain
+        facets["experiment"] = str(data.GCM__experiment_id).replace(",", "-")
+        facets["format"] = "netcdf"
+        facets["frequency"] = data.frequency
+        facets["institution"] = data.institution_id
+        facets[
+            "member"
+        ] = f"r{data.GCM__realization_index}i{data.GCM__initialization_index}p{data.GCM__physics_index}f{data.GCM__forcing_index}"
+        # facets["modeling_realm"] = data.realm
+        facets["processing_level"] = "bias_adjusted"
+        facets["project"] = "CanDCS-U6"
+        facets["source"] = data.GCM__source_id
+        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["type"] = "bias_adjusted"
+        facets["variable"] = variable
+        facets["version"] = data.version
+
+        try:
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderError:
+            pass
+
+        return facets
+
+    @classmethod
     def decode_cmip6_data(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 

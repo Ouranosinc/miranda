@@ -90,24 +90,41 @@ def build_path_from_schema(
 
     if facets["type"] == "simulation":
         SIMULATION_SCHEMA.validate(facets)
-        if facets["project"] == "CORDEX":
-            model = facets["driving_model"]
-        else:
-            model = facets["member"]
-        return (
-            Path(output_folder)
-            / facets["type"]
-            / facets["processing_level"]
-            / facets["project"]
-            / facets["domain"]
-            / facets["institution"]
-            / facets["source"]
-            / model
-            / facets["experiment"]
-            / facets["member"]
-            / facets["frequency"]
-            / facets["variable"]
-        )
+        if facets["type"] == "raw":
+            if facets["project"] == "CORDEX":
+                model = facets["driving_model"]
+            else:
+                model = facets["member"]
+            return (
+                Path(output_folder)
+                / facets["type"]
+                / facets["processing_level"]
+                / facets["activity"]
+                / facets["project"]
+                / facets["domain"]
+                / facets["source"]
+                / model
+                / facets["experiment"]
+                / facets["member"]
+                / facets["frequency"]
+                / facets["variable"]
+            )
+        elif facets["type"] == "bias_adjusted":
+            return (
+                Path(output_folder)
+                / facets["type"]
+                / facets["processing_level"]
+                / facets["project"]
+                / facets["bias_adjust_institute"]
+                / facets["domain"]
+                / facets["project"]
+                / facets["source"]
+                / facets["model"]
+                / facets["experiment"]
+                / facets["member"]
+                / facets["frequency"]
+                / facets["variable"]
+            )
 
     raise ValueError("No appropriate data schemas found.")
 
