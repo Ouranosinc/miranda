@@ -46,7 +46,7 @@ def request_era5(
     Parameters
     ----------
     variables: Mapping[str, str]
-    projects : List[{"era5", "era5-land"}]
+    projects : List[{"era5", "era5-land", "era5-single-levels"}]
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     output_folder : str or os.PathLike, optional
     year_start : int
@@ -70,7 +70,9 @@ def request_era5(
         sd="snow_depth_water_equivalent",
         sf="snowfall",
     )
-    variable_reference["era5"] = dict(
+    variable_reference[
+        "era5", "era-single-levels", "era5-single-levels-preliminary-back-extension"
+    ] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
         u10="10m_u_component_of_wind",
@@ -93,12 +95,14 @@ def request_era5(
             yearmonth.append((y, m))
 
     project_names = dict()
-    if "era5" in projects:
-        project_names["era5"] = "reanalysis-era5-single-levels"
-        # project_names.append("reanalysis-era5-single-levels")
+    if "era5" in projects or "era5-single-levels" in projects:
+        project_names["era5-single-levels"] = "reanalysis-era5-single-levels"
     if "era5-land" in projects:
         project_names["era5-land"] = "reanalysis-era5-land"
-    # product = project_names[0].split("-")[0]
+    if "era5-single-levels-preliminary-back-extension" in projects:
+        project_names[
+            "era5-single-levels-preliminary-back-extension"
+        ] = "reanalysis-era5-single-levels-preliminary-back-extension"
 
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
@@ -110,6 +114,9 @@ def request_era5(
     for key, p in project_names.items():
         product = p.split("-")[0]
         v_requested = dict()
+        variable_reference = next(
+            var_list for k, var_list in variable_reference.items() if p in k
+        )
         if variables:
             for v in variables:
                 if v in variable_reference[key]:

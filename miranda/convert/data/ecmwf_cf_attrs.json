@@ -2,15 +2,26 @@
   "Header": {
     "Conventions": "CF-1.8",
     "activity": "ERA",
-    "data_specs_version": "00.00.03",
+    "data_specs_version": "00.00.04",
     "institution": "ECMWF",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "16 February 2022",
+    "table_date": "7 April 2022",
     "type": "reanalysis"
   },
   "variable_entry": {
+    "_VERIFY_NAME_": {
+      "_cf_corrected_name": "ssd",
+      "_corrected_units": {},
+      "_transformation": {},
+      "cell_methods": "time: mean",
+      "comments": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
+      "long_name": "Surface snow density",
+      "original_long_name": "Snow density",
+      "standard_name": "surface_snow_density",
+      "units": "kg m-3"
+    },
     "d2m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {},
