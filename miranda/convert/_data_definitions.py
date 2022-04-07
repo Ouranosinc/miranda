@@ -54,19 +54,13 @@ reanalysis_project_institutes = {
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
 xarray_frequencies_to_cmip6like = {
-    "H": "1hr",
-    "3H": "3hr",
-    "6H": "6hr",
+    "H": "hr",
     "D": "day",
     "W": "sem",
-    "7D": "sem",
     "M": "mon",
-    "3OD": "mon",
     "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
     "A": "yr",
     "Y": "yr",
-    "10A": "dec",
-    "10Y": "dec",
 }
 
 

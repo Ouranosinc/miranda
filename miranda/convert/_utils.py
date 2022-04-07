@@ -38,7 +38,7 @@ def load_json_data_mappings(project: str) -> dict:
     if project in ["era5-single-levels", "era5-land"]:
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
-        raise NotImplementedError()
+        metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
     elif project == "nrcan-gridded-10km":
         raise NotImplementedError()
     elif project == "wfdei-gem-capa":
