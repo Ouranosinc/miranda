@@ -65,7 +65,8 @@ def request_era5(
         u10="10m_u_component_of_wind",
         d2m="2m_dewpoint_temperature",
         t2m="2m_temperature",
-        pev="potential evaporation",
+        pev="potential_evaporation",
+        rsn="snow_density",
         sde="snow_depth",
         sd="snow_depth_water_equivalent",
         sf="snowfall",
@@ -80,6 +81,7 @@ def request_era5(
         t2m="2m_temperature",
         pev="potential evaporation",
         # sde= Not available for era5
+        rsn="snow_density",
         sd="snow_depth",  # note difference in name vs era5-land cf_variable == snw
         sf="snowfall",
     )
