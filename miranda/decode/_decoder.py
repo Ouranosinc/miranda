@@ -106,19 +106,18 @@ class Decoder:
             warnings.warn(
                 "The decoder 'project' is not set; Decoding step will be much slower."
             )
+        else:
+            logging.info(f"Deciphering metadata with project = '{self.project}'")
 
-        logging.info(f"Deciphering metadata with project = '{self.project}'")
         manager = mp.Manager()
         _file_facets = manager.dict()
         lock = manager.Lock()
-
-        pool = mp.Pool()
         func = partial(
             self._decoder, _file_facets, method, raise_error, self.project, lock
         )
-        pool.imap_unordered(func, files)
-        pool.close()
-        pool.join()
+
+        with mp.Pool() as pool:
+            pool.imap(func, files, chunksize=10)
 
         self._file_facets.update(_file_facets)
 
