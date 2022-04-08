@@ -58,10 +58,14 @@ CORDEX_MODELS.extend(
 
 # Time Frequencies
 
-WCRP_FREQUENCIES = list()
 CMIP5_FREQUENCIES = [f.raw_name for f in CMIP5.time_frequency.terms]
 CMIP6_FREQUENCIES = [f.raw_name for f in CMIP6.frequency.terms]
 CORDEX_FREQUENCIES = [f.raw_name for f in CMIP5.time_frequency.terms]
+
+WCRP_FREQUENCIES = list()
+WCRP_FREQUENCIES.extend(CMIP5_FREQUENCIES)
+WCRP_FREQUENCIES.extend(CMIP6_FREQUENCIES)
+WCRP_FREQUENCIES.extend(CORDEX_FREQUENCIES)
 
 REANALYSIS = list()
 REANALYSIS.extend(ERA5_PROJECT_NAMES)

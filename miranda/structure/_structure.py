@@ -90,7 +90,7 @@ def build_path_from_schema(
 
     if facets["type"] == "simulation":
         SIMULATION_SCHEMA.validate(facets)
-        if facets["type"] == "raw":
+        if facets["processing_level"] == "raw":
             if facets["project"] == "CORDEX":
                 model = facets["driving_model"]
             else:
@@ -109,7 +109,7 @@ def build_path_from_schema(
                 / facets["frequency"]
                 / facets["variable"]
             )
-        elif facets["type"] == "bias_adjusted":
+        elif facets["processing_level"] == "bias_adjusted":
             return (
                 Path(output_folder)
                 / facets["type"]
