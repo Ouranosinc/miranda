@@ -4,7 +4,12 @@ import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
-from miranda.cv import ACTIVITIES, INSTITUTIONS, WCRP_FREQUENCIES
+from miranda.cv import (
+    ACTIVITIES,
+    BIAS_ADJUST_INSTITUTIONS,
+    INSTITUTIONS,
+    WCRP_FREQUENCIES,
+)
 
 TYPE_NAMES = ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"]
 PROCESSING_LEVELS = ["raw", "bias_adjusted"]
@@ -107,6 +112,7 @@ SIMULATION_SCHEMA = Schema(
         "domain": str,
         Optional("driving_model"): str,
         Optional("member"): str,
+        Optional("bias_adjust_institution"): Or(*BIAS_ADJUST_INSTITUTIONS),
         "experiment": str,
         "frequency": str,
         "member": str,

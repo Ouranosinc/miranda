@@ -296,12 +296,13 @@ class Decoder:
 
         facets = dict()
         facets["activity"] = data["activity_id"]
+        facets["bias_adjust_institution"] = "PCIC"
         facets["date"] = date
         facets["domain"] = data["domain"]
         facets["experiment"] = str(data["GCM__experiment_id"]).replace(",", "-")
         facets["format"] = "netcdf"
         facets["frequency"] = data["frequency"]
-        facets["institution"] = data["institution_id"]
+        facets["institution"] = data["GCM__institution_id"]
         facets["member"] = (
             f"r{data['GCM__realization_index']}"
             f"i{data['GCM__initialization_index']}"
