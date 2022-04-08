@@ -1,6 +1,7 @@
 import logging
 import multiprocessing as mp
 import os
+import threading
 import warnings
 from functools import partial
 from logging import config
@@ -52,7 +53,14 @@ class Decoder:
         self.project = project
 
     @staticmethod
-    def _decoder(d: dict, m: str, fail_early: bool, proj: str, lock, file: str):
+    def _decoder(
+        d: dict,
+        m: str,
+        fail_early: bool,
+        proj: str,
+        lock: threading.Lock,
+        file: Union[str, Path],
+    ) -> None:
         with lock:
             if proj is None:
                 try:
@@ -64,10 +72,16 @@ class Decoder:
                     if fail_early:
                         raise
 
-            _deciphered = getattr(Decoder, f"decode_{proj.lower()}_{m}")(Path(file))
-            FACETS_SCHEMA.validate(_deciphered)
+            decode_function_name = f"decode_{proj.lower().replace('-','_')}_{m}"
+            try:
+                _deciphered = getattr(Decoder, decode_function_name)(Path(file))
+                FACETS_SCHEMA.validate(_deciphered)
+            except AttributeError as e:
+                print(f"Unable to read data from {Path(file).name}: {e}")
 
-            print(f"Deciphered the following from {file}: {_deciphered.items()}")
+            print(
+                f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
+            )
             d[file] = _deciphered
 
     def decode(
@@ -101,7 +115,7 @@ class Decoder:
         func = partial(
             self._decoder, _file_facets, method, raise_error, self.project, lock
         )
-        pool.map(func, [f for f in files])
+        pool.imap_unordered(func, files)
         pool.close()
         pool.join()
 
@@ -280,24 +294,27 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
-        facets["activity"] = data.activity_id
+        facets["activity"] = data["activity_id"]
         facets["date"] = date
-        facets["domain"] = data.domain
-        facets["experiment"] = str(data.GCM__experiment_id).replace(",", "-")
+        facets["domain"] = data["domain"]
+        facets["experiment"] = str(data["GCM__experiment_id"]).replace(",", "-")
         facets["format"] = "netcdf"
-        facets["frequency"] = data.frequency
-        facets["institution"] = data.institution_id
-        facets[
-            "member"
-        ] = f"r{data.GCM__realization_index}i{data.GCM__initialization_index}p{data.GCM__physics_index}f{data.GCM__forcing_index}"
+        facets["frequency"] = data["frequency"]
+        facets["institution"] = data["institution_id"]
+        facets["member"] = (
+            f"r{data['GCM__realization_index']}"
+            f"i{data['GCM__initialization_index']}"
+            f"p{data['GCM__physics_index']}"
+            f"f{data['GCM__forcing_index']}"
+        )
         # facets["modeling_realm"] = data.realm
         facets["processing_level"] = "bias_adjusted"
         facets["project"] = "CanDCS-U6"
-        facets["source"] = data.GCM__source_id
+        facets["source"] = data["GCM__source_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "bias_adjusted"
         facets["variable"] = variable
-        facets["version"] = data.version
+        facets["version"] = data["GCM__data_specs_version"]
 
         try:
             facets["date_start"] = date_parser(date)
