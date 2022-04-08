@@ -76,12 +76,13 @@ class Decoder:
             try:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
                 FACETS_SCHEMA.validate(_deciphered)
+                print(
+                    f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
+                )
             except AttributeError as e:
                 print(f"Unable to read data from {Path(file).name}: {e}")
+                return
 
-            print(
-                f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
-            )
             d[file] = _deciphered
 
     def decode(
@@ -312,7 +313,7 @@ class Decoder:
         facets["project"] = "CanDCS-U6"
         facets["source"] = data["GCM__source_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
-        facets["type"] = "bias_adjusted"
+        facets["type"] = "simulation"
         facets["variable"] = variable
         facets["version"] = data["GCM__data_specs_version"]
 
