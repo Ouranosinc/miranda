@@ -189,9 +189,9 @@ def structure_datasets(
 
     # multiprocessing copy
     func = partial(_structure_datasets, method=method, dry_run=dry_run)
-    pool = multiprocessing.Pool()
-    pool.starmap(func, zip(all_file_paths.keys(), all_file_paths.values()))
-    pool.close()
-    pool.join()
+    with multiprocessing.Pool() as pool:
+        pool.starmap(func, zip(all_file_paths.keys(), all_file_paths.values()))
+        pool.close()
+        pool.join()
 
     return all_file_paths
