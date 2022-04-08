@@ -1,7 +1,6 @@
 import logging
 import multiprocessing as mp
 import os
-import threading
 import warnings
 from functools import partial
 from logging import config
@@ -58,9 +57,10 @@ class Decoder:
         m: str,
         fail_early: bool,
         proj: str,
-        lock: threading.Lock,
+        lock,
         file: Union[str, Path],
     ) -> None:
+        """lock is a threading lock object"""
         with lock:
             if proj is None:
                 try:
