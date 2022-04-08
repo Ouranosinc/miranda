@@ -39,9 +39,9 @@ def _structure_datasets(
                     )
                 else:
                     getattr(shutil, f"{method}{method_mod}")(in_file, output_file)
-            logging.info(f"{meth} {in_file.name} to {output_file}.")
+            print(f"{meth} {in_file.name} to {output_file}.")
         except FileExistsError:
-            logging.warning(f"{in_file.name} already exists at location. Continuing...")
+            print(f"{in_file.name} already exists at location. Continuing...")
 
 
 def build_path_from_schema(
@@ -81,6 +81,7 @@ def build_path_from_schema(
             Path(output_folder)
             / facets["type"]
             / facets["institution"]
+            / facets["activity"]
             / facets["source"]
             / facets["project"]
             / facets["domain"]
@@ -92,34 +93,45 @@ def build_path_from_schema(
         SIMULATION_SCHEMA.validate(facets)
         if facets["processing_level"] == "raw":
             if facets["project"] == "CORDEX":
-                model = facets["driving_model"]
+                return (
+                    Path(output_folder)
+                    / facets["type"]
+                    / facets["processing_level"]
+                    / facets["activity"]
+                    / facets["project"]
+                    / facets["domain"]
+                    / facets["source"]
+                    / facets["driving_model"]
+                    / facets["experiment"]
+                    / facets["member"]
+                    / facets["frequency"]
+                    / facets["variable"]
+                )
             else:
-                model = facets["member"]
-            return (
-                Path(output_folder)
-                / facets["type"]
-                / facets["processing_level"]
-                / facets["activity"]
-                / facets["project"]
-                / facets["domain"]
-                / facets["source"]
-                / model
-                / facets["experiment"]
-                / facets["member"]
-                / facets["frequency"]
-                / facets["variable"]
-            )
+                return (
+                    Path(output_folder)
+                    / facets["type"]
+                    / facets["processing_level"]
+                    / facets["activity"]
+                    / facets["project"]
+                    / facets["domain"]
+                    / facets["institution"]
+                    / facets["source"]
+                    / facets["experiment"]
+                    / facets["member"]
+                    / facets["frequency"]
+                    / facets["variable"]
+                )
         elif facets["processing_level"] == "bias_adjusted":
             return (
                 Path(output_folder)
                 / facets["type"]
                 / facets["processing_level"]
+                / facets["activity"]
+                / facets["bias_adjust_institution"]
                 / facets["project"]
-                / facets["bias_adjust_institute"]
-                / facets["domain"]
-                / facets["project"]
+                / facets["institution"]
                 / facets["source"]
-                / facets["model"]
                 / facets["experiment"]
                 / facets["member"]
                 / facets["frequency"]
@@ -146,7 +158,7 @@ def structure_datasets(
     ----------
     input_files: str or Path or list of str or Path or GeneratorType
     output_folder: str or Path
-    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis"}, optional
+    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis", "pcic-candcs-u6"}, optional
     guess: bool
       If project not supplied, suggest to decoder that project is the same for all input_files. Default: True.
     dry_run: bool
