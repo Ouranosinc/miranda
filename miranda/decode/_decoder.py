@@ -14,7 +14,7 @@ import pandas as pd
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
-from miranda.cv import PROJECT_MODELS
+from miranda.cv import INSTITUTIONS, PROJECT_MODELS
 from miranda.scripting import LOGGING_CONFIG
 from miranda.validators import FACETS_SCHEMA
 
@@ -482,7 +482,17 @@ class Decoder:
                 logging.error(msg)
                 raise NotImplementedError(msg)
 
-        facets["driving_institution"] = str(data["driving_model_id"]).split("-")[0]
+        driving_institution_parts = str(data["driving_model_id"]).split("-")
+        if driving_institution_parts[0] in INSTITUTIONS:
+            driving_institution = driving_institution_parts[0]
+        elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
+            driving_institution = "-".join(driving_institution_parts[:2])
+        elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
+            driving_institution = "-".join(driving_institution_parts[:3])
+        else:
+            raise AttributeError("driving_institution not valid.")
+
+        facets["driving_institution"] = driving_institution
         facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
