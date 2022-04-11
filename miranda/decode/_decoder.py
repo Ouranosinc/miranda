@@ -295,7 +295,7 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
-        facets["activity"] = data["activity_id"]
+        facets["mip_era"] = data["project_id"]
         facets["bias_adjust_institution"] = "PCIC"
         facets["date"] = date
         facets["domain"] = data["domain"]
@@ -311,7 +311,7 @@ class Decoder:
         )
         # facets["modeling_realm"] = data.realm
         facets["processing_level"] = "bias_adjusted"
-        facets["project"] = "CanDCS-U6"
+        facets["bias_adjust_project"] = "CanDCS-U6"
         facets["source"] = data["GCM__source_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
@@ -341,7 +341,7 @@ class Decoder:
         facets["member"] = data.variant_label
         facets["modeling_realm"] = data.realm
         facets["processing_level"] = "raw"
-        facets["project"] = data.project
+        facets["mip_era"] = data.project
         facets["source"] = data.source_id
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
@@ -361,7 +361,7 @@ class Decoder:
         decode_file = cls._from_filename(file=file)
 
         facets = dict()
-        facets["activity"] = "CMIP6"
+        facets["activity"] = "CMIP"
         facets["date"] = decode_file[-1]
         facets["domain"] = "global"
         facets["experiment"] = decode_file[3]
@@ -370,7 +370,7 @@ class Decoder:
         facets["grid_label"] = decode_file[5]
         facets["member"] = decode_file[4]
         facets["processing_level"] = "raw"
-        facets["project"] = "CMIP6"
+        facets["mip_era"] = "CMIP6"
         facets["source"] = decode_file[2]
         facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
         facets["type"] = "simulation"
@@ -397,7 +397,7 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
-        facets["activity"] = "CMIP5"
+        facets["activity"] = "CMIP"
         facets["date"] = date
         facets["domain"] = "global"
         facets["experiment"] = data["experiment_id"]
@@ -407,7 +407,7 @@ class Decoder:
         facets["member"] = data["parent_experiment_rip"]
         facets["modeling_realm"] = data["modeling_realm"]
         facets["processing_level"] = "raw"
-        facets["project"] = data["project_id"]
+        facets["mip_era"] = data["project_id"]
         facets["source"] = data["model_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
@@ -426,13 +426,14 @@ class Decoder:
         decode_file = cls._from_filename(file=file)
 
         facets = dict()
-        facets["activity"] = "CMIP5"
+        facets["activity"] = "CMIP"
         facets["date"] = decode_file[-1]
         facets["domain"] = "global"
         facets["experiment"] = decode_file[3]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(file=decode_file, field="frequency")
         facets["member"] = decode_file[4]
+        facets["mip_era"] = "CMIP5"
         facets["modeling_realm"] = None
         facets["processing_level"] = "raw"
         facets["source"] = decode_file[2]
@@ -462,7 +463,14 @@ class Decoder:
 
         # FIXME: What to do about our internal data that breaks all established conventions?
         facets = dict()
-        facets["activity"] = "CORDEX"
+        facets["activity"] = "CMIP"
+        facets["project"] = "CORDEX"
+
+        if data["project_id"] == "":
+            facets["mip_era"] = "internal"
+        elif data["project_id"] == "CORDEX":
+            facets["mip_era"] = "CMIP5"
+
         facets["date"] = date
 
         try:
@@ -486,12 +494,6 @@ class Decoder:
             facets["institution"] = data["institute_id"].strip()
 
         facets["processing_level"] = "raw"
-
-        if data["project_id"] == "":
-            facets["project"] = "internal"
-        else:
-            facets["project"] = data["project_id"]
-
         facets["source"] = data["model_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
@@ -520,7 +522,10 @@ class Decoder:
         decode_file = cls._from_filename(file=file)
 
         facets = dict()
-        facets["activity"] = "CORDEX"
+        facets["activity"] = "CMIP"
+        facets["mip_era5"] = "CMIP5"
+        facets["project"] = "CORDEX"
+
         facets["date"] = decode_file[-1]
         facets["domain"] = decode_file[1]
         facets["driving_model"] = "_".join(decode_file[2].split("-")[1:])
@@ -531,7 +536,6 @@ class Decoder:
         facets["institution"] = decode_file[5].split("-")[0]
         facets["member"] = decode_file[4].strip()
         facets["processing_level"] = "raw"
-        facets["project"] = "CORDEX"
         facets["source"] = decode_file[5]
         facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
         facets["type"] = "simulation"
@@ -550,7 +554,9 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
-        facets["activity"] = "ISIMP-FT"
+        facets["activity"] = "ISIMIP"
+        facets["mip_era"] = data["project_id"]
+
         facets["date"] = date
         facets["domain"] = "global"
         facets["co2_forcing_id"] = data["co2_forcing_id"]
@@ -561,7 +567,6 @@ class Decoder:
         facets["institution"] = data["institute_id"]
         facets["member"] = data["driving_model_ensemble_member"]
         facets["modeling_realm"] = data["modeling_realm"]
-        facets["project"] = data["project_id"]
         facets["social_forcing_id"] = data["social_forcing_id"]
         facets["source"] = data["model_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
@@ -581,7 +586,9 @@ class Decoder:
         decode_file = cls._from_filename(file=file)
 
         facets = dict()
-        facets["activity"] = "ISIMP-FT"
+        facets["activity"] = "ISIMIP"
+        facets["mip_era"] = "ISIMIP-FT"
+
         facets["date"] = decode_file[-1]
         facets["domain"] = "global"
         facets["co2_forcing_id"] = decode_file[4]
@@ -590,7 +597,6 @@ class Decoder:
         facets["frequency"] = cls._decode_time_info(file=decode_file, field="frequency")
         facets["impact_model_id"] = decode_file[0]
         facets["institution"] = decode_file[1].split("-")[0]
-        facets["project"] = "ISIMIP-FT"
         facets["soc_forcing_id"] = decode_file[3]
         facets["source"] = "-".join(decode_file[1].split("-")[1:])
         facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")

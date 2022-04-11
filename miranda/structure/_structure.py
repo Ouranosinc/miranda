@@ -92,28 +92,30 @@ def build_path_from_schema(
     if facets["type"] == "simulation":
         SIMULATION_SCHEMA.validate(facets)
         if facets["processing_level"] == "raw":
-            if facets["project"] == "CORDEX":
-                return (
-                    Path(output_folder)
-                    / facets["type"]
-                    / facets["processing_level"]
-                    / facets["activity"]
-                    / facets["project"]
-                    / facets["domain"]
-                    / facets["source"]
-                    / facets["driving_model"]
-                    / facets["experiment"]
-                    / facets["member"]
-                    / facets["frequency"]
-                    / facets["variable"]
-                )
+            if hasattr(facets, "project"):
+                if facets["project"] == "CORDEX":
+                    return (
+                        Path(output_folder)
+                        / facets["type"]
+                        / facets["processing_level"]
+                        / facets["activity"]
+                        / facets["mip_era"]
+                        / facets["project"]
+                        / facets["domain"]
+                        / facets["source"]
+                        / facets["driving_model"]
+                        / facets["experiment"]
+                        / facets["member"]
+                        / facets["frequency"]
+                        / facets["variable"]
+                    )
             else:
                 return (
                     Path(output_folder)
                     / facets["type"]
                     / facets["processing_level"]
                     / facets["activity"]
-                    / facets["project"]
+                    / facets["mip_era"]
                     / facets["domain"]
                     / facets["institution"]
                     / facets["source"]
@@ -127,9 +129,9 @@ def build_path_from_schema(
                 Path(output_folder)
                 / facets["type"]
                 / facets["processing_level"]
-                / facets["activity"]
+                / facets["mip_era"]
                 / facets["bias_adjust_institution"]
-                / facets["project"]
+                / facets["bias_adjust_project"]
                 / facets["institution"]
                 / facets["source"]
                 / facets["experiment"]
