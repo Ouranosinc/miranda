@@ -114,10 +114,16 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         if freq is None:
                             raise TypeError()
                         offset = (
-                            float(calendar.parse_offset(freq)[0])
+                            float(calendar.parse_offset(freq)[0]),
+                            calendar.parse_offset(freq)[1]
                             if calendar.parse_offset(freq)[0] != ""
-                            else 1.0
+                            else 1.0,
+                            "H",
                         )
+                        logging.info(
+                            f"Offsetting data for `{vv}` by `{''.join(offset)}`."
+                        )
+
                     except TypeError:
                         logging.error(
                             f"Unable to parse the time frequency for variable `{vv}`. "
@@ -126,10 +132,14 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         raise
 
                     # accumulated hourly to hourly flux (de-accumulation)
+                    d["time"] = d.time - np.timedelta64(
+                        offset[0], offset[1].lower() if offset[1] == "H" else offset[1]
+                    )
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
                         out = d[vv].where(
-                            d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
+                            d[vv].time.dt.hour == int(offset[0]),
+                            out.broadcast_like(d[vv]),
                         )
                         out = units.amount2rate(out)
                     d_out[out.name] = out
