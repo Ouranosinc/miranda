@@ -121,7 +121,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                             "H",
                         )
                         logging.info(
-                            f"Offsetting data for `{vv}` by `{''.join(offset)}`."
+                            f"Offsetting data for `{vv}` by `{int(offset[0])}{offset[1]}`."
                         )
 
                     except TypeError:
@@ -133,7 +133,8 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
 
                     # accumulated hourly to hourly flux (de-accumulation)
                     d["time"] = d.time - np.timedelta64(
-                        offset[0], offset[1].lower() if offset[1] == "H" else offset[1]
+                        int(offset[0]),
+                        offset[1].lower() if offset[1] == "H" else offset[1],
                     )
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
