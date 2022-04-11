@@ -129,6 +129,7 @@ def build_path_from_schema(
                 Path(output_folder)
                 / facets["type"]
                 / facets["processing_level"]
+                / facets["activity"]
                 / facets["mip_era"]
                 / facets["bias_adjust_institution"]
                 / facets["bias_adjust_project"]

@@ -79,11 +79,9 @@ class Decoder:
                 print(
                     f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
                 )
+                d[file] = _deciphered
             except AttributeError as e:
                 print(f"Unable to read data from {Path(file).name}: {e}")
-                return
-
-            d[file] = _deciphered
 
     def decode(
         self,
@@ -295,6 +293,7 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
+        facets["activity"] = data["activity_id"]
         facets["mip_era"] = data["project_id"]
         facets["bias_adjust_institution"] = "PCIC"
         facets["date"] = date
