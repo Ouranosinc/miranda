@@ -108,43 +108,43 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
+                try:
+                    freq = xr.infer_freq(ds.time)
+                    if freq is None:
+                        raise TypeError()
+                    offset = (
+                        [
+                            int(calendar.parse_offset(freq)[0]),
+                            calendar.parse_offset(freq)[1],
+                        ]
+                        if calendar.parse_offset(freq)[0] != ""
+                        else [1.0, "h"]
+                    )
+
+                    time_units = {
+                        "s": "second",
+                        "m": "minute",
+                        "h": "hour",
+                        "D": "day",
+                        "W": "week",
+                        "Y": "year",
+                    }
+                    if offset[1] in ["S", "M", "H"]:
+                        offset[1] = offset[1].lower()
+                    offset_meaning = time_units[offset[1]]
+
+                    logging.info(
+                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                    )
+
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
+                    )
+                    raise
+
                 if m["variable_entry"][vv][key][p] == "deaccumulate":
-                    try:
-                        freq = xr.infer_freq(ds.time)
-                        if freq is None:
-                            raise TypeError()
-                        offset = (
-                            [
-                                int(calendar.parse_offset(freq)[0]),
-                                calendar.parse_offset(freq)[1],
-                            ]
-                            if calendar.parse_offset(freq)[0] != ""
-                            else [1.0, "h"]
-                        )
-
-                        time_units = {
-                            "s": "second",
-                            "m": "minute",
-                            "h": "hour",
-                            "D": "day",
-                            "W": "week",
-                            "Y": "year",
-                        }
-                        if offset[1] in ["S", "M", "H"]:
-                            offset[1] = offset[1].lower()
-                        offset_meaning = time_units[offset[1]]
-
-                        logging.info(
-                            f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-                        )
-
-                    except TypeError:
-                        logging.error(
-                            f"Unable to parse the time frequency for variable `{vv}`. "
-                            "Verify data integrity before retrying."
-                        )
-                        raise
-
                     # accumulated hourly to hourly flux (de-accumulation)
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
@@ -152,7 +152,10 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                             getattr(d[vv].time.dt, offset_meaning) == offset[0],
                             out.broadcast_like(d[vv]),
                         )
-                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+
+                        # TODO: Discuss the need for this as a group!
+                        # out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+
                         out = units.amount2rate(out)
                     d_out[out.name] = out
                 elif m["variable_entry"][vv][key][p] == "amount2rate":
@@ -160,6 +163,10 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         d[vv],
                         out_units=m["variable_entry"][vv]["units"],
                     )
+
+                    # TODO: Discuss the need for this as a group!
+                    # out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+
                     d_out[out.name] = out
                 else:
                     raise NotImplementedError(
