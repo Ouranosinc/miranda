@@ -64,7 +64,9 @@ xarray_frequencies_to_cmip6like = {
 }
 
 
-def gather_era5_single_levels(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_era5_single_levels(
+    path: Union[str, os.PathLike], back_extension: bool = False
+) -> Dict[str, List[Path]]:
     # ERA5 source data
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
@@ -74,7 +76,9 @@ def gather_era5_single_levels(path: Union[str, os.PathLike]) -> Dict[str, List[P
     logging.info(
         f"Found {len(infiles_era5)} files, totalling {report_file_size(infiles_era5)}."
     )
-    return {"era5-single-levels": infiles_era5}
+    if not back_extension:
+        return {"era5-single-levels": infiles_era5}
+    return {"era5-single-levels-back-extension": infiles_era5}
 
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
