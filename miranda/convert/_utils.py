@@ -114,14 +114,28 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         if freq is None:
                             raise TypeError()
                         offset = (
-                            float(calendar.parse_offset(freq)[0]),
-                            calendar.parse_offset(freq)[1]
+                            [
+                                int(calendar.parse_offset(freq)[0]),
+                                calendar.parse_offset(freq)[1],
+                            ]
                             if calendar.parse_offset(freq)[0] != ""
-                            else 1.0,
-                            "H",
+                            else [1.0, "h"]
                         )
+
+                        time_units = {
+                            "s": "second",
+                            "m": "minute",
+                            "h": "hour",
+                            "D": "day",
+                            "W": "week",
+                            "Y": "year",
+                        }
+                        if offset[1] in ["S", "M", "H"]:
+                            offset[1] = offset[1].lower()
+                        offset_meaning = time_units[offset[1]]
+
                         logging.info(
-                            f"Offsetting data for `{vv}` by `{int(offset[0])}{offset[1]}`."
+                            f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
                         )
 
                     except TypeError:
@@ -132,16 +146,13 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         raise
 
                     # accumulated hourly to hourly flux (de-accumulation)
-                    d["time"] = d.time - np.timedelta64(
-                        int(offset[0]),
-                        offset[1].lower() if offset[1] == "H" else offset[1],
-                    )
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
                         out = d[vv].where(
-                            d[vv].time.dt.hour == int(offset[0]),
+                            getattr(d[vv].time.dt, offset_meaning) == offset[0],
                             out.broadcast_like(d[vv]),
                         )
+                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                         out = units.amount2rate(out)
                     d_out[out.name] = out
                 elif m["variable_entry"][vv][key][p] == "amount2rate":
