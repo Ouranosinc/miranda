@@ -35,7 +35,7 @@ VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 def load_json_data_mappings(project: str) -> dict:
     data_folder = Path(__file__).parent / "data"
 
-    if project in ["era5-single-levels", "era5-land"]:
+    if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
