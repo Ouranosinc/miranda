@@ -78,7 +78,7 @@ def gather_era5_single_levels(
     )
     if not back_extension:
         return {"era5-single-levels": infiles_era5}
-    return {"era5-single-levels-back-extension": infiles_era5}
+    return {"era5-single-levels-preliminary-back-extension": infiles_era5}
 
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
