@@ -92,7 +92,7 @@ def build_path_from_schema(
     if facets["type"] == "simulation":
         SIMULATION_SCHEMA.validate(facets)
         if facets["processing_level"] == "raw":
-            if hasattr(facets, "project"):
+            try:
                 if facets["project"] == "CORDEX":
                     return (
                         Path(output_folder)
@@ -109,7 +109,7 @@ def build_path_from_schema(
                         / facets["frequency"]
                         / facets["variable"]
                     )
-            else:
+            except KeyError:
                 return (
                     Path(output_folder)
                     / facets["type"]
