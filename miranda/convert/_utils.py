@@ -133,10 +133,6 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         offset[1] = offset[1].lower()
                     offset_meaning = time_units[offset[1]]
 
-                    logging.info(
-                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-                    )
-
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "
@@ -146,18 +142,20 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
 
                 if m["variable_entry"][vv][key][p] == "deaccumulate":
                     # daily accumulated total to time-based flux (de-accumulation)
+                    logging.info(f"De-accumulating units for variable `{vv}`.")
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
                         out = d[vv].where(
                             getattr(d[vv].time.dt, offset_meaning) == offset[0],
                             out.broadcast_like(d[vv]),
                         )
-                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                         out = units.amount2rate(out)
                     d_out[out.name] = out
                 elif m["variable_entry"][vv][key][p] == "amount2rate":
                     # frequency-based totals to time-based flux
-                    out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+                    logging.info(
+                        f"Performing amount-to-rate units conversion for variable `{vv}`."
+                    )
                     out = units.amount2rate(
                         d[vv],
                         out_units=m["variable_entry"][vv]["units"],
@@ -167,10 +165,58 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                     raise NotImplementedError(
                         f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
                     )
-
             else:
                 d_out[vv] = d[vv]
         return d_out
+
+    def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+        key = "_offset_time"
+        d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+        for vv in d.data_vars:
+            if p in m["variable_entry"][vv][key].keys():
+                try:
+                    freq = xr.infer_freq(ds.time)
+                    if freq is None:
+                        raise TypeError()
+                    offset = (
+                        [
+                            int(calendar.parse_offset(freq)[0]),
+                            calendar.parse_offset(freq)[1],
+                        ]
+                        if calendar.parse_offset(freq)[0] != ""
+                        else [1.0, "h"]
+                    )
+
+                    time_units = {
+                        "s": "second",
+                        "m": "minute",
+                        "h": "hour",
+                        "D": "day",
+                        "W": "week",
+                        "Y": "year",
+                    }
+                    if offset[1] in ["S", "M", "H"]:
+                        offset[1] = offset[1].lower()
+                    offset_meaning = time_units[offset[1]]
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
+                    )
+                    raise
+
+                if m["variable_entry"][vv][key][p]:
+                    # Offset time by value of one time-step
+                    logging.info(
+                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                    )
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv]
+                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+                        d_out[out.name] = out
+                else:
+                    d_out = d
+            return d_out
 
     # For converting variable units to standard workflow units
     def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
@@ -207,6 +253,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         # Add variable metadata
         for v in d.data_vars:
             descriptions[v].pop("_corrected_units")
+            descriptions[v].pop("_offset_time")
             descriptions[v].pop("_transformation")
             d[v].attrs.update(descriptions[v])
 
@@ -243,6 +290,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
     metadata_definition = load_json_data_mappings(project)
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
+    ds = _offset_time(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
     ds = _metadata_conversion(ds, project, output_format, metadata_definition)
     ds = _dims_conversion(ds)
