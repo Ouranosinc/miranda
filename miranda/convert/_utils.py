@@ -145,28 +145,23 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                     raise
 
                 if m["variable_entry"][vv][key][p] == "deaccumulate":
-                    # accumulated hourly to hourly flux (de-accumulation)
+                    # daily accumulated total to time-based flux (de-accumulation)
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
                         out = d[vv].where(
                             getattr(d[vv].time.dt, offset_meaning) == offset[0],
                             out.broadcast_like(d[vv]),
                         )
-
-                        # TODO: Discuss the need for this as a group!
-                        # out["time"] = out.time - np.timedelta64(offset[0], offset[1])
-
+                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                         out = units.amount2rate(out)
                     d_out[out.name] = out
                 elif m["variable_entry"][vv][key][p] == "amount2rate":
+                    # frequency-based totals to time-based flux
+                    out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                     out = units.amount2rate(
                         d[vv],
                         out_units=m["variable_entry"][vv]["units"],
                     )
-
-                    # TODO: Discuss the need for this as a group!
-                    # out["time"] = out.time - np.timedelta64(offset[0], offset[1])
-
                     d_out[out.name] = out
                 else:
                     raise NotImplementedError(
