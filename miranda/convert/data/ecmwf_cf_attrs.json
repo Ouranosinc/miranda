@@ -36,7 +36,7 @@
       "units": "kg m-2 s-1"
     },
     "rsn": {
-      "_cf_corrected_name": "snr",
+      "_cf_variable_name": "snr",
       "_corrected_units": {
         "era5-land": "kg m-3",
         "era5-single-levels": "kg m-3",
