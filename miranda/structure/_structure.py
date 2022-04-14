@@ -124,7 +124,9 @@ def build_path_from_schema(
                     / facets["frequency"]
                     / facets["variable"]
                 )
-        elif facets["processing_level"] == "bias_adjusted":
+        elif (
+            facets["processing_level"] == "bias_adjusted"
+        ):  # FIXME: remove or keep underline?
             return (
                 Path(output_folder)
                 / facets["type"]
@@ -133,6 +135,7 @@ def build_path_from_schema(
                 / facets["mip_era"]
                 / facets["bias_adjust_institution"]
                 / facets["bias_adjust_project"]
+                / facets["domain"]
                 / facets["institution"]
                 / facets["source"]
                 / facets["experiment"]

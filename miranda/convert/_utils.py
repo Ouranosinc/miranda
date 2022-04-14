@@ -90,6 +90,29 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
 def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
 
+    def _get_time_frequency(d: xr.Dataset):
+        freq = xr.infer_freq(d.time)
+        if freq is None:
+            raise TypeError()
+        offset = (
+            [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
+            if calendar.parse_offset(freq)[0] != ""
+            else [1.0, "h"]
+        )
+
+        time_units = {
+            "s": "second",
+            "m": "minute",
+            "h": "hour",
+            "D": "day",
+            "W": "week",
+            "Y": "year",
+        }
+        if offset[1] in ["S", "M", "H"]:
+            offset[1] = offset[1].lower()
+        offset_meaning = time_units[offset[1]]
+        return offset, offset_meaning
+
     def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
         for v in d.data_vars:
@@ -109,30 +132,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 try:
-                    freq = xr.infer_freq(ds.time)
-                    if freq is None:
-                        raise TypeError()
-                    offset = (
-                        [
-                            int(calendar.parse_offset(freq)[0]),
-                            calendar.parse_offset(freq)[1],
-                        ]
-                        if calendar.parse_offset(freq)[0] != ""
-                        else [1.0, "h"]
-                    )
-
-                    time_units = {
-                        "s": "second",
-                        "m": "minute",
-                        "h": "hour",
-                        "D": "day",
-                        "W": "week",
-                        "Y": "year",
-                    }
-                    if offset[1] in ["S", "M", "H"]:
-                        offset[1] = offset[1].lower()
-                    offset_meaning = time_units[offset[1]]
-
+                    offset, offset_meaning = _get_time_frequency(d)
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "
@@ -141,7 +141,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                     raise
 
                 if m["variable_entry"][vv][key][p] == "deaccumulate":
-                    # daily accumulated total to time-based flux (de-accumulation)
+                    # Time-step accumulated total to time-based flux (de-accumulation)
                     logging.info(f"De-accumulating units for variable `{vv}`.")
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
@@ -175,29 +175,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 try:
-                    freq = xr.infer_freq(ds.time)
-                    if freq is None:
-                        raise TypeError()
-                    offset = (
-                        [
-                            int(calendar.parse_offset(freq)[0]),
-                            calendar.parse_offset(freq)[1],
-                        ]
-                        if calendar.parse_offset(freq)[0] != ""
-                        else [1.0, "h"]
-                    )
-
-                    time_units = {
-                        "s": "second",
-                        "m": "minute",
-                        "h": "hour",
-                        "D": "day",
-                        "W": "week",
-                        "Y": "year",
-                    }
-                    if offset[1] in ["S", "M", "H"]:
-                        offset[1] = offset[1].lower()
-                    offset_meaning = time_units[offset[1]]
+                    offset, offset_meaning = _get_time_frequency(d)
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "
@@ -382,7 +360,7 @@ def threshold_land_sea_mask(
     try:
         project = ds.attrs["project"]
     except KeyError:
-        raise ValueError("No 'project' found for given dataset.")
+        raise ValueError("No 'project' field found for given dataset.")
 
     if project in land_sea_mask.keys():
         logging.info(
@@ -420,7 +398,7 @@ def threshold_land_sea_mask(
             ds.to_netcdf(out)
             return out
         return ds
-    raise RuntimeError("'Project' was not found.")
+    raise RuntimeError(f"Project `{project}` was not found in land-sea masks.")
 
 
 def delayed_write(
