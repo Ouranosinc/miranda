@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Union
 
 import netCDF4 as nc  # noqa
 import pandas as pd
+import schema
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
@@ -82,6 +83,8 @@ class Decoder:
                 d[file] = _deciphered
             except AttributeError as e:
                 print(f"Unable to read data from {Path(file).name}: {e}")
+            except schema.SchemaError as e:
+                print(f"Decoded facets from {Path(file).name} are not valid: {e}")
 
     def decode(
         self,
