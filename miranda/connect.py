@@ -42,7 +42,7 @@ class Connection:
         return self
 
     def __str__(self):
-        return "Connection to {} as {}".format(self.host, self.user)
+        return f"Connection to {self.host} as {self.user}"
 
     def __repr__(self):
         return "<{}.{} object at {}>".format(

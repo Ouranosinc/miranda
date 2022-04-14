@@ -1,0 +1,21 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.2",
+    "data_specs_version": "00.00.01",
+    "institution": "DEH",
+    "product": "station-obs",
+    "realm": "land",
+    "table_date": "2021-10-26",
+    "table_id": "DEH"
+  },
+  "variable_entry": {
+    "flag": {
+      "comment": "See DEH technical information for details.",
+      "long_name": "data flag"
+    },
+    "q": {
+      "long_name": "River discharge",
+      "units": "m3 s-1"
+    }
+  }
+}

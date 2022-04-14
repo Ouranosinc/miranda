@@ -1,72 +1,114 @@
 {
   "Header": {
+    "Conventions": "CF-1.8",
     "data_specs_version": "00.00.01",
-    "table_id": "NASA",
     "institution": "NASA",
+    "product": "reanalysis",
     "realm": "atmos",
     "table_date": "2 February 2022",
-    "product": "reanalysis",
-    "Conventions": "CF-1.8"
+    "table_id": "NASA"
   },
   "variable_entry": {
     "prate": {
-      "standard_name": "precipitation_flux",
-      "units": "kg m-2 s-1",
+      "_cf_variable_name": {
+        "agcfsr": "pr",
+        "agmerra2": "pr"
+      },
+      "_corrected_units": {
+        "agcfsr": "mm d-1",
+        "agmerra2": "mm d-1"
+      },
       "cell_methods": "time: mean",
       "long_name": "Precipitation rate",
-      "_cf_variable_name": "pr",
-      "_corrected_units": "mm d-1"
-    },
-    "tavg": {
-      "standard_name": "air_temperature",
-      "units": "K",
-      "cell_methods": "time: mean",
-      "long_name": "Average temperature",
-      "_cf_variable_name": "tas",
-      "_corrected_units": "degC"
-    },
-    "tmax": {
-      "standard_name": "air_temperature",
-      "units": "K",
-      "cell_methods": "time: maximum",
-      "long_name": "Maximum temperature",
-      "_cf_variable_name": "tasmax",
-      "_corrected_units": "degC"
-    },
-    "tmin": {
-      "standard_name": "air_temperature",
-      "units": "K",
-      "cell_methods": "time: minimum",
-      "long_name": "Minimum temperature",
-      "_cf_variable_name": "tasmin",
-      "_corrected_units": "degC"
-    },
-    "srad": {
-      "standard_name": "surface_net_downward_radiative_flux",
-      "units": "W m-2 d-1",
-      "cell_methods": "time: mean within days",
-      "long_name": "Solar radiation flux",
-      "comment": "Combined longwave and shortwave radiation based on NASA/GEWEX SRB",
-      "_cf_variable_name": "rxds",
-      "_corrected_units": "MJ m-2 d-1"
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
     },
     "rhstmax": {
-      "standard_name": "relative_humidity",
-      "units": "1",
+      "_cf_variable_name": {
+        "agcfsr": "hurs",
+        "agmerra2": "hurs"
+      },
       "cell_methods": "time: point",
       "long_name": "Relative Humidity at time of Maximum Temperature",
-      "_cf_variable_name": "hurs"
+      "standard_name": "relative_humidity",
+      "units": "1"
     },
-    "wndspd": {
-      "standard_name": "wind_speed",
-      "units": "m s-1",
-      "cell_methods": "time: point",
-      "long_name": "Wind speed",
-      "_cf_variable_name": "sfcWind",
-      "_corrected_units": "m s-1"
+    "srad": {
+      "_cf_variable_name": {
+        "agcfsr": "rxds",
+        "agmerra2": "rxds"
+      },
+      "_corrected_units": {
+        "agcfsr": "MJ m-2 d-1",
+        "agmerra2": "MJ m-2 d-1"
+      },
+      "cell_methods": "time: mean within days",
+      "comment": "Combined longwave and shortwave radiation based on NASA/GEWEX SRB",
+      "long_name": "Solar radiation flux",
+      "standard_name": "surface_net_downward_radiative_flux",
+      "units": "W m-2 d-1"
+    },
+    "tavg": {
+      "_cf_variable_name": {
+        "agcfsr": "tas",
+        "agmerra2": "tas"
+      },
+      "_corrected_units": {
+        "agcfsr": "degC",
+        "agmerra2": "degC"
+      },
+      "cell_methods": "time: mean",
+      "long_name": "Average temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
     },
     "time": {
-      "units": "days since 1980 01-01 12:00:00"
+      "_corrected_units": {
+        "agcfsr": "days since 1980-01-01 12:00:00",
+        "agmerra2": "days since 1980-01-01 12:00:00"
+      }
+    },
+    "tmax": {
+      "_cf_variable_name": {
+        "agcfsr": "tasmax",
+        "agmerra2": "tasmax"
+      },
+      "_corrected_units": {
+        "agcfsr": "degC",
+        "agmerra2": "degC"
+      },
+      "cell_methods": "time: maximum",
+      "long_name": "Maximum temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tmin": {
+      "_cf_variable_name": {
+        "agcfsr": "tasmin",
+        "agmerra2": "tasmin"
+      },
+      "_corrected_units": {
+        "agcfsr": "degC",
+        "agmerra2": "degC"
+      },
+      "cell_methods": "time: minimum",
+      "long_name": "Minimum temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "wndspd": {
+      "_cf_variable_name": {
+        "agcfsr": "sfcWind",
+        "agmerra2": "sfcWind"
+      },
+      "_corrected_units": {
+        "agcfsr": "m s-1",
+        "agmerra2": "m s-1"
+      },
+      "cell_methods": "time: point",
+      "long_name": "Wind speed",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
     }
   }
 }

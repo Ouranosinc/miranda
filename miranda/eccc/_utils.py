@@ -358,7 +358,7 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
         variable["missing_flags"] = "M"
         variable["least_significant_digit"] = ""
     except KeyError:
-        logging.error("Hourly variable `{}` not supported.".format(code))
+        logging.error(f"Hourly variable `{code}` not supported.")
         raise
     return variable
 
@@ -534,7 +534,7 @@ def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, fl
         variable["missing_flags"] = "M"
         variable["least_significant_digit"] = ""
     except KeyError:
-        logging.error("Daily variable `{}` not supported.".format(code))
+        logging.error(f"Daily variable `{code}` not supported.")
         raise
     return variable
 

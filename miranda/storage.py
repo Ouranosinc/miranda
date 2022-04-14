@@ -26,7 +26,17 @@ from typing import List, Union
 from .scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
-_CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
+
+
+__all__ = [
+    "DiskSpaceError",
+    "FileMeta",
+    "StorageState",
+    "file_size",
+    "report_file_size",
+    "size_division",
+    "size_evaluation",
+]
 
 
 class DiskSpaceError(Exception):
@@ -62,7 +72,7 @@ class FileMeta:
             try:
                 self.size = self.path.stat().st_size
             except OSError:
-                raise DiskSpaceError("Cannot get size of {}.".format(self.path.name))
+                raise DiskSpaceError(f"Cannot get size of {self.path.name}.")
         elif -1 == size:
             self.size = 0
         else:
@@ -75,7 +85,6 @@ class FileMeta:
             return False
 
 
-#
 class StorageState:
     """Information regarding the storage capacity of a disk."""
 
@@ -134,7 +143,6 @@ class StorageState:
             self.free_space = free_space
 
 
-#
 def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
     """Total size of files.
 
@@ -164,37 +172,36 @@ def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
         return 0
 
 
-#
 def size_division(
     files_to_divide: Union[List, FileMeta, Path],
     size_limit: int = 0,
     file_limit: int = 0,
     check_name_repetition: bool = False,
     preserve_order: bool = False,
-):
+) -> List[list]:
     """Divide files according to size and number limits.
 
     Parameters
     ----------
     files_to_divide : Union[List, FileMeta, Path]
     size_limit : int
-        size limit of divisions in bytes (default: no limit).
+      size limit of divisions in bytes (default: no limit).
     file_limit : int
-        number of files limit of divisions (default: no limit).
+      number of files limit of divisions (default: no limit).
     check_name_repetition : bool
-        flag to prevent file name repetitions (default: off).
+      flag to prevent file name repetitions (default: off).
     preserve_order : bool
-        flag to force files to be restored in the order they are given
-        (default: off).
+      flag to force files to be restored in the order they are given
+      (default: off).
 
     Returns
     -------
-    out - 2d nested lists
-        list of divisions (each division is a list of FileMeta objects).
+    List[list]
+      list of divisions (each division is a list of FileMeta objects).
 
     """
 
-    divisions = []
+    divisions = list()
     for file_divide in files_to_divide:
         # If file paths are given, convert to FileMeta objects first
         if not isinstance(file_divide, FileMeta):
@@ -247,17 +254,17 @@ def file_size(
     try:
         if isinstance(file_path_or_bytes, int):
             total = file_path_or_bytes
+        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
+            total = reduce(
+                (lambda x, y: x + y),
+                map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
+            )
         elif Path(file_path_or_bytes).is_file():
             total = Path(file_path_or_bytes).stat().st_size
         elif Path(file_path_or_bytes).is_dir():
             total = reduce(
                 (lambda x, y: x + y),
                 [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")],
-            )
-        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
-            total = reduce(
-                (lambda x, y: x + y),
-                map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
             )
         else:
             raise FileNotFoundError
@@ -274,11 +281,12 @@ def report_file_size(
     file_path_or_bytes: Union[Path, str, int, List[Union[str, Path]], GeneratorType],
     use_binary: bool = True,
     significant_digits: int = 2,
-) -> str or None:
+) -> str:
     """
     This function will parse the contents of a list or generator of files and return the
     size in bytes of a file or a list of files in pretty formatted text.
     """
+    _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
     def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
         """
@@ -292,7 +300,7 @@ def report_file_size(
         multiple = math.trunc(math.log2(i) / math.log2(base))
         value = i / math.pow(base, multiple)
         suffix = _CONVERSIONS[multiple].format("i" if binary else "")
-        return "{value:.{precision}f} {suffix}".format(**locals())
+        return f"{value:.{precision}f} {suffix}"
 
     total = file_size(file_path_or_bytes)
     return _size_formatter(total, binary=use_binary, precision=significant_digits)

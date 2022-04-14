@@ -4,7 +4,7 @@ import json
 import logging.config
 import re
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,12 @@ from miranda.units import u, units2pint
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+__all__ = ["open_csv"]
+
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "hq_cf_attrs.json"))["variable_entry"]
+cmor = json.load(open(Path(__file__).parent / "data" / "hq_cf_attrs.json"))[
+    "variable_entry"
+]
 
 fp = r"[-+]?\d*,\d+|\d+"
 
@@ -60,7 +64,7 @@ converters = {
 }
 
 
-def guess_variable(meta, cf_table: Optional[dict]) -> str:
+def guess_variable(meta, cf_table: Optional[dict]) -> Tuple[str, Optional[str]]:
     """Return the corresponding CMOR variable."""
     if cf_table is None:
         cf_table = cmor
@@ -76,7 +80,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
         "Humidité relative 2 mètres": "hurs",
     }
 
-    name = str()
+    name = ""
     table_name = None
     if v in corr:
         name = corr[v]
@@ -87,7 +91,7 @@ def guess_variable(meta, cf_table: Optional[dict]) -> str:
             elif meta["mesure"] == "Minimum":
                 name = "tasmin"
 
-            table_name = name + "_" + meta["pas"]
+            table_name = f"{name}_{meta['pas']}"
 
     if meta["pas"] != cf_table[table_name or name]["frequency"]:
         raise ValueError("Unexpected frequency.")
@@ -143,14 +147,17 @@ def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
 
 
 def to_cf(
-    meta: dict, data: pd.DataFrame, cf_table: Optional[dict] = {}
+    meta: dict, data: pd.DataFrame, cf_table: Optional[dict] = None
 ) -> xr.DataArray:
     """Return CF-compliant metadata."""
+
+    if cf_table is None:
+        cf_table = dict()
 
     # Convert meta values
     m = dict()
     for key, val in meta.items():
-        m[key] = converters.get(key, lambda x: x)(val)
+        m[key] = converters.get(key, lambda q: q)(val)
 
     # Get default variable attributes
     name, table_name = guess_variable(m, cf_table)

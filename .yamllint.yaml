@@ -1,0 +1,8 @@
+---
+
+rules:
+  document-start: disable
+  line-length:
+    max: 88
+    level: warning
+  truthy: disable
