@@ -89,7 +89,7 @@ def date_parser(
     *,
     end_of_period: bool = False,
     output_type: str = "str",
-    strtime_format: str = "%Y-%m-%d"
+    strtime_format: str = "%Y-%m-%d",
 ) -> Union[str, pd.Timestamp, NaTType]:
     """Returns a datetime from a string.
 
@@ -126,6 +126,7 @@ def date_parser(
         17: ["%Y%m%d-%Y%m%d"],
         19: ["%Y-%m-%dT%H:%M:%S"],
         21: ["%Y%m%d%H-%Y%m%d%H"],
+        25: ["%Y%m%d%H%M-%Y%m%d%H%M"],
     }
     end_date_found = False
 
@@ -138,7 +139,7 @@ def date_parser(
             except ValueError:
                 pass
         else:
-            raise DecoderError("Can't parse date {d} with supported formats {fmts}.")
+            raise DecoderError(f"Can't parse date {d} with supported formats {fmts}.")
         return s, match
 
     date_format = None
@@ -168,16 +169,16 @@ def date_parser(
                 break
         else:
             raise DecoderError(
-                "Unable to parse cftime date {date}, even when moving back 2 days."
+                f"Unable to parse cftime date {date}, even when moving back 2 days."
             )
     elif not isinstance(date, pd.Timestamp):
         date = pd.Timestamp(date)  # noqa
 
     if end_of_period and date_format and not end_date_found:
         if "m" not in date_format:
-            date = date + pd.tseries.offsets.YearEnd(1)
+            date = date + pd.tseries.offsets.YearEnd(1)  # noqa
         elif "d" not in date_format:
-            date = date + pd.tseries.offsets.MonthEnd(1)
+            date = date + pd.tseries.offsets.MonthEnd(1)  # noqa
         # TODO: Implement sub-daily?
 
     if output_type == "str":
