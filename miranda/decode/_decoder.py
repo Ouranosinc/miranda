@@ -358,6 +358,7 @@ class Decoder:
 
         return facets
 
+    # TODO: Remove name-based methods
     @classmethod
     def decode_cmip6_name(cls, file: Union[PathLike, str]) -> dict:
         decode_file = cls._from_filename(file=file)
@@ -423,6 +424,7 @@ class Decoder:
 
         return facets
 
+    # TODO: Remove name-based methods
     @classmethod
     def decode_cmip5_name(cls, file: Union[PathLike, str]) -> dict:
         decode_file = cls._from_filename(file=file)
@@ -534,6 +536,7 @@ class Decoder:
 
         return facets
 
+    # TODO: Remove name-based methods
     @classmethod
     def decode_cordex_name(cls, file: Union[PathLike, str]) -> dict:
         decode_file = cls._from_filename(file=file)
@@ -598,6 +601,7 @@ class Decoder:
 
         return facets
 
+    # TODO: Remove name-based methods
     @classmethod
     def decode_isimip_ft_name(cls, file: Union[PathLike, str]) -> dict:
         decode_file = cls._from_filename(file=file)
