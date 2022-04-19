@@ -307,7 +307,7 @@ def daily_aggregation(ds) -> Dict[str, xr.Dataset]:
                 daily_dataset[v] = ds_out
                 del ds_out
 
-        elif variable in ["evspsblpot", "pr", "prsn", "snd", "snw"]:
+        elif variable in ["evspsblpot", "pr", "prsn", "snd", "snr", "snw"]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
             ds_out.attrs["frequency"] = "day"
