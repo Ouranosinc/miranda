@@ -473,7 +473,10 @@ class Decoder:
         elif data["project_id"] == "CORDEX":
             facets["mip_era"] = "CMIP5"
 
-        facets["date"] = date
+        if date == "r0i0p0":
+            facets["date"] = "fx"
+        else:
+            facets["date"] = date
 
         try:
             facets["domain"] = data["CORDEX_domain"].strip()
