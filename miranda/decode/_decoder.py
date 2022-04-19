@@ -524,6 +524,8 @@ class Decoder:
 
         try:
             facets["member"] = data["parent_experiment_rip"].strip()
+            if facets["member"] == "N/A":
+                raise KeyError()
         except KeyError:
             facets["member"] = data["driving_model_ensemble_member"].strip()
 
