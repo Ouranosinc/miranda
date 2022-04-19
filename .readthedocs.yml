@@ -6,7 +6,7 @@ build:
     python: "3.8"
   jobs:
     pre_build:
-      - git clone pyessv-archive ~/.esdoc/pyessv-archive
+      - git clone https://github.com/ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
 
 python:
   install:
