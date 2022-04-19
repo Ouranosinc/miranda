@@ -333,22 +333,22 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
-        facets["activity"] = data.activity_id
+        facets["activity"] = data["activity_id"]
         facets["date"] = date
         facets["domain"] = "global"
-        facets["experiment"] = data.experiment_id
+        facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = data.frequency
-        facets["institution"] = data.institution_id
-        facets["member"] = data.variant_label
-        facets["modeling_realm"] = data.realm
+        facets["frequency"] = data["frequency"]
+        facets["institution"] = data["institution_id"]
+        facets["member"] = data["variant_label"]
+        facets["modeling_realm"] = data["realm"]
         facets["processing_level"] = "raw"
-        facets["mip_era"] = data.project
-        facets["source"] = data.source_id
+        facets["mip_era"] = data["project"]
+        facets["source"] = data["source_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
         facets["variable"] = variable
-        facets["version"] = data.version
+        facets["version"] = data["version"]
 
         try:
             facets["date_start"] = date_parser(date)
