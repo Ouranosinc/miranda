@@ -31,6 +31,7 @@ CORDEX_ADJUST = pyessv.WCRP.CORDEX_ADJUST  # noqa
 CMIP5_INSTITUTES = [f.raw_name for f in CMIP5.institute.terms]
 CMIP6_INSTITUTES = [f.raw_name for f in CMIP6.institution_id.terms]
 CORDEX_INSTITUTES = [f.raw_name for f in CORDEX.institute.terms]
+CORDEX_INSTITUTES.append("OURANOS")  # Needed for internal-ish CORDEX data
 CORDEX_ADJUST_INSTITUTES = [f.raw_name for f in CORDEX_ADJUST.institute.terms]
 
 WCRP_INSTITUTIONS = list()
@@ -39,10 +40,10 @@ WCRP_INSTITUTIONS.extend(CMIP6_INSTITUTES)
 WCRP_INSTITUTIONS.extend(CORDEX_INSTITUTES)
 WCRP_INSTITUTIONS.extend(CORDEX_ADJUST_INSTITUTES)
 
-BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
-
 INSTITUTIONS = list()
 INSTITUTIONS.extend(WCRP_INSTITUTIONS)
+
+BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
 
 # Models
 
