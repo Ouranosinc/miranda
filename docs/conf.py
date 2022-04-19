@@ -50,9 +50,9 @@ napoleon_use_param = False
 napoleon_use_ivar = True
 
 # To avoid having to install these libraries on ReadTheDocs.
-autodoc_mock_imports = [
-    "pyessv",
-]
+# autodoc_mock_imports = [
+#
+# ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
