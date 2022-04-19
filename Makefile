@@ -4,14 +4,14 @@ help:
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
 	@echo "compliant - make changes to code to satisfy lint rules"
-	@echo "lint - check style with modfied pep8 and black"
+	@echo "lint - check style with modified pep8 and black"
 	@echo "test - run tests quickly with the default Python"
 	@echo "test-all - run tests on every Python version with tox"
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "release - package and upload a release"
 	@echo "sdist - package"
-	@echo "install - install the library in developmer mode"
+	@echo "install - install the library in developer mode"
 
 clean: clean-build clean-pyc  ## remove all build, test, coverage and Python artifacts
 
@@ -26,15 +26,15 @@ clean-pyc:
 	find . -name '*~' -exec rm -f {} +
 
 compliant:
-	auotopep8 miranda test
-	black miranda test
+	auotopep8 miranda tests
+	black miranda tests
 
 lint:
-	flake8 miranda test
-	black miranda test --check
+	flake8 miranda tests
+	black  --check miranda tests
 
 test:
-	pytest test
+	pytest tests
 
 test-all:
 	tox
