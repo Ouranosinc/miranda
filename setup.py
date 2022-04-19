@@ -11,7 +11,7 @@ KEYWORDS = "climate meteorology archiving collection NetCDF"
 URL = "https://github.com/Ouranosinc/miranda"
 AUTHOR = "Trevor James Smith"
 AUTHOR_EMAIL = "smith.trevorj@ouranos.ca"
-REQUIRES_PYTHON = ">=3.5.0"
+REQUIRES_PYTHON = ">=3.7.0"
 LICENSE = "Apache Software License 2.0"
 
 if sys.argv[-1] == "publish":

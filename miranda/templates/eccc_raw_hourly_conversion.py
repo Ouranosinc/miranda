@@ -1,3 +1,4 @@
+from os import getenv
 from pathlib import Path
 
 from miranda.eccc import (
@@ -47,9 +48,9 @@ if __name__ == "__main__":
 
     var_codes = [107, 108, 109, 110, 133, 156]
 
-    # station_file = "/media/sf_VMshare/Trevor/data/Station Inventory EN.csv"
-    # source_data = Path("/home/travis/doris_home/logan/scen3/smith/eccc")
-    source_data = Path("/scen3/smith/eccc_converted")
+    in_files = getenv("in")
+
+    source_data = Path(in_files)
 
     station_file = source_data.joinpath("Station Inventory EN.csv")
     origin_files = source_data.parent.joinpath("eccc_source/20200618")

@@ -31,7 +31,7 @@ def subsetting_domains(domain: str) -> np.array:
     if domain.upper() == "GLOBAL":
         region = np.array([90.0, -180.0, -90.0, 180.0])
     elif domain.upper() in ["AMNO", "NAM"]:
-        region = np.array([90.0, -180.0, 10.0, -10.0])
+        region = np.array([90.0, -179.9, 10.0, -10.0])
     elif domain.upper() == "CAN":
         region = np.array([83.5, -141.0, 41.5, -52.5])
     elif domain.upper() == "QC":

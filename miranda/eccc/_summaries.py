@@ -22,7 +22,6 @@ import pandas as pd
 import xarray as xr
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import ingest
 
 config.dictConfig(LOGGING_CONFIG)
 __all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
@@ -54,7 +53,7 @@ def extract_daily_summaries(
 
     # Find the CSV files
     if "*" not in file_suffix:
-        file_suffix = "*{}".format(file_suffix)
+        file_suffix = f"*{file_suffix}"
     station_files = Path(path_station).rglob(file_suffix)
 
     # extract the .csv data
@@ -205,9 +204,10 @@ def _read_multiple_daily_summaries(
     station_meta = None
     datafull = None
 
-    files = ingest(files)
+    file_list = [Path(f) for f in files]
+    file_list.sort()
 
-    for f in files:
+    for f in file_list:
         station_meta, data = _read_single_daily_summaries(f)
         if datafull is None:
             datafull = data
@@ -248,7 +248,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     Tuple[dict, pd.DataFrame]
     """
     # Read the whole file
-    with open(file, "r", encoding="utf-8-sig") as fi:
+    with open(file, encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
     # Find each elements in the header

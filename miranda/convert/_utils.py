@@ -2,34 +2,29 @@ import datetime
 import json
 import logging.config
 import os
-import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, Optional, Union
 
-import dask.config
 import netCDF4
 import numpy as np
 import regionmask
-import xarray
 import xarray as xr
 import zarr
 from clisops.core import subset
-from dask import compute
-from dask.diagnostics import ProgressBar
-from xarray import Dataset
 from xclim.core import calendar, units
 from xclim.indices import tas
 
-from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import chunk_iterables
-
-from ._data import project_institutes, xarray_frequencies_to_cmip6
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-
-dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
+__all__ = [
+    "get_chunks_on_disk",
+    "add_ar6_regions",
+    "daily_aggregation",
+    "delayed_write",
+    "variable_conversion",
+]
 
 LATLON_COORDINATE_PRECISION = dict()
 LATLON_COORDINATE_PRECISION["era5-land"] = 4
@@ -37,15 +32,37 @@ LATLON_COORDINATE_PRECISION["era5-land"] = 4
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 
-# Needed pre-processing function
-def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
-    if "time_bnds" in dataset.variables:
-        return dataset.drop_vars(["time_bnds"])
-    return dataset
+def load_json_data_mappings(project: str) -> dict:
+    data_folder = Path(__file__).parent / "data"
+
+    if project.startswith("era5"):
+        metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+    elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
+        metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
+    elif project == "nrcan-gridded-10km":
+        raise NotImplementedError()
+    elif project == "wfdei-gem-capa":
+        metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
+    else:
+        raise NotImplementedError()
+
+    return metadata_definition
 
 
-def get_chunks_on_disk(ncfile: Union[os.PathLike, str]) -> dict:
-    ds = netCDF4.Dataset(ncfile)
+def get_chunks_on_disk(nc_file: Union[os.PathLike, str]) -> dict:
+    """
+
+    Parameters
+    ----------
+    nc_file: Path or str
+
+    Returns
+    -------
+    dict
+    """
+    # FIXME: This does not support zarr
+    # TODO: This needs to be optimized for dask. See: https://github.com/Ouranosinc/miranda/pull/24/files#r840617216
+    ds = netCDF4.Dataset(nc_file)
     chunks = dict()
     for v in ds.variables:
         chunks[v] = dict()
@@ -54,355 +71,149 @@ def get_chunks_on_disk(ncfile: Union[os.PathLike, str]) -> dict:
     return chunks
 
 
-def reanalysis_processing(
-    data: Dict[str, List[Union[str, os.PathLike]]],
-    output_folder: Union[str, os.PathLike],
-    variables: Sequence[str],
-    aggregate: Union[str, bool] = False,
-    domains: Union[str, List[str]] = "_DEFAULT",
-    start: Optional[str] = None,
-    end: Optional[str] = None,
-    target_chunks: Optional[dict] = None,
-    output_format: str = "netcdf",
-    overwrite: bool = False,
-    engine: str = "h5netcdf"
-    # n_workers: int = 4,
-    # **dask_kwargs,
-) -> None:
-    """
+def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
+    """Add the IPCC AR6 Regions to dataset.
 
     Parameters
     ----------
-    data: Dict[str, List[str]]
-    output_folder: Union[str, os.PathLike]
-    variables: Sequence[str]
-    aggregate: {"day", None}
-    domains: {"QC", "CAN", "AMNO", "GLOBAL"}
-    start: str, optional
-    end: str, optional
-    target_chunks: dict, optional
-    output_format: {"netcdf", "zarr"}
-    overwrite: bool
-    engine: {"netcdf4", "h5netcdf"}
+    ds : xarray.Dataset
 
     Returns
     -------
-    None
+    xarray.Dataset
     """
-    if output_format == "netcdf":
-        suffix = ".nc"
-    elif output_format == "zarr":
-        suffix = ".zarr"
-    else:
-        raise NotImplementedError(f"`output_format`: '{output_format}")
-
-    with ProgressBar(), dask.config.set(**{"array.slicing.split_large_chunks": False}):
-        out_files = Path(output_folder)
-        if isinstance(domains, str):
-            domains = [domains]
-
-        for domain in domains:
-            if domain == "_DEFAULT":
-                logging.warning("No domain specified. proceeding with 'not-specified'")
-                output_folder = output_folder
-                domain = "not-specified"
-            elif isinstance(domain, str):
-                output_folder = out_files.joinpath(domain)  # noqa
-            else:
-                raise NotImplementedError()
-
-            output_folder.mkdir(exist_ok=True)
-
-            for project, in_files in data.items():
-                if domain != "not_specified":
-                    logging.info(f"Processing {project} data for domain {domain}.")
-                else:
-                    logging.info(f"Processing {project} data.")
-                for var in variables:
-                    # Select only for variable of interest
-                    multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
-
-                    if multi_files:
-                        all_chunks = get_chunks_on_disk(multi_files[0])
-                        chunks = all_chunks[var]
-
-                        if target_chunks is None:
-                            output_chunks = dict()
-                            mappings = dict(longitude="lon", latitude="lat")
-                            for k, v in chunks.items():
-                                if k in mappings.keys():
-                                    output_chunks[mappings[k]] = v
-                                else:
-                                    output_chunks[k] = v
-
-                            logging.warning(
-                                "No `target_chunks` set. "
-                                f"Proceeding with following found chunks: {output_chunks}"
-                            )
-                        else:
-                            output_chunks = target_chunks
-
-                        logging.info(f"Resampling variable `{var}`.")
-
-                        if aggregate:
-                            time_freq = aggregate
-                        else:
-                            parse_freq = calendar.parse_offset(
-                                xr.infer_freq(xr.open_dataset(multi_files[0]).time)
-                            )
-                            time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6[parse_freq[1]]}"
-
-                        institute = project_institutes[project]
-                        file_name = "_".join([var, time_freq, institute, project])
-                        if domain != "not-specified":
-                            file_name = f"{file_name}_{domain}"
-
-                        xr_kwargs = dict(
-                            chunks=chunks,
-                            engine=engine,
-                            preprocess=_drop_those_time_bnds,
-                            parallel=True,
-                        )
-
-                        # Subsetting operations
-                        if domain.lower() in ["global", "not-specified"]:
-                            if start or end:
-                                ds = subset.subset_time(
-                                    xr.open_mfdataset(multi_files, **xr_kwargs),
-                                    start_date=start,
-                                    end_date=end,
-                                )
-                            else:
-                                ds = xr.open_mfdataset(multi_files, **xr_kwargs)
-                        else:
-                            region = subsetting_domains(domain)
-                            lon_values = np.array([region[1], region[3]])
-                            lat_values = np.array([region[0], region[2]])
-
-                            ds = subset.subset_bbox(
-                                xr.open_mfdataset(multi_files, **xr_kwargs),
-                                lon_bnds=lon_values,
-                                lat_bnds=lat_values,
-                                start_date=start,
-                                end_date=end,
-                            )
-
-                        ds.attrs.update(dict(frequency=time_freq, domain=domain))
-                        ds = variable_conversion(
-                            ds, project=project, output_format=output_format
-                        )
-
-                        if time_freq.lower() == "day":
-                            dataset = daily_aggregation(ds)
-                            freq = "YS"
-                        else:
-                            out_variable = (
-                                list(ds.data_vars)[0]
-                                if len(list(ds.data_vars)) == 1
-                                else None
-                            )
-                            dataset = {out_variable: ds}
-                            freq = "MS"
-
-                        if len(dataset) == 0:
-                            logging.warning(
-                                f"Daily aggregation methods for variable `{var}` are not supported. "
-                                "Continuing..."
-                            )
-
-                        for key in dataset.keys():
-                            ds = dataset[key]
-
-                            # TODO: What do we do about multivariable files. Are they even allowed?
-                            out_variable = (
-                                list(ds.data_vars)[0]
-                                if len(list(ds.data_vars)) == 1
-                                else None
-                            )
-                            file_name1 = file_name.replace(
-                                f"{var}_", f"{out_variable}_"
-                            )
-
-                            logging.info(f"Writing out fixed files for {file_name1}.")
-                            years, datasets = zip(*ds.resample(time=freq))
-                            if freq == "MS":
-                                format_str = "%Y-%m"
-                                iterable_chunks = 36
-                            else:
-                                format_str = "%Y"
-                                iterable_chunks = 10
-
-                            out_filenames = [
-                                output_folder.joinpath(
-                                    f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}{suffix}"
-                                )
-                                for year in years
-                            ]
-
-                            jobs = list()
-                            if output_format != "zarr" and overwrite:
-                                logging.warning(
-                                    f"Removing existing {output_format} files for {var}."
-                                )
-                            for i, d in enumerate(datasets):
-                                if (
-                                    out_filenames[i].exists()
-                                    and out_filenames[i].is_file()
-                                    and overwrite
-                                ):
-                                    out_filenames[i].unlink()
-
-                                if (
-                                    not out_filenames[i].exists()
-                                    or out_filenames[i].is_dir()
-                                ):
-                                    jobs.append(
-                                        delayed_write(
-                                            d,
-                                            out_filenames[i],
-                                            output_chunks,
-                                            output_format,
-                                            overwrite,
-                                        )
-                                    )
-
-                            if len(jobs) == 0:
-                                logging.warning(
-                                    f"All output files for `{var}` currently exist."
-                                    " To overwrite them, set `overwrite=True`. Continuing..."
-                                )
-                            else:
-                                chunked_jobs = chunk_iterables(jobs, iterable_chunks)
-                                logging.info(f"Processing jobs for variable `{var}`.")
-                                iterations = 0
-                                for chunk in chunked_jobs:
-                                    iterations += 1
-                                    logging.info(f"Writing out job chunk {iterations}.")
-                                    compute(chunk)
-                    else:
-                        logging.info(f"No files found for variable {var}.")
+    mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
+    ds = ds.assign_coords(region=mask)
+    return ds
 
 
-def delayed_write(
-    ds: xarray.Dataset,
-    outfile: Path,
-    target_chunks: dict,
-    output_format: str,
-    overwrite: bool,
-):
-    # Set correct chunks in encoding options
-    kwargs = dict()
-    kwargs["encoding"] = dict()
-    for name, da in ds.data_vars.items():
-        chunks = list()
-        for dim in da.dims:
-            if dim in target_chunks.keys():
-                chunks.append(target_chunks[str(dim)])
-            else:
-                chunks.append(len(da[dim]))
-
-        if output_format == "netcdf":
-            kwargs["encoding"][name] = {
-                "chunksizes": chunks,
-                "zlib": True,
-            }
-            kwargs["compute"] = False
-            if not overwrite:
-                kwargs["mode"] = "a"
-        elif output_format == "zarr":
-            ds = ds.chunk(target_chunks)
-            kwargs["encoding"][name] = {
-                "chunks": chunks,
-                "compressor": zarr.Blosc(),
-            }
-            kwargs["compute"] = False
-            if overwrite:
-                kwargs["mode"] = "w"
-    if kwargs["encoding"]:
-        kwargs["encoding"]["time"] = {"dtype": "int32"}
-
-    return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
-
-
-def variable_conversion(
-    ds: xarray.Dataset, project: str, output_format: str
-) -> xarray.Dataset:
+def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
 
-    def _correct_units_names(d: xarray.Dataset, p: str):
+    def _get_time_frequency(d: xr.Dataset):
+        freq = xr.infer_freq(d.time)
+        if freq is None:
+            raise TypeError()
+        offset = (
+            [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
+            if calendar.parse_offset(freq)[0] != ""
+            else [1.0, "h"]
+        )
+
+        time_units = {
+            "s": "second",
+            "m": "minute",
+            "h": "hour",
+            "D": "day",
+            "W": "week",
+            "Y": "year",
+        }
+        if offset[1] in ["S", "M", "H"]:
+            offset[1] = offset[1].lower()
+        offset_meaning = time_units[offset[1]]
+        return offset, offset_meaning
+
+    def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
-        for vv in d.data_vars:
-            if p in metadata_definition["variable_entry"][vv][key].keys():
-                d[vv].attrs["units"] = metadata_definition["variable_entry"][vv][key][
-                    project
-                ]
+        for v in d.data_vars:
+            if p in m["variable_entry"][v][key].keys():
+                d[v].attrs["units"] = m["variable_entry"][v][key][project]
+
+        if "time" in m["variable_entry"].keys():
+            if p in m["variable_entry"]["time"][key].keys():
+                d["time"].attrs["units"] = m["variable_entry"]["time"][key][project]
+
         return d
 
-    if project in ["era5-single-levels", "era5-land"]:
-        metadata_definition = json.load(
-            open(Path(__file__).parent.parent / "ecmwf" / "ecmwf_cf_attrs.json")
-        )
-    else:
-        raise NotImplementedError()
-
     # for de-accumulation or conversion to flux
-    def _transform(d: xarray.Dataset, p: str):
+    def _transform(d: xr.Dataset, p: str, m: Dict):
         key = "_transformation"
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
-            if p in metadata_definition["variable_entry"][vv][key].keys():
-                if metadata_definition["variable_entry"][vv][key][p] == "deaccumulate":
-                    freq = xr.infer_freq(ds.time)
-                    try:
-                        offset = (
-                            float(calendar.parse_offset(freq)[0])
-                            if calendar.parse_offset(freq)[0] != ""
-                            else 1.0
-                        )
-                    except TypeError:
-                        logging.error(
-                            f"Unable to parse the time frequency for variable `{vv}`. "
-                            "Verify data integrity before retrying."
-                        )
-                        raise
+            if p in m["variable_entry"][vv][key].keys():
+                try:
+                    offset, offset_meaning = _get_time_frequency(d)
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
+                    )
+                    raise
 
-                    # accumulated hourly to hourly flux (de-accumulation)
+                if m["variable_entry"][vv][key][p] == "deaccumulate":
+                    # Time-step accumulated total to time-based flux (de-accumulation)
+                    logging.info(f"De-accumulating units for variable `{vv}`.")
                     with xr.set_options(keep_attrs=True):
                         out = d[vv].diff(dim="time")
                         out = d[vv].where(
-                            d[vv].time.dt.hour == int(offset), out.broadcast_like(d[vv])
+                            getattr(d[vv].time.dt, offset_meaning) == offset[0],
+                            out.broadcast_like(d[vv]),
                         )
                         out = units.amount2rate(out)
                     d_out[out.name] = out
-                elif metadata_definition["variable_entry"][vv][key][p] == "amount2rate":
+                elif m["variable_entry"][vv][key][p] == "amount2rate":
+                    # frequency-based totals to time-based flux
+                    logging.info(
+                        f"Performing amount-to-rate units conversion for variable `{vv}`."
+                    )
                     out = units.amount2rate(
                         d[vv],
-                        out_units=metadata_definition["variable_entry"][vv]["units"],
+                        out_units=m["variable_entry"][vv]["units"],
                     )
                     d_out[out.name] = out
                 else:
                     raise NotImplementedError(
-                        f"Unknown transformation "
-                        f"{metadata_definition['variable_entry'][vv][key][p]}"
+                        f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
                     )
-
             else:
                 d_out[vv] = d[vv]
         return d_out
 
+    def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+        key = "_offset_time"
+        d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+        for vv in d.data_vars:
+            if p in m["variable_entry"][vv][key].keys():
+                try:
+                    offset, offset_meaning = _get_time_frequency(d)
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
+                    )
+                    raise
+
+                if m["variable_entry"][vv][key][p]:
+                    # Offset time by value of one time-step
+                    logging.info(
+                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                    )
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv]
+                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+                        d_out[out.name] = out
+                else:
+                    d_out = d
+            return d_out
+
     # For converting variable units to standard workflow units
-    def _units_cf_conversion(d: xarray.Dataset) -> xarray.Dataset:
-        descriptions = metadata_definition["variable_entry"]
+    def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
+        descriptions = m["variable_entry"]
+
+        if "time" in m["variable_entry"].keys():
+            d["time"]["units"] = m["variable_entry"]["time"]["units"]
+
         for v in d.data_vars:
             d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
+
         return d
 
     # Add and update existing metadata fields
-    def _metadata_conversion(d: xarray.Dataset, p: str, o: str) -> xarray.Dataset:
+    def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
 
         # Add global attributes
-        d.attrs.update(metadata_definition["Header"])
-        d.attrs.update(dict(project=p, output_format=o))
+        d.attrs.update(m["Header"])
+        d.attrs.update(dict(project=p, format=o))
 
         # Date-based versioning
         d.attrs.update(dict(version=VERSION))
@@ -412,12 +223,15 @@ def variable_conversion(
             " with modified metadata for CF-like compliance."
         )
         d.attrs.update(dict(history=history))
+        descriptions = m["variable_entry"]
 
-        descriptions = metadata_definition["variable_entry"]
+        if "time" in m["variable_entry"].keys():
+            descriptions["time"].pop("_corrected_units")
 
         # Add variable metadata
         for v in d.data_vars:
             descriptions[v].pop("_corrected_units")
+            descriptions[v].pop("_offset_time")
             descriptions[v].pop("_transformation")
             d[v].attrs.update(descriptions[v])
 
@@ -433,7 +247,7 @@ def variable_conversion(
         return d
 
     # For renaming lat and lon dims
-    def _dims_conversion(d: xarray.Dataset):
+    def _dims_conversion(d: xr.Dataset):
         sort_dims = []
         for orig, new in dict(longitude="lon", latitude="lat").items():
             try:
@@ -451,17 +265,19 @@ def variable_conversion(
             d = d.sortby(sort_dims)
         return d
 
-    ds = _correct_units_names(ds, project)
-    ds = _transform(ds, project)
-    ds = _units_cf_conversion(ds)
-    ds = _metadata_conversion(ds, project, output_format)
+    metadata_definition = load_json_data_mappings(project)
+    ds = _correct_units_names(ds, project, metadata_definition)
+    ds = _transform(ds, project, metadata_definition)
+    ds = _offset_time(ds, project, metadata_definition)
+    ds = _units_cf_conversion(ds, metadata_definition)
+    ds = _metadata_conversion(ds, project, output_format, metadata_definition)
     ds = _dims_conversion(ds)
 
     return ds
 
 
-def daily_aggregation(ds) -> Dict[str, Dataset]:
-    logging.info("Creating daily upscaled reanalyses.")
+def daily_aggregation(ds) -> Dict[str, xr.Dataset]:
+    logging.info("Creating daily upscaled climate variables.")
 
     daily_dataset = dict()
     for variable in ds.data_vars:
@@ -509,22 +325,6 @@ def daily_aggregation(ds) -> Dict[str, Dataset]:
     return daily_dataset
 
 
-def add_ar6_regions(ds: xarray.Dataset) -> xarray.Dataset:
-    """Add the IPCC AR6 Regions to dataset.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-
-    Returns
-    -------
-    xarray.Dataset
-    """
-    mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
-    ds = ds.assign_coords(region=mask)
-    return ds
-
-
 def threshold_land_sea_mask(
     ds: Union[xr.Dataset, str, os.PathLike],
     *,
@@ -560,7 +360,7 @@ def threshold_land_sea_mask(
     try:
         project = ds.attrs["project"]
     except KeyError:
-        raise ValueError("No 'project' found for given dataset.")
+        raise ValueError("No 'project' field found for given dataset.")
 
     if project in land_sea_mask.keys():
         logging.info(
@@ -598,5 +398,59 @@ def threshold_land_sea_mask(
             ds.to_netcdf(out)
             return out
         return ds
-    logging.warning("Project was not found.")
-    raise RuntimeError()
+    raise RuntimeError(f"Project `{project}` was not found in land-sea masks.")
+
+
+def delayed_write(
+    ds: xr.Dataset,
+    outfile: Path,
+    target_chunks: dict,
+    output_format: str,
+    overwrite: bool,
+):
+    """
+
+    Parameters
+    ----------
+    ds: Union[xr.Dataset, str, os.PathLike]
+    outfile
+    target_chunks
+    output_format
+    overwrite
+
+    Returns
+    -------
+
+    """
+    # Set correct chunks in encoding options
+    kwargs = dict()
+    kwargs["encoding"] = dict()
+    for name, da in ds.data_vars.items():
+        chunks = list()
+        for dim in da.dims:
+            if dim in target_chunks.keys():
+                chunks.append(target_chunks[str(dim)])
+            else:
+                chunks.append(len(da[dim]))
+
+        if output_format == "netcdf":
+            kwargs["encoding"][name] = {
+                "chunksizes": chunks,
+                "zlib": True,
+            }
+            kwargs["compute"] = False
+            if not overwrite:
+                kwargs["mode"] = "a"
+        elif output_format == "zarr":
+            ds = ds.chunk(target_chunks)
+            kwargs["encoding"][name] = {
+                "chunks": chunks,
+                "compressor": zarr.Blosc(),
+            }
+            kwargs["compute"] = False
+            if overwrite:
+                kwargs["mode"] = "w"
+    if kwargs["encoding"]:
+        kwargs["encoding"]["time"] = {"dtype": "int32"}
+
+    return getattr(ds, f"to_{output_format}")(outfile, **kwargs)

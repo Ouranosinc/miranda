@@ -1,12 +1,11 @@
+import json
 import logging.config
 import os
 from pathlib import Path
 from typing import Dict, List, Union
 
-from miranda.ecmwf import ecmwf_variables
 from miranda.scripting import LOGGING_CONFIG
-
-from ._data import nasa_ag_variables, sc_earth_variables, wfdei_gem_capa_variables
+from miranda.storage import report_file_size
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -18,17 +17,68 @@ __all__ = [
     "gather_nrcan_gridded_obs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
+    "era5_variables",
+    "nrcan_variables",
+    "nasa_ag_variables",
+    "sc_earth_variables",
+    "wfdei_gem_capa_variables",
+    "reanalysis_project_institutes",
+    "xarray_frequencies_to_cmip6like",
 ]
 
+data_folder = Path(__file__).parent / "data"
+era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
+    "variable_entry"
+].keys()
+nrcan_variables = ["tasmin", "tasmax", "pr"]
+nasa_ag_variables = json.load(open(data_folder / "nasa_cf_attrs.json"))[
+    "variable_entry"
+].keys()
+sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
+wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
+    "variable_entry"
+].keys()
 
-def gather_era5_single_levels(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+reanalysis_project_institutes = {
+    "cfsr": "ncar",
+    "era5": "ecmwf",
+    "era5-single-levels-preliminary-back-extension": "ecmwf",
+    "era5-single-levels": "ecmwf",
+    "era5-land": "ecmwf",
+    "merra2": "nasa",
+    "nrcan-gridded-10km": "nrcan",
+    "wfdei-gem-capa": "usask",
+}
+
+
+# Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
+# see: https://github.com/ES-DOC/pyessv-archive
+xarray_frequencies_to_cmip6like = {
+    "H": "hr",
+    "D": "day",
+    "W": "sem",
+    "M": "mon",
+    "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
+    "A": "yr",
+    "Y": "yr",
+}
+
+
+def gather_era5_single_levels(
+    path: Union[str, os.PathLike], back_extension: bool = False
+) -> Dict[str, List[Path]]:
     # ERA5 source data
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
     infiles_era5 = list()
-    for v in ecmwf_variables:
+    for v in era5_variables:
         infiles_era5.extend(list(sorted(source_era5.rglob(f"{v}_*.nc"))))
-    return {"era5-single-levels": infiles_era5}
+    logging.info(
+        f"Found {len(infiles_era5)} files, totalling {report_file_size(infiles_era5)}."
+    )
+    if not back_extension:
+        return {"era5-single-levels": infiles_era5}
+    return {"era5-single-levels-preliminary-back-extension": infiles_era5}
 
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
@@ -37,7 +87,6 @@ def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
     except StopIteration:
         logging.error("No land_sea_mask found for ERA5.")
         raise FileNotFoundError()
-
     return land_sea_mask
 
 
@@ -46,8 +95,11 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     source_era5l = Path(path)
     logging.info("Gathering ERA5-Land from %s" % source_era5l.as_posix())
     infiles_era5l = list()
-    for v in ecmwf_variables:
+    for v in era5_variables:
         infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}_*.nc"))))
+    logging.info(
+        f"Found {len(infiles_era5l)} files, totalling {report_file_size(infiles_era5l)}."
+    )
     return {"era5-land": infiles_era5l}
 
 
@@ -58,6 +110,9 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     infiles_agmerra = list()
     for v in nasa_ag_variables:
         infiles_agmerra.extend(list(sorted(source_agmerra.rglob(f"AgMERRA_*_{v}.nc4"))))
+    logging.info(
+        f"Found {len(infiles_agmerra)} files, totalling {report_file_size(infiles_agmerra)}."
+    )
     return dict(cfsr=infiles_agmerra)
 
 
@@ -68,6 +123,9 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     infiles_agcfsr = list()
     for v in nasa_ag_variables:
         infiles_agcfsr.extend(list(sorted(source_agcfsr.rglob(f"AgCFSR_*_{v}.nc4"))))
+    logging.info(
+        f"Found {len(infiles_agcfsr)} files, totalling {report_file_size(infiles_agcfsr)}."
+    )
     return dict(cfsr=infiles_agcfsr)
 
 
@@ -75,11 +133,12 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Pa
     # NRCan Gridded Obs source data
     source_nrcan = Path(path)
     logging.info("Gathering NRCAN Gridded Obs from %s" % source_nrcan.as_posix())
-    infiles_nrcan = list(sorted(source_nrcan.joinpath("tasmax").glob("*tasmax_*.nc")))
-    infiles_nrcan.extend(
-        list(sorted(source_nrcan.joinpath("tasmin").glob("*tasmin_*.nc")))
+    infiles_nrcan = list()
+    for v in nrcan_variables:
+        infiles_nrcan.extend(list(sorted(source_nrcan.joinpath(v).glob(f"*{v}_*.nc"))))
+    logging.info(
+        f"Found {len(infiles_nrcan)} files, totalling {report_file_size(infiles_nrcan)}."
     )
-    infiles_nrcan.extend(list(sorted(source_nrcan.joinpath("pr").glob("*pr*.nc"))))
     return dict(nrcan=infiles_nrcan)
 
 
@@ -90,6 +149,9 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
     infiles_wfdei = list()
     for v in wfdei_gem_capa_variables:
         infiles_wfdei.extend(list(sorted(source_wfdei.rglob(f"{v}_*.nc"))))
+    logging.info(
+        f"Found {len(infiles_wfdei)} files, totalling {report_file_size(infiles_wfdei)}."
+    )
     return {"wfdei-gem-capa": infiles_wfdei}
 
 
@@ -102,4 +164,7 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
         infiles_sc_earth.extend(
             list(sorted(source_sc_earth.rglob(f"SC-Earth_{v}_*.nc")))
         )
+    logging.info(
+        f"Found {len(infiles_sc_earth)} files, totalling {report_file_size(infiles_sc_earth)}."
+    )
     return {"wfdei-gem-capa": infiles_sc_earth}

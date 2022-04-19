@@ -9,33 +9,56 @@ from typing import Dict, Iterable, List, Optional, Sequence, Union
 
 from . import scripting
 
-KiB = int(pow(2, 10))
-MiB = int(pow(2, 20))
-GiB = int(pow(2, 30))
-
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
     "chunk_iterables",
     "creation_date",
+    "filefolder_iterator",
     "find_filepaths",
-    "GiB",
-    "ingest",
-    "KiB",
     "list_paths_with_elements",
-    "MiB",
     "read_privileges",
     "single_item_list",
     "working_directory",
     "yesno_prompt",
 ]
 
+# For datetime validation
+ISO_8601 = (
+    r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])"
+    r"T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$"
+)
 
-def ingest(files: Union[GeneratorType, List]) -> List:
-    if isinstance(files, GeneratorType):
-        files = [f for f in files]
-    files.sort()
-    return files
+
+def filefolder_iterator(
+    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
+    pattern: str,
+) -> Union[List[os.PathLike], GeneratorType]:
+    """
+
+    Parameters
+    ----------
+    input_files: str or Path or List[Union[str, Path]] or GeneratorType
+    pattern: str
+
+    Returns
+    -------
+    list or generator
+    """
+    if isinstance(input_files, (Path, str)):
+        input_files = Path(input_files)
+        if input_files.is_dir():
+            if pattern.endswith("zarr"):
+                input_files = sorted(list(input_files.glob(pattern)))
+            else:
+                input_files = input_files.rglob(pattern)
+    elif isinstance(input_files, list):
+        input_files = sorted(Path(p) for p in input_files)
+    elif isinstance(input_files, GeneratorType):
+        pass
+    else:
+        raise NotImplementedError(f"input_files: {type(input_files)}")
+    return input_files
 
 
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> List:
@@ -95,22 +118,22 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
     Returns
     -------
     bool
-      Whether or not the current user shell has read privileges
+      Whether the current user shell has read privileges
     """
     if (2, 7) < sys.version_info < (3, 6):
         location = str(location)
 
-    msg = str()
+    msg = ""
     try:
         if Path(location).exists():
             if os.access(location, os.R_OK):
-                msg = "{} is read OK!".format(location)
+                msg = f"{location} is read OK!"
                 logging.info(msg)
                 return True
-            msg = "Ensure read privileges for `{}`.".format(location)
+            msg = f"Ensure read privileges for `{location}`."
         else:
-            msg = "`{}` is an invalid path.".format(location)
-        raise OSError
+            msg = f"`{location}` is an invalid path."
+        raise OSError()
 
     except OSError:
         logging.exception(msg)
@@ -177,13 +200,13 @@ def find_filepaths(
     for location in source:
         for pattern in file_suffixes:
             if "*" not in pattern:
-                pattern = "*{}*".format(pattern)
+                pattern = f"*{pattern}*"
             if recursive:
                 found.extend([f for f in Path(location).expanduser().rglob(pattern)])
             elif not recursive:
                 found.extend([f for f in Path(location).expanduser().glob(pattern)])
             else:
-                raise ValueError("Recursive: {}".format(recursive))
+                raise ValueError(f"Recursive: {recursive}")
 
     if (2, 7) < sys.version_info < (3, 6):
         found = [str(f) for f in found]
@@ -228,12 +251,12 @@ def yesno_prompt(query: str) -> bool:
         True (yes) or False (otherwise).
     """
 
-    user_input = input("{} (y/n) ".format(query))
+    user_input = input(f"{query} (y/n) ")
     if user_input.lower() == "y":
         return True
     if user_input.lower() == "n":
         return False
-    raise ValueError("{} not in (y, n)".format(user_input))
+    raise ValueError(f"{user_input} not in (y, n)")
 
 
 def list_paths_with_elements(
