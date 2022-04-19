@@ -17,7 +17,6 @@ from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.cv import INSTITUTIONS, PROJECT_MODELS
 from miranda.scripting import LOGGING_CONFIG
-from miranda.validators import FACETS_SCHEMA
 
 from ._time import (
     TIME_UNITS_TO_FREQUENCY,
