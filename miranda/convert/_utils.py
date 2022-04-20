@@ -223,7 +223,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d.attrs.update(dict(project=p, format=o))
 
         # Date-based versioning
-        d.attrs.update(dict(version=VERSION))
+        d.attrs.update(dict(version=f"v{VERSION}"))
 
         history = (
             f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o}"

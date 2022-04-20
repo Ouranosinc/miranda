@@ -1,3 +1,4 @@
+import hashlib
 import logging.config
 import multiprocessing
 import os
@@ -6,7 +7,7 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 from miranda import Decoder
 from miranda.decode import guess_project
@@ -20,6 +21,16 @@ __all__ = [
     "build_path_from_schema",
     "structure_datasets",
 ]
+
+
+def generate_version_hashes(in_file: Path, out_file: Path):
+    hash_sha256_writer = hashlib.sha256()
+    with open(in_file, "rb") as f:
+        hash_sha256_writer.update(f.read())
+    sha256sum = hash_sha256_writer.hexdigest()
+
+    with open(out_file, "w") as f:
+        f.write(sha256sum)
 
 
 def _structure_datasets(
@@ -156,6 +167,7 @@ def structure_datasets(
     dry_run: bool = False,
     method: str = "copy",
     make_dirs: bool = False,
+    set_version_hashes: bool = True,
     filename_pattern: str = "*.nc",
 ) -> Mapping[Path, Path]:
     """
@@ -173,6 +185,8 @@ def structure_datasets(
       Method to transfer files to intended location. Default: "move".
     make_dirs:
       Make folder tree if it does not already exist. Default: False.
+    set_version_hashes:
+      Make an accompanying file with version in filename and sha256sum in contents.
     filename_pattern: str
       If pattern ends with "zarr", will 'glob' with provided pattern.
       Otherwise, will perform an 'rglob' (recursive) operation.
@@ -197,18 +211,36 @@ def structure_datasets(
         decoder.decode(input_files)
 
     all_file_paths = dict()
+    version_hash_paths = dict()
     for file, facets in decoder.file_facets().items():
         output_filepath = build_path_from_schema(facets, output_folder)
         all_file_paths.update({Path(file): output_filepath})
+
+        if set_version_hashes:
+            version_hash_file = f"{Path(file).stem}.{facets['version']}"
+            version_hash_paths.update(
+                {Path(file): output_filepath.joinpath(version_hash_file)}
+            )
 
     if make_dirs:
         for new_paths in set(all_file_paths.values()):
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
+    if set_version_hashes:
+        with multiprocessing.Pool() as pool:
+            pool.starmap(
+                generate_version_hashes,
+                zip(version_hash_paths.keys(), version_hash_paths.values()),
+            )
+            pool.close()
+            pool.join()
+
     # multiprocessing copy
-    func = partial(_structure_datasets, method=method, dry_run=dry_run)
+    structure_func = partial(_structure_datasets, method=method, dry_run=dry_run)
     with multiprocessing.Pool() as pool:
-        pool.starmap(func, zip(all_file_paths.keys(), all_file_paths.values()))
+        pool.starmap(
+            structure_func, zip(all_file_paths.keys(), all_file_paths.values())
+        )
         pool.close()
         pool.join()
 
