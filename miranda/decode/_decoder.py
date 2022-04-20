@@ -75,7 +75,6 @@ class Decoder:
             decode_function_name = f"decode_{proj.lower().replace('-','_')}_{m}"
             try:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
-                # FACETS_SCHEMA.validate(_deciphered)
                 print(
                     f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
                 )
@@ -347,7 +346,11 @@ class Decoder:
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
         facets["variable"] = variable
-        facets["version"] = data["version"]
+
+        try:
+            facets["version"] = data["version"]
+        except KeyError:
+            facets["version"] = Path(file).parent.name
 
         try:
             facets["date_start"] = date_parser(date)
