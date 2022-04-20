@@ -193,8 +193,14 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                         d_out[out.name] = out
                 else:
+                    logging.info(
+                        f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+                    )
                     d_out = d
-            return d_out
+            else:
+                logging.info(f"No time offsetting needed for `{vv}` in project `{p}`.")
+                d_out = d
+        return d_out
 
     # For converting variable units to standard workflow units
     def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
@@ -210,6 +216,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
 
     # Add and update existing metadata fields
     def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
+        logging.info("Converting metadata to CF-like conventions.")
 
         # Add global attributes
         d.attrs.update(m["Header"])
