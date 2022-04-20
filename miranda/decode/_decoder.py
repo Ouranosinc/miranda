@@ -1,6 +1,7 @@
 import logging
 import multiprocessing as mp
 import os
+import re
 import warnings
 from functools import partial
 from logging import config
@@ -350,7 +351,11 @@ class Decoder:
         try:
             facets["version"] = data["version"]
         except KeyError:
-            facets["version"] = Path(file).parent.name
+            possible_version = Path(file).parent.name
+            if re.match(r"^[vV]\d+", possible_version):
+                facets["version"] = Path(file).parent.name
+            else:
+                facets["version"] = "vNotFound"
 
         try:
             facets["date_start"] = date_parser(date)
