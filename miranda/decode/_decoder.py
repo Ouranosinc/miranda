@@ -342,7 +342,6 @@ class Decoder:
         facets["member"] = data["variant_label"]
         facets["modeling_realm"] = data["realm"]
         facets["processing_level"] = "raw"
-        facets["project"] = data["project"]
         facets["mip_era"] = data["mip_era"]
         facets["source"] = data["source_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
