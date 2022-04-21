@@ -7,7 +7,7 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Mapping, Optional, Union
+from typing import List, Mapping, Optional, Union
 
 from miranda import Decoder
 from miranda.decode import guess_project
@@ -31,6 +31,9 @@ def generate_version_hashes(in_file: Path, out_file: Path):
 
     with open(out_file, "w") as f:
         f.write(sha256sum)
+
+    del hash_sha256_writer
+    del sha256sum
 
 
 def _structure_datasets(
