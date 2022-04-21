@@ -36,14 +36,15 @@ def generate_version_hashes(in_file: Path, out_file: Path):
 def _structure_datasets(
     in_file: Path, out_path: Path, method: str, dry_run: bool = False
 ):
-    method_mod = ""
-    if in_file.is_dir():
-        method_mod = "tree"
     if method.lower() in ["move", "copy"]:
         meth = "Moved" if method.lower() == "move" else "Copied"
         output_file = out_path.joinpath(in_file.name)
         try:
             if not dry_run:
+                method_mod = ""
+                if in_file.is_dir() and method.lower() == "copy":
+                    method_mod = "tree"
+
                 if sys.version_info < (3, 9):
                     getattr(shutil, f"{method}{method_mod}")(
                         str(in_file), str(output_file)
