@@ -29,6 +29,7 @@ def generate_version_hashes(in_file: Path, out_file: Path):
         hash_sha256_writer.update(f.read())
     sha256sum = hash_sha256_writer.hexdigest()
 
+    print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
     with open(out_file, "w") as f:
         f.write(sha256sum)
 
