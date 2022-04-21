@@ -167,7 +167,7 @@ def structure_datasets(
     dry_run: bool = False,
     method: str = "copy",
     make_dirs: bool = False,
-    set_version_hashes: bool = True,
+    set_version_hashes: bool = False,
     filename_pattern: str = "*.nc",
 ) -> Mapping[Path, Path]:
     """
@@ -186,7 +186,7 @@ def structure_datasets(
     make_dirs:
       Make folder tree if it does not already exist. Default: False.
     set_version_hashes:
-      Make an accompanying file with version in filename and sha256sum in contents.
+      Make an accompanying file with version in filename and sha256sum in contents. Default: False.
     filename_pattern: str
       If pattern ends with "zarr", will 'glob' with provided pattern.
       Otherwise, will perform an 'rglob' (recursive) operation.
