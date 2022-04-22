@@ -51,7 +51,10 @@ setup(
     package_dir={"miranda": "miranda"},
     include_package_data=True,
     install_requires=requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    extras_require={
+        "docs": docs_requirements,
+        "dev": dev_requirements,
+    },
     license=LICENSE,
     zip_safe=False,
     keywords="climate meteorology archiving collection NetCDF",
