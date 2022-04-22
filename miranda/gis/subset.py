@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple, Union
 import fiona
 import geojson
 import numpy as np
-import rasterio.crs
+from rasterio.crs import CRS
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -46,7 +46,7 @@ def subsetting_domains(domain: str) -> np.array:
 
 def _read_geometries(
     shape: Union[str, Path], crs: Optional[Union[str, int, dict]] = None
-) -> Tuple[List[geojson.geometry.Geometry], rasterio.crs.CRS]:
+) -> Tuple[List[geojson.geometry.Geometry], CRS]:
     """
     A decorator to perform a check to verify a geometry is valid.
     Returns the function with geom set to the shapely Shape object.
@@ -64,9 +64,9 @@ def _read_geometries(
         with fiona.open(shape) as fio:
             logging.info("Vector read OK.")
             if crs:
-                shape_crs = rasterio.crs.CRS.from_user_input(crs)
+                shape_crs = CRS.from_user_input(crs)
             else:
-                shape_crs = rasterio.crs.CRS(fio.crs or 4326)
+                shape_crs = CRS(fio.crs or 4326)
             for i, feat in enumerate(fio):
                 g = geojson.GeoJSON(feat)
                 geom.append(g["geometry"])

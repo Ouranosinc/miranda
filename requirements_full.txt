@@ -1,0 +1,11 @@
+cdsapi
+distributed
+ecmwf-api-client
+fabric
+intake
+intake-esm
+numcodecs
+paramiko>=2.6.0
+regionmask
+s3fs
+scp

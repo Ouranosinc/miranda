@@ -1,18 +1,22 @@
-import logging
+import logging.config
 from datetime import date
 from getpass import getpass
-from logging import config
 from pathlib import Path
 from types import GeneratorType
 from typing import List, Optional, Union
-
-import fabric
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 from miranda.utils import creation_date
 
-config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
+
+try:
+    import fabric  # noqa
+except ImportError:
+    raise ImportError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    )
 
 
 def file_emptier(*, file_list: Union[List[Union[str, Path]], GeneratorType]) -> None:

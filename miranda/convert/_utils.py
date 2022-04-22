@@ -7,7 +7,6 @@ from typing import Dict, Optional, Union
 
 import netCDF4
 import numpy as np
-import regionmask
 import xarray as xr
 import zarr
 from clisops.core import subset
@@ -82,6 +81,14 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     -------
     xarray.Dataset
     """
+    try:
+        import regionmask
+    except ImportError:
+        raise ImportError(
+            f"{add_ar6_regions.__name__} functions require additional dependencies. "
+            "Please install them with `pip install miranda[full]`."
+        )
+
     mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
     ds = ds.assign_coords(region=mask)
     return ds

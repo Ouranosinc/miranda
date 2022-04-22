@@ -3,11 +3,17 @@ from getpass import getpass
 from pathlib import Path
 from typing import Union
 
-import fabric
-from paramiko import SSHClient
-from scp import SCPClient
+from miranda.scripting import LOGGING_CONFIG
 
-from .scripting import LOGGING_CONFIG
+try:
+    import fabric  # noqa
+    from paramiko import SSHClient  # noqa
+    from scp import SCPClient  # noqa
+except ImportError:
+    raise ImportError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    )
+
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
