@@ -141,7 +141,7 @@ def build_path_from_schema(
                     / facets["variable"]
                 )
         elif (
-            facets["processing_level"] == "bias_adjusted"
+            facets["processing_level"] == "biasadjusted"
         ):  # FIXME: remove or keep underline?
             return (
                 Path(output_folder)

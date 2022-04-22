@@ -310,8 +310,7 @@ class Decoder:
             f"p{data['GCM__physics_index']}"
             f"f{data['GCM__forcing_index']}"
         )
-        # facets["modeling_realm"] = data.realm
-        facets["processing_level"] = "bias_adjusted"
+        facets["processing_level"] = "biasadjusted"
         facets["bias_adjust_project"] = "CanDCS-U6"
         facets["source"] = data["GCM__source_id"]
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
