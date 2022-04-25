@@ -15,20 +15,20 @@ import xarray as xr
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
-from . import ERA5_PROJECT_NAMES
-
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-try:
-    from cdsapi import Client  # noqa
-except ModuleNotFoundError:
-    raise ModuleNotFoundError(
-        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
-    )
+__all__ = ["request_era5", "rename_era5_files", "ERA5_PROJECT_NAMES"]
 
 
-__all__ = ["request_era5", "rename_era5_files"]
+ERA5_PROJECT_NAMES = [
+    "era5-land",
+    "era5-land-monthly-means",
+    "era5-pressure-levels",
+    "era5-pressure-levels-preliminary-back-extension",
+    "era5-single-levels",
+    "era5-single-levels-preliminary-back-extension",
+]
 
 
 def request_era5(
@@ -143,6 +143,15 @@ def _request_direct_era(
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
+
+    try:
+        from cdsapi import Client  # noqa
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError(
+            f"{_request_direct_era.__name__} requires additional dependencies. "
+            "Please install them with `pip install miranda[full]`."
+        )
+
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]
     times = [f"{str(t).zfill(2)}:00" for t in range(24)]

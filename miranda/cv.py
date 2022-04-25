@@ -1,6 +1,6 @@
 import pyessv
 
-from miranda.ecmwf import ERA5_PROJECT_NAMES  # noqa
+from miranda.ecmwf._era5 import ERA5_PROJECT_NAMES  # noqa
 
 __all__ = [
     "ACTIVITIES",
