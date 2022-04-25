@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import re
 import shutil
-from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Mapping, Optional, Tuple, Union
@@ -90,7 +89,7 @@ def request_era5(
     )
 
     if year_end is None:
-        year_end = date.today().year
+        year_end = dt.today().year
     years = range(int(year_start), int(year_end) + 1)
 
     months = [str(d).zfill(2) for d in range(1, 13)]
