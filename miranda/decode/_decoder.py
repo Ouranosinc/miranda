@@ -55,13 +55,17 @@ class Decoder:
     @staticmethod
     def _decoder(
         d: dict,
-        m: str,
         fail_early: bool,
         proj: str,
         lock,
         file: Union[str, Path],
     ) -> None:
-        """lock is a threading lock object"""
+        """
+
+        Notes
+        -----
+        lock is a threading lock object
+        """
         with lock:
             if proj is None:
                 try:
@@ -73,7 +77,7 @@ class Decoder:
                     if fail_early:
                         raise
 
-            decode_function_name = f"decode_{proj.lower().replace('-','_')}_{m}"
+            decode_function_name = f"decode_{proj.lower().replace('-','_')}"
             try:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
                 print(
@@ -88,7 +92,6 @@ class Decoder:
     def decode(
         self,
         files: Union[os.PathLike, str, List[Union[str, os.PathLike]], GeneratorType],
-        method: str = "data",
         raise_error: bool = False,
     ):
         """Decode facets from file or list of files.
@@ -96,10 +99,8 @@ class Decoder:
         Parameters
         ----------
         files: Union[str, Path, List[Union[str, Path]]]
-        method: {"data", "name"}
         raise_error: bool
         """
-
         if isinstance(files, (str, os.PathLike)):
             files = [files]
         if self.project is None:
@@ -111,9 +112,7 @@ class Decoder:
         manager = mp.Manager()
         _file_facets = manager.dict()
         lock = manager.Lock()
-        func = partial(
-            self._decoder, _file_facets, method, raise_error, self.project, lock
-        )
+        func = partial(self._decoder, _file_facets, raise_error, self.project, lock)
 
         with mp.Pool() as pool:
             pool.imap(func, files, chunksize=10)
@@ -127,16 +126,6 @@ class Decoder:
 
     def file_facets(self) -> Dict[os.PathLike, Dict]:
         return self._file_facets
-
-    @staticmethod
-    def guess_project(file: Union[Path, str]) -> str:
-        file_name = Path(file).stem
-
-        potential_names = file_name.split("_")
-        for project, models in PROJECT_MODELS.items():
-            if any([model in potential_names for model in models]):
-                return project
-        raise DecoderError("Unable to determine project from file name.")
 
     @classmethod
     def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
@@ -156,12 +145,6 @@ class Decoder:
         else:
             raise DecoderError("Unable to read dataset.")
         return variable_name, variable_date, data
-
-    @staticmethod
-    def _from_filename(file: Union[Path, str]) -> List[str]:
-        file_name = Path(file).stem
-        decode_file = file_name.split("_")
-        return decode_file
 
     @staticmethod
     def _decode_primary_variable(file: Path) -> str:
@@ -208,8 +191,8 @@ class Decoder:
 
         Parameters
         ----------
-        file
-        data
+        file: Union[os.PathLike, str] or List[str], optional
+        data: dict, optional
         field: {"timedelta", "frequency"}
 
         Returns
@@ -251,7 +234,7 @@ class Decoder:
             return time_dictionary[potential_time]
 
     @classmethod
-    def decode_reanalysis_data(cls, file: Union[PathLike, str]) -> dict:
+    def decode_reanalysis(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -274,10 +257,6 @@ class Decoder:
 
         return facets
 
-    @classmethod
-    def decode_reanalysis_name(cls, file: Union[PathLike, str]) -> dict:
-        raise NotImplementedError()
-
     @staticmethod
     def decode_eccc_obs(self, file: Union[PathLike, str]) -> dict:
         raise NotImplementedError()
@@ -291,7 +270,7 @@ class Decoder:
         raise NotImplementedError()
 
     @classmethod
-    def decode_pcic_candcs_u6_data(cls, file: Union[PathLike, str]) -> dict:
+    def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -327,7 +306,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip6_data(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -337,6 +316,7 @@ class Decoder:
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = data["frequency"]
+        facets["grid_label"] = data["grid_label"]
         facets["institution"] = data["institution_id"]
         facets["member"] = data["variant_label"]
         facets["modeling_realm"] = data["realm"]
@@ -364,45 +344,8 @@ class Decoder:
 
         return facets
 
-    # TODO: Remove name-based methods
     @classmethod
-    def decode_cmip6_name(cls, file: Union[PathLike, str]) -> dict:
-        decode_file = cls._from_filename(file=file)
-
-        facets = dict()
-        facets["activity"] = "CMIP"
-        facets["date"] = decode_file[-1]
-        facets["domain"] = "global"
-        facets["experiment"] = decode_file[3]
-        facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(file=decode_file, field="frequency")
-        facets["grid_label"] = decode_file[5]
-        facets["member"] = decode_file[4]
-        facets["processing_level"] = "raw"
-        facets["mip_era"] = "CMIP6"
-        facets["source"] = decode_file[2]
-        facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
-        facets["type"] = "simulation"
-        facets["variable"] = decode_file[0]
-
-        if "mon" in facets["frequency"]:
-            facets["frequency"] = "mon"
-
-        logging.warning(
-            f"Cannot accurately find institute for model: {facets['source']} based on model name. "
-            f"Consider parsing this information from the metadata."
-        )
-
-        try:
-            facets["date_start"] = date_parser(decode_file[-1])
-            facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderError:
-            pass
-
-        return facets
-
-    @classmethod
-    def decode_cmip5_data(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -430,45 +373,8 @@ class Decoder:
 
         return facets
 
-    # TODO: Remove name-based methods
     @classmethod
-    def decode_cmip5_name(cls, file: Union[PathLike, str]) -> dict:
-        decode_file = cls._from_filename(file=file)
-
-        facets = dict()
-        facets["activity"] = "CMIP"
-        facets["date"] = decode_file[-1]
-        facets["domain"] = "global"
-        facets["experiment"] = decode_file[3]
-        facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(file=decode_file, field="frequency")
-        facets["member"] = decode_file[4]
-        facets["mip_era"] = "CMIP5"
-        facets["modeling_realm"] = None
-        facets["processing_level"] = "raw"
-        facets["source"] = decode_file[2]
-        facets["variable"] = decode_file[0]
-        facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
-        facets["type"] = "simulation"
-
-        logging.warning(
-            f"Cannot accurately find institute for model: {facets['source']} based on model name. "
-            f"Consider parsing this information from the metadata."
-        )
-
-        if "mon" in facets["frequency"]:
-            facets["frequency"] = "mon"
-
-        try:
-            facets["date_start"] = date_parser(decode_file[-1])
-            facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderError:
-            pass
-
-        return facets
-
-    @classmethod
-    def decode_cordex_data(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         # FIXME: What to do about our internal data that breaks all established conventions?
@@ -542,41 +448,8 @@ class Decoder:
 
         return facets
 
-    # TODO: Remove name-based methods
     @classmethod
-    def decode_cordex_name(cls, file: Union[PathLike, str]) -> dict:
-        decode_file = cls._from_filename(file=file)
-
-        facets = dict()
-        facets["activity"] = "CMIP"
-        facets["mip_era5"] = "CMIP5"
-        facets["project"] = "CORDEX"
-
-        facets["date"] = decode_file[-1]
-        facets["domain"] = decode_file[1]
-        facets["driving_model"] = "_".join(decode_file[2].split("-")[1:])
-        facets["driving_institution"] = decode_file[2].split("-")[0]
-        facets["experiment"] = decode_file[3]
-        facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(file=decode_file, field="frequency")
-        facets["institution"] = decode_file[5].split("-")[0]
-        facets["member"] = decode_file[4].strip()
-        facets["processing_level"] = "raw"
-        facets["source"] = decode_file[5]
-        facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
-        facets["type"] = "simulation"
-        facets["variable"] = decode_file[0]
-
-        try:
-            facets["date_start"] = date_parser(decode_file[-1])
-            facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
-        except DecoderError:
-            pass
-
-        return facets
-
-    @classmethod
-    def decode_isimip_ft_data(cls, file: Union[PathLike, str]) -> dict:
+    def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -602,55 +475,6 @@ class Decoder:
         try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
-            pass
-
-        return facets
-
-    # TODO: Remove name-based methods
-    @classmethod
-    def decode_isimip_ft_name(cls, file: Union[PathLike, str]) -> dict:
-        decode_file = cls._from_filename(file=file)
-
-        facets = dict()
-        facets["activity"] = "ISIMIP"
-        facets["mip_era"] = "ISIMIP-FT"
-
-        facets["date"] = decode_file[-1]
-        facets["domain"] = "global"
-        facets["co2_forcing_id"] = decode_file[4]
-        facets["experiment"] = decode_file[2]
-        facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(file=decode_file, field="frequency")
-        facets["impact_model_id"] = decode_file[0]
-        facets["institution"] = decode_file[1].split("-")[0]
-        facets["soc_forcing_id"] = decode_file[3]
-        facets["source"] = "-".join(decode_file[1].split("-")[1:])
-        facets["timedelta"] = cls._decode_time_info(file=decode_file, field="timedelta")
-        facets["type"] = "simulation"
-        facets["variable"] = decode_file[-4]
-
-        facets["setup"] = "-".join([facets["source"], facets["experiment"]])
-
-        if facets["co2_forcing_id"] == facets["variable"]:
-            if facets["soc_forcing"] in [
-                "nosoc",
-                "pressoc",
-                "ssp1soc",
-                "ssp2",
-                "ssp2soc",
-                "ssp3soc",
-                "ssp4soc",
-                "ssp5soc",
-            ]:
-                facets["co2_forcing_id"] = "NAco2"
-            elif facets["soc_forcing"] in ["co2", "nocco2", "pico2"]:
-                facets["co2_forcing"] = facets["soc_forcing"]
-                facets["soc_forcing"] = "NAsoc"
-
-        try:
-            facets["date_start"] = date_parser(decode_file[-1])
-            facets["date_end"] = date_parser(decode_file[-1], end_of_period=True)
         except DecoderError:
             pass
 
