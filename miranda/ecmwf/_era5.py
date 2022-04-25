@@ -11,24 +11,24 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Tuple, Union
 
 import xarray as xr
-from cdsapi import Client
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
+from . import ERA5_PROJECT_NAMES
+
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["request_era5", "rename_era5_files", "ERA5_PROJECT_NAMES"]
+
+try:
+    from cdsapi import Client  # noqa
+except ModuleNotFoundError:
+    raise ModuleNotFoundError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    )
 
 
-ERA5_PROJECT_NAMES = [
-    "era5-land",
-    "era5-land-monthly-means",
-    "era5-pressure-levels",
-    "era5-pressure-levels-preliminary-back-extension",
-    "era5-single-levels",
-    "era5-single-levels-preliminary-back-extension",
-]
+__all__ = ["request_era5", "rename_era5_files"]
 
 
 def request_era5(
