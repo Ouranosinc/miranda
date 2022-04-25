@@ -1,44 +1,27 @@
 import logging
-import re
+import logging.config
 import tarfile
 import tempfile
 import time
-from logging import config
 from pathlib import Path
-from typing import List, Match, Optional, Union
+from typing import List, Union
 
-import fabric
-from paramiko import SFTPClient, SSHClient, SSHException
-from scp import SCPClient, SCPException
-
-from miranda.connect import Connection
 from miranda.scripting import LOGGING_CONFIG
 
-logging.config.dictConfig(LOGGING_CONFIG)
-__all__ = ["create_archive", "create_remote_directory", "transfer_file", "url_validate"]
+from .connect import Connection
 
-
-def url_validate(target: str) -> Optional[Match[str]]:
-    """
-    Validates whether a supplied URL is reliably written
-    see: https://stackoverflow.com/a/7160778/7322852
-
-    Parameters
-    ----------
-    target : str
-
-    """
-    regex = re.compile(
-        r"^(?:http|ftp)s?://"  # http:// or https://
-        # domain...
-        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"
-        r"localhost|"  # localhost...
-        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
-        r"(?::\d+)?"  # optional port
-        r"(?:/?|[/?]\S+)$",
-        re.IGNORECASE,
+try:
+    import fabric  # noqa
+    from paramiko import SFTPClient, SSHClient, SSHException  # noqa
+    from scp import SCPClient, SCPException  # noqa
+except ImportError:
+    raise ImportError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
     )
-    return re.match(regex, target)
+
+
+logging.config.dictConfig(LOGGING_CONFIG)
+__all__ = ["create_archive", "create_remote_directory", "transfer_file"]
 
 
 def create_remote_directory(

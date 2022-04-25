@@ -3,11 +3,17 @@ from getpass import getpass
 from pathlib import Path
 from typing import Union
 
-import fabric
-from paramiko import SSHClient
-from scp import SCPClient
+from miranda.scripting import LOGGING_CONFIG
 
-from .scripting import LOGGING_CONFIG
+try:
+    import fabric  # noqa
+    from paramiko import SSHClient  # noqa
+    from scp import SCPClient  # noqa
+except ImportError:
+    raise ImportError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    )
+
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -45,9 +51,7 @@ class Connection:
         return f"Connection to {self.host} as {self.user}"
 
     def __repr__(self):
-        return "<{}.{} object at {}>".format(
-            self.__class__.__module__, self.__class__.__name__, hex(id(self))
-        )
+        return f"<{self.__class__.__module__}.{self.__class__.__name__} object at {hex(id(self))}>"
 
     def connect(self, **kwargs):
         try:

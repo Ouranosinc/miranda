@@ -1,12 +1,10 @@
 import ast
 import json
-import logging
 import logging.config
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import intake
 import schema
 import xarray as xr
 from dask.diagnostics import ProgressBar
@@ -15,6 +13,16 @@ from xclim.core import calendar as xcal  # noqa
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+try:
+    import intake  # noqa
+    import intake_esm  # noqa
+    import numcodecs  # noqa
+    import s3fs  # noqa
+except ImportError:
+    raise ImportError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    )
 
 
 _allowed_args = schema.Schema(
@@ -154,4 +162,19 @@ def cordex_aws_download(
                     for y in years
                     if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
                 ]
+
+                datasets = [
+                    d
+                    for y, d in zip(years, datasets)
+                    if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
+                ]
+
+                if len(datasets) == 0:
+                    logging.warning(
+                        f"All files currently exist for {scen} and {member.name}. Continuing..."
+                    )
+                    continue
+
+                logging.info(f"Final count of files: {len(datasets)}")
+
                 xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")

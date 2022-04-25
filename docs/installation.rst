@@ -2,11 +2,16 @@
 Installation
 ============
 
-At the command line either via pip::
+At the command line, enter::
 
     $ pip install miranda
 
 This is the preferred method to install miranda, as it will always install the most recent stable release.
+
+To make use of remote operations (`miranda.remote`) and some dataset downloading functions (`miranda.ncar` `miranda.ecmwf`), additional libraries are needed.
+They can can be installed with the following::
+
+    $ pip install miranda[full]
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -42,6 +47,6 @@ Creating a Conda environment
 
 To create a conda development environment including all miranda dependencies, enter the following command from within your cloned repo::
 
-    $ conda create -n my_miranda_env python=3.6 --file=requirements_dev.txt
+    $ conda create -n my_miranda_env python=3.8 --file=environment.yml
     $ conda activate my_miranda_env
-    $ python setup.py install
+    $ pip install -e .[dev]
