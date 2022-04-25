@@ -366,6 +366,15 @@ class Decoder:
         facets["variable"] = variable
 
         try:
+            facets["version"] = data["version"]
+        except KeyError:
+            possible_version = Path(file).parent.name
+            if re.match(r"^[vV]\d+", possible_version):
+                facets["version"] = Path(file).parent.name
+            else:
+                facets["version"] = "vNotFound"
+
+        try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
