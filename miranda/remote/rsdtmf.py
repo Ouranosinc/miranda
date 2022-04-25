@@ -29,16 +29,14 @@ The python trick to convert is::
    >>> str(path_string).replace('/','.').lstrip('.')
 
 """
-import logging
+import logging.config
 import os
 import subprocess
 import threading
 import time
-from logging import config
 from pathlib import Path
 from typing import List, Union
 
-from miranda.archive.ops import transfer_file
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import (
     DiskSpaceError,
@@ -50,9 +48,11 @@ from miranda.storage import (
 from miranda.units import GiB
 from miranda.utils import find_filepaths, yesno_prompt
 
+from .ops import transfer_file
+
 DiskSpaceEvent = threading.Event()
 
-config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "local_storage_for_rstdmf",

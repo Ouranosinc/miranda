@@ -1,18 +1,20 @@
-#!/bin/env python3
 import logging
 import logging.config
 from collections import defaultdict
-from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Union
 
-from miranda.archive.ops import create_archive, create_remote_directory, transfer_file
-from miranda.connect import Connection
+from miranda.archive.groupings import (
+    group_by_deciphered_date,
+    group_by_size,
+    group_by_subdirectories,
+)
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 from miranda.utils import find_filepaths, single_item_list, working_directory
 
-from .groupings import group_by_deciphered_date, group_by_size, group_by_subdirectories
+from .connect import Connection
+from .ops import create_archive, create_remote_directory, transfer_file
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -38,7 +40,7 @@ def archive_database(
     Given a source, destination, and dependent on file size limit, create tarfile archives and transfer
      files to another server for backup purposes
     """
-    project = "{}_{}{}.{}"
+    project = "{project_name}_{group_name}_{common_date}{part}.{suffix}"
 
     if not project_name:
         project_name = destination.name
@@ -138,21 +140,12 @@ def archive_database(
                         raise FileNotFoundError("No files found in grouping.")
 
         logging.info(
-            "Transferred {} of {} files totalling {}.".format(
-                len(successful_transfers),
-                len([f for f in file_list]),
-                report_file_size(successful_transfers),
-            )
+            f"Transferred {len(successful_transfers)} "
+            f"of { len([f for f in file_list])} files "
+            f"totalling {report_file_size(successful_transfers)}."
         )
 
     except Exception as e:
         msg = f"{e}: Failed to transfer files."
         logging.error(msg)
         raise RuntimeError(msg) from e
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        filename=f"{dt.strftime(dt.now(), '%Y%m%d')}_{Path(__name__).stem}.log",
-        level=logging.INFO,
-    )

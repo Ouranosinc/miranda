@@ -1,6 +1,5 @@
 import logging
 from datetime import date
-from datetime import datetime as dt
 from logging import config
 from pathlib import Path
 from typing import List, Union
@@ -29,7 +28,7 @@ def select_by_date_modified(
     selected_files = list()
     for file in files:
         if creation_date(file) == date_selected:
-            logging.info(f"{dt.now().strftime('%Y-%m-%d %X')}: Selecting {file}")
+            logging.info(f"Selecting {file}.")
             selected_files.append(file)
 
     return selected_files

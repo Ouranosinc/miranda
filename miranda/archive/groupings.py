@@ -44,7 +44,7 @@ def group_by_length(
         pass
     else:
         grouped_list.append(group.copy())
-    logging.info("Divided files into %s groups." % len(grouped_list))
+    logging.info(f"Divided files into {len(grouped_list)} groups.")
     return grouped_list
 
 
@@ -58,7 +58,7 @@ def group_by_deciphered_date(
     logging.info("Creating files from deciphered dates.")
 
     year_month_day = re.compile(
-        r"(?P<year>[0-9]{4})-?(?P<month>[0-9]{2})-?(?P<day>[0-9]{2})?.*\.(?P<suffix>nc)$"
+        r"(?P<year>\d{4})-?(?P<month>\d{2})-?(?P<day>\d{2})?.*\.(?P<suffix>nc|zarr)$"
     )
 
     files = [Path(f) for f in files]
@@ -100,9 +100,7 @@ def group_by_size(
     This function will group files up until a desired size and save it as a grouping within a list
     """
     logging.info(
-        "Creating groups of files based on size not exceeding {}.".format(
-            report_file_size(size)
-        )
+        f"Creating groups of files based on size not exceeding {report_file_size(size)}."
     )
 
     files = [Path(f) for f in files]
@@ -145,8 +143,6 @@ def group_by_subdirectories(
         groups.setdefault(group_name, list()).append(f)
 
     logging.info(
-        "File subdirectories found. Proceeding with {}.".format(
-            str([str(key) for key in groups.keys()])
-        )
+        f"File subdirectories found. Proceeding with { str([str(key) for key in groups.keys()])}."
     )
     return groups
