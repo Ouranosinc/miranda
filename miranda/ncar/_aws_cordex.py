@@ -162,4 +162,19 @@ def cordex_aws_download(
                     for y in years
                     if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
                 ]
+
+                datasets = [
+                    d
+                    for y, d in zip(years, datasets)
+                    if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
+                ]
+
+                if len(datasets) == 0:
+                    logging.warning(
+                        f"All files currently exist for {scen} and {member.name}. Continuing..."
+                    )
+                    continue
+
+                logging.info(f"Final count of files: {len(datasets)}")
+
                 xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")

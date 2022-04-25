@@ -15,7 +15,8 @@ try:
     import fabric  # noqa
 except ImportError:
     raise ImportError(
-        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+        f"{__name__} functions require additional dependencies. "
+        "Please install them with `pip install miranda[full]`."
     )
 
 
