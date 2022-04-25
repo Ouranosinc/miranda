@@ -1,8 +1,16 @@
 import re
 
-from miranda import Connection
+import pytest
+
+try:
+    import fabric  # noqa
+except ImportError:
+    fabric = None
+
+from miranda.remote.connect import Connection
 
 
+@pytest.mark.skipif(not fabric, reason="Needs fabric")
 class TestConnection:
     def test_connection_dict(self):
         self.c = Connection(username="qwerty", host="localhost")
@@ -12,7 +20,7 @@ class TestConnection:
 
     def test_connection_location(self):
         self.c = Connection(username="qwerty", host="localhost")
-        match = re.search(r"0x[0-9|a-f]+>", repr(self.c))
+        match = re.search(r"0x[\d|a-f]+>", repr(self.c))
         assert match is not None
 
     def test_connection_update(self):

@@ -38,31 +38,45 @@ jobs:
             python-version: "3.7"
           - tox-env: py38
             python-version: "3.8"
-          - tox-env: py39
+          - tox-env: py39-full
             python-version: "3.9"
+#          # Not supported yet with pure PyPI install
+#          - tox-env: py310
+#            python-version: "3.10-dev"
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Python3.10 (deadsnakes version)
+      if: "endsWith(matrix.python-version, '-dev')"
+      uses: deadsnakes/action@v2.1.1
+      with:
+        python-version: ${{ matrix.python-version }}
     - name: Set up Python ${{ matrix.python-version }}
+      if: "!endsWith(matrix.python-version, '-dev')"
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install GDAL
+      if: "endsWith(matrix.python-version, '-dev')"
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: report coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        flag-name: run-${{ matrix.tox-env }}
-        parallel: true
+        COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
+        COVERALLS_PARALLEL: true
 
   finish:
     needs: test
     runs-on: ubuntu-latest
+    container: python:3-slim
     steps:
       - name: Coveralls Finished
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          parallel-finished: true
+        run: |
+          pip install --upgrade coveralls
+          coveralls --service=github --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,12 +11,12 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Tuple, Union
 
 import xarray as xr
-from cdsapi import Client
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
 
 __all__ = ["request_era5", "rename_era5_files", "ERA5_PROJECT_NAMES"]
 
@@ -145,6 +145,15 @@ def _request_direct_era(
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
+
+    try:
+        from cdsapi import Client  # noqa
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError(
+            f"{_request_direct_era.__name__} requires additional dependencies. "
+            "Please install them with `pip install miranda[full]`."
+        )
+
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]
     times = [f"{str(t).zfill(2)}:00" for t in range(24)]

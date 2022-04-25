@@ -7,8 +7,6 @@ from datetime import timedelta as td
 from pathlib import Path
 from typing import List, Optional
 
-from ecmwfapi import ECMWFDataServer
-
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -47,7 +45,7 @@ def request_tigge(
     None
     """
 
-    def _tigge_request(
+    def _request_direct_tigge(
         variable_name: str,
         variable_code: str,
         time: str,
@@ -57,6 +55,14 @@ def request_tigge(
         date: str,
     ):
         """Launch formatted request."""
+        try:
+            from ecmwfapi import ECMWFDataServer
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                f"{_request_direct_tigge.__name__} requires additional dependencies. "
+                "Please install them with `pip install miranda[full]`."
+            )
+
         number_range = ""
         if nums:
             number_range = "/".join([str(n) for n in range(1, nums + 1)])
@@ -165,7 +171,9 @@ def request_tigge(
                         numbers = project_members[p]
                         num_dict[numbers] = numbers
 
-                    func = functools.partial(_tigge_request, **config, **num_dict)
+                    func = functools.partial(
+                        _request_direct_tigge, **config, **num_dict
+                    )
 
                     logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
 
