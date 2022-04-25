@@ -4,11 +4,11 @@ channels:
   - defaults
 dependencies:
   - autopep8
-  - bumpversion
+  - black
+  - bump2version
   - cdsapi
   - cftime
   - clisops
-  - coverage
   - custom-inherit >=2.3.0
   - dask
   - distributed
@@ -17,7 +17,6 @@ dependencies:
   - fiona
   - flake8
   - geojson
-  - geopandas
   - h5netcdf
   - intake
   - intake-esm
@@ -30,7 +29,6 @@ dependencies:
   - pre-commit
   - pyproj
   - pytest
-  - pytest-runner
   - python >=3.7
   - rasterio
   - regionmask
