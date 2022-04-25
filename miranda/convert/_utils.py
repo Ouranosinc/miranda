@@ -10,10 +10,11 @@ import numpy as np
 import xarray as xr
 import zarr
 from clisops.core import subset
-from xclim.core import calendar, units
+from xclim.core import units
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -97,29 +98,6 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
 def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
 
-    def _get_time_frequency(d: xr.Dataset):
-        freq = xr.infer_freq(d.time)
-        if freq is None:
-            raise TypeError()
-        offset = (
-            [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
-            if calendar.parse_offset(freq)[0] != ""
-            else [1.0, "h"]
-        )
-
-        time_units = {
-            "s": "second",
-            "m": "minute",
-            "h": "hour",
-            "D": "day",
-            "W": "week",
-            "Y": "year",
-        }
-        if offset[1] in ["S", "M", "H"]:
-            offset[1] = offset[1].lower()
-        offset_meaning = time_units[offset[1]]
-        return offset, offset_meaning
-
     def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
         for v in d.data_vars:
@@ -139,7 +117,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 try:
-                    offset, offset_meaning = _get_time_frequency(d)
+                    offset, offset_meaning = get_time_frequency(d)
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "
@@ -182,7 +160,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 try:
-                    offset, offset_meaning = _get_time_frequency(d)
+                    offset, offset_meaning = get_time_frequency(d)
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "

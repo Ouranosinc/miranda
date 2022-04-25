@@ -14,6 +14,7 @@ import xarray as xr
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -200,7 +201,24 @@ def _request_direct_era(
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:
-    files = [f for f in Path(path).glob("*.nc")]
+    """Rename badly named ERA5 files.
+
+    Notes
+    -----
+    Requires that the proper ERA5 project name is in the filename, separated by underscores.
+    Assumes that the data
+
+    Parameters
+    ----------
+    path: os.PathLike or str
+      Path to a folder containing netcdf files
+
+    Returns
+    -------
+    None
+
+    """
+    files = Path(path).glob("*.nc")
     for f in files:
         file_name = str(f.stem)
 
@@ -216,21 +234,30 @@ def rename_era5_files(path: Union[os.PathLike, str]) -> None:
             month = int(ds.isel(time=0).time.dt.month)
             date_found = f"{year}{str(month).zfill(2)}"
 
+        try:
+            freq_parts = get_time_frequency(ds)
+            freq = f"{freq_parts[0]}{freq_parts[1]}"
+        except ValueError:
+            logging.error(
+                f"Unable to parse the time frequency for variable `{var_name}` "
+                f"in file `{f.name}`. Verify data integrity before retrying."
+            )
+            continue
+
         names = file_name.split("_")
         projects = [name for name in names if name in ERA5_PROJECT_NAMES]
         if len(projects) == 1:
-            project = projects[0]
+            project = projects.pop()
         elif len(projects) > 1:
             logging.warning(
                 f"More than one project identified for file {f.name}. Verify file naming."
             )
             continue
         else:
+            logging.warning("No project string found in filename.")
             continue
 
         product = "reanalysis"
-        freq = "1hr"
-        domain = "NAM"
         institute = "ecmwf"
 
         new_name_parts = [
@@ -239,7 +266,6 @@ def rename_era5_files(path: Union[os.PathLike, str]) -> None:
             institute,
             project,
             product,
-            domain,
             date_found,
         ]
         new_name = f"{'_'.join(new_name_parts)}.nc"
