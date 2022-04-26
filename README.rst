@@ -44,7 +44,17 @@ Installation
 
     $ git clone git@github.com:Ouranosinc/miranda.git
     $ cd miranda
+
+    # If using Anaconda:
+    $ conda create -n miranda -f environment.yml
+    $ conda activate miranda
+
     $ pip install miranda[full]
+
+`miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary. This library requires additional installation steps:
+
+    $ mkdir -p ~/.esdoc
+    $ git clone git@github.com:ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
 
 *We strongly suggest using Anaconda3/miniconda3 (with the conda-forge repository enabled) to manage your environment and dependencies*
  * Anaconda: https://www.anaconda.com/products/distribution
