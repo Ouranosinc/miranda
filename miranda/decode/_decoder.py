@@ -391,9 +391,9 @@ class Decoder:
         facets["activity"] = "CMIP"
         facets["project"] = "CORDEX"
 
-        if data["project_id"] == "":
+        if data.get("project_id") == "" or data.get("project_id") is None:
             facets["mip_era"] = "internal"
-        elif data["project_id"] == "CORDEX":
+        elif data.get("project_id") == "CORDEX":
             facets["mip_era"] = "CMIP5"
 
         if date == "r0i0p0":
@@ -464,6 +464,8 @@ class Decoder:
                     raise KeyError()
                 else:
                     break
+            if facets["member"] is None:
+                raise KeyError()
         except KeyError:
             facets["member"] = data["driving_model_ensemble_member"].strip()
 

@@ -144,7 +144,7 @@ def date_parser(
 
     date_format = None
     if isinstance(date, str):
-        if len(date) in [13, 17]:
+        if len(date) in [13, 17, 21, 25]:
             dates = date.split("-")
             if not end_of_period:
                 date = dates[0]
