@@ -1,13 +1,19 @@
 import itertools as it
+import logging.config
 import multiprocessing
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
 
 import xarray
 from dask.diagnostics import ProgressBar
+
+from miranda.scripting import LOGGING_CONFIG
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 
 def tigge_convert(
@@ -43,35 +49,37 @@ def tigge_convert(
 
             encoding = {var: dict(zlib=True) for var in ds.data_vars}
             encoding["time"] = {"dtype": "single"}
-            tmpfile = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
+            tf = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
 
             with ProgressBar():
-                print("converting ", infile.name)
+                logging.info(f"converting: {infile.name}")
                 ds.to_netcdf(
-                    tmpfile.name, format="NETCDF4", engine="netcdf4", encoding=encoding
+                    tf.name, format="NETCDF4", engine="netcdf4", encoding=encoding
                 )
 
             shutil.move(
-                tmpfile.name,
+                tf.name,
                 output_folder.joinpath(infile.name.replace(".grib", ".nc")).as_posix(),
             )
 
         except ValueError:
-            print(f"error converting {infile.name} : File may be corrupted")
+            logging.error(f"error converting {infile.name} : File may be corrupted.")
 
     if source is None:
-        source = Path().cwd().joinpath("download")
+        source = Path().cwd().joinpath("downloaded")
+
+    all_files = list(Path(source).glob("*.grib2"))
+    if len(all_files) == 0:
+        raise FileNotFoundError("TIGGE files not found.")
+
     if target is None:
         target = Path().cwd().joinpath("converted")
-
-    all_files = Path(source).glob("*.grib2")
-
-    target = Path(target)
+    else:
+        target = Path(target)
     target.mkdir(exist_ok=True)
 
-    p = multiprocessing.Pool(processes=processes)
-
-    combs = list(it.product(*[all_files, [target]]))
-    p.map(_tigge_convert, combs)
-    p.close()
-    p.join()
+    with multiprocessing.Pool(processes=processes) as p:
+        combs = list(it.product(*[all_files, [target]]))
+        p.map(_tigge_convert, combs)
+        p.close()
+        p.join()

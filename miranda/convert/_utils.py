@@ -211,8 +211,8 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d.attrs.update(dict(version=f"v{VERSION}"))
 
         history = (
-            f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o}"
-            " with modified metadata for CF-like compliance."
+            f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o} "
+            "with modified metadata for CF-like compliance."
         )
         d.attrs.update(dict(history=history))
         descriptions = m["variable_entry"]

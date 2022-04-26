@@ -19,7 +19,7 @@ __all__ = [
     "WCRP_INSTITUTIONS",
 ]
 
-# Controlled Vocabularies supplied via pyessv
+# Controlled Vocabularies supplied via PyESSV
 
 CMIP5 = pyessv.WCRP.CMIP5  # noqa
 CMIP6 = pyessv.WCRP.CMIP6  # noqa
@@ -32,6 +32,7 @@ CMIP5_INSTITUTES = [f.raw_name for f in CMIP5.institute.terms]
 CMIP6_INSTITUTES = [f.raw_name for f in CMIP6.institution_id.terms]
 CORDEX_INSTITUTES = [f.raw_name for f in CORDEX.institute.terms]
 CORDEX_INSTITUTES.append("OURANOS")  # Needed for internal-ish CORDEX data
+CORDEX_INSTITUTES.append("ISU")  # Needed for validation - Not presently in PyESSV
 CORDEX_ADJUST_INSTITUTES = [f.raw_name for f in CORDEX_ADJUST.institute.terms]
 
 WCRP_INSTITUTIONS = list()

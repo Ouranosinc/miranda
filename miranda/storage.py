@@ -18,6 +18,7 @@ Functions:
 import logging
 import logging.config
 import os
+import subprocess
 from functools import reduce
 from pathlib import Path
 from types import GeneratorType
@@ -111,15 +112,16 @@ class StorageState:
         self.base_path = Path(base_path).absolute()
 
         # Get attributes from 'df' function if they are not specified
-        if (-1 == capacity) or (-1 == used_space) or (-1 == free_space):
-            if not os.path.isdir(base_path):
-                raise DiskSpaceError("Cannot analyse " + base_path + ".")
-            elif not os.path.isfile("/bin/df"):
-                raise DiskSpaceError("/bin/df does not exist.")
-            df_output = os.popen("/bin/df -P " + base_path + " | tail -1").read()
-            if not df_output:
-                raise DiskSpaceError("/bin/df call failed.")
-            df_output_split = df_output.split()
+        if not self.base_path.is_dir():
+            raise DiskSpaceError(f"Cannot analyze {self.base_path}.")
+        elif not Path("/bin/df").exists():
+            raise DiskSpaceError("/bin/df does not exist.")
+        df_output = subprocess.run(
+            ["/bin/df", "-P", base_path, "|", "tail", "-1"], capture_output=True
+        )
+        if not df_output.stdout:
+            raise DiskSpaceError("/bin/df call failed.")
+        df_output_split = df_output.stdout.split()
         if -1 == capacity:
             try:
                 self.capacity = int(df_output_split[1]) * 1000
@@ -185,14 +187,13 @@ def size_division(
     ----------
     files_to_divide : Union[List, FileMeta, Path]
     size_limit : int
-      size limit of divisions in bytes (default: no limit).
+      Size limit of divisions in bytes. Default: 0 (no limit).
     file_limit : int
-      number of files limit of divisions (default: no limit).
+      Number of files limit of divisions. Default: 0 (no limit).
     check_name_repetition : bool
-      flag to prevent file name repetitions (default: off).
+      Flag to prevent file name repetitions. Default: False.
     preserve_order : bool
-      flag to force files to be restored in the order they are given
-      (default: off).
+      Flag to force files to be restored in the order they are given. Default: False.
 
     Returns
     -------
@@ -270,7 +271,7 @@ def file_size(
             raise FileNotFoundError
     except FileNotFoundError:
         logging.error(
-            "File Not Found: Unable to parse file size from %s." % file_path_or_bytes
+            f"File Not Found: Unable to parse file size from {file_path_or_bytes}"
         )
         raise
 

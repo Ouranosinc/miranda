@@ -143,7 +143,7 @@ class Decoder:
             ds = zarr.open(file, mode="r")
             data = ds.attrs.asdict()
         else:
-            raise DecoderError("Unable to read dataset.")
+            raise DecoderError(f"Unable to read dataset: `{file.name}`.")
         return variable_name, variable_date, data
 
     @staticmethod

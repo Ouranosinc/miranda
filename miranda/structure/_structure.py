@@ -12,7 +12,7 @@ from typing import List, Mapping, Optional, Union
 from miranda import Decoder
 from miranda.decode import guess_project
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import filefolder_iterator
+from miranda.utils import discover_data
 from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -200,7 +200,7 @@ def structure_datasets(
     -------
     dict
     """
-    input_files = filefolder_iterator(input_files, filename_pattern)
+    input_files = discover_data(input_files, filename_pattern)
     if not project and guess:
         # Examine the first file from a list or generator
         for f in input_files:

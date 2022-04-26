@@ -67,7 +67,7 @@ xarray_frequencies_to_cmip6like = {
 def gather_era5_single_levels(
     path: Union[str, os.PathLike], back_extension: bool = False
 ) -> Dict[str, List[Path]]:
-    # ERA5 source data
+    # ERA5-Single-Levels source data
     source_era5 = Path(path)
     logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
     infiles_era5 = list()
@@ -156,7 +156,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
 
 
 def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # SC_Earth source data
+    # SC-Earth source data
     source_sc_earth = Path(path)
     logging.info("Gathering SC-Earth from %s" % source_sc_earth.as_posix())
     infiles_sc_earth = list()

@@ -68,13 +68,14 @@ def rstdmf_rename(file_list: Union[str, List[str]], restore_path: str):
     Parameters
     ----------
     file_list : List[str]
-      list of files to restore.
+      List of files to restore.
     restore_path : str
+      Path to restore files and folders to.
 
     Notes
     -----
     The restored files are renamed to their full path with '/' replaced by '.'.
-        e.g. /dmf1/scenario/sample.tar becomes dmf1.scenario.sample.tar
+    e.g. /dmf1/scenario/sample.tar becomes dmf1.scenario.sample.tar
 
     """
     # Make sure we have the full path of each argument
@@ -87,11 +88,11 @@ def rstdmf_rename(file_list: Union[str, List[str]], restore_path: str):
     try:
         Path(restore_path).mkdir(parents=True, exist_ok=True)
     except OSError:
-        raise RstdmfError(f"Cannot create restore path {restore_path}.")
+        raise RstdmfError(f"Cannot create restore path: {restore_path}.")
 
     # Create string with list of files
     file_list_string = "' '".join(file_list)
-    file_list_string = "'" + file_list_string + "'"
+    file_list_string = f"'{file_list_string}'"
     file_list_string = file_list_string.replace("(", r"\(")
     file_list_string = file_list_string.replace(")", r"\)")
 
@@ -114,21 +115,21 @@ def rstdmf_rename(file_list: Union[str, List[str]], restore_path: str):
 
 def local_storage_for_rstdmf(
     files_for_rstdmf: List[str], restore_path: str, max_size_on_disk: int
-):
+) -> StorageState:
     """Create a local storage object for rstdmf_divisions function.
 
     Parameters
     ----------
     files_for_rstdmf : List[str]
-        files that will be restored.
+      files that will be restored.
     restore_path : str
+      Path to restore files and folders to.
     max_size_on_disk : int
-        maximum amount of space to be used on disk.
+      maximum amount of space to be used on disk.
 
     Returns
     -------
-    out : StorageState object
-
+    StorageState
     """
 
     # Get files already restored on disk and their size
@@ -168,7 +169,7 @@ def rstdmf_divisions(
     ----------
     paths_to_restore : list of strings
         list of files to restore (path or FileMeta objects), giving
-        directories also works but they are considered like a single file
+        directories also works, but they are considered like a single file
         (i.e. be careful of their size!).
     restore_path : str
         Path where files will be restored.
@@ -248,8 +249,9 @@ def rstdmf_divisions(
     if verbose:
         size_of_files = size_evaluation(files_for_rstdmf)
         logging.warning(
-            f"Disk space: {float(storage.free_space) / GiB} GiB, Restoration size: {size_of_files / GiB} GiB, "
-            + f"Subdivisions: {str(len(divisions))}"
+            f"Disk space: {float(storage.free_space) / GiB} GiB, "
+            f"Restoration size: {size_of_files / GiB} GiB, "
+            f"Subdivisions: {str(len(divisions))}"
         )
         if not yesno_prompt("Proceed with restoration?"):
             return
@@ -282,8 +284,8 @@ def rstdmf_divisions(
                 )
             elif local_storage.free_space < size_of_files:
                 logging.warning(
-                    f"Reached size limit of files on disk ({float(max_size_on_disk) / GiB} GiB)."
-                    f" Starting wait loop ({disk_refresh_time} seconds)."
+                    f"Reached size limit of files on disk ({float(max_size_on_disk) / GiB} GiB). "
+                    f"Starting wait loop ({disk_refresh_time} seconds)."
                 )
             while (storage.free_space - disk_space_margin < size_of_files) or (
                 local_storage.free_space < size_of_files
