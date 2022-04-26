@@ -51,7 +51,7 @@ Installation
 
     $ pip install miranda[full]
 
-`miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary. This library requires additional installation steps:
+`miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary. This library requires additional installation steps::
 
     $ mkdir -p ~/.esdoc
     $ git clone git@github.com:ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
