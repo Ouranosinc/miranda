@@ -107,6 +107,102 @@
       "standard_name": "snowfall_flux",
       "units": "kg m-2 s-1"
     },
+    "slhf": {
+      "_cf_variable_name": "hfls",
+      "_corrected_units": {
+        "era5-land": "J m-2",
+        "era5-single-levels": "J m-2",
+        "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "This parameter is the transfer of latent heat (resulting from water phase changes, such as evaporation or condensation) between the Earth's surface and the atmosphere through the effects of turbulent air motion. Evaporation from the Earth's surface represents a transfer of energy from the surface to the atmosphere.",
+      "long_name": "Surface upward latent heat flux",
+      "original_long_name": "Surface latent heat flux",
+      "standard_name": "surface_upward_latent_heat_flux",
+      "units": "W m-2"
+    },
+    "sshf": {
+      "_cf_variable_name": "hfss",
+      "_corrected_units": {
+        "era5-land": "J m-2",
+        "era5-single-levels": "J m-2",
+        "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "This parameter is the transfer of heat between the Earth's surface and the atmosphere through the effects of turbulent air motion (but excluding any heat transfer resulting from condensation or evaporation)",
+      "long_name": "Surface upward sensible heat flux",
+      "original_long_name": "Surface sensible heat flux",
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "units": "W m-2"
+    },
+    "ssrd": {
+      "_cf_variable_name": "rsds",
+      "_corrected_units": {
+        "era5-land": "J m-2",
+        "era5-single-levels": "J m-2",
+        "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "This parameter is the amount of solar radiation (also known as shortwave radiation) that reaches a horizontal plane at the surface of the Earth. This parameter comprises both direct and diffuse solar radiation",
+      "long_name": "Surface downwelling shortwave flux",
+      "original_long_name": "Surface solar radiation downwards",
+      "standard_name": "surface_downwelling_shortwave_flux",
+      "units": "W m-2"
+    },
+    "strd": {
+      "_cf_variable_name": "rlds",
+      "_corrected_units": {
+        "era5-land": "J m-2",
+        "era5-single-levels": "J m-2",
+        "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "This parameter is the amount of thermal (also known as longwave or terrestrial) radiation emitted by the atmosphere and clouds that reaches a horizontal plane at the surface of the Earth. ",
+      "long_name": "Surface downwelling longwave flux",
+      "original_long_name": "Surface thermal radiation downwards",
+      "standard_name": "surface_downwelling_longwave_flux",
+      "units": "W m-2"
+    },
     "swvl1": {
       "_cf_variable_name": "mrsolv1",
       "_corrected_units": {
