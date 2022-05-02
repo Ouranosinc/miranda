@@ -401,15 +401,22 @@ class Decoder:
         else:
             facets["date"] = date
 
-        try:
-            facets["domain"] = data["CORDEX_domain"].strip()
-        except KeyError:
-            try:
-                facets["domain"] = data["ouranos_domain_name"].strip()
-            except KeyError:
+        domain = data.get("CORDEX_domain").strip()
+        if domain:
+            facets["domain"] = domain
+        else:
+            domain = data.get("ouranos_domain_name").strip()
+            if domain:
+                facets["domain"] = domain
+            else:
                 msg = f"File {Path(file).name} has a nonstandard domain name."
                 logging.error(msg)
                 raise NotImplementedError(msg)
+
+        # FIXME: CORDEX-NAM on AWS mis-attributes the domain (22/44 should be 22i/44i)
+        aws_keys = data.get("intake_esm_dataset_key")
+        if aws_keys:
+            facets["domain"] = aws_keys.split(".")[3]
 
         driving_institution_parts = str(data["driving_model_id"]).split("-")
         if driving_institution_parts[0] in INSTITUTIONS:
