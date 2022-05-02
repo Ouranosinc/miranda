@@ -69,7 +69,7 @@ def gather_era5_single_levels(
 ) -> Dict[str, List[Path]]:
     # ERA5-Single-Levels source data
     source_era5 = Path(path)
-    logging.info("Gathering ERA5 from %s" % source_era5.as_posix())
+    logging.info(f"Gathering ERA5 from: {source_era5.as_posix()}")
     infiles_era5 = list()
     for v in era5_variables:
         infiles_era5.extend(list(sorted(source_era5.rglob(f"{v}_*.nc"))))
@@ -93,7 +93,7 @@ def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
 def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # ERA5-Land source data
     source_era5l = Path(path)
-    logging.info("Gathering ERA5-Land from %s" % source_era5l.as_posix())
+    logging.info(f"Gathering ERA5-Land from: {source_era5l.as_posix()}")
     infiles_era5l = list()
     for v in era5_variables:
         infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}_*.nc"))))
@@ -106,7 +106,7 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # agMERRA source data
     source_agmerra = Path(path)
-    logging.info("Gathering agMERRA from %s" % source_agmerra.as_posix())
+    logging.info(f"Gathering agMERRA from: {source_agmerra.as_posix()}")
     infiles_agmerra = list()
     for v in nasa_ag_variables:
         infiles_agmerra.extend(list(sorted(source_agmerra.rglob(f"AgMERRA_*_{v}.nc4"))))
@@ -119,7 +119,7 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # agCFSR source data
     source_agcfsr = Path(path)
-    logging.info("Gathering CFSR from %s" % source_agcfsr.as_posix())
+    logging.info(f"Gathering CFSR from: {source_agcfsr.as_posix()}")
     infiles_agcfsr = list()
     for v in nasa_ag_variables:
         infiles_agcfsr.extend(list(sorted(source_agcfsr.rglob(f"AgCFSR_*_{v}.nc4"))))
@@ -132,7 +132,7 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # NRCan Gridded Obs source data
     source_nrcan = Path(path)
-    logging.info("Gathering NRCAN Gridded Obs from %s" % source_nrcan.as_posix())
+    logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
     infiles_nrcan = list()
     for v in nrcan_variables:
         infiles_nrcan.extend(list(sorted(source_nrcan.joinpath(v).glob(f"*{v}_*.nc"))))
@@ -145,7 +145,7 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Pa
 def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # WFDEI-GEM-CaPa source data
     source_wfdei = Path(path)
-    logging.info("Gathering WFDEI-GEM_CaPa from %s" % source_wfdei.as_posix())
+    logging.info(f"Gathering WFDEI-GEM_CaPa from: {source_wfdei.as_posix()}")
     infiles_wfdei = list()
     for v in wfdei_gem_capa_variables:
         infiles_wfdei.extend(list(sorted(source_wfdei.rglob(f"{v}_*.nc"))))
@@ -158,7 +158,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
 def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # SC-Earth source data
     source_sc_earth = Path(path)
-    logging.info("Gathering SC-Earth from %s" % source_sc_earth.as_posix())
+    logging.info(f"Gathering SC-Earth from: {source_sc_earth.as_posix()}")
     infiles_sc_earth = list()
     for v in sc_earth_variables:
         infiles_sc_earth.extend(
