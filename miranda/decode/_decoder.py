@@ -242,10 +242,13 @@ class Decoder:
         del facets["history"]
 
         facets["date"] = date
-        try:  # FIXME: This should be adjusted in files.
-            facets["format"] = data["output_format"]
-        except KeyError:
+
+        file_format = data.get("output_format")
+        if format:
+            facets["format"] = file_format
+        else:
             facets["format"] = data["format"]
+
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["variable"] = variable
 
