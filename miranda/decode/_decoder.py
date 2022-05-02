@@ -18,6 +18,7 @@ from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.cv import INSTITUTIONS, PROJECT_MODELS
 from miranda.scripting import LOGGING_CONFIG
+from miranda.validators import FACETS_SCHEMA
 
 from ._time import (
     TIME_UNITS_TO_FREQUENCY,
@@ -80,6 +81,8 @@ class Decoder:
             decode_function_name = f"decode_{proj.lower().replace('-','_')}"
             try:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
+                if fail_early:
+                    FACETS_SCHEMA.validate(_deciphered)
                 print(
                     f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
                 )
@@ -88,6 +91,7 @@ class Decoder:
                 print(f"Unable to read data from {Path(file).name}: {e}")
             except schema.SchemaError as e:
                 print(f"Decoded facets from {Path(file).name} are not valid: {e}")
+                raise
 
     def decode(
         self,
