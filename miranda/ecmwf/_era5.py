@@ -70,6 +70,10 @@ def request_era5(
         sde="snow_depth",
         sd="snow_depth_water_equivalent",
         sf="snowfall",
+        swlv1="volumetric_soil_water_layer_1",
+        swlv2="volumetric_soil_water_layer_2",
+        swlv3="volumetric_soil_water_layer_3",
+        swlv4="volumetric_soil_water_layer_4",
     )
     variable_reference[
         "era5", "era-single-levels", "era5-single-levels-preliminary-back-extension"
@@ -84,6 +88,10 @@ def request_era5(
         rsn="snow_density",
         sd="snow_depth",  # note difference in name vs era5-land cf_variable == snw
         sf="snowfall",
+        swlv1="volumetric_soil_water_layer_1",
+        swlv2="volumetric_soil_water_layer_2",
+        swlv3="volumetric_soil_water_layer_3",
+        swlv4="volumetric_soil_water_layer_4",
     )
 
     if year_end is None:

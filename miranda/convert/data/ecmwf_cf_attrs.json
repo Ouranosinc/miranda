@@ -107,6 +107,66 @@
       "standard_name": "snowfall_flux",
       "units": "kg m-2 s-1"
     },
+    "swvl1": {
+      "_cf_variable_name": "mrsolv1",
+      "_corrected_units": {
+        "era5-land": "1",
+        "era5-single-levels": "1",
+        "era5-single-levels-preliminary-back-extension": "1"
+      },
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "comments": "This parameter is the volume of water in soil layer 1 (0 - 7cm, the surface is at 0cm).",
+      "long_name": "Volumetric soil water layer 1",
+      "standard_name": "volume_fraction_of_water_in_soil",
+      "units": "1"
+    },
+    "swvl2": {
+      "_cf_variable_name": "mrsolv2",
+      "_corrected_units": {
+        "era5-land": "1",
+        "era5-single-levels": "1",
+        "era5-single-levels-preliminary-back-extension": "1"
+      },
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "comments": "This parameter is the volume of water in soil layer 2 (7 - 28cm, the surface is at 0cm).",
+      "long_name": "Volumetric soil water layer 2",
+      "standard_name": "volume_fraction_of_water_in_soil",
+      "units": "1"
+    },
+    "swvl3": {
+      "_cf_variable_name": "mrsolv3",
+      "_corrected_units": {
+        "era5-land": "1",
+        "era5-single-levels": "1",
+        "era5-single-levels-preliminary-back-extension": "1"
+      },
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "comments": "This parameter is the volume of water in soil layer 2 (28 - 100cm, the surface is at 0cm).",
+      "long_name": "Volumetric soil water layer 3",
+      "standard_name": "volume_fraction_of_water_in_soil",
+      "units": "1"
+    },
+    "swvl4": {
+      "_cf_variable_name": "mrsolv4",
+      "_corrected_units": {
+        "era5-land": "1",
+        "era5-single-levels": "1",
+        "era5-single-levels-preliminary-back-extension": "1"
+      },
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "comments": "This parameter is the volume of water in soil layer 2 (100 - 289cm, the surface is at 0cm).",
+      "long_name": "Volumetric soil water layer 4",
+      "standard_name": "volume_fraction_of_water_in_soil",
+      "units": "1"
+    },
     "t2m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {},
