@@ -93,7 +93,7 @@ class Decoder:
         self,
         files: Union[os.PathLike, str, List[Union[str, os.PathLike]], GeneratorType],
         raise_error: bool = False,
-    ):
+    ) -> None:
         """Decode facets from file or list of files.
 
         Parameters

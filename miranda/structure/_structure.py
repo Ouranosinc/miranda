@@ -9,6 +9,8 @@ from pathlib import Path
 from types import GeneratorType
 from typing import List, Mapping, Optional, Union
 
+import schema
+
 from miranda import Decoder
 from miranda.decode import guess_project
 from miranda.scripting import LOGGING_CONFIG
@@ -62,7 +64,7 @@ def _structure_datasets(
 
 def build_path_from_schema(
     facets: dict, output_folder: Union[str, os.PathLike]
-) -> Path:
+) -> Optional[Path]:
     """Build a filepath based on a valid data schema.
 
     Parameters
@@ -74,64 +76,82 @@ def build_path_from_schema(
 
     Returns
     -------
-    Path
+    Path or None
     """
-    if facets["type"] == "station-obs":
-        STATION_OBS_SCHEMA.validate(facets)
-        folder_tree = (
-            Path(output_folder)
-            / facets["type"]
-            / facets["project"]
-            / facets["institution"]
-            / facets["version"]  # This suggests "date_created"
-            / facets["frequency"]
-            / facets["variable"]
-        )
-        if hasattr(facets, "member"):
-            return folder_tree / facets["member"]
-        return folder_tree
+    try:
+        if facets["type"] == "station-obs":
+            STATION_OBS_SCHEMA.validate(facets)
+            folder_tree = (
+                Path(output_folder)
+                / facets["type"]
+                / facets["project"]
+                / facets["institution"]
+                / facets["version"]  # This suggests "date_created"
+                / facets["frequency"]
+                / facets["variable"]
+            )
+            if hasattr(facets, "member"):
+                return folder_tree / facets["member"]
+            return folder_tree
 
-    if facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
-        GRIDDED_SCHEMA.validate(facets)
-        return (
-            Path(output_folder)
-            / facets["type"]
-            / facets["institution"]
-            / facets["activity"]
-            / facets["source"]
-            / facets["project"]
-            / facets["domain"]
-            / facets["frequency"]
-            / facets["variable"]
-        )
+        if facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
+            GRIDDED_SCHEMA.validate(facets)
+            return (
+                Path(output_folder)
+                / facets["type"]
+                / facets["institution"]
+                / facets["activity"]
+                / facets["source"]
+                / facets["project"]
+                / facets["domain"]
+                / facets["frequency"]
+                / facets["variable"]
+            )
 
-    if facets["type"] == "simulation":
-        SIMULATION_SCHEMA.validate(facets)
-        if facets["processing_level"] == "raw":
-            try:
-                if facets["project"] == "CORDEX":
+        if facets["type"] == "simulation":
+            SIMULATION_SCHEMA.validate(facets)
+            if facets["processing_level"] == "raw":
+                try:
+                    if facets["project"] == "CORDEX":
+                        return (
+                            Path(output_folder)
+                            / facets["type"]
+                            / facets["processing_level"]
+                            / facets["activity"]
+                            / facets["mip_era"]
+                            / facets["project"]
+                            / facets["domain"]
+                            / facets["source"]
+                            / facets["driving_model"]
+                            / facets["experiment"]
+                            / facets["member"]
+                            / facets["frequency"]
+                            / facets["variable"]
+                        )
+                except KeyError:
                     return (
                         Path(output_folder)
                         / facets["type"]
                         / facets["processing_level"]
                         / facets["activity"]
                         / facets["mip_era"]
-                        / facets["project"]
                         / facets["domain"]
+                        / facets["institution"]
                         / facets["source"]
-                        / facets["driving_model"]
                         / facets["experiment"]
                         / facets["member"]
                         / facets["frequency"]
                         / facets["variable"]
                     )
-            except KeyError:
+            elif facets["processing_level"] == "biasadjusted":
                 return (
                     Path(output_folder)
                     / facets["type"]
                     / facets["processing_level"]
                     / facets["activity"]
                     / facets["mip_era"]
+                    / facets["bias_adjust_institution"]
+                    / facets["bias_adjust_project"]
                     / facets["domain"]
                     / facets["institution"]
                     / facets["source"]
@@ -140,27 +160,15 @@ def build_path_from_schema(
                     / facets["frequency"]
                     / facets["variable"]
                 )
-        elif (
-            facets["processing_level"] == "biasadjusted"
-        ):  # FIXME: remove or keep underline?
-            return (
-                Path(output_folder)
-                / facets["type"]
-                / facets["processing_level"]
-                / facets["activity"]
-                / facets["mip_era"]
-                / facets["bias_adjust_institution"]
-                / facets["bias_adjust_project"]
-                / facets["domain"]
-                / facets["institution"]
-                / facets["source"]
-                / facets["experiment"]
-                / facets["member"]
-                / facets["frequency"]
-                / facets["variable"]
-            )
+        raise ValueError()
 
-    raise ValueError("No appropriate data schemas found.")
+    except schema.SchemaError:
+        logging.error(f"Validation issues found for file matching schema: {facets}")
+    except ValueError:
+        logging.error(
+            f"No appropriate data schemas found for file matching schema: {facets}"
+        )
+    return
 
 
 def structure_datasets(
@@ -217,15 +225,25 @@ def structure_datasets(
 
     all_file_paths = dict()
     version_hash_paths = dict()
+    errored_files = list()
     for file, facets in decoder.file_facets().items():
         output_filepath = build_path_from_schema(facets, output_folder)
-        all_file_paths.update({Path(file): output_filepath})
+        if isinstance(output_filepath, Path):
+            all_file_paths.update({Path(file): output_filepath})
+        else:
+            errored_files.append(Path(file).name)
+            continue
 
         if set_version_hashes:
             version_hash_file = f"{Path(file).stem}.{facets['version']}"
             version_hash_paths.update(
                 {Path(file): output_filepath.joinpath(version_hash_file)}
             )
+
+    if errored_files:
+        logging.warning(
+            f"Some files were unable to be structured: [{', '.join(errored_files)}]"
+        )
 
     if make_dirs:
         for new_paths in set(all_file_paths.values()):
