@@ -197,10 +197,17 @@ def _request_direct_era(
         timestep = "hourly"
 
     for var in variables.keys():
-        netcdf_name = (
-            f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-            f"_{product}_{domain.upper()}_{year}{month}.nc"
-        )
+        if pressure_levels is None:
+            netcdf_name = (
+                f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+                f"_{product}_{domain.upper()}_{year}{month}.nc"
+            )
+        else:
+            plev_names = "-".join(pressure_levels)
+            netcdf_name = (
+                f"{var}{plev_names}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+                f"_{product}_{domain.upper()}_{year}{month}.nc"
+            )
 
         if Path(netcdf_name).exists():
             logging.info(f"Dataset {netcdf_name} already exists. Continuing...")

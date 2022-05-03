@@ -214,7 +214,7 @@
       "_transformation": {},
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 1 (0 - 7cm, the surface is at 0cm).",
-      "long_name": "Volumetric soil water layer 1",
+      "long_name": "Volumetric soil water layer 1 (0 - 7 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
@@ -229,7 +229,7 @@
       "_transformation": {},
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 2 (7 - 28cm, the surface is at 0cm).",
-      "long_name": "Volumetric soil water layer 2",
+      "long_name": "Volumetric soil water layer 2 (7 - 28 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
@@ -244,7 +244,7 @@
       "_transformation": {},
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 3 (28 - 100cm, the surface is at 0cm).",
-      "long_name": "Volumetric soil water layer 3",
+      "long_name": "Volumetric soil water layer 3 (28 - 100 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
@@ -259,7 +259,7 @@
       "_transformation": {},
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 4 (100 - 289cm, the surface is at 0cm).",
-      "long_name": "Volumetric soil water layer 4",
+      "long_name": "Volumetric soil water layer 4 (100 - 289 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
