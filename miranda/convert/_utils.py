@@ -82,7 +82,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     xarray.Dataset
     """
     try:
-        import regionmask
+        import regionmask  # noqa
     except ImportError:
         raise ImportError(
             f"{add_ar6_regions.__name__} functions require additional dependencies. "
@@ -314,7 +314,18 @@ def daily_aggregation(ds) -> Dict[str, xr.Dataset]:
                 daily_dataset[v] = ds_out
                 del ds_out
 
-        elif variable in ["evspsblpot", "pr", "prsn", "snd", "snr", "snw"]:
+        elif variable in [
+            "evspsblpot",
+            "hfls",
+            "hfss",
+            "pr",
+            "prsn",
+            "rsds",
+            "rlds",
+            "snd",
+            "snr",
+            "snw",
+        ]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
             ds_out.attrs["frequency"] = "day"
