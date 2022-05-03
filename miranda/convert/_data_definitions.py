@@ -12,6 +12,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = [
     "gather_agcfsr",
     "gather_agmerra",
+    "gather_era5_pressure_levels",
     "gather_era5_land",
     "gather_era5_single_levels",
     "gather_nrcan_gridded_obs",
@@ -42,6 +43,8 @@ wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
 reanalysis_project_institutes = {
     "cfsr": "ncar",
     "era5": "ecmwf",
+    "era5-pressure-levels-preliminary-back-extension": "ecmwf",
+    "era5-pressure-levels": "ecmwf",
     "era5-single-levels-preliminary-back-extension": "ecmwf",
     "era5-single-levels": "ecmwf",
     "era5-land": "ecmwf",
@@ -72,13 +75,34 @@ def gather_era5_single_levels(
     logging.info(f"Gathering ERA5 from: {source_era5.as_posix()}")
     infiles_era5 = list()
     for v in era5_variables:
-        infiles_era5.extend(list(sorted(source_era5.rglob(f"{v}_*.nc"))))
+        infiles_era5.extend(
+            list(sorted(source_era5.rglob(f"{v}*era5-single-levels*.nc")))
+        )
     logging.info(
         f"Found {len(infiles_era5)} files, totalling {report_file_size(infiles_era5)}."
     )
     if not back_extension:
         return {"era5-single-levels": infiles_era5}
     return {"era5-single-levels-preliminary-back-extension": infiles_era5}
+
+
+def gather_era5_pressure_levels(
+    path: Union[str, os.PathLike], back_extension: bool = False
+) -> Dict[str, List[Path]]:
+    # ERA5-Single-Levels source data
+    source_era5plev = Path(path)
+    logging.info(f"Gathering ERA5 from: {source_era5plev.as_posix()}")
+    infiles_era5plev = list()
+    for v in era5_variables:
+        infiles_era5plev.extend(
+            list(sorted(source_era5plev.rglob(f"{v}*era5-pressure-levels*.nc")))
+        )
+    logging.info(
+        f"Found {len(infiles_era5plev)} files, totalling {report_file_size(infiles_era5plev)}."
+    )
+    if not back_extension:
+        return {"era5-pressure-levels": infiles_era5plev}
+    return {"era5-pressure-levels-preliminary-back-extension": infiles_era5plev}
 
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
@@ -96,7 +120,7 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     logging.info(f"Gathering ERA5-Land from: {source_era5l.as_posix()}")
     infiles_era5l = list()
     for v in era5_variables:
-        infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}_*.nc"))))
+        infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}*era5-land*.nc"))))
     logging.info(
         f"Found {len(infiles_era5l)} files, totalling {report_file_size(infiles_era5l)}."
     )

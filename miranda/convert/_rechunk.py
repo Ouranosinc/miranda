@@ -19,9 +19,17 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["rechunk_reanalysis"]
 
 
-def _rechunk_configurator(project, time_step):
+def _rechunk_configurator(project, time_step, levels: int = None):
     # ~35 Mo chunks
-    if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
+    if project.lower() in [
+        "era5-single-levels",
+        "era5-single-levels-preliminary-back-extension",
+        "era5-land",
+    ] or (
+        project.lower()
+        in ["era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"]
+        and levels == 1
+    ):
         if time_step == "1hr":
             # Chunks for monthly files, optimized for Zarr
             target_chunks = {
@@ -130,8 +138,13 @@ def rechunk_reanalysis(
 
             ds = xr.open_dataset(file, chunks={"time": -1})
 
+            try:
+                levels = len(ds.level)
+            except AttributeError:
+                levels = None
+
             if target_chunks is None:
-                target_chunks = _rechunk_configurator(project, time_step)
+                target_chunks = _rechunk_configurator(project, time_step, levels)
 
             # Set correct chunks in encoding options
             encoding = dict()
