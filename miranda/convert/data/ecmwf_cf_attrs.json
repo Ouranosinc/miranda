@@ -2,12 +2,12 @@
   "Header": {
     "Conventions": "CF-1.8",
     "activity": "ERA",
-    "data_specs_version": "00.00.04",
+    "data_specs_version": "00.00.05",
     "institution": "ECMWF",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "7 April 2022",
+    "table_date": "3 May 2022",
     "type": "reanalysis"
   },
   "variable_entry": {
