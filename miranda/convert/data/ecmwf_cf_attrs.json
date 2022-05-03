@@ -314,6 +314,22 @@
       "long_name": "10 metre northward wind",
       "standard_name": "northward_wind",
       "units": "m s-1"
+    },
+    "z": {
+      "_cf_variable_name": "z",
+      "_corrected_units": {
+        "era5-pressure-levels": "m2 s-2",
+        "era5-pressure-levels-preliminary-back-extension": "m2 s-2",
+        "era5-single-levels": "m2 s-2",
+        "era5-single-levels-preliminary-back-extension": "m2 s-2"
+      },
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "comments": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
+      "long_name": "Geopotential",
+      "standard_name": "geopotential",
+      "units": "m2 s-2"
     }
   }
 }

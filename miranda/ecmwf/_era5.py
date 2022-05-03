@@ -32,10 +32,11 @@ ERA5_PROJECT_NAMES = [
 
 
 def request_era5(
-    variables: Optional[Mapping[str, str]],
     projects: List[str],
     *,
+    variables: Optional[Mapping[str, str]] = None,
     domain: str = "AMNO",
+    pressure_levels: Optional[List[int]] = None,
     output_folder: Optional[Union[str, os.PathLike]] = None,
     year_start: Union[str, int] = 1950,
     year_end: Optional[Union[str, int]] = None,
@@ -46,8 +47,9 @@ def request_era5(
     Parameters
     ----------
     variables: Mapping[str, str]
-    projects : List[{"era5", "era5-land", "era5-single-levels"}]
+    projects : List[{"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}]
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
+    pressure_levels: List[int], optional
     output_folder : str or os.PathLike, optional
     year_start : int
     year_end : int, optional
@@ -80,7 +82,7 @@ def request_era5(
         swlv4="volumetric_soil_water_layer_4",
     )
     variable_reference[
-        "era5", "era-single-levels", "era5-single-levels-preliminary-back-extension"
+        "era5-single-levels", "era5-single-levels-preliminary-back-extension"
     ] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
@@ -101,6 +103,9 @@ def request_era5(
         swlv3="volumetric_soil_water_layer_3",
         swlv4="volumetric_soil_water_layer_4",
     )
+    variable_reference[
+        "era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"
+    ] = dict(z="geopotential")
 
     if year_end is None:
         year_end = date.today().year
@@ -113,14 +118,8 @@ def request_era5(
             yearmonth.append((y, m))
 
     project_names = dict()
-    if "era5" in projects or "era5-single-levels" in projects:
-        project_names["era5-single-levels"] = "reanalysis-era5-single-levels"
-    if "era5-land" in projects:
-        project_names["era5-land"] = "reanalysis-era5-land"
-    if "era5-single-levels-preliminary-back-extension" in projects:
-        project_names[
-            "era5-single-levels-preliminary-back-extension"
-        ] = "reanalysis-era5-single-levels-preliminary-back-extension"
+    for project in projects:
+        project_names[project] = f"reanalysis-{project}"
 
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
@@ -129,20 +128,33 @@ def request_era5(
     Path(target).mkdir(exist_ok=True)
     os.chdir(target)
 
-    for key, p in project_names.items():
-        product = p.split("-")[0]
+    for project_name, request_code in project_names.items():
+        product = request_code.split("-")[0]
         v_requested = dict()
         variable_reference = next(
-            var_list for k, var_list in variable_reference.items() if p in k
+            var_list for k, var_list in variable_reference.items() if request_code in k
         )
         if variables:
             for v in variables:
-                if v in variable_reference[key]:
-                    v_requested[v] = variable_reference[key][v]
+                if v in variable_reference[project_name]:
+                    v_requested[v] = variable_reference[project_name][v]
         else:
-            v_requested = variable_reference[key]
+            v_requested = variable_reference[project_name]
+
+        if "pressure-levels" in project_name:
+            pressure_levels_requested = [str(i) for i in pressure_levels]
+        else:
+            pressure_levels_requested = None
+
         proc = multiprocessing.Pool(processes=processes)
-        func = functools.partial(_request_direct_era, v_requested, p, domain, product)
+        func = functools.partial(
+            _request_direct_era,
+            v_requested,
+            request_code,
+            domain,
+            pressure_levels_requested,
+            product,
+        )
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
 
@@ -155,6 +167,7 @@ def _request_direct_era(
     variables: Mapping[str, str],
     project: str,
     domain: str,
+    pressure_levels: Optional[List[str]],
     product: str,
     yearmonth: Tuple[int, str],
 ):
@@ -178,10 +191,10 @@ def _request_direct_era(
 
     c = Client()
 
-    if project in ["reanalysis-era5-single-levels", "reanalysis-era5-land"]:
-        timestep = "hourly"
-    else:
+    if "monthly-means" in project:
         raise NotImplementedError(project)
+    else:
+        timestep = "hourly"
 
     for var in variables.keys():
         netcdf_name = (
@@ -190,7 +203,7 @@ def _request_direct_era(
         )
 
         if Path(netcdf_name).exists():
-            logging.info("Dataset %s already exists. Continuing..." % netcdf_name)
+            logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
             continue
 
         request_kwargs = dict(
@@ -203,8 +216,16 @@ def _request_direct_era(
             format="netcdf",
         )
 
-        if project == "reanalysis-era5-single-levels":
+        if project in [
+            "reanalysis-era5-single-levels",
+            "reanalysis-era5-single-levels-preliminary-back-extension",
+            "reanalysis-era5-pressure-levels",
+            "reanalysis-era5-pressure-levels-preliminary-back-extension",
+        ]:
             request_kwargs.update(dict(product_type=product))
+
+        if pressure_levels:
+            request_kwargs.update(dict(pressure_level=pressure_levels))
 
         c.retrieve(
             project,
