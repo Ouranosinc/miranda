@@ -19,12 +19,13 @@ Data collection functions for climate and forecast data hosted at:
 
 Data conversion for `Climate and Forecasting (CF) <https://cfconventions.org/>`_ Variable and Metadata compliance:
     * ECMWF (ERA5, ERA5-Land, TIGGE - In Development)
-    * ECCC (Canada) (Flat File Observation, Monthly Climate Summaries, Adjusted and Homogenized Climate Data, ECCC GEOAPI - In Development)
+    * ECCC (Canada) (Flat File Observations, Monthly Climate Summaries, Adjusted and Homogenized Climate Data, ECCC GEOAPI - In Development)
     * MELCC (Québec) (In Development)
     * Hydro-Québec (In Development)
 
 Database structuring and facets validation:
-    * Simulations: WCRP (CORDEX, CORDEX-ADJUST, CMIP5, CMIP6, ISIMIP, etc.)
+    * Simulations:
+       * WCRP (CORDEX, CORDEX-ADJUST, CMIP5, CMIP6, ISIMIP, etc.)
     * Station-Observations:
        * ECCC (Canada) (In Development)
        * MELCC (Québec) (In Development)

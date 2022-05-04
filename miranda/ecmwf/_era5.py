@@ -148,7 +148,7 @@ def request_era5(
         product = request_code.split("-")[0]
         v_requested = dict()
         variable_reference = next(
-            var_list for k, var_list in variable_reference.items() if request_code in k
+            var_list for k, var_list in variable_reference.items() if project_name in k
         )
         if variables:
             for v in variables:
