@@ -203,6 +203,8 @@ def _request_direct_era(
 
     if domain.upper() == "AMNO":
         domain = "NAM"
+
+    # FIXME: This needs to be a list, not an ndarray
     region = subsetting_domains(domain)
 
     c = Client()
