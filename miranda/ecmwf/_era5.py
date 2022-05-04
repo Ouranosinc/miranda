@@ -38,7 +38,7 @@ def request_era5(
     domain: str = "AMNO",
     pressure_levels: Optional[List[int]] = None,
     output_folder: Optional[Union[str, os.PathLike]] = None,
-    year_start: Union[str, int] = 1950,
+    year_start: Optional[Union[str, int]] = None,
     year_end: Optional[Union[str, int]] = None,
     processes: int = 10,
 ) -> None:
@@ -51,7 +51,7 @@ def request_era5(
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     pressure_levels: List[int], optional
     output_folder : str or os.PathLike, optional
-    year_start : int
+    year_start : int, optional
     year_end : int, optional
     processes : int
 
@@ -109,20 +109,6 @@ def request_era5(
         "era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"
     ] = dict(z="geopotential")
 
-    if year_end is None:
-        year_end = dt.today().year
-    years = range(int(year_start), int(year_end) + 1)
-
-    months = [str(d).zfill(2) for d in range(1, 13)]
-    yearmonth = list()
-    for y in years:
-        for m in months:
-            yearmonth.append((y, m))
-
-    project_names = dict()
-    for project in projects:
-        project_names[project] = f"reanalysis-{project}"
-
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
     else:
@@ -130,7 +116,35 @@ def request_era5(
     Path(target).mkdir(exist_ok=True)
     os.chdir(target)
 
+    project_names = dict()
+    for project in projects:
+        project_names[project] = f"reanalysis-{project}"
+
     for project_name, request_code in project_names.items():
+        if year_start is None:
+            if "back-extension" in project_name or project_name == "era5-land":
+                project_year_start = 1950
+            else:
+                project_year_start = 1979
+        else:
+            project_year_start = year_start
+
+        if year_end is None:
+            if "back-extension" in project_name:
+                project_year_end = 1978
+            else:
+                project_year_end = dt.today().year
+        else:
+            project_year_end = year_end
+
+        years = range(int(project_year_start), int(project_year_end) + 1)
+
+        months = [str(d).zfill(2) for d in range(1, 13)]
+        yearmonth = list()
+        for y in years:
+            for m in months:
+                yearmonth.append((y, m))
+
         product = request_code.split("-")[0]
         v_requested = dict()
         variable_reference = next(

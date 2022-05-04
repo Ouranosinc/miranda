@@ -4,7 +4,7 @@ from pathlib import Path
 
 import dask
 
-from miranda.ncar import cordex_aws_download
+from miranda.ncar._aws_cordex import cordex_aws_download  # noqa
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
