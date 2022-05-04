@@ -152,10 +152,10 @@ def request_era5(
         )
         if variables:
             for v in variables:
-                if v in variable_reference[project_name]:
-                    v_requested[v] = variable_reference[project_name][v]
+                if v in variable_reference:
+                    v_requested[v] = variable_reference[v]
         else:
-            v_requested = variable_reference[project_name]
+            v_requested = variable_reference
 
         if "pressure-levels" in project_name:
             pressure_levels_requested = [str(i) for i in pressure_levels]
