@@ -30,8 +30,8 @@ def main():
         "v10": "10m_v_component_of_wind",
     }
     projects = [
-        "reanalysis-era5-single-levels",
-        "reanalysis-era5-single-levels-preliminary-back-extension",
+        "era5-single-levels",
+        "era5-single-levels-preliminary-back-extension",
     ]
 
     request_era5(projects, variables=variables, output_folder=target_folder)
