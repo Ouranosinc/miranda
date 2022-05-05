@@ -135,14 +135,16 @@ def cordex_aws_download(
             scen = ds.attrs["experiment_id"]
             grid = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-2]
             bias_correction = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-1]
+            attrs_ref = ds.attrs.copy()
 
             for i, member in enumerate(ds.member_id):
                 for var in ds.variables:
                     if var in search["variable"]:
                         var_out = var
+                        break
 
                 new_attrs = dict()
-                for key, vals in ds.attrs.items():
+                for key, vals in attrs_ref.items():
                     try:
                         mapped = json.loads(vals)
                         if isinstance(mapped, dict):
@@ -150,7 +152,10 @@ def cordex_aws_download(
                     except JSONDecodeError:
                         new_attrs[key] = vals
                     except TypeError:
-                        new_attrs[key] = vals[0]
+                        if len(vals) == 1:
+                            new_attrs[key] = vals[0]
+                        else:
+                            raise RuntimeError()
 
                 if correct_times:
                     try:
@@ -194,4 +199,4 @@ def cordex_aws_download(
 
                 logging.info(f"Final count of files: {len(datasets)}")
 
-                xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")
+                xr.save_mfdataset(datasets[0:2], paths[0:2], format="NETCDF4_CLASSIC")
