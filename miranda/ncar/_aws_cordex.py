@@ -1,4 +1,5 @@
 import ast
+import functools
 import json
 import logging.config
 from json.decoder import JSONDecodeError
@@ -7,9 +8,11 @@ from typing import Dict, List, Optional, Union
 
 import schema
 import xarray as xr
+from clisops.core import subset_bbox
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar as xcal  # noqa
 
+from miranda.gis import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -88,7 +91,12 @@ def cordex_aws_download(
     *,
     search: Dict[str, Union[str, List[str]]],
     correct_times: bool = False,
+    domain: Optional[str] = None,
 ):
+    def _subset_preprocess(d: xr.Dataset, dom: List[float]) -> xr.Dataset:
+        n, w, s, e = subsetting_domains(dom)
+        return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
+
     schema.Schema(_allowed_args).validate(search)
 
     # Define the catalog description file location.
@@ -104,8 +112,16 @@ def cordex_aws_download(
 
     col_subset = col.search(**search)
 
+    additional_kwargs = dict()
+    if domain:
+        additional_kwargs["preprocess"] = functools.partial(
+            _subset_preprocess, dom=domain
+        )
+
     dsets = col_subset.to_dataset_dict(
-        zarr_kwargs={"consolidated": True}, storage_options={"anon": True}
+        zarr_kwargs={"consolidated": True},
+        storage_options={"anon": True},
+        **additional_kwargs,
     )
     logging.info(f"\nDataset dictionary keys:\n {dsets.keys()}")
 
@@ -119,6 +135,7 @@ def cordex_aws_download(
             scen = ds.attrs["experiment_id"]
             grid = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-2]
             bias_correction = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-1]
+
             for i, member in enumerate(ds.member_id):
                 for var in ds.variables:
                     if var in search["variable"]:
