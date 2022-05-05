@@ -20,6 +20,21 @@ def select_by_date_modified(
     pattern: str = None,
     datetime: date = None,
 ) -> List:
+    """
+
+    Parameters
+    ----------
+    source
+    year
+    month
+    day
+    pattern
+    datetime
+
+    Returns
+    -------
+
+    """
 
     date_selected = date(year, month, day) or datetime
 

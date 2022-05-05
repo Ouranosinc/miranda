@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple, Union
 
 import fiona
 import geojson
-import numpy as np
 from rasterio.crs import CRS
 
 from miranda.scripting import LOGGING_CONFIG
@@ -16,7 +15,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["subsetting_domains"]
 
 
-def subsetting_domains(domain: str) -> np.array:
+def subsetting_domains(domain: str) -> List:
     """Provides the bounding box coordinates for specific domains.
     Parameters
     ----------
@@ -29,15 +28,15 @@ def subsetting_domains(domain: str) -> np.array:
     region = None
 
     if domain.upper() == "GLOBAL":
-        region = np.array([90.0, -180.0, -90.0, 180.0])
+        region = [90.0, -180.0, -90.0, 180.0]
     elif domain.upper() in ["AMNO", "NAM"]:
-        region = np.array([90.0, -179.9, 10.0, -10.0])
+        region = [90.0, -179.9, 10.0, -10.0]
     elif domain.upper() == "CAN":
-        region = np.array([83.5, -141.0, 41.5, -52.5])
+        region = [83.5, -141.0, 41.5, -52.5]
     elif domain.upper() == "QC":
-        region = np.array([63.0, -80.0, 44.5, -57.0])
+        region = [63.0, -80.0, 44.5, -57.0]
     elif domain.upper() == "MTL":
-        region = np.array([45.75, -74.05, 45.3, -73.4])
+        region = [45.75, -74.05, 45.3, -73.4]
     if region is not None:
         return region
 

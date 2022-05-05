@@ -14,7 +14,7 @@ logging.config.dictConfig(scripting.LOGGING_CONFIG)
 __all__ = [
     "chunk_iterables",
     "creation_date",
-    "filefolder_iterator",
+    "discover_data",
     "find_filepaths",
     "list_paths_with_elements",
     "read_privileges",
@@ -30,28 +30,38 @@ ISO_8601 = (
 )
 
 
-def filefolder_iterator(
+def discover_data(
     input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
-    pattern: str,
+    suffix: str = ".nc",
+    recurse: bool = True,
 ) -> Union[List[os.PathLike], GeneratorType]:
     """
 
     Parameters
     ----------
     input_files: str or Path or List[Union[str, Path]] or GeneratorType
-    pattern: str
+      Path or string to a file, a folder, or a generator of paths.
+    suffix: str
+      File-ending suffix to search for. Default: ".nc".
+    recurse: bool
+      Whether to recurse through folders or not. Default: True.
 
     Returns
     -------
-    list or generator
+    list or generator of Path
+
+    Warnings
+    --------
+    Recursion through ".zarr" files is explicitly disabled. Recursive globs and generators will not be expanded/sorted.
+
     """
     if isinstance(input_files, (Path, str)):
         input_files = Path(input_files)
         if input_files.is_dir():
-            if pattern.endswith("zarr"):
-                input_files = sorted(list(input_files.glob(pattern)))
+            if suffix.endswith("zarr") or not recurse:
+                input_files = sorted(list(input_files.glob(suffix)))
             else:
-                input_files = input_files.rglob(pattern)
+                input_files = input_files.rglob(suffix)
     elif isinstance(input_files, list):
         input_files = sorted(Path(p) for p in input_files)
     elif isinstance(input_files, GeneratorType):
@@ -61,7 +71,7 @@ def filefolder_iterator(
     return input_files
 
 
-def chunk_iterables(iterable: Sequence, chunk_size: int) -> List:
+def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
     """Generates lists of `chunk_size` elements from `iterable`.
 
     Notes

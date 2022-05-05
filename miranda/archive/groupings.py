@@ -26,8 +26,16 @@ __all__ = [
 def group_by_length(
     files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10
 ) -> List[List[Path]]:
-    """
-    This function groups files by an arbitrary number of file entries
+    """Group files by an arbitrary number of file entries.
+
+    Parameters
+    ----------
+    files
+    size
+
+    Returns
+    -------
+
     """
     logging.info(f"Creating groups of {size} files")
     files = [Path(f) for f in files]
@@ -51,8 +59,15 @@ def group_by_length(
 def group_by_deciphered_date(
     files: Union[GeneratorType, List[Union[str, Path]]]
 ) -> Dict[str, List[Path]]:
-    """
-    This function attempts to find a common date and groups files based on year and month
+    """Find a common date and groups files based on year and month.
+
+    Parameters
+    ----------
+    files
+
+    Returns
+    -------
+
     """
     logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
@@ -96,11 +111,20 @@ def group_by_deciphered_date(
 def group_by_size(
     files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10 * GiB
 ) -> List[List[Path]]:
+    """Group files up until a desired size and save it as a grouping within a list.
+
+    Parameters
+    ----------
+    files
+    size
+
+    Returns
+    -------
+
     """
-    This function will group files up until a desired size and save it as a grouping within a list
-    """
+
     logging.info(
-        f"Creating groups of files based on size not exceeding {report_file_size(size)}."
+        f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
     )
 
     files = [Path(f) for f in files]
@@ -115,9 +139,6 @@ def group_by_size(
             grouped_list.append(group.copy())
             group.clear()
             total = 0
-            continue
-        elif total < size:
-            continue
 
     if not group:
         logging.info("The final group is empty. Skipping this set...")
@@ -143,6 +164,6 @@ def group_by_subdirectories(
         groups.setdefault(group_name, list()).append(f)
 
     logging.info(
-        f"File subdirectories found. Proceeding with { str([str(key) for key in groups.keys()])}."
+        f"File subdirectories found. Proceeding with: `{', '.join([str(key) for key in groups.keys()])}`."
     )
     return groups

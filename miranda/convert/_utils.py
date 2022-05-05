@@ -10,10 +10,11 @@ import numpy as np
 import xarray as xr
 import zarr
 from clisops.core import subset
-from xclim.core import calendar, units
+from xclim.core import units
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -82,7 +83,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     xarray.Dataset
     """
     try:
-        import regionmask
+        import regionmask  # noqa
     except ImportError:
         raise ImportError(
             f"{add_ar6_regions.__name__} functions require additional dependencies. "
@@ -96,29 +97,6 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
 
 def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
-
-    def _get_time_frequency(d: xr.Dataset):
-        freq = xr.infer_freq(d.time)
-        if freq is None:
-            raise TypeError()
-        offset = (
-            [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
-            if calendar.parse_offset(freq)[0] != ""
-            else [1.0, "h"]
-        )
-
-        time_units = {
-            "s": "second",
-            "m": "minute",
-            "h": "hour",
-            "D": "day",
-            "W": "week",
-            "Y": "year",
-        }
-        if offset[1] in ["S", "M", "H"]:
-            offset[1] = offset[1].lower()
-        offset_meaning = time_units[offset[1]]
-        return offset, offset_meaning
 
     def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
@@ -139,7 +117,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 try:
-                    offset, offset_meaning = _get_time_frequency(d)
+                    offset, offset_meaning = get_time_frequency(d)
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "
@@ -182,7 +160,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             if p in m["variable_entry"][vv][key].keys():
                 try:
-                    offset, offset_meaning = _get_time_frequency(d)
+                    offset, offset_meaning = get_time_frequency(d)
                 except TypeError:
                     logging.error(
                         f"Unable to parse the time frequency for variable `{vv}`. "
@@ -200,8 +178,14 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                         d_out[out.name] = out
                 else:
+                    logging.info(
+                        f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+                    )
                     d_out = d
-            return d_out
+            else:
+                logging.info(f"No time offsetting needed for `{vv}` in project `{p}`.")
+                d_out = d
+        return d_out
 
     # For converting variable units to standard workflow units
     def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
@@ -217,17 +201,18 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
 
     # Add and update existing metadata fields
     def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
+        logging.info("Converting metadata to CF-like conventions.")
 
         # Add global attributes
         d.attrs.update(m["Header"])
         d.attrs.update(dict(project=p, format=o))
 
         # Date-based versioning
-        d.attrs.update(dict(version=VERSION))
+        d.attrs.update(dict(version=f"v{VERSION}"))
 
         history = (
-            f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o}"
-            " with modified metadata for CF-like compliance."
+            f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o} "
+            "with modified metadata for CF-like compliance."
         )
         d.attrs.update(dict(history=history))
         descriptions = m["variable_entry"]
@@ -314,7 +299,18 @@ def daily_aggregation(ds) -> Dict[str, xr.Dataset]:
                 daily_dataset[v] = ds_out
                 del ds_out
 
-        elif variable in ["evspsblpot", "pr", "prsn", "snd", "snr", "snw"]:
+        elif variable in [
+            "evspsblpot",
+            "hfls",
+            "hfss",
+            "pr",
+            "prsn",
+            "rsds",
+            "rlds",
+            "snd",
+            "snr",
+            "snw",
+        ]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
             ds_out.attrs["frequency"] = "day"

@@ -13,7 +13,7 @@ from miranda.cv import (
 )
 
 TYPE_NAMES = ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"]
-PROCESSING_LEVELS = ["raw", "bias_adjusted"]
+PROCESSING_LEVELS = ["raw", "biasadjusted", "extracted", "regridded"]
 BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
 DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
 
