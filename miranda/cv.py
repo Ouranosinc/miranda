@@ -19,7 +19,8 @@ __all__ = [
     "WCRP_INSTITUTIONS",
 ]
 
-# Controlled Vocabularies supplied via pyessv
+
+# Controlled Vocabularies supplied via PyESSV
 
 CMIP5 = pyessv.WCRP.CMIP5  # noqa
 CMIP6 = pyessv.WCRP.CMIP6  # noqa
@@ -31,18 +32,42 @@ CORDEX_ADJUST = pyessv.WCRP.CORDEX_ADJUST  # noqa
 CMIP5_INSTITUTES = [f.raw_name for f in CMIP5.institute.terms]
 CMIP6_INSTITUTES = [f.raw_name for f in CMIP6.institution_id.terms]
 CORDEX_INSTITUTES = [f.raw_name for f in CORDEX.institute.terms]
+CORDEX_ADDITIONAL_INSTITUTES = [
+    "BOM",
+    "BOUN",
+    "CLMcom-CMCC",
+    "CLMcom-ETH",
+    "CLMcom-HZG",
+    "CLMcom-KIT",
+    "CSIRO",
+    "CYI",
+    "ETH",
+    "ISU",
+    "KNU",
+    "NCAR",
+    "NIMS-KMA",
+    "ORNL",
+    "OURANOS",
+    "PNU",
+    "POSTECH",
+    "RU-CORE",
+    "UA",
+    "UNIST",
+    "UNSW",
+]
 CORDEX_ADJUST_INSTITUTES = [f.raw_name for f in CORDEX_ADJUST.institute.terms]
 
 WCRP_INSTITUTIONS = list()
 WCRP_INSTITUTIONS.extend(CMIP5_INSTITUTES)
 WCRP_INSTITUTIONS.extend(CMIP6_INSTITUTES)
 WCRP_INSTITUTIONS.extend(CORDEX_INSTITUTES)
+WCRP_INSTITUTIONS.extend(CORDEX_ADDITIONAL_INSTITUTES)
 WCRP_INSTITUTIONS.extend(CORDEX_ADJUST_INSTITUTES)
-
-BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
 
 INSTITUTIONS = list()
 INSTITUTIONS.extend(WCRP_INSTITUTIONS)
+
+BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
 
 # Models
 

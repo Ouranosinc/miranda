@@ -1,6 +1,13 @@
 import re
 
 import pint
+import xarray as xr
+from pint import Unit
+from xclim.core.calendar import parse_offset
+
+KiB = int(pow(2, 10))
+MiB = int(pow(2, 20))
+GiB = int(pow(2, 30))
 
 u = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -41,7 +48,7 @@ u.add_context(hq)
 u.enable_contexts(hq)
 
 
-def units2pint(value: str) -> u.Unit:
+def units2pint(value: str) -> Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -51,7 +58,7 @@ def units2pint(value: str) -> u.Unit:
 
     Returns
     -------
-    pint.Quantity
+    pint.Unit
       Pint compatible units.
 
     """
@@ -70,6 +77,21 @@ def units2pint(value: str) -> u.Unit:
         return u.parse_expression(_transform(value)).units
 
 
-KiB = int(pow(2, 10))
-MiB = int(pow(2, 20))
-GiB = int(pow(2, 30))
+def get_time_frequency(d: xr.Dataset):
+    freq = xr.infer_freq(d.time)
+    if freq is None:
+        raise TypeError()
+    offset = [int(parse_offset(freq)[0]), parse_offset(freq)[1]]
+
+    time_units = {
+        "s": "second",
+        "m": "minute",
+        "h": "hour",
+        "D": "day",
+        "W": "week",
+        "Y": "year",
+    }
+    if offset[1] in ["S", "M", "H"]:
+        offset[1] = offset[1].lower()
+    offset_meaning = time_units[offset[1]]
+    return offset, offset_meaning

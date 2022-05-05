@@ -1,5 +1,6 @@
 import json
 import logging.config
+import os
 import re
 from pathlib import Path
 from typing import Optional, Tuple, Union
@@ -29,7 +30,7 @@ meta_patterns = {
 data_header_pattern = "Station Date Débit (m³/s) Remarque\n"
 
 
-def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
+def extract_daily(path: Union[os.PathLike, str]) -> Tuple[dict, pd.DataFrame]:
     """Extract data and metadata from DEH (MELCC) stream flow file."""
 
     with open(path, encoding="latin1") as fh:
@@ -66,7 +67,7 @@ def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
     return m, d
 
 
-def to_cf(meta: dict, data: pd.DataFrame, cf_table: Optional[dict] = {}) -> xr.Dataset:
+def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
     """Return CF-compliant metadata."""
     ds = xr.Dataset()
 

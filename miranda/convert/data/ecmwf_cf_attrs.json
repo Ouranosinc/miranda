@@ -131,6 +131,16 @@
       "standard_name": "surface_upward_latent_heat_flux",
       "units": "W m-2"
     },
+    "sp": {
+      "_cf_variable_name": "ps",
+      "_corrected_units": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "long_name": "Surface Pressure",
+      "standard_name": "surface_air_pressure",
+      "units": "Pa"
+    },
     "sshf": {
       "_cf_variable_name": "hfss",
       "_corrected_units": {

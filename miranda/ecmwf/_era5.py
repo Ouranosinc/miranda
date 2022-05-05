@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import re
 import shutil
-from datetime import date
 from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Mapping, Optional, Tuple, Union
@@ -14,6 +13,7 @@ import xarray as xr
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -38,7 +38,7 @@ def request_era5(
     domain: str = "AMNO",
     pressure_levels: Optional[List[int]] = None,
     output_folder: Optional[Union[str, os.PathLike]] = None,
-    year_start: Union[str, int] = 1950,
+    year_start: Optional[Union[str, int]] = None,
     year_end: Optional[Union[str, int]] = None,
     processes: int = 10,
 ) -> None:
@@ -51,7 +51,7 @@ def request_era5(
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     pressure_levels: List[int], optional
     output_folder : str or os.PathLike, optional
-    year_start : int
+    year_start : int, optional
     year_end : int, optional
     processes : int
 
@@ -72,6 +72,7 @@ def request_era5(
         sde="snow_depth",
         sd="snow_depth_water_equivalent",
         sf="snowfall",
+        sp="surface_pressure",
         sshf="surface_sensible_heat_flux",
         slhf="surface_latent_heat_flux",
         ssrd="surface_solar_radiation_downwards",
@@ -94,6 +95,7 @@ def request_era5(
         rsn="snow_density",
         sd="snow_depth",  # note difference in name vs era5-land cf_variable == snw
         sf="snowfall",
+        sp="surface_pressure",
         sshf="surface_sensible_heat_flux",
         slhf="surface_latent_heat_flux",
         ssrd="surface_solar_radiation_downwards",
@@ -107,20 +109,6 @@ def request_era5(
         "era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"
     ] = dict(z="geopotential")
 
-    if year_end is None:
-        year_end = date.today().year
-    years = range(int(year_start), int(year_end) + 1)
-
-    months = [str(d).zfill(2) for d in range(1, 13)]
-    yearmonth = list()
-    for y in years:
-        for m in months:
-            yearmonth.append((y, m))
-
-    project_names = dict()
-    for project in projects:
-        project_names[project] = f"reanalysis-{project}"
-
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
     else:
@@ -128,18 +116,46 @@ def request_era5(
     Path(target).mkdir(exist_ok=True)
     os.chdir(target)
 
+    project_names = dict()
+    for project in projects:
+        project_names[project] = f"reanalysis-{project}"
+
     for project_name, request_code in project_names.items():
+        if year_start is None:
+            if "back-extension" in project_name or project_name == "era5-land":
+                project_year_start = 1950
+            else:
+                project_year_start = 1979
+        else:
+            project_year_start = year_start
+
+        if year_end is None:
+            if "back-extension" in project_name:
+                project_year_end = 1978
+            else:
+                project_year_end = dt.today().year
+        else:
+            project_year_end = year_end
+
+        years = range(int(project_year_start), int(project_year_end) + 1)
+
+        months = [str(d).zfill(2) for d in range(1, 13)]
+        yearmonth = list()
+        for y in years:
+            for m in months:
+                yearmonth.append((y, m))
+
         product = request_code.split("-")[0]
         v_requested = dict()
         variable_reference = next(
-            var_list for k, var_list in variable_reference.items() if request_code in k
+            var_list for k, var_list in variable_reference.items() if project_name in k
         )
         if variables:
             for v in variables:
-                if v in variable_reference[project_name]:
-                    v_requested[v] = variable_reference[project_name][v]
+                if v in variable_reference:
+                    v_requested[v] = variable_reference[v]
         else:
-            v_requested = variable_reference[project_name]
+            v_requested = variable_reference
 
         if "pressure-levels" in project_name:
             pressure_levels_requested = [str(i) for i in pressure_levels]
@@ -187,14 +203,14 @@ def _request_direct_era(
 
     if domain.upper() == "AMNO":
         domain = "NAM"
+
     region = subsetting_domains(domain)
 
     c = Client()
 
     if "monthly-means" in project:
         raise NotImplementedError(project)
-    else:
-        timestep = "hourly"
+    timestep = "hourly"
 
     for var in variables.keys():
         if pressure_levels is None:
@@ -242,7 +258,24 @@ def _request_direct_era(
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:
-    files = [f for f in Path(path).glob("*.nc")]
+    """Rename badly named ERA5 files.
+
+    Notes
+    -----
+    Requires that the proper ERA5 project name is in the filename, separated by underscores.
+    Assumes that the data
+
+    Parameters
+    ----------
+    path: os.PathLike or str
+      Path to a folder containing netcdf files
+
+    Returns
+    -------
+    None
+
+    """
+    files = Path(path).glob("*.nc")
     for f in files:
         file_name = str(f.stem)
 
@@ -258,21 +291,30 @@ def rename_era5_files(path: Union[os.PathLike, str]) -> None:
             month = int(ds.isel(time=0).time.dt.month)
             date_found = f"{year}{str(month).zfill(2)}"
 
+        try:
+            freq_parts = get_time_frequency(ds)
+            freq = f"{freq_parts[0]}{freq_parts[1]}"
+        except ValueError:
+            logging.error(
+                f"Unable to parse the time frequency for variable `{var_name}` "
+                f"in file `{f.name}`. Verify data integrity before retrying."
+            )
+            continue
+
         names = file_name.split("_")
         projects = [name for name in names if name in ERA5_PROJECT_NAMES]
         if len(projects) == 1:
-            project = projects[0]
+            project = projects.pop()
         elif len(projects) > 1:
             logging.warning(
                 f"More than one project identified for file {f.name}. Verify file naming."
             )
             continue
         else:
+            logging.warning("No project string found in filename.")
             continue
 
         product = "reanalysis"
-        freq = "1hr"
-        domain = "NAM"
         institute = "ecmwf"
 
         new_name_parts = [
@@ -281,7 +323,6 @@ def rename_era5_files(path: Union[os.PathLike, str]) -> None:
             institute,
             project,
             product,
-            domain,
             date_found,
         ]
         new_name = f"{'_'.join(new_name_parts)}.nc"
