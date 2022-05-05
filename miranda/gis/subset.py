@@ -15,7 +15,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["subsetting_domains"]
 
 
-def subsetting_domains(domain: str) -> list:
+def subsetting_domains(domain: str) -> List:
     """Provides the bounding box coordinates for specific domains.
     Parameters
     ----------
