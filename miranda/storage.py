@@ -114,7 +114,7 @@ class StorageState:
         # Get attributes from 'df' function if they are not specified
         if not self.base_path.is_dir():
             raise DiskSpaceError(f"Cannot analyze {self.base_path}.")
-        elif not Path("/bin/df").exists():
+        if not Path("/bin/df").exists():
             raise DiskSpaceError("/bin/df does not exist.")
         df_output = subprocess.run(
             ["/bin/df", "-P", base_path, "|", "tail", "-1"], capture_output=True

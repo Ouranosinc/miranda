@@ -420,7 +420,7 @@ class Decoder:
                 logging.error(msg)
                 raise NotImplementedError(msg)
 
-        # FIXME: CORDEX-NAM on AWS mis-attributes the domain (22/44 should be 22i/44i)
+        # CORDEX-NAM on AWS mis-attributes the domain (22/44 should be 22i/44i)
         aws_keys = data.get("intake_esm_dataset_key")
         if aws_keys:
             facets["domain"] = aws_keys.split(".")[3]

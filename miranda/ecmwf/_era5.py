@@ -210,8 +210,7 @@ def _request_direct_era(
 
     if "monthly-means" in project:
         raise NotImplementedError(project)
-    else:
-        timestep = "hourly"
+    timestep = "hourly"
 
     for var in variables.keys():
         if pressure_levels is None:
