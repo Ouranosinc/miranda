@@ -37,6 +37,7 @@ def request_era5(
     variables: Optional[Mapping[str, str]] = None,
     domain: str = "AMNO",
     pressure_levels: Optional[List[int]] = None,
+    separate_pressure_levels: bool = True,
     output_folder: Optional[Union[str, os.PathLike]] = None,
     year_start: Optional[Union[str, int]] = None,
     year_end: Optional[Union[str, int]] = None,
@@ -50,6 +51,8 @@ def request_era5(
     projects : List[{"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}]
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     pressure_levels: List[int], optional
+    separate_pressure_levels: bool
+      Separate files for each pressure level. Default: True
     output_folder : str or os.PathLike, optional
     year_start : int, optional
     year_end : int, optional
@@ -169,6 +172,7 @@ def request_era5(
             request_code,
             domain,
             pressure_levels_requested,
+            separate_pressure_levels,
             product,
         )
 
@@ -184,6 +188,7 @@ def _request_direct_era(
     project: str,
     domain: str,
     pressure_levels: Optional[List[str]],
+    separate_pressure_level_requests: bool,
     product: str,
     yearmonth: Tuple[int, str],
 ):
@@ -248,7 +253,17 @@ def _request_direct_era(
             request_kwargs.update(dict(product_type=product))
 
         if pressure_levels:
-            request_kwargs.update(dict(pressure_level=pressure_levels))
+            if separate_pressure_level_requests:
+                for level in pressure_levels:
+                    request_kwargs.update(dict(pressure_level=[level]))
+                    c.retrieve(
+                        project,
+                        request_kwargs,
+                        netcdf_name,
+                    )
+                continue
+            else:
+                request_kwargs.update(dict(pressure_level=pressure_levels))
 
         c.retrieve(
             project,
