@@ -215,25 +215,9 @@ def _request_direct_era(
 
     if "monthly-means" in project:
         raise NotImplementedError(project)
-    timestep = "hourly"
+    timestep = "1h"
 
     for var in variables.keys():
-        if pressure_levels is None:
-            netcdf_name = (
-                f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-                f"_{product}_{domain.upper()}_{year}{month}.nc"
-            )
-        else:
-            plev_names = "-".join(pressure_levels)
-            netcdf_name = (
-                f"{var}{plev_names}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-                f"_{product}_{domain.upper()}_{year}{month}.nc"
-            )
-
-        if Path(netcdf_name).exists():
-            logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
-            continue
-
         request_kwargs = dict(
             variable=variables[var],
             year=year,
@@ -256,14 +240,40 @@ def _request_direct_era(
             if separate_pressure_level_requests:
                 for level in pressure_levels:
                     request_kwargs.update(dict(pressure_level=[level]))
+                    netcdf_name = (
+                        f"{var}{level}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+                        f"_{product}_{domain.upper()}_{year}{month}.nc"
+                    )
+
+                    if Path(netcdf_name).exists():
+                        logging.info(
+                            f"Dataset {netcdf_name} already exists. Continuing..."
+                        )
+                        continue
+
                     c.retrieve(
                         project,
                         request_kwargs,
                         netcdf_name,
                     )
+
                 continue
             else:
                 request_kwargs.update(dict(pressure_level=pressure_levels))
+                plev_names = "-".join(pressure_levels)
+                netcdf_name = (
+                    f"{var}{plev_names}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+                    f"_{product}_{domain.upper()}_{year}{month}.nc"
+                )
+        else:
+            netcdf_name = (
+                f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+                f"_{product}_{domain.upper()}_{year}{month}.nc"
+            )
+
+        if Path(netcdf_name).exists():
+            logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
+            continue
 
         c.retrieve(
             project,
