@@ -260,16 +260,11 @@ def _request_direct_era(
                 continue
             else:
                 request_kwargs.update(dict(pressure_level=pressure_levels))
-                plev_names = "-".join(pressure_levels)
-                netcdf_name = (
-                    f"{var}{plev_names}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-                    f"_{product}_{domain.upper()}_{year}{month}.nc"
-                )
-        else:
-            netcdf_name = (
-                f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-                f"_{product}_{domain.upper()}_{year}{month}.nc"
-            )
+
+        netcdf_name = (
+            f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
+            f"_{product}_{domain.upper()}_{year}{month}.nc"
+        )
 
         if Path(netcdf_name).exists():
             logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
