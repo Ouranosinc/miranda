@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     out_files = getenv("out")
     target_folder = Path(out_files).expanduser()
-    domain = "MTL"
+    domain = None  # "AMNO"
 
     search = dict(
         variable=["tasmax", "tasmin", "tas", "pr"],
