@@ -7,7 +7,7 @@ import re
 import shutil
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import xarray as xr
 
@@ -41,6 +41,7 @@ def request_era5(
     output_folder: Optional[Union[str, os.PathLike]] = None,
     year_start: Optional[Union[str, int]] = None,
     year_end: Optional[Union[str, int]] = None,
+    dry_run: bool = False,
     processes: int = 10,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
@@ -56,6 +57,8 @@ def request_era5(
     output_folder : str or os.PathLike, optional
     year_start : int, optional
     year_end : int, optional
+    dry_run: bool
+      Do not send request. For debugging purposes.
     processes : int
 
     Returns
@@ -150,9 +153,14 @@ def request_era5(
 
         product = request_code.split("-")[0]
         v_requested = dict()
-        variable_reference = next(
-            var_list for k, var_list in variable_reference.items() if project_name in k
-        )
+        try:
+            variable_reference = next(
+                var_list
+                for k, var_list in variable_reference.items()
+                if project_name in k
+            )
+        except StopIteration:
+            return
         if variables:
             for v in variables:
                 if v in variable_reference:
@@ -174,6 +182,7 @@ def request_era5(
             pressure_levels_requested,
             separate_pressure_levels,
             product,
+            dry_run,
         )
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
@@ -190,6 +199,7 @@ def _request_direct_era(
     pressure_levels: Optional[List[str]],
     separate_pressure_level_requests: bool,
     product: str,
+    dry_run: bool,
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
@@ -210,8 +220,6 @@ def _request_direct_era(
         domain = "NAM"
 
     region = subsetting_domains(domain)
-
-    c = Client()
 
     if "monthly-means" in project:
         raise NotImplementedError(project)
@@ -251,11 +259,17 @@ def _request_direct_era(
                         )
                         continue
 
-                    c.retrieve(
-                        project,
-                        request_kwargs,
-                        netcdf_name,
-                    )
+                    if not dry_run:
+                        c = Client()
+                        c.retrieve(
+                            project,
+                            request_kwargs,
+                            netcdf_name,
+                        )
+                    else:
+                        logging.info(project)
+                        logging.info(request_kwargs)
+                        logging.info(netcdf_name)
 
                 continue
             else:
@@ -270,11 +284,17 @@ def _request_direct_era(
             logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
             continue
 
-        c.retrieve(
-            project,
-            request_kwargs,
-            netcdf_name,
-        )
+        if not dry_run:
+            c = Client()
+            c.retrieve(
+                project,
+                request_kwargs,
+                netcdf_name,
+            )
+        else:
+            logging.info(project)
+            logging.info(request_kwargs)
+            logging.info(netcdf_name)
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:
