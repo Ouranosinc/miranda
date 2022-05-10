@@ -150,8 +150,9 @@ def request_era5(
         yearmonth = list()
         for y in years:
             for m in months:
-                two_months_lag = datetime.date.today() - datetime.timedelta(60)
-                if datetime.date(y, int(m), 1) > two_months_lag:
+                request_date = datetime.date(y, int(m), 1)
+                two_months_ago = datetime.date.today() - datetime.timedelta(60)
+                if request_date < two_months_ago:
                     yearmonth.append((y, m))
 
         product = request_code.split("-")[0]
