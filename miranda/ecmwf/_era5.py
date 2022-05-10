@@ -1,3 +1,4 @@
+import datetime
 import functools
 import logging
 import logging.config
@@ -149,7 +150,10 @@ def request_era5(
         yearmonth = list()
         for y in years:
             for m in months:
-                yearmonth.append((y, m))
+                request_date = datetime.date(y, int(m), 1)
+                two_months_ago = datetime.date.today() - datetime.timedelta(60)
+                if request_date < two_months_ago:
+                    yearmonth.append((y, m))
 
         product = request_code.split("-")[0]
         v_requested = dict()
