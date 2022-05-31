@@ -78,89 +78,75 @@ def build_path_from_schema(
     -------
     Path or None
     """
+    folder_tree_structure = None
     try:
         if facets["type"] == "station-obs":
             STATION_OBS_SCHEMA.validate(facets)
-            folder_tree = (
-                Path(output_folder)
-                / facets["type"]
-                / facets["project"]
-                / facets["institution"]
-                / facets["version"]  # This suggests "date_created"
-                / facets["frequency"]
-                / facets["variable"]
+            folder_tree_structure = (
+                "type",
+                "institution",
+                "version",  # This suggests "date_created"
+                "frequency",
+                "member"
+                if hasattr(facets, "member")
+                else None,  # This suggests station code
+                "variable",
             )
-            if hasattr(facets, "member"):
-                return folder_tree / facets["member"]
-            return folder_tree
 
         if facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
             GRIDDED_SCHEMA.validate(facets)
-            return (
-                Path(output_folder)
-                / facets["type"]
-                / facets["institution"]
-                / facets["activity"]
-                / facets["source"]
-                / facets["project"]
-                / facets["domain"]
-                / facets["frequency"]
-                / facets["variable"]
+            folder_tree_structure = (
+                "type",
+                "institution",
+                "source",
+                "domain",
+                "frequency",
+                "variable",
             )
 
         if facets["type"] == "simulation":
             SIMULATION_SCHEMA.validate(facets)
             if facets["processing_level"] == "raw":
-                try:
-                    if facets["project"] == "CORDEX":
-                        return (
-                            Path(output_folder)
-                            / facets["type"]
-                            / facets["processing_level"]
-                            / facets["activity"]
-                            / facets["mip_era"]
-                            / facets["project"]
-                            / facets["domain"]
-                            / facets["source"]
-                            / facets["driving_model"]
-                            / facets["experiment"]
-                            / facets["member"]
-                            / facets["frequency"]
-                            / facets["variable"]
-                        )
-                except KeyError:
-                    return (
-                        Path(output_folder)
-                        / facets["type"]
-                        / facets["processing_level"]
-                        / facets["activity"]
-                        / facets["mip_era"]
-                        / facets["domain"]
-                        / facets["institution"]
-                        / facets["source"]
-                        / facets["experiment"]
-                        / facets["member"]
-                        / facets["frequency"]
-                        / facets["variable"]
-                    )
-            elif facets["processing_level"] == "biasadjusted":
-                return (
-                    Path(output_folder)
-                    / facets["type"]
-                    / facets["processing_level"]
-                    / facets["activity"]
-                    / facets["mip_era"]
-                    / facets["bias_adjust_institution"]
-                    / facets["bias_adjust_project"]
-                    / facets["domain"]
-                    / facets["institution"]
-                    / facets["source"]
-                    / facets["experiment"]
-                    / facets["member"]
-                    / facets["frequency"]
-                    / facets["variable"]
+                folder_tree_structure = (
+                    "type",
+                    "processing_level",
+                    "mip_era",
+                    "activity",
+                    "project",
+                    "domain",
+                    "source",
+                    "driving_model" if facets["project"] == "CORDEX" else None,
+                    "experiment",
+                    "member",
+                    "frequency",
+                    "variable",
                 )
-        raise ValueError()
+
+            elif facets["processing_level"] == "biasadjusted":
+                folder_tree_structure = (
+                    "type",
+                    "processing_level",
+                    "activity",
+                    "mip_era",
+                    "bias_adjust_project",
+                    "domain",
+                    "institution",
+                    "source",
+                    "driving_model" if facets["project"] == "CORDEX" else None,
+                    "experiment",
+                    "member",
+                    "frequency",
+                    "variable",
+                )
+
+        if folder_tree_structure:
+            facet_tree = list()
+            for facet in folder_tree_structure:
+                if facet:
+                    facet_tree.append(facets[facet])
+            return Path(output_folder).joinpath("/".join(facet_tree))
+        else:
+            raise ValueError()
 
     except schema.SchemaError:
         logging.error(f"Validation issues found for file matching schema: {facets}")
