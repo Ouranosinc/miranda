@@ -30,6 +30,7 @@ dependencies:
   - pyproj
   - pytest
   - python >=3.7
+  - pyupgrade
   - rasterio
   - regionmask
   - requests
