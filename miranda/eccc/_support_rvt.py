@@ -7,6 +7,8 @@ import geopandas as gpd
 
 "https://api.weather.gc.ca/collections/climate-daily/items?datetime=1840-03-01%2000:00:00/2021-06-02%2000:00:00&STN_ID=10761&f=json&limit=1500000&startindex=0"
 
+# TODO: Investigate the API definition: https://api.weather.gc.ca/collections/climate-hourly
+
 
 def gather_eccc_stations(
     start_date: Optional[datetime.datetime] = None,
