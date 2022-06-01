@@ -1,4 +1,5 @@
 import datetime
+import re
 import urllib
 from pathlib import Path
 from typing import Optional, Union
@@ -11,30 +12,37 @@ import geopandas as gpd
 
 
 def gather_eccc_stations(
-    start_date: Optional[datetime.datetime] = None,
-    end_date: Optional[datetime.datetime] = None,
-    wmo_id: Optional[str] = None,
+    timestep: str,
+    start_date: Optional[Union[datetime.datetime, str]] = None,
+    end_date: Optional[Union[datetime.datetime, str]] = None,
+    climate_id: Optional[str] = None,
 ) -> gpd.GeoDataFrame:
 
-    base_url = "https://api.weather.gc.ca/collections/climate-daily/"
+    if timestep.lower() in ["hourly", "daily"]:
+        base_url = f"https://api.weather.gc.ca/collections/climate-{timestep}/"
+    else:
+        raise ValueError(timestep)
 
-    if not start_date:
-        start_date = datetime.datetime(
-            year=1840, month=1, day=1, hour=0, minute=0, second=0
-        ).strftime("%Y-%m-%d %H:%M:%S")
-    start_date_url = str(start_date).replace(" ", "%20")
-
-    if not end_date:
-        end_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    end_date_url = str(end_date).replace(" ", "%20")
-    date_range = f"{start_date_url}/{end_date_url}"
+    dates = [start_date, end_date]
+    for i, date in enumerate(dates):
+        if not date:
+            dates[i] = datetime.datetime(
+                year=1840, month=1, day=1, hour=0, minute=0, second=0
+            ).strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            if re.match(r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$", date):
+                dates[i] = datetime.datetime.fromisoformat(date).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+        dates[i] = str(dates[i]).replace(" ", "%20")
+    date_range = "/".join(dates)
 
     facets = dict(
         f="json",
         datetime=date_range,
-        STN_ID=wmo_id,
+        CLIMATE_IDENTIFIER=climate_id,
         # PROVINCE_CODE=province,
-        limit=1000,
+        limit=20000,
         startindex=0,
     )
     # if station_id:
@@ -56,8 +64,9 @@ if __name__ == "__main__":
     target_folder = Path().cwd().joinpath("downloaded")
     target_folder.mkdir(exist_ok=True)
     data = gather_eccc_stations(
-        start_date="1998-01-01 00:00:00",
-        end_date="2010-12-31 00:00:00",
-        wmo_id="10761",
+        timestep="hourly",
+        start_date="2019-01-01",
+        end_date="2020-12-31",
+        climate_id="7040815",
     )
     print(data)
