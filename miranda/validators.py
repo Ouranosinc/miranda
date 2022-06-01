@@ -12,7 +12,7 @@ from miranda.cv import (
     WCRP_FREQUENCIES,
 )
 
-TYPE_NAMES = ["simulation", "reanalysis", "forecast", "gridded-obs", "station-obs"]
+TYPE_NAMES = ["simulation", "reconstruction", "forecast", "gridded-obs", "station-obs"]
 PROCESSING_LEVELS = ["raw", "biasadjusted", "extracted", "regridded"]
 BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
 DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
@@ -23,12 +23,6 @@ FACETS_SCHEMA = Schema(
             "type",
             description="An Ouranos internal code used for classifying datasets.",
         ): Or(*TYPE_NAMES),
-        Optional(
-            Literal(
-                "project",
-                description="The parent project name according to the institute/authority coordinating it.",
-            )
-        ): str,
         Literal(
             "activity",
             description="The common climate modelling activity. "
@@ -79,7 +73,7 @@ FACETS_SCHEMA = Schema(
 STATION_OBS_SCHEMA = Schema(
     {
         "type": "station-obs",
-        "project": str,
+        "activity": str,
         "institution": str,
         "source": str,
         "frequency": str,
@@ -93,7 +87,7 @@ STATION_OBS_SCHEMA = Schema(
 GRIDDED_SCHEMA = Schema(
     {
         "type": Or("forecast", "gridded-obs", "reanalysis"),
-        "project": str,
+        "activity": str,
         "institution": str,
         "source": str,
         "domain": str,
@@ -107,7 +101,7 @@ SIMULATION_SCHEMA = Schema(
     {
         "type": "simulation",
         "processing_level": Or(*PROCESSING_LEVELS),
-        Optional("project"): str,
+        "activity": str,
         Or("institution", "driving_institution"): Or(*INSTITUTIONS),
         "source": str,
         "domain": str,
@@ -124,19 +118,20 @@ SIMULATION_SCHEMA = Schema(
 
 
 def url_validate(target: str) -> typing.Optional[typing.Match[str]]:
-    """
-    Validates whether a supplied URL is reliably written
-    see: https://stackoverflow.com/a/7160778/7322852
+    """Validate whether a supplied URL is reliably written.
 
     Parameters
     ----------
     target : str
 
+    References
+    ----------
+    https://stackoverflow.com/a/7160778/7322852
     """
     url_regex = re.compile(
         r"^(?:http|ftp)s?://"  # http:// or https://
         # domain...
-        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"
+        r"(?:(?:[A-Z\d](?:[A-Z\d-]{0,61}[A-Z\d])?\.)+(?:[A-Z]{2,6}\.?|[A-Z\d-]{2,}\.?)|"
         r"localhost|"  # localhost...
         r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
         r"(?::\d+)?"  # optional port
