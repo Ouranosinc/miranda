@@ -85,6 +85,7 @@ def build_path_from_schema(
             folder_tree_structure = (
                 "type",
                 "institution",
+                "source",
                 "version",  # This suggests "date_created"
                 "frequency",
                 "member"
@@ -106,38 +107,21 @@ def build_path_from_schema(
 
         if facets["type"] == "simulation":
             SIMULATION_SCHEMA.validate(facets)
-            if facets["processing_level"] == "raw":
-                folder_tree_structure = (
-                    "type",
-                    "processing_level",
-                    "mip_era",
-                    "activity",
-                    "project",
-                    "domain",
-                    "source",
-                    "driving_model" if facets["project"] == "CORDEX" else None,
-                    "experiment",
-                    "member",
-                    "frequency",
-                    "variable",
-                )
-
-            elif facets["processing_level"] == "biasadjusted":
-                folder_tree_structure = (
-                    "type",
-                    "processing_level",
-                    "activity",
-                    "mip_era",
-                    "bias_adjust_project",
-                    "domain",
-                    "institution",
-                    "source",
-                    "driving_model" if facets["project"] == "CORDEX" else None,
-                    "experiment",
-                    "member",
-                    "frequency",
-                    "variable",
-                )
+            folder_tree_structure = (
+                "type",
+                "processing_level",
+                "mip_era",
+                "activity"
+                if facets["processing_level"] == "raw"
+                else "bias_adjust_project",
+                "domain",
+                "institution" "source",
+                "driving_model" if facets["activity"] == "CORDEX" else None,
+                "experiment",
+                "member",
+                "frequency",
+                "variable",
+            )
 
         if folder_tree_structure:
             facet_tree = list()
