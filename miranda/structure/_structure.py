@@ -145,7 +145,7 @@ def structure_datasets(
     input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
     output_folder: Union[str, os.PathLike],
     *,
-    project: Optional[str] = None,
+    activity: Optional[str] = None,
     guess: bool = True,
     dry_run: bool = False,
     method: str = "copy",
@@ -159,9 +159,9 @@ def structure_datasets(
     ----------
     input_files: str or Path or list of str or Path or GeneratorType
     output_folder: str or Path
-    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis", "pcic-candcs-u6"}, optional
+    activity: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis", "pcic-candcs-u6"}, optional
     guess: bool
-      If project not supplied, suggest to decoder that project is the same for all input_files. Default: True.
+      If activity not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
     dry_run: bool
       Prints changes that would have been made without performing them. Default: False.
     method: {"move", "copy"}
@@ -179,18 +179,18 @@ def structure_datasets(
     dict
     """
     input_files = discover_data(input_files, filename_pattern)
-    if not project and guess:
+    if not activity and guess:
         # Examine the first file from a list or generator
         for f in input_files:
-            project = guess_activity(f)
-            decoder = Decoder(project)
+            activity = guess_activity(f)
+            decoder = Decoder(activity)
             decoder.decode(f)
             break
         else:
             raise FileNotFoundError()
         decoder.decode(input_files)
     else:
-        decoder = Decoder(project)
+        decoder = Decoder(activity)
         decoder.decode(input_files)
 
     all_file_paths = dict()
