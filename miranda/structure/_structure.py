@@ -115,7 +115,8 @@ def build_path_from_schema(
                 if facets["processing_level"] == "raw"
                 else "bias_adjust_project",
                 "domain",
-                "institution" "source",
+                "institution",
+                "source",
                 "driving_model" if facets["activity"] == "CORDEX" else None,
                 "experiment",
                 "member",
