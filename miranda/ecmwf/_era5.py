@@ -32,7 +32,7 @@ ERA5_PROJECT_NAMES = [
 
 
 def request_era5(
-    projects: List[str],
+    projects: Union[str, List[str]],
     *,
     variables: Optional[Mapping[str, str]] = None,
     domain: str = "AMNO",
@@ -48,8 +48,9 @@ def request_era5(
 
     Parameters
     ----------
+    projects : str or List[str]
+      Allowed keys: {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}
     variables: Mapping[str, str]
-    projects : List[{"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}]
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     pressure_levels: List[int], optional
     separate_pressure_levels: bool
@@ -123,6 +124,8 @@ def request_era5(
     os.chdir(target)
 
     project_names = dict()
+    if isinstance(projects, str):
+        projects = [projects]
     for project in projects:
         project_names[project] = f"reanalysis-{project}"
 
