@@ -124,17 +124,13 @@ def convert_hourly_flat_files(
                 # Abort if the variable is not found
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        "Variable `{}` not found for station code: {}. Continuing...".format(
-                            variable_file_name, code
-                        )
+                        f"Variable `{variable_file_name}` not found for station code: {code}. Continuing..."
                     )
                     continue
 
                 # Treat the data
                 logging.info(
-                    "Converting `{}` for station code: {}".format(
-                        variable_file_name, code
-                    )
+                    f"Converting `{variable_file_name}` for station code: {code}"
                 )
 
                 # Dump the data into a DataFrame
@@ -195,27 +191,19 @@ def convert_hourly_flat_files(
                 station_folder.mkdir(parents=True, exist_ok=True)
 
                 if start_year == end_year:
-                    f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
-                        c=code, vc=variable_code, v=variable_file_name, sy=start_year
+                    f_nc = (
+                        f"{code}_{variable_code}_{variable_file_name}_{start_year}.nc"
                     )
                 else:
-                    f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
-                        c=code,
-                        vc=variable_code,
-                        v=variable_file_name,
-                        sy=start_year,
-                        ey=end_year,
-                    )
+                    f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}_{end_year}.nc"
 
                 ds.attrs["Conventions"] = "CF-1.7"
-
                 ds.attrs[
                     "title"
                 ] = "Environment and Climate Change Canada (ECCC) weather eccc"
-                ds.attrs[
-                    "history"
-                ] = "{}: Merged from multiple individual station files to n-dimensional array.".format(
-                    dt.now().strftime("%Y-%m-%d %X")
+                ds.attrs["history"] = (
+                    f"{dt.now().strftime('%Y-%m-%d %X')}: "
+                    f"Merged from multiple individual station files to n-dimensional array."
                 )
                 ds.attrs["version"] = f"v{dt.now().strftime('%Y.%m')}"
                 ds.attrs["institution"] = "Environment and Climate Change Canada (ECCC)"
@@ -265,7 +253,7 @@ def convert_daily_flat_files(
     for variable_code in variables:
         info = cf_daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
-        nc_name = info["nc_name"]
+        variable_file_code = info["nc_name"]
 
         # Prepare the data extraction
         titre_colonnes = "code year month code_var".split()
@@ -274,7 +262,7 @@ def convert_daily_flat_files(
             titre_colonnes.append(f"F{i:0n}")
 
         # Create the output directory
-        rep_nc = Path(output_folder).joinpath(nc_name)
+        rep_nc = Path(output_folder).joinpath(variable_file_code)
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
@@ -300,9 +288,7 @@ def convert_daily_flat_files(
                 )
             except ValueError:
                 logging.error(
-                    "File {} was unable to be read. This is probably an issue with the file.".format(
-                        fichier
-                    )
+                    f"File {fichier} was unable to be read. This is probably an issue with the file."
                 )
                 errored_files.append(fichier)
                 continue
@@ -315,14 +301,14 @@ def convert_daily_flat_files(
                 # Abort if the variable is not present
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        "Variable `{}` not found for station `{}` in file {}. Continuing...".format(
-                            nc_name, code, fichier
-                        )
+                        f"Variable `{variable_file_code}` not found for station `{code}` in file {fichier}. Continuing..."
                     )
                     continue
 
                 # Perform the data treatment
-                logging.info(f"Converting {nc_name} for station code: {code}")
+                logging.info(
+                    f"Converting {variable_file_code} for station code: {code}"
+                )
 
                 # Dump the values into a DataFrame
                 df_var = df_code[df_code["code_var"] == variable_code].copy()
@@ -367,7 +353,7 @@ def convert_daily_flat_files(
 
                 ds = xr.Dataset()
                 da_val = xr.DataArray(value_days, coords=date_range, dims=["time"])
-                da_val = da_val.rename(nc_name)
+                da_val = da_val.rename(variable_file_code)
                 da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
                 da_val.attrs["element_number"] = variable_code
@@ -378,7 +364,7 @@ def convert_daily_flat_files(
                 da_flag.attrs["long_name"] = "data flag"
                 da_flag.attrs["note"] = "See ECCC technical documentation for details"
 
-                ds[nc_name] = da_val
+                ds[variable_file_code] = da_val
                 ds["flag"] = da_flag
 
                 # Save as a NetCDF file
@@ -389,29 +375,21 @@ def convert_daily_flat_files(
                 station_folder.mkdir(parents=True, exist_ok=True)
 
                 if start_year == end_year:
-                    f_nc = "{c}_{vc}_{v}_{sy}.nc".format(
-                        c=code, vc=variable_code, v=nc_name, sy=start_year
+                    f_nc = (
+                        f"{code}_{variable_code}_{variable_file_code}_{start_year}.nc"
                     )
                 else:
-                    f_nc = "{c}_{vc}_{v}_{sy}_{ey}.nc".format(
-                        c=code,
-                        vc=variable_code,
-                        v=nc_name,
-                        sy=start_year,
-                        ey=end_year,
-                    )
+                    f_nc = f"{code}_{variable_code}_{variable_file_code}_{start_year}_{end_year}.nc"
 
                 ds.attrs["Conventions"] = "CF-1.7"
-
                 ds.attrs[
                     "title"
                 ] = "Environment and Climate Change Canada (ECCC) weather eccc"
-                ds.attrs[
-                    "history"
-                ] = "{}: Merged from multiple individual station files to n-dimensional array.".format(
-                    dt.now().strftime("%Y-%m-%d %X")
+                ds.attrs["history"] = (
+                    f"{dt.now().strftime('%Y-%m-%d %X')}: "
+                    "Merged from multiple individual station files to n-dimensional array."
                 )
-                ds.attrs["version"] = "v{}".format(dt.now().strftime("%Y.%m"))
+                ds.attrs["version"] = f"v{dt.now().strftime('%Y.%m')}"
                 ds.attrs["institution"] = "Environment and Climate Change Canada (ECCC)"
                 ds.attrs[
                     "source"
@@ -510,16 +488,16 @@ def aggregate_stations(
 
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
-        nclist = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
+        nc_list = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
 
         ds = None
-        if nclist != list():
-            nclists = np.array_split(nclist, groups)
+        if nc_list != list():
+            nc_lists = np.array_split(nc_list, groups)
 
             with tempfile.TemporaryDirectory(
                 prefix="eccc", dir=temp_directory
             ) as temp_dir:
-                combinations = [(ii, nc, temp_dir) for ii, nc in enumerate(nclists)]
+                combinations = [(ii, nc, temp_dir) for ii, nc in enumerate(nc_lists)]
 
                 # TODO memory use seems ok here .. could try using Pool() to increase performance
                 for combo in combinations:
@@ -536,7 +514,7 @@ def aggregate_stations(
                 # dask gives warnings about export 'object' data types
                 ds["station_id"] = ds["station_id"].astype(str)
         if ds:
-            station_file_codes = [x.name.split("_")[0] for x in nclist]
+            station_file_codes = [x.name.split("_")[0] for x in nc_list]
             rejected_stations = set(station_file_codes).difference(
                 set(station_inventory)
             )
@@ -556,7 +534,7 @@ def aggregate_stations(
 
             attrs1 = ds.attrs
             # filter metadata for station_ids in dataset
-            logging.info("Writing metdata.")
+            logging.info("Writing out metadata.")
 
             meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id.values)]
             # Rearrange column order to have lon, lat, elev first
@@ -604,11 +582,9 @@ def aggregate_stations(
                 return
 
             logging.warning(
-                "Files exist for {} ECCC stations. Metadata found for {} stations. Rejecting {} stations.".format(
-                    len(station_file_codes),
-                    valid_stations_count,
-                    len(rejected_stations),
-                )
+                f"Files exist for {len(station_file_codes)} ECCC stations. "
+                f"Metadata found for {valid_stations_count} stations. "
+                f"Rejecting {len(rejected_stations)} stations."
             )
             if rejected_stations:
                 logging.warning(
@@ -628,9 +604,7 @@ def aggregate_stations(
             )[:-1]
 
             logging.info(
-                "Number of ECCC stations: {}, time steps: {}.".format(
-                    valid_stations_count, time_index.size
-                )
+                f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
             )
 
             ds_out = xr.Dataset(
@@ -650,10 +624,7 @@ def aggregate_stations(
             output_folder.mkdir(parents=True, exist_ok=True)
 
             file_out = Path(output_folder).joinpath(
-                "{}_eccc_{}".format(
-                    variable_name,
-                    "hourly" if hourly else "daily",
-                )
+                f"{variable_name}_eccc_{'hourly' if hourly else 'daily'}"
             )
 
             if mf_dataset_freq is not None:
@@ -728,7 +699,7 @@ def _tmp_nc(
 def merge_converted_variables(
     source: Union[str, Path],
     destination: Union[str, Path],
-    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
+    variables: Optional[Union[str, int, list[Union[str, int]]]] = None,
 ) -> None:
     """
 
@@ -743,7 +714,7 @@ def merge_converted_variables(
 
     """
 
-    def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
+    def _combine_years(args: tuple[str, Union[str, Path], Union[str, Path]]) -> None:
         varia, input_folder, output_folder = args
 
         ncfiles = sorted(list(input_folder.glob("*.nc")))
