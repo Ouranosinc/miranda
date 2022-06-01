@@ -5,6 +5,8 @@ build:
   tools:
     python: "3.8"
   jobs:
+    post_install:
+      - sphinx-apidoc -o docs/ --module-first miranda
     pre_build:
       - git clone https://github.com/ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
 

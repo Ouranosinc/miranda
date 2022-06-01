@@ -2,7 +2,7 @@ import json
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import List, Mapping, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -67,67 +67,66 @@ xarray_frequencies_to_cmip6like = {
 }
 
 
+def _gather(
+    name: str,
+    variables: Mapping[str, List[str]],
+    source: Union[str, os.PathLike],
+    back_extension: bool,
+) -> Mapping[str, List[Path]]:
+    # ERA5-Single-Levels source data
+    source = Path(source)
+    logging.info(f"Gathering {name} files from: {source.as_posix()}")
+    infiles = list()
+    for v in variables:
+        infiles.extend(
+            list(
+                sorted(
+                    source.rglob(
+                        f"{v}*{name}{'-preliminary-back-extension' if back_extension else ''}*.nc"
+                    )
+                )
+            )
+        )
+    logging.info(f"Found {len(infiles)} files, totalling {report_file_size(infiles)}.")
+    return {name: infiles}
+
+
 def gather_era5_single_levels(
     path: Union[str, os.PathLike], back_extension: bool = False
-) -> Dict[str, List[Path]]:
+) -> Mapping[str, List[Path]]:
     # ERA5-Single-Levels source data
-    source_era5 = Path(path)
-    logging.info(f"Gathering ERA5 from: {source_era5.as_posix()}")
-    infiles_era5 = list()
-    for v in era5_variables:
-        infiles_era5.extend(
-            list(sorted(source_era5.rglob(f"{v}*era5-single-levels*.nc")))
-        )
-    logging.info(
-        f"Found {len(infiles_era5)} files, totalling {report_file_size(infiles_era5)}."
+    return _gather(
+        "era5-single-levels", era5_variables, source=path, back_extension=back_extension
     )
-    if not back_extension:
-        return {"era5-single-levels": infiles_era5}
-    return {"era5-single-levels-preliminary-back-extension": infiles_era5}
 
 
 def gather_era5_pressure_levels(
     path: Union[str, os.PathLike], back_extension: bool = False
-) -> Dict[str, List[Path]]:
+) -> Mapping[str, List[Path]]:
     # ERA5-Single-Levels source data
-    source_era5plev = Path(path)
-    logging.info(f"Gathering ERA5 from: {source_era5plev.as_posix()}")
-    infiles_era5plev = list()
-    for v in era5_variables:
-        infiles_era5plev.extend(
-            list(sorted(source_era5plev.rglob(f"{v}*era5-pressure-levels*.nc")))
-        )
-    logging.info(
-        f"Found {len(infiles_era5plev)} files, totalling {report_file_size(infiles_era5plev)}."
+    return _gather(
+        "era5-pressure-levels",
+        era5_variables,
+        source=path,
+        back_extension=back_extension,
     )
-    if not back_extension:
-        return {"era5-pressure-levels": infiles_era5plev}
-    return {"era5-pressure-levels-preliminary-back-extension": infiles_era5plev}
 
 
-def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict:
+def gather_era5_land(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+    # ERA5-Land source data
+    return _gather("era5-land", era5_variables, source=path, back_extension=False)
+
+
+def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Mapping[str, Path]:
     try:
-        land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*.nc")))
+        land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*era5-land.nc")))
     except StopIteration:
         logging.error("No land_sea_mask found for ERA5.")
         raise FileNotFoundError()
     return land_sea_mask
 
 
-def gather_era5_land(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # ERA5-Land source data
-    source_era5l = Path(path)
-    logging.info(f"Gathering ERA5-Land from: {source_era5l.as_posix()}")
-    infiles_era5l = list()
-    for v in era5_variables:
-        infiles_era5l.extend(list(sorted(source_era5l.rglob(f"{v}*era5-land*.nc"))))
-    logging.info(
-        f"Found {len(infiles_era5l)} files, totalling {report_file_size(infiles_era5l)}."
-    )
-    return {"era5-land": infiles_era5l}
-
-
-def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_agmerra(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # agMERRA source data
     source_agmerra = Path(path)
     logging.info(f"Gathering agMERRA from: {source_agmerra.as_posix()}")
@@ -140,7 +139,7 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     return dict(cfsr=infiles_agmerra)
 
 
-def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_agcfsr(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # agCFSR source data
     source_agcfsr = Path(path)
     logging.info(f"Gathering CFSR from: {source_agcfsr.as_posix()}")
@@ -153,7 +152,7 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     return dict(cfsr=infiles_agcfsr)
 
 
-def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # NRCan Gridded Obs source data
     source_nrcan = Path(path)
     logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
@@ -166,7 +165,7 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Pa
     return dict(nrcan=infiles_nrcan)
 
 
-def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # WFDEI-GEM-CaPa source data
     source_wfdei = Path(path)
     logging.info(f"Gathering WFDEI-GEM_CaPa from: {source_wfdei.as_posix()}")
@@ -179,7 +178,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
     return {"wfdei-gem-capa": infiles_wfdei}
 
 
-def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_sc_earth(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # SC-Earth source data
     source_sc_earth = Path(path)
     logging.info(f"Gathering SC-Earth from: {source_sc_earth.as_posix()}")
