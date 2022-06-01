@@ -428,6 +428,8 @@ class Decoder:
         driving_institution_parts = str(data["driving_model_id"]).split("-")
         if driving_institution_parts[0] in INSTITUTIONS:
             driving_institution = driving_institution_parts[0]
+        if driving_institution_parts[0] == "GFDL":
+            driving_institution = "NOAA-GFDL"
         elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:2])
         elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
