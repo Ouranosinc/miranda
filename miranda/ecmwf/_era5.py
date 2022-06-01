@@ -1,6 +1,5 @@
 import datetime
 import functools
-import logging
 import logging.config
 import multiprocessing
 import os
@@ -208,6 +207,23 @@ def _request_direct_era(
 ):
     """Launch formatted request."""
 
+    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str]):
+        if Path(nc_name).exists():
+            logging.info(f"Dataset {nc_name} already exists. Continuing...")
+            return
+
+        if not dry_run:
+            c = Client()
+            c.retrieve(
+                p,
+                rq_kwargs,
+                nc_name,
+            )
+        else:
+            logging.info(p)
+            logging.info(rq_kwargs)
+            logging.info(nc_name)
+
     try:
         from cdsapi import Client  # noqa
     except ModuleNotFoundError:
@@ -256,25 +272,7 @@ def _request_direct_era(
                         f"{var}{level}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
                         f"_{product}_{domain.upper()}_{year}{month}.nc"
                     )
-
-                    if Path(netcdf_name).exists():
-                        logging.info(
-                            f"Dataset {netcdf_name} already exists. Continuing..."
-                        )
-                        continue
-
-                    if not dry_run:
-                        c = Client()
-                        c.retrieve(
-                            project,
-                            request_kwargs,
-                            netcdf_name,
-                        )
-                    else:
-                        logging.info(project)
-                        logging.info(request_kwargs)
-                        logging.info(netcdf_name)
-
+                    __request(netcdf_name, project, request_kwargs)
                 continue
             else:
                 request_kwargs.update(dict(pressure_level=pressure_levels))
@@ -283,22 +281,7 @@ def _request_direct_era(
             f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
             f"_{product}_{domain.upper()}_{year}{month}.nc"
         )
-
-        if Path(netcdf_name).exists():
-            logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
-            continue
-
-        if not dry_run:
-            c = Client()
-            c.retrieve(
-                project,
-                request_kwargs,
-                netcdf_name,
-            )
-        else:
-            logging.info(project)
-            logging.info(request_kwargs)
-            logging.info(netcdf_name)
+        __request(netcdf_name, project, request_kwargs)
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:

@@ -31,11 +31,11 @@ config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "Decoder",
-    "guess_project",
+    "guess_activity",
 ]
 
 
-def guess_project(file: Union[os.PathLike, str]) -> str:
+def guess_activity(file: Union[os.PathLike, str]) -> str:
     file_name = Path(file).stem
 
     potential_names = file_name.split("_")
@@ -47,11 +47,11 @@ def guess_project(file: Union[os.PathLike, str]) -> str:
 
 class Decoder:
 
-    project = None
+    activity = None
     _file_facets = dict()
 
-    def __init__(self, project: Optional[str]):
-        self.project = project
+    def __init__(self, activity: Optional[str]):
+        self.activity = activity
 
     @staticmethod
     def _decoder(
@@ -70,10 +70,11 @@ class Decoder:
         with lock:
             if proj is None:
                 try:
-                    proj = guess_project(file)
+                    proj = guess_activity(file)
                 except DecoderError:
                     print(
-                        f"Unable to determine 'project': Signature for 'project' must be set manually for file: {file}."
+                        "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
+                        f"{file}."
                     )
                     if fail_early:
                         raise
@@ -107,16 +108,16 @@ class Decoder:
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
-        if self.project is None:
+        if self.activity is None:
             warnings.warn(
-                "The decoder 'project' is not set; Decoding step will be much slower."
+                "The decoder 'activity' is not set; Decoding step will be much slower."
             )
         else:
-            logging.info(f"Deciphering metadata with project = '{self.project}'")
+            logging.info(f"Deciphering metadata with activity = '{self.activity}'")
         manager = mp.Manager()
         _file_facets = manager.dict()
         lock = manager.Lock()
-        func = partial(self._decoder, _file_facets, raise_error, self.project, lock)
+        func = partial(self._decoder, _file_facets, raise_error, self.activity, lock)
 
         with mp.Pool() as pool:
             pool.imap(func, files, chunksize=10)
@@ -395,8 +396,7 @@ class Decoder:
 
         # FIXME: What to do about our internal data that breaks all established conventions?
         facets = dict()
-        facets["activity"] = "CMIP"
-        facets["project"] = "CORDEX"
+        facets["activity"] = "CORDEX"
 
         if data.get("project_id") == "" or data.get("project_id") is None:
             facets["mip_era"] = "internal"

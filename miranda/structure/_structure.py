@@ -12,7 +12,7 @@ from typing import List, Mapping, Optional, Union
 import schema
 
 from miranda import Decoder
-from miranda.decode import guess_project
+from miranda.decode import guess_activity
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
 from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
@@ -94,7 +94,7 @@ def build_path_from_schema(
                 "variable",
             )
 
-        if facets["type"] in ["forecast", "gridded-obs", "reanalysis"]:
+        if facets["type"] in ["forecast", "gridded-obs", "reconstruction"]:
             GRIDDED_SCHEMA.validate(facets)
             folder_tree_structure = (
                 "type",
@@ -182,7 +182,7 @@ def structure_datasets(
     if not project and guess:
         # Examine the first file from a list or generator
         for f in input_files:
-            project = guess_project(f)
+            project = guess_activity(f)
             decoder = Decoder(project)
             decoder.decode(f)
             break
