@@ -34,7 +34,9 @@ def main():
         "era5-single-levels-preliminary-back-extension",
     ]
 
-    request_era5(projects, variables=variables, output_folder=target_folder)
+    request_era5(
+        projects, variables=variables, output_folder=target_folder, dry_run=False
+    )
 
 
 if __name__ == "__main__":

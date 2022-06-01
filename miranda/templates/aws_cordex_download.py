@@ -14,8 +14,8 @@ dask.config.set(**{"array.slicing.split_large_chunks": True})
 if __name__ == "__main__":
 
     out_files = getenv("out")
-
     target_folder = Path(out_files).expanduser()
+    domain = None  # "AMNO"
 
     search = dict(
         variable=["tasmax", "tasmin", "tas", "pr"],
@@ -24,4 +24,4 @@ if __name__ == "__main__":
         bias_correction=["raw"],
     )
 
-    cordex_aws_download(target_folder, search=search)
+    cordex_aws_download(target_folder, search=search, domain=domain)

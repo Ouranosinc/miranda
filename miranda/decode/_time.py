@@ -152,7 +152,9 @@ def date_parser(
             except ValueError:
                 pass
         else:
-            raise DecoderError(f"Can't parse date {d} with supported formats {fmts}.")
+            raise DecoderError(
+                f"Can't parse date {d} with supported formats: [{', '.join(fmts)}]."
+            )
         return s, match
 
     date_format = None

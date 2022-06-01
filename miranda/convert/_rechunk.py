@@ -66,7 +66,7 @@ def rechunk_reanalysis(
 
     Parameters
     ----------
-    project : {"era5", "era5-land", "era5-single-levels"}
+    project : {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-single-levels", "era5-pressure-levels-preliminary-back-extension"}
       Supported reanalysis projects.
     input_folder : str or os.PathLike
       Folder to be examined. Performs globbing.
