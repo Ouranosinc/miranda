@@ -23,10 +23,12 @@ FACETS_SCHEMA = Schema(
             "type",
             description="An Ouranos internal code used for classifying datasets.",
         ): Or(*TYPE_NAMES),
-        Literal(
-            "activity",
-            description="The common climate modelling activity. "
-            "Derived from 'activity_id' in WCRP-CMIP CVs",
+        Optional(
+            Literal(
+                "activity",
+                description="The common climate modelling activity. "
+                "Derived from 'activity_id' in WCRP-CMIP CVs",
+            )
         ): Or(*ACTIVITIES),
         Literal(
             "institution",
@@ -73,7 +75,6 @@ FACETS_SCHEMA = Schema(
 STATION_OBS_SCHEMA = Schema(
     {
         "type": "station-obs",
-        "activity": str,
         "institution": str,
         "source": str,
         "frequency": str,
