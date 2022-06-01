@@ -1,7 +1,6 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
-    "activity": "ERA",
     "data_specs_version": "00.00.05",
     "institution": "ECMWF",
     "processing_level": "raw",

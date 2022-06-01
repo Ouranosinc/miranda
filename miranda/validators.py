@@ -87,8 +87,8 @@ STATION_OBS_SCHEMA = Schema(
 
 GRIDDED_SCHEMA = Schema(
     {
-        "type": Or("forecast", "gridded-obs", "reanalysis"),
-        "activity": str,
+        "type": Or("forecast", "gridded-obs", "reconstruction"),
+        "project": str,
         "institution": str,
         "source": str,
         "domain": str,
@@ -103,6 +103,7 @@ SIMULATION_SCHEMA = Schema(
         "type": "simulation",
         "processing_level": Or(*PROCESSING_LEVELS),
         "activity": str,
+        "mip_era": str,
         Or("institution", "driving_institution"): Or(*INSTITUTIONS),
         "source": str,
         "domain": str,
