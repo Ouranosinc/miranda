@@ -435,7 +435,10 @@ class Decoder:
         elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:3])
         else:
-            raise AttributeError("driving_institution not valid.")
+            raise AttributeError(
+                "driving_institution (from driving_model_id: "
+                f"`{data['driving_model_id']}`) is not valid."
+            )
 
         facets["driving_institution"] = driving_institution
         facets["driving_model"] = data["driving_model_id"]
