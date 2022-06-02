@@ -25,9 +25,13 @@ ERA5_PROJECT_NAMES = [
     "era5-land",
     "era5-land-monthly-means",
     "era5-pressure-levels",
+    "era5-pressure-levels-monthly-means",
     "era5-pressure-levels-preliminary-back-extension",
+    "era5-pressure-levels-monthly-means-preliminary-back-extension",
     "era5-single-levels",
+    "era5-single-levels-monthly-means",
     "era5-single-levels-preliminary-back-extension",
+    "era5-single-levels-monthly-means-preliminary-back-extension",
 ]
 
 
@@ -74,7 +78,7 @@ def request_era5(
     """
     # Variables of interest
     variable_reference = dict()
-    variable_reference["era5-land"] = dict(
+    variable_reference["era5-land", "era5-land-monthly-means"] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
         u10="10m_u_component_of_wind",
@@ -96,7 +100,10 @@ def request_era5(
         swlv4="volumetric_soil_water_layer_4",
     )
     variable_reference[
-        "era5-single-levels", "era5-single-levels-preliminary-back-extension"
+        "era5-single-levels",
+        "era5-single-levels-monthly-means",
+        "era5-single-levels-preliminary-back-extension",
+        "era5-single-levels-monthly-means-preliminary-back-extension",
     ] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
@@ -119,7 +126,10 @@ def request_era5(
         swlv4="volumetric_soil_water_layer_4",
     )
     variable_reference[
-        "era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"
+        "era5-pressure-levels",
+        "era5-pressure-levels-monthly-means",
+        "era5-pressure-levels-preliminary-back-extension",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension",
     ] = dict(
         cc="fraction_of_cloud_cover",
         r="relative_humidity",
@@ -145,7 +155,9 @@ def request_era5(
 
     for project_name, request_code in project_names.items():
         if year_start is None:
-            if "back-extension" in project_name or project_name == "era5-land":
+            if "preliminary-back-extension" in project_name or project_name.startswith(
+                "era5-land"
+            ):
                 project_year_start = 1950
             else:
                 project_year_start = 1979
@@ -153,7 +165,7 @@ def request_era5(
             project_year_start = year_start
 
         if year_end is None:
-            if "back-extension" in project_name:
+            if "preliminary-back-extension" in project_name:
                 project_year_end = 1978
             else:
                 project_year_end = dt.today().year
@@ -162,14 +174,18 @@ def request_era5(
 
         years = range(int(project_year_start), int(project_year_end) + 1)
 
+        # Allow at least a two-month lag from current month before attempting to collect data
         months = [str(d).zfill(2) for d in range(1, 13)]
         yearmonth = list()
         for y in years:
             for m in months:
                 request_date = datetime.date(y, int(m), 1)
-                two_months_ago = datetime.date.today() - datetime.timedelta(60)
-                if request_date < two_months_ago:
+                if y < datetime.date.today().year - 2:
                     yearmonth.append((y, m))
+                else:
+                    two_months_ago = datetime.date.today() - datetime.timedelta(60)
+                    if request_date < two_months_ago:
+                        yearmonth.append((y, m))
 
         product = request_code.split("-")[0]
         v_requested = dict()
@@ -181,6 +197,7 @@ def request_era5(
             )
         except StopIteration:
             return
+
         if variables:
             for v in variables:
                 if v in variable_reference:
@@ -274,6 +291,7 @@ def _request_direct_era(
 
     region = subsetting_domains(domain)
 
+    # TODO: Treatments necessary for data conversion still need to be verified for monthly datasets
     if "monthly-means" in project:
         raise NotImplementedError(project)
     timestep = "1h"
@@ -289,12 +307,10 @@ def _request_direct_era(
             format="netcdf",
         )
 
-        if project in [
-            "reanalysis-era5-single-levels",
-            "reanalysis-era5-single-levels-preliminary-back-extension",
-            "reanalysis-era5-pressure-levels",
-            "reanalysis-era5-pressure-levels-preliminary-back-extension",
-        ]:
+        if (
+            "reanalysis-era5-single-levels" in project
+            or "reanalysis-era5-pressure-levels" in project
+        ):
             request_kwargs.update(dict(product_type=product))
 
         if pressure_levels:
