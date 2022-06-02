@@ -429,12 +429,14 @@ class Decoder:
         driving_institution_parts = str(data["driving_model_id"]).split("-")
         if driving_institution_parts[0] in INSTITUTIONS:
             driving_institution = driving_institution_parts[0]
-        if driving_institution_parts[0] == "GFDL":
-            driving_institution = "NOAA-GFDL"
         elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:2])
         elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:3])
+        elif driving_institution_parts[0] == "GFDL":
+            driving_institution = "NOAA-GFDL"
+        elif driving_institution_parts[0] == "MPI":
+            driving_institution = "MPI-M"
         else:
             raise AttributeError(
                 "driving_institution (from driving_model_id: "
@@ -442,7 +444,10 @@ class Decoder:
             )
 
         facets["driving_institution"] = driving_institution
-        facets["driving_model"] = data["driving_model_id"]
+        if data["driving_model_id"].startswith("MPI"):
+            facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
+        else:
+            facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
 
