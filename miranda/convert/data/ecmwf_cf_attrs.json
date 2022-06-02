@@ -1,14 +1,21 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
-    "activity": "ERA",
-    "data_specs_version": "00.00.05",
+    "_source": {
+      "era5-land": "ERA5-Land",
+      "era5-land-monthly-means": "ERA5-Land",
+      "era5-pressure-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
+      "era5-pressure-levels-preliminary-back-extension": "ERA5-preliminary",
+      "era5-single-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
+      "era5-single-levels-preliminary-back-extension": "ERA5-preliminary"
+    },
+    "data_specs_version": "00.00.06",
     "institution": "ECMWF",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "3 May 2022",
-    "type": "reanalysis"
+    "table_date": "2 June 2022",
+    "type": "reconstruction"
   },
   "variable_entry": {
     "d2m": {

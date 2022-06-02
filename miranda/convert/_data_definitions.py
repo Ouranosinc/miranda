@@ -119,7 +119,7 @@ def gather_era5_land(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Mapping[str, Path]:
     try:
-        land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*era5-land.nc")))
+        land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*era5*.nc")))
     except StopIteration:
         logging.error("No land_sea_mask found for ERA5.")
         raise FileNotFoundError()

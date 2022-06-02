@@ -12,6 +12,7 @@ __all__ = [
     "CMIP6_MODELS",
     "CORDEX_INSTITUTES",
     "CORDEX_MODELS",
+    "GCM_MODELS",
     "INSTITUTIONS",
     "PROJECT_MODELS",
     "REANALYSIS_ACTIVITIES",
@@ -73,6 +74,10 @@ BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
 
 CMIP5_MODELS = [f.raw_name for f in CMIP5.model.terms]
 CMIP6_MODELS = [f.raw_name for f in CMIP6.source_id.terms]
+
+GCM_MODELS = list()
+GCM_MODELS.extend(CMIP5_MODELS)
+GCM_MODELS.extend(CMIP6_MODELS)
 
 CORDEX_MODELS = list()
 CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_name.terms])

@@ -8,8 +8,8 @@ dependencies:
   - bump2version
   - cdsapi
   - cftime
-  - clisops
-  - custom-inherit >=2.3.0
+  - clisops >=0.9
+  - coverage
   - dask
   - distributed
   - ecmwf-api-client
@@ -34,16 +34,11 @@ dependencies:
   - rasterio
   - regionmask
   - requests
-  - rioxarray
   - s3fs
   - schema
   - scp
   - shapely
   - tox
-  - wheel
   - xarray
-  - xclim
+  - xclim >=0.35
   - zarr
-  - pip
-  - pip:
-    - pyessv
