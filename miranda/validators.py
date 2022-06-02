@@ -8,6 +8,7 @@ from schema import Literal, Optional, Or, Regex, Schema
 from miranda.cv import (
     ACTIVITIES,
     BIAS_ADJUST_INSTITUTIONS,
+    GCM_MODELS,
     INSTITUTIONS,
     WCRP_FREQUENCIES,
 )
@@ -104,10 +105,11 @@ SIMULATION_SCHEMA = Schema(
         "processing_level": Or(*PROCESSING_LEVELS),
         "activity": str,
         "mip_era": str,
-        Or("institution", "driving_institution"): Or(*INSTITUTIONS),
+        "institution": Or(*INSTITUTIONS),
+        Or("driving_institution"): Or(*INSTITUTIONS),
         "source": str,
         "domain": str,
-        Optional("driving_model"): str,
+        Optional("driving_model"): Or(*GCM_MODELS),
         Optional("bias_adjust_institution"): Or(*BIAS_ADJUST_INSTITUTIONS),
         Optional("bias_adjust_project"): str,
         "experiment": str,
