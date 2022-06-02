@@ -2,7 +2,7 @@
   "Header": {
     "Conventions": "CF-1.8",
     "data_specs_version": "00.00.01",
-    "product": "reanalysis",
+    "product": "reconstruction",
     "realm": "atmos",
     "table_date": "2 February 2022",
     "table_id": "USASK"

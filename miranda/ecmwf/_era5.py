@@ -1,6 +1,5 @@
 import datetime
 import functools
-import logging
 import logging.config
 import multiprocessing
 import os
@@ -26,14 +25,18 @@ ERA5_PROJECT_NAMES = [
     "era5-land",
     "era5-land-monthly-means",
     "era5-pressure-levels",
+    "era5-pressure-levels-monthly-means",
     "era5-pressure-levels-preliminary-back-extension",
+    "era5-pressure-levels-monthly-means-preliminary-back-extension",
     "era5-single-levels",
+    "era5-single-levels-monthly-means",
     "era5-single-levels-preliminary-back-extension",
+    "era5-single-levels-monthly-means-preliminary-back-extension",
 ]
 
 
 def request_era5(
-    projects: List[str],
+    projects: Union[str, List[str]],
     *,
     variables: Optional[Mapping[str, str]] = None,
     domain: str = "AMNO",
@@ -44,13 +47,16 @@ def request_era5(
     year_end: Optional[Union[str, int]] = None,
     dry_run: bool = False,
     processes: int = 10,
+    url: Optional[str] = None,
+    key: Optional[str] = None,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
     Parameters
     ----------
+    projects : str or List[str]
+      Allowed keys: {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}
     variables: Mapping[str, str]
-    projects : List[{"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}]
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
     pressure_levels: List[int], optional
     separate_pressure_levels: bool
@@ -61,6 +67,10 @@ def request_era5(
     dry_run: bool
       Do not send request. For debugging purposes.
     processes : int
+    url: str, optional
+      URL for Copernicus Data Store API (if not already using .cdsapirc)
+    key: str, optional
+      Personal access key for Copernicus Data Store (if not already using .cdsapirc)
 
     Returns
     -------
@@ -68,7 +78,7 @@ def request_era5(
     """
     # Variables of interest
     variable_reference = dict()
-    variable_reference["era5-land"] = dict(
+    variable_reference["era5-land", "era5-land-monthly-means"] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
         u10="10m_u_component_of_wind",
@@ -90,7 +100,10 @@ def request_era5(
         swlv4="volumetric_soil_water_layer_4",
     )
     variable_reference[
-        "era5-single-levels", "era5-single-levels-preliminary-back-extension"
+        "era5-single-levels",
+        "era5-single-levels-monthly-means",
+        "era5-single-levels-preliminary-back-extension",
+        "era5-single-levels-monthly-means-preliminary-back-extension",
     ] = dict(
         tp="total_precipitation",
         v10="10m_v_component_of_wind",
@@ -113,8 +126,19 @@ def request_era5(
         swlv4="volumetric_soil_water_layer_4",
     )
     variable_reference[
-        "era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"
-    ] = dict(z="geopotential")
+        "era5-pressure-levels",
+        "era5-pressure-levels-monthly-means",
+        "era5-pressure-levels-preliminary-back-extension",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension",
+    ] = dict(
+        cc="fraction_of_cloud_cover",
+        r="relative_humidity",
+        q="specific_humidity",
+        t="temperature",
+        u="u_component_of_wind",
+        v="v_component_of_wind",
+        z="geopotential",
+    )
 
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
@@ -124,12 +148,16 @@ def request_era5(
     os.chdir(target)
 
     project_names = dict()
+    if isinstance(projects, str):
+        projects = [projects]
     for project in projects:
         project_names[project] = f"reanalysis-{project}"
 
     for project_name, request_code in project_names.items():
         if year_start is None:
-            if "back-extension" in project_name or project_name == "era5-land":
+            if "preliminary-back-extension" in project_name or project_name.startswith(
+                "era5-land"
+            ):
                 project_year_start = 1950
             else:
                 project_year_start = 1979
@@ -137,7 +165,7 @@ def request_era5(
             project_year_start = year_start
 
         if year_end is None:
-            if "back-extension" in project_name:
+            if "preliminary-back-extension" in project_name:
                 project_year_end = 1978
             else:
                 project_year_end = dt.today().year
@@ -146,14 +174,18 @@ def request_era5(
 
         years = range(int(project_year_start), int(project_year_end) + 1)
 
+        # Allow at least a two-month lag from current month before attempting to collect data
         months = [str(d).zfill(2) for d in range(1, 13)]
         yearmonth = list()
         for y in years:
             for m in months:
                 request_date = datetime.date(y, int(m), 1)
-                two_months_ago = datetime.date.today() - datetime.timedelta(60)
-                if request_date < two_months_ago:
+                if y < datetime.date.today().year - 2:
                     yearmonth.append((y, m))
+                else:
+                    two_months_ago = datetime.date.today() - datetime.timedelta(60)
+                    if request_date < two_months_ago:
+                        yearmonth.append((y, m))
 
         product = request_code.split("-")[0]
         v_requested = dict()
@@ -165,6 +197,7 @@ def request_era5(
             )
         except StopIteration:
             return
+
         if variables:
             for v in variables:
                 if v in variable_reference:
@@ -187,6 +220,8 @@ def request_era5(
             separate_pressure_levels,
             product,
             dry_run,
+            url,
+            key,
         )
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
@@ -204,9 +239,40 @@ def _request_direct_era(
     separate_pressure_level_requests: bool,
     product: str,
     dry_run: bool,
+    url: Optional[str],
+    key: Optional[str],
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
+
+    def __request(
+        nc_name: str,
+        p: str,
+        rq_kwargs: Mapping[str, str],
+        u: Optional[str],
+        k: Optional[str],
+    ):
+        if Path(nc_name).exists():
+            logging.info(f"Dataset {nc_name} already exists. Continuing...")
+            return
+
+        if not dry_run:
+            client_kwargs = dict()
+            if u:
+                client_kwargs[url] = u
+            if k:
+                client_kwargs[key] = k
+
+            with Client(**client_kwargs) as c:
+                c.retrieve(
+                    p,
+                    rq_kwargs,
+                    nc_name,
+                )
+        else:
+            logging.info(p)
+            logging.info(rq_kwargs)
+            logging.info(nc_name)
 
     try:
         from cdsapi import Client  # noqa
@@ -225,6 +291,7 @@ def _request_direct_era(
 
     region = subsetting_domains(domain)
 
+    # TODO: Treatments necessary for data conversion still need to be verified for monthly datasets
     if "monthly-means" in project:
         raise NotImplementedError(project)
     timestep = "1h"
@@ -240,12 +307,10 @@ def _request_direct_era(
             format="netcdf",
         )
 
-        if project in [
-            "reanalysis-era5-single-levels",
-            "reanalysis-era5-single-levels-preliminary-back-extension",
-            "reanalysis-era5-pressure-levels",
-            "reanalysis-era5-pressure-levels-preliminary-back-extension",
-        ]:
+        if (
+            "reanalysis-era5-single-levels" in project
+            or "reanalysis-era5-pressure-levels" in project
+        ):
             request_kwargs.update(dict(product_type=product))
 
         if pressure_levels:
@@ -256,25 +321,7 @@ def _request_direct_era(
                         f"{var}{level}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
                         f"_{product}_{domain.upper()}_{year}{month}.nc"
                     )
-
-                    if Path(netcdf_name).exists():
-                        logging.info(
-                            f"Dataset {netcdf_name} already exists. Continuing..."
-                        )
-                        continue
-
-                    if not dry_run:
-                        c = Client()
-                        c.retrieve(
-                            project,
-                            request_kwargs,
-                            netcdf_name,
-                        )
-                    else:
-                        logging.info(project)
-                        logging.info(request_kwargs)
-                        logging.info(netcdf_name)
-
+                    __request(netcdf_name, project, request_kwargs)
                 continue
             else:
                 request_kwargs.update(dict(pressure_level=pressure_levels))
@@ -283,22 +330,7 @@ def _request_direct_era(
             f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
             f"_{product}_{domain.upper()}_{year}{month}.nc"
         )
-
-        if Path(netcdf_name).exists():
-            logging.info(f"Dataset {netcdf_name} already exists. Continuing...")
-            continue
-
-        if not dry_run:
-            c = Client()
-            c.retrieve(
-                project,
-                request_kwargs,
-                netcdf_name,
-            )
-        else:
-            logging.info(project)
-            logging.info(request_kwargs)
-            logging.info(netcdf_name)
+        __request(netcdf_name, project, request_kwargs, url, key)
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:

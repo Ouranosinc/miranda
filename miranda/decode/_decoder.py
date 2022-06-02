@@ -73,7 +73,8 @@ class Decoder:
                     proj = guess_project(file)
                 except DecoderError:
                     print(
-                        f"Unable to determine 'project': Signature for 'project' must be set manually for file: {file}."
+                        "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
+                        f"{file}."
                     )
                     if fail_early:
                         raise
@@ -238,7 +239,7 @@ class Decoder:
             return time_dictionary[potential_time]
 
     @classmethod
-    def decode_reanalysis(cls, file: Union[PathLike, str]) -> dict:
+    def decode_converted(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -395,8 +396,7 @@ class Decoder:
 
         # FIXME: What to do about our internal data that breaks all established conventions?
         facets = dict()
-        facets["activity"] = "CMIP"
-        facets["project"] = "CORDEX"
+        facets["activity"] = "CORDEX"
 
         if data.get("project_id") == "" or data.get("project_id") is None:
             facets["mip_era"] = "internal"
@@ -425,15 +425,21 @@ class Decoder:
         if aws_keys:
             facets["domain"] = aws_keys.split(".")[3]
 
+        # The logic here is awful, but the information is bad to begin with.
         driving_institution_parts = str(data["driving_model_id"]).split("-")
         if driving_institution_parts[0] in INSTITUTIONS:
             driving_institution = driving_institution_parts[0]
+        if driving_institution_parts[0] == "GFDL":
+            driving_institution = "NOAA-GFDL"
         elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:2])
         elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:3])
         else:
-            raise AttributeError("driving_institution not valid.")
+            raise AttributeError(
+                "driving_institution (from driving_model_id: "
+                f"`{data['driving_model_id']}`) is not valid."
+            )
 
         facets["driving_institution"] = driving_institution
         facets["driving_model"] = data["driving_model_id"]
