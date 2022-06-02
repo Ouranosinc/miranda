@@ -12,7 +12,7 @@ from typing import List, Mapping, Optional, Union
 import schema
 
 from miranda import Decoder
-from miranda.decode import guess_activity
+from miranda.decode import guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
 from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
@@ -146,7 +146,7 @@ def structure_datasets(
     input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
     output_folder: Union[str, os.PathLike],
     *,
-    activity: Optional[str] = None,
+    project: Optional[str] = None,
     guess: bool = True,
     dry_run: bool = False,
     method: str = "copy",
@@ -160,9 +160,9 @@ def structure_datasets(
     ----------
     input_files: str or Path or list of str or Path or GeneratorType
     output_folder: str or Path
-    activity: {"cordex", "cmip5", "cmip6", "isimip-ft", "reanalysis", "pcic-candcs-u6"}, optional
+    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "converted", "pcic-candcs-u6"}, optional
     guess: bool
-      If activity not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
+      If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
     dry_run: bool
       Prints changes that would have been made without performing them. Default: False.
     method: {"move", "copy"}
@@ -180,18 +180,18 @@ def structure_datasets(
     dict
     """
     input_files = discover_data(input_files, filename_pattern)
-    if not activity and guess:
+    if not project and guess:
         # Examine the first file from a list or generator
         for f in input_files:
-            activity = guess_activity(f)
-            decoder = Decoder(activity)
+            project = guess_project(f)
+            decoder = Decoder(project)
             decoder.decode(f)
             break
         else:
             raise FileNotFoundError()
         decoder.decode(input_files)
     else:
-        decoder = Decoder(activity)
+        decoder = Decoder(project)
         decoder.decode(input_files)
 
     all_file_paths = dict()

@@ -31,11 +31,11 @@ config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "Decoder",
-    "guess_activity",
+    "guess_project",
 ]
 
 
-def guess_activity(file: Union[os.PathLike, str]) -> str:
+def guess_project(file: Union[os.PathLike, str]) -> str:
     file_name = Path(file).stem
 
     potential_names = file_name.split("_")
@@ -47,11 +47,11 @@ def guess_activity(file: Union[os.PathLike, str]) -> str:
 
 class Decoder:
 
-    activity = None
+    project = None
     _file_facets = dict()
 
-    def __init__(self, activity: Optional[str]):
-        self.activity = activity
+    def __init__(self, project: Optional[str]):
+        self.project = project
 
     @staticmethod
     def _decoder(
@@ -70,7 +70,7 @@ class Decoder:
         with lock:
             if proj is None:
                 try:
-                    proj = guess_activity(file)
+                    proj = guess_project(file)
                 except DecoderError:
                     print(
                         "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
@@ -108,16 +108,16 @@ class Decoder:
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
-        if self.activity is None:
+        if self.project is None:
             warnings.warn(
-                "The decoder 'activity' is not set; Decoding step will be much slower."
+                "The decoder 'project' is not set; Decoding step will be much slower."
             )
         else:
-            logging.info(f"Deciphering metadata with activity = '{self.activity}'")
+            logging.info(f"Deciphering metadata with project = '{self.project}'")
         manager = mp.Manager()
         _file_facets = manager.dict()
         lock = manager.Lock()
-        func = partial(self._decoder, _file_facets, raise_error, self.activity, lock)
+        func = partial(self._decoder, _file_facets, raise_error, self.project, lock)
 
         with mp.Pool() as pool:
             pool.imap(func, files, chunksize=10)
@@ -239,7 +239,7 @@ class Decoder:
             return time_dictionary[potential_time]
 
     @classmethod
-    def decode_reanalysis(cls, file: Union[PathLike, str]) -> dict:
+    def decode_converted(cls, file: Union[PathLike, str]) -> dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -425,6 +425,7 @@ class Decoder:
         if aws_keys:
             facets["domain"] = aws_keys.split(".")[3]
 
+        # The logic here is awful, but the information is bad to begin with.
         driving_institution_parts = str(data["driving_model_id"]).split("-")
         if driving_institution_parts[0] in INSTITUTIONS:
             driving_institution = driving_institution_parts[0]
