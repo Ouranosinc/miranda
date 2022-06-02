@@ -435,7 +435,7 @@ class Decoder:
             driving_institution = "-".join(driving_institution_parts[:3])
         elif driving_institution_parts[0] == "GFDL":
             driving_institution = "NOAA-GFDL"
-        elif driving_institution_parts[0] == "MPI":
+        elif data["driving_model_id"].startswith("MPI-ESM"):
             driving_institution = "MPI-M"
         else:
             raise AttributeError(
@@ -444,7 +444,7 @@ class Decoder:
             )
 
         facets["driving_institution"] = driving_institution
-        if data["driving_model_id"].startswith("MPI"):
+        if data["driving_model_id"].startswith("MPI-ESM"):
             facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
         else:
             facets["driving_model"] = data["driving_model_id"]
