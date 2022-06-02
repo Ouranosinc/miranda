@@ -1,7 +1,7 @@
+import tempfile
 import warnings
 from os import getenv
 from pathlib import Path
-from tempfile import tempdir
 
 try:
     from dask.distributed import Client
@@ -20,7 +20,7 @@ from miranda.convert import rechunk_reanalysis
 if __name__ == "__main__":
     step = "hourly"  # "daily
     target_project = "era5-land"  # "era5-single-levels"
-    outfmt = "nc"  # "zarr"
+    outfmt = "netcdf"  # "zarr"
 
     in_files = getenv("in")
     out_files = getenv("out")
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             threads_per_worker=1,
             dashboard_address=8786,
             memory_limit="4GB",
-            local_directory=Path(tempdir),
+            local_directory=Path(tempfile.TemporaryDirectory().name),
         ):
             rechunk_reanalysis(**parameters)
     else:

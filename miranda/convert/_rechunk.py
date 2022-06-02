@@ -98,7 +98,7 @@ def rechunk_reanalysis(
             raise NotImplementedError()
 
     if project.startswith("era5") and variables is None:
-        variables = era5_variables.copy()
+        variables = list(era5_variables)
 
     errored = list()
     start_all = time.perf_counter()
