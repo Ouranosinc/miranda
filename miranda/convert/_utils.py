@@ -203,6 +203,16 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
     def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
         logging.info("Converting metadata to CF-like conventions.")
 
+        # Conditional handling of source based on project name
+        if "_source" in m["header"].keys():
+            if p in m["header"]["_source"].keys():
+                m["header"]["source"] = m["header"]["_source"][p]
+                del m["header"]["_source"]
+            elif "source" in m["header"].keys():
+                pass
+            else:
+                raise AttributeError("Source not found for project dataset")
+
         # Add global attributes
         d.attrs.update(m["Header"])
         d.attrs.update(dict(project=p, format=o))
@@ -218,13 +228,13 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         descriptions = m["variable_entry"]
 
         if "time" in m["variable_entry"].keys():
-            descriptions["time"].pop("_corrected_units")
+            del descriptions["time"]["_corrected_units"]
 
         # Add variable metadata
         for v in d.data_vars:
-            descriptions[v].pop("_corrected_units")
-            descriptions[v].pop("_offset_time")
-            descriptions[v].pop("_transformation")
+            del descriptions[v]["_corrected_units"]
+            del descriptions[v]["_offset_time"]
+            del descriptions[v]["_transformation"]
             d[v].attrs.update(descriptions[v])
 
         # Rename data variables
