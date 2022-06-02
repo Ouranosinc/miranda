@@ -43,6 +43,8 @@ def request_era5(
     year_end: Optional[Union[str, int]] = None,
     dry_run: bool = False,
     processes: int = 10,
+    url: Optional[str] = None,
+    key: Optional[str] = None,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
@@ -61,6 +63,10 @@ def request_era5(
     dry_run: bool
       Do not send request. For debugging purposes.
     processes : int
+    url: str, optional
+      URL for Copernicus Data Store API (if not already using .cdsapirc)
+    key: str, optional
+      Personal access key for Copernicus Data Store (if not already using .cdsapirc)
 
     Returns
     -------
@@ -114,7 +120,15 @@ def request_era5(
     )
     variable_reference[
         "era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"
-    ] = dict(z="geopotential")
+    ] = dict(
+        cc="fraction_of_cloud_cover",
+        r="relative_humidity",
+        q="specific_humidity",
+        t="temperature",
+        u="u_component_of_wind",
+        v="v_component_of_wind",
+        z="geopotential",
+    )
 
     if output_folder is None:
         target = Path().cwd().joinpath("downloaded")
@@ -189,6 +203,8 @@ def request_era5(
             separate_pressure_levels,
             product,
             dry_run,
+            url,
+            key,
         )
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
@@ -206,22 +222,36 @@ def _request_direct_era(
     separate_pressure_level_requests: bool,
     product: str,
     dry_run: bool,
+    url: Optional[str],
+    key: Optional[str],
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
 
-    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str]):
+    def __request(
+        nc_name: str,
+        p: str,
+        rq_kwargs: Mapping[str, str],
+        u: Optional[str],
+        k: Optional[str],
+    ):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
             return
 
         if not dry_run:
-            c = Client()
-            c.retrieve(
-                p,
-                rq_kwargs,
-                nc_name,
-            )
+            client_kwargs = dict()
+            if u:
+                client_kwargs[url] = u
+            if k:
+                client_kwargs[key] = k
+
+            with Client(**client_kwargs) as c:
+                c.retrieve(
+                    p,
+                    rq_kwargs,
+                    nc_name,
+                )
         else:
             logging.info(p)
             logging.info(rq_kwargs)
@@ -284,7 +314,7 @@ def _request_direct_era(
             f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
             f"_{product}_{domain.upper()}_{year}{month}.nc"
         )
-        __request(netcdf_name, project, request_kwargs)
+        __request(netcdf_name, project, request_kwargs, url, key)
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:
