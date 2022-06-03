@@ -11,10 +11,10 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "date_parser",
     "DecoderError",
     "TIME_UNITS_TO_FREQUENCY",
     "TIME_UNITS_TO_TIMEDELTA",
+    "date_parser",
 ]
 
 TIME_UNITS_TO_FREQUENCY = {

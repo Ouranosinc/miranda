@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import multiprocessing as mp
 import os
 import re
@@ -13,19 +14,20 @@ from typing import Dict, List, Optional, Union
 import netCDF4 as nc  # noqa
 import pandas as pd
 import schema
+import xarray
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.cv import INSTITUTIONS, PROJECT_MODELS
-from miranda.scripting import LOGGING_CONFIG
-from miranda.validators import FACETS_SCHEMA
-
-from ._time import (
+from miranda.decode._time import (
     TIME_UNITS_TO_FREQUENCY,
     TIME_UNITS_TO_TIMEDELTA,
     DecoderError,
     date_parser,
 )
+from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
+from miranda.validators import FACETS_SCHEMA
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -58,29 +60,23 @@ class Decoder:
         d: dict,
         fail_early: bool,
         proj: str,
-        lock,
+        lock: multiprocessing.Lock,
         file: Union[str, Path],
     ) -> None:
-        """
-
-        Notes
-        -----
-        lock is a threading lock object
-        """
-        with lock:
-            if proj is None:
-                try:
-                    proj = guess_project(file)
-                except DecoderError:
-                    print(
-                        "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
-                        f"{file}."
-                    )
-                    if fail_early:
-                        raise
-
-            decode_function_name = f"decode_{proj.lower().replace('-','_')}"
+        if proj is None:
             try:
+                proj = guess_project(file)
+            except DecoderError:
+                print(
+                    "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
+                    f"{file}."
+                )
+                if fail_early:
+                    raise
+
+        decode_function_name = f"decode_{proj.lower().replace('-','_')}"
+        try:
+            with lock:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
                 if fail_early:
                     FACETS_SCHEMA.validate(_deciphered)
@@ -88,11 +84,12 @@ class Decoder:
                     f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
                 )
                 d[file] = _deciphered
-            except AttributeError as e:
-                print(f"Unable to read data from {Path(file).name}: {e}")
-            except schema.SchemaError as e:
-                print(f"Decoded facets from {Path(file).name} are not valid: {e}")
-                raise
+
+        except AttributeError as e:
+            print(f"Unable to read data from {Path(file).name}: {e}")
+        except schema.SchemaError as e:
+            print(f"Decoded facets from {Path(file).name} are not valid: {e}")
+            raise
 
     def decode(
         self,
@@ -114,11 +111,11 @@ class Decoder:
             )
         else:
             logging.info(f"Deciphering metadata with project = '{self.project}'")
+
         manager = mp.Manager()
         _file_facets = manager.dict()
         lock = manager.Lock()
         func = partial(self._decoder, _file_facets, raise_error, self.project, lock)
-
         with mp.Pool() as pool:
             pool.imap(func, files, chunksize=10)
             pool.close()
@@ -189,23 +186,24 @@ class Decoder:
     def _decode_time_info(
         file: Optional[Union[PathLike, str, List[str]]] = None,
         data: Optional[Dict] = None,
+        term: Optional[str] = None,
         *,
-        field: str,
+        field: str = None,
     ) -> Union[str, NaTType]:
         """
 
         Parameters
         ----------
-        file: Union[os.PathLike, str] or List[str], optional
+        file: Union[os.PathLike, str], optional
         data: dict, optional
         field: {"timedelta", "frequency"}
 
         Returns
         -------
-
+        str or NaTType
         """
-        if not file and not data:
-            raise ValueError()
+        if not file and not data and not term:
+            raise ValueError("Nothing passed to parse time info from.")
 
         if field == "frequency":
             time_dictionary = TIME_UNITS_TO_FREQUENCY
@@ -214,11 +212,18 @@ class Decoder:
         else:
             raise NotImplementedError()
 
-        if isinstance(file, (str, PathLike)):
-            file = Path(file).name.split("_")
+        if term:
+            if term in ["fx", "fixed"]:
+                if field == "timedelta":
+                    return pd.NaT
+                return "fx"
+            return pd.to_timedelta(time_dictionary[term])
 
-        if isinstance(file, list):
-            potential_times = [segment in file for segment in time_dictionary.keys()]
+        if file and not data:
+            file_parts = Path(file).name.split("_")
+            potential_times = [
+                segment in file_parts for segment in time_dictionary.keys()
+            ]
             if potential_times:
                 if potential_times[0] in ["fx", "fixed"]:
                     if field == "timedelta":
@@ -227,7 +232,7 @@ class Decoder:
                 if field == "timedelta":
                     return pd.to_timedelta(time_dictionary[potential_times[0]])
                 return time_dictionary[potential_times[0]]
-        elif data:
+        elif data and not file:
             potential_time = data["frequency"]
             if potential_time == "":
                 time_units = data["time"].units
@@ -237,6 +242,34 @@ class Decoder:
                     return pd.NaT
                 return pd.to_timedelta(time_dictionary[potential_time])
             return time_dictionary[potential_time]
+        elif file and data:
+            file_parts = Path(file).name.split("_")
+            potential_times = [
+                segment in file_parts for segment in time_dictionary.keys()
+            ]
+            potential_time = data["frequency"]
+            if potential_time == "":
+                time_units = data["time"].units
+                potential_time = time_units.split()[0]
+
+            if potential_time not in potential_times:
+                logging.warning(
+                    f"Frequency from metadata not found in filename: `{Path(file).name}`: Performing more rigorous checks."
+                )
+                if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
+                    engine = "netcdf4"
+                elif Path(file).is_dir() and Path(file).suffix == ".zarr":
+                    engine = "zarr"
+                else:
+                    raise DecoderError(file)
+                _, time_freq = get_time_frequency(
+                    xarray.open_dataset(
+                        file,
+                        engine=engine,
+                        drop_variables="time_bnds",
+                    ).time
+                )
+                return time_freq
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
@@ -289,7 +322,7 @@ class Decoder:
         facets["domain"] = data["domain"]
         facets["experiment"] = str(data["GCM__experiment_id"]).replace(",", "-")
         facets["format"] = "netcdf"
-        facets["frequency"] = data["frequency"]
+        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
         facets["institution"] = data["GCM__institution_id"]
         facets["member"] = (
             f"r{data['GCM__realization_index']}"
@@ -323,7 +356,9 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = data["frequency"]
+        facets["frequency"] = cls._decode_time_info(
+            data=data, file=file, field="frequency"
+        )
         facets["grid_label"] = data["grid_label"]
         facets["institution"] = data["institution_id"]
         facets["member"] = data["variant_label"]
@@ -331,7 +366,9 @@ class Decoder:
         facets["processing_level"] = "raw"
         facets["mip_era"] = data["mip_era"]
         facets["source"] = data["source_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -362,7 +399,9 @@ class Decoder:
         facets["domain"] = "global"
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+        facets["frequency"] = cls._decode_time_info(
+            data=data, file=file, field="frequency"
+        )
         facets["institution"] = data["institute_id"]
         facets["member"] = data["parent_experiment_rip"]
         facets["modeling_realm"] = data["modeling_realm"]
@@ -453,7 +492,9 @@ class Decoder:
         else:
             facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+        facets["frequency"] = cls._decode_time_info(
+            data=data, file=file, field="frequency"
+        )
 
         if data["institute_id"].strip() == "Our.":
             facets["institution"] = "Ouranos"
