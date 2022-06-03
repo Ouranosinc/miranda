@@ -81,6 +81,7 @@ GCM_MODELS.extend(CMIP5_MODELS)
 GCM_MODELS.extend(CMIP6_MODELS)
 
 DRIVING_MODELS = [f.raw_name for f in CORDEX.driving_model.terms]
+DRIVING_MODELS.extend(["UQAM-GEMatm-Can-ESMsea"])
 
 CORDEX_MODELS = list()
 CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_name.terms])
