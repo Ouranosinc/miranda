@@ -437,6 +437,8 @@ class Decoder:
             driving_institution = "NOAA-GFDL"
         elif data["driving_model_id"].startswith("MPI-ESM"):
             driving_institution = "MPI-M"
+        elif data["driving_model_id"].startswith("HadGEM2"):
+            driving_institution = "MOHC"
         else:
             raise AttributeError(
                 "driving_institution (from driving_model_id: "
@@ -446,6 +448,8 @@ class Decoder:
         facets["driving_institution"] = driving_institution
         if data["driving_model_id"].startswith("MPI-ESM"):
             facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
+        elif data["driving_model_id"].startswith("HadGEM2"):
+            facets["driving_model"] = f"MOHC-{data['driving_model_id']}"
         else:
             facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
