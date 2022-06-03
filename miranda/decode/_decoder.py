@@ -1,5 +1,4 @@
 import logging
-import multiprocessing
 import multiprocessing as mp
 import os
 import re
@@ -60,7 +59,7 @@ class Decoder:
         d: dict,
         fail_early: bool,
         proj: str,
-        lock: multiprocessing.Lock,
+        lock: mp.Lock,
         file: Union[str, Path],
     ) -> None:
         if proj is None:
