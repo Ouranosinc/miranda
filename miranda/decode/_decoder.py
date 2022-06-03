@@ -254,7 +254,10 @@ class Decoder:
                 time_units = data["time"].units
                 potential_time = time_units.split()[0]
 
-            if potential_time not in potential_times:
+            if potential_time in potential_times:
+                return time_dictionary[potential_time]
+
+            else:
                 logging.warning(
                     f"Frequency from metadata not found in filename: `{Path(file).name}`: "
                     "Performing more rigorous frequency checks."
@@ -278,13 +281,13 @@ class Decoder:
                 elif found_freq == "month":
                     for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
                         if f in potential_times:
-                            return f
+                            return time_dictionary[f]
                 else:
                     logging.warning(
-                        "Frequency found in dataset on analysis was not found in filename. "
-                        f"Using `{found_freq}`."
+                        "Time frequency found in dataset on analysis was not found in filename. "
+                        f"Basing fields on `{found_freq}`."
                     )
-                    return found_freq
+                    return time_dictionary[found_freq]
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
