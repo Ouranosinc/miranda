@@ -590,12 +590,3 @@ class Decoder:
             pass
 
         return facets
-
-
-if __name__ == "__main__":
-    d = Decoder("cmip6")
-    d.decode(
-        [
-            "/tank/scenario/datasets/simulations/raw/CMIP/CMIP6/global/NIMS-KMA/KACE-1-0-G/historical/r1i1p1f1/day/tasmax/tasmax_Amon_KACE-1-0-G_historical_r1i1p1f1_gr_185001-201412.nc"
-        ]
-    )
