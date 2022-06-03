@@ -12,6 +12,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "DecoderError",
+    "FREQUENCY_TO_POTENTIAL_TIME_UNITS",
     "TIME_UNITS_TO_FREQUENCY",
     "TIME_UNITS_TO_TIMEDELTA",
     "date_parser",
@@ -56,6 +57,11 @@ TIME_UNITS_TO_FREQUENCY = {
     "fixed": "fx",
     "fx": "fx",
 }
+
+FREQUENCY_TO_POTENTIAL_TIME_UNITS = dict()
+for key, value in TIME_UNITS_TO_FREQUENCY.items():
+    FREQUENCY_TO_POTENTIAL_TIME_UNITS.setdefault(value, list()).append(key)
+
 TIME_UNITS_TO_TIMEDELTA = {
     "hourly": "1h",
     "hours": "1h",

@@ -219,20 +219,7 @@ class Decoder:
                 return "fx"
             return pd.to_timedelta(time_dictionary[term])
 
-        if file and not data:
-            file_parts = Path(file).name.split("_")
-            potential_times = [
-                segment in file_parts for segment in time_dictionary.keys()
-            ]
-            if potential_times:
-                if potential_times[0] in ["fx", "fixed"]:
-                    if field == "timedelta":
-                        return pd.NaT
-                    return "fx"
-                if field == "timedelta":
-                    return pd.to_timedelta(time_dictionary[potential_times[0]])
-                return time_dictionary[potential_times[0]]
-        elif data and not file:
+        if data and not file:
             potential_time = data["frequency"]
             if potential_time == "":
                 time_units = data["time"].units
@@ -242,10 +229,25 @@ class Decoder:
                     return pd.NaT
                 return pd.to_timedelta(time_dictionary[potential_time])
             return time_dictionary[potential_time]
-        elif file and data:
+
+        if data and not file:
             file_parts = Path(file).name.split("_")
             potential_times = [
-                segment in file_parts for segment in time_dictionary.keys()
+                segment for segment in file_parts if segment in time_dictionary.keys()
+            ]
+            if potential_times:
+                if potential_times[0] in ["fx", "fixed"]:
+                    if field == "timedelta":
+                        return pd.NaT
+                    return "fx"
+                if field == "timedelta":
+                    return pd.to_timedelta(time_dictionary[potential_times[0]])
+                return time_dictionary[potential_times[0]]
+
+        if file and data:
+            file_parts = Path(file).name.split("_")
+            potential_times = [
+                segment for segment in file_parts if segment in time_dictionary.keys()
             ]
             potential_time = data["frequency"]
             if potential_time == "":
@@ -254,7 +256,8 @@ class Decoder:
 
             if potential_time not in potential_times:
                 logging.warning(
-                    f"Frequency from metadata not found in filename: `{Path(file).name}`: Performing more rigorous checks."
+                    f"Frequency from metadata not found in filename: `{Path(file).name}`: "
+                    "Performing more rigorous frequency checks."
                 )
                 if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
                     engine = "netcdf4"
@@ -262,14 +265,26 @@ class Decoder:
                     engine = "zarr"
                 else:
                     raise DecoderError(file)
-                _, time_freq = get_time_frequency(
+                _, found_freq = get_time_frequency(
                     xarray.open_dataset(
                         file,
                         engine=engine,
                         drop_variables="time_bnds",
                     ).time
                 )
-                return time_freq
+
+                if found_freq in potential_times:
+                    return found_freq
+                elif found_freq == "month":
+                    for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
+                        if f in potential_times:
+                            return f
+                else:
+                    logging.warning(
+                        "Frequency found in dataset on analysis was not found in filename. "
+                        f"Using `{found_freq}`."
+                    )
+                    return found_freq
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
@@ -572,3 +587,12 @@ class Decoder:
             pass
 
         return facets
+
+
+if __name__ == "__main__":
+    d = Decoder("cmip6")
+    d.decode(
+        [
+            "/tank/scenario/datasets/simulations/raw/CMIP/CMIP6/global/NIMS-KMA/KACE-1-0-G/historical/r1i1p1f1/day/tasmax/tasmax_Amon_KACE-1-0-G_historical_r1i1p1f1_gr_185001-201412.nc"
+        ]
+    )

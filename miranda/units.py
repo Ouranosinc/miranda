@@ -1,5 +1,6 @@
 import re
 
+import pandas as pd
 import pint
 import xarray as xr
 from pint import Unit
@@ -79,8 +80,17 @@ def units2pint(value: str) -> Unit:
 
 def get_time_frequency(d: xr.Dataset):
     freq = xr.infer_freq(d.time)
-    if freq is None:
-        raise TypeError()
+
+    # Hacky workaround for irregular Monthly data
+    if freq is None or (1 < int(freq[:-1]) < 32 and freq.endswith("D")):
+        if (
+            (d.diff("time") < pd.Timedelta(32, "D"))
+            & (d.diff("time") > pd.Timedelta(27, "D"))
+        ).all():
+            freq = "1M"
+        else:
+            raise TypeError()
+
     offset = [int(parse_offset(freq)[0]), parse_offset(freq)[1]]
 
     time_units = {
@@ -88,10 +98,11 @@ def get_time_frequency(d: xr.Dataset):
         "m": "minute",
         "h": "hour",
         "D": "day",
+        "M": "month",
         "W": "week",
         "Y": "year",
     }
-    if offset[1] in ["S", "M", "H"]:
+    if offset[1] in ["S", "H"]:
         offset[1] = offset[1].lower()
     offset_meaning = time_units[offset[1]]
     return offset, offset_meaning
