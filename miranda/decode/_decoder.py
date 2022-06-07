@@ -276,6 +276,11 @@ class Decoder:
                 )
 
                 if found_freq in potential_times:
+                    logging.warning(
+                        "Time frequency found in dataset on analysis was found in filename. "
+                        f"Metadata for `{Path(file).name} is probably incorrect. "
+                        f"Basing fields on `{found_freq}`."
+                    )
                     return time_dictionary[found_freq]
                 elif found_freq == "month":
                     for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
