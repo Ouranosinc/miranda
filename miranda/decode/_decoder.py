@@ -229,7 +229,7 @@ class Decoder:
                 return pd.to_timedelta(time_dictionary[potential_time])
             return time_dictionary[potential_time]
 
-        if data and not file:
+        if file and not data:
             file_parts = Path(file).name.split("_")
             potential_times = [
                 segment for segment in file_parts if segment in time_dictionary.keys()
@@ -258,7 +258,7 @@ class Decoder:
 
             else:
                 logging.warning(
-                    f"Frequency from metadata not found in filename: `{Path(file).name}`: "
+                    f"Frequency from metadata (`{potential_time}`) not found in filename (`{Path(file).name}`): "
                     "Performing more rigorous frequency checks."
                 )
                 if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
@@ -276,7 +276,7 @@ class Decoder:
                 )
 
                 if found_freq in potential_times:
-                    return found_freq
+                    return time_dictionary[found_freq]
                 elif found_freq == "month":
                     for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
                         if f in potential_times:
