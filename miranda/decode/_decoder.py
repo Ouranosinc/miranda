@@ -527,6 +527,7 @@ class Decoder:
             facets["domain"] = regridded_domain_found.group()
 
         # The logic here is awful, but the information is bad to begin with.
+        driving_model = None
         driving_institution_parts = str(data["driving_model_id"]).split("-")
         if driving_institution_parts[0] in INSTITUTIONS:
             driving_institution = driving_institution_parts[0]
@@ -536,10 +537,13 @@ class Decoder:
             driving_institution = "-".join(driving_institution_parts[:3])
         elif data["driving_model_id"].startswith("GFDL"):
             driving_institution = "NOAA-GFDL"
+            facets["driving_model"] = f"NOAA-GFDL-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("MPI-ESM"):
             driving_institution = "MPI-M"
+            facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("HadGEM2"):
             driving_institution = "MOHC"
+            facets["driving_model"] = f"MOHC-{data['driving_model_id']}"
         else:
             raise AttributeError(
                 "driving_institution (from driving_model_id: "
@@ -547,13 +551,7 @@ class Decoder:
             )
 
         facets["driving_institution"] = driving_institution
-        if data["driving_model_id"].startswith("MPI-ESM"):
-            facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
-        elif data["driving_model_id"].startswith("GFDL"):
-            facets["driving_model"] = f"NOAA-GFDL-{data['driving_model_id']}"
-        elif data["driving_model_id"].startswith("HadGEM2"):
-            facets["driving_model"] = f"MOHC-{data['driving_model_id']}"
-        else:
+        if not driving_model:
             facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(
