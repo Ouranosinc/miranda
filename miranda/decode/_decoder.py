@@ -266,8 +266,6 @@ class Decoder:
                     if segment in time_dictionary.keys()
                 ]
                 potential_time = data["frequency"]
-                print(potential_time, ", ".join(potential_times))
-
                 if potential_time == "":
                     if hasattr(data, "time"):
                         time_units = data["time"].units
@@ -524,6 +522,9 @@ class Decoder:
         aws_keys = data.get("intake_esm_dataset_key")
         if aws_keys:
             facets["domain"] = aws_keys.split(".")[3]
+        regridded_domain_found = re.search(r"\w{3}-\d{2}i", data.get("title"))
+        if regridded_domain_found:
+            facets["domain"] = regridded_domain_found.group()
 
         # The logic here is awful, but the information is bad to begin with.
         driving_institution_parts = str(data["driving_model_id"]).split("-")
