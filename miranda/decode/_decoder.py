@@ -221,8 +221,17 @@ class Decoder:
         if data and not file:
             potential_time = data["frequency"]
             if potential_time == "":
-                time_units = data["time"].units
-                potential_time = time_units.split()[0]
+                if hasattr(data, "time"):
+                    time_units = data["time"].units
+                    potential_time = time_units.split()[0]
+            if potential_time in ["ymon", "yseas"]:
+                logging.warning(f"Found `{potential_time}`. Frequency is likely `fx`.")
+                if field == "frequency":
+                    return "fx"
+                if field == "timedelta":
+                    return pd.NaT
+                raise ValueError()
+
             if field == "timedelta":
                 if potential_time in ["fx", "fixed"]:
                     return pd.NaT
@@ -230,68 +239,98 @@ class Decoder:
             return time_dictionary[potential_time]
 
         if file and not data:
-            file_parts = Path(file).name.split("_")
-            potential_times = [
-                segment for segment in file_parts if segment in time_dictionary.keys()
-            ]
-            if potential_times:
-                if potential_times[0] in ["fx", "fixed"]:
+            for delimiter in ["_", "."]:
+                file_parts = Path(file).name.split(delimiter)
+                potential_times = [
+                    segment
+                    for segment in file_parts
+                    if segment in time_dictionary.keys()
+                ]
+                if potential_times:
+                    if potential_times[0] in ["fx", "fixed"]:
+                        if field == "frequency":
+                            return "fx"
+                        if field == "timedelta":
+                            return pd.NaT
+                        raise ValueError()
                     if field == "timedelta":
-                        return pd.NaT
-                    return "fx"
-                if field == "timedelta":
-                    return pd.to_timedelta(time_dictionary[potential_times[0]])
-                return time_dictionary[potential_times[0]]
+                        return pd.to_timedelta(time_dictionary[potential_times[0]])
+                    return time_dictionary[potential_times[0]]
 
         if file and data:
-            file_parts = Path(file).name.split("_")
-            potential_times = [
-                segment for segment in file_parts if segment in time_dictionary.keys()
-            ]
-            potential_time = data["frequency"]
-            if potential_time == "":
-                time_units = data["time"].units
-                potential_time = time_units.split()[0]
+            for delimiter in ["_", "."]:
+                file_parts = Path(file).name.split(delimiter)
+                potential_times = [
+                    segment
+                    for segment in file_parts
+                    if segment in time_dictionary.keys()
+                ]
+                potential_time = data["frequency"]
+                print(potential_time, ", ".join(potential_times))
 
-            if potential_time in potential_times:
-                return time_dictionary[potential_time]
+                if potential_time == "":
+                    if hasattr(data, "time"):
+                        time_units = data["time"].units
+                        potential_time = time_units.split()[0]
+                if potential_time in ["ymon", "yseas"]:
+                    logging.warning(
+                        f"Found `{potential_time}`. Frequency is likely `fx`."
+                    )
+                    if "fx" in file_parts or "fixed" in file_parts:
+                        if field == "frequency":
+                            return "fx"
+                        if field == "timedelta":
+                            return pd.NaT
+                        raise ValueError()
 
+                if potential_time in potential_times:
+                    return time_dictionary[potential_time]
+
+            logging.warning(
+                f"Frequency from metadata (`{potential_time}`) not found in filename (`{Path(file).name}`): "
+                "Performing more rigorous frequency checks."
+            )
+            if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
+                engine = "netcdf4"
+            elif Path(file).is_dir() and Path(file).suffix == ".zarr":
+                engine = "zarr"
+            else:
+                raise DecoderError(file)
+
+            _ds = xarray.open_dataset(
+                file,
+                engine=engine,
+                drop_variables="time_bnds",
+            )
+            if not hasattr(_ds, "time"):
+                logging.warning(
+                    "Dataset does not contain time array. Assuming fixed variable."
+                )
+                if field == "frequency":
+                    return "fx"
+                if field == "timedelta":
+                    return pd.NaT
+                raise ValueError()
+            else:
+                _, found_freq = get_time_frequency(_ds.time)
+
+            if found_freq in potential_times:
+                logging.warning(
+                    "Time frequency found in dataset on analysis was found in filename. "
+                    f"Metadata for `{Path(file).name} is probably incorrect. "
+                    f"Basing fields on `{found_freq}`."
+                )
+                return time_dictionary[found_freq]
+            elif found_freq == "month":
+                for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
+                    if f in potential_times:
+                        return time_dictionary[f]
             else:
                 logging.warning(
-                    f"Frequency from metadata (`{potential_time}`) not found in filename (`{Path(file).name}`): "
-                    "Performing more rigorous frequency checks."
+                    "Time frequency found in dataset on analysis was not found in filename. "
+                    f"Basing fields on `{found_freq}`."
                 )
-                if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
-                    engine = "netcdf4"
-                elif Path(file).is_dir() and Path(file).suffix == ".zarr":
-                    engine = "zarr"
-                else:
-                    raise DecoderError(file)
-                _, found_freq = get_time_frequency(
-                    xarray.open_dataset(
-                        file,
-                        engine=engine,
-                        drop_variables="time_bnds",
-                    ).time
-                )
-
-                if found_freq in potential_times:
-                    logging.warning(
-                        "Time frequency found in dataset on analysis was found in filename. "
-                        f"Metadata for `{Path(file).name} is probably incorrect. "
-                        f"Basing fields on `{found_freq}`."
-                    )
-                    return time_dictionary[found_freq]
-                elif found_freq == "month":
-                    for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
-                        if f in potential_times:
-                            return time_dictionary[f]
-                else:
-                    logging.warning(
-                        "Time frequency found in dataset on analysis was not found in filename. "
-                        f"Basing fields on `{found_freq}`."
-                    )
-                    return time_dictionary[found_freq]
+                return time_dictionary[found_freq]
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
@@ -494,7 +533,7 @@ class Decoder:
             driving_institution = "-".join(driving_institution_parts[:2])
         elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
             driving_institution = "-".join(driving_institution_parts[:3])
-        elif driving_institution_parts[0] == "GFDL":
+        elif data["driving_model_id"].startswith("GFDL"):
             driving_institution = "NOAA-GFDL"
         elif data["driving_model_id"].startswith("MPI-ESM"):
             driving_institution = "MPI-M"
@@ -509,6 +548,8 @@ class Decoder:
         facets["driving_institution"] = driving_institution
         if data["driving_model_id"].startswith("MPI-ESM"):
             facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
+        elif data["driving_model_id"].startswith("GFDL"):
+            facets["driving_model"] = f"NOAA-GFDL-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("HadGEM2"):
             facets["driving_model"] = f"MOHC-{data['driving_model_id']}"
         else:
