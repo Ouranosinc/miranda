@@ -207,11 +207,11 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         if "_source" in m["Header"].keys():
             if p in m["Header"]["_source"].keys():
                 m["Header"]["source"] = m["Header"]["_source"][p]
-                del m["Header"]["_source"]
             elif "source" in m["Header"].keys():
                 pass
             else:
                 raise AttributeError("Source not found for project dataset")
+            del m["Header"]["_source"]
 
         # Add global attributes
         d.attrs.update(m["Header"])
