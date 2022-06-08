@@ -265,6 +265,7 @@ def structure_datasets(
         decoder.decode(input_files)
 
     all_file_paths = dict()
+    existing_hashes = dict()
     version_hash_paths = dict()
     errored_files = list()
     for file, facets in decoder.file_facets().items():
@@ -277,9 +278,18 @@ def structure_datasets(
 
         if set_version_hashes:
             version_hash_file = f"{Path(file).stem}.{facets['version']}"
-            version_hash_paths.update(
-                {Path(file): output_filepath.joinpath(version_hash_file)}
-            )
+            if Path(file).parent.joinpath(version_hash_file).exists():
+                existing_hashes.update(
+                    {
+                        Path(file).parent.joinpath(
+                            version_hash_file
+                        ): output_filepath.joinpath(version_hash_file)
+                    }
+                )
+            else:
+                version_hash_paths.update(
+                    {Path(file): output_filepath.joinpath(version_hash_file)}
+                )
 
     if errored_files:
         logging.warning(
@@ -293,6 +303,11 @@ def structure_datasets(
     if set_version_hashes:
         hash_func = partial(_generate_version_hashes, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
+            if existing_hashes:
+                pool.starmap(
+                    getattr(shutil, method),
+                    zip(existing_hashes.keys(), existing_hashes.values()),
+                )
             pool.starmap(
                 hash_func,
                 zip(version_hash_paths.keys(), version_hash_paths.values()),
