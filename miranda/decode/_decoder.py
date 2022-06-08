@@ -360,7 +360,7 @@ class Decoder:
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"^.[vV](\d+)", sig.suffix)
+                    found_version = re.match(r"^.([vV]\d+)", sig.suffix)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -461,7 +461,7 @@ class Decoder:
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"^.[vV](\d+)", sig.suffix)
+                    found_version = re.search(r"^[vV](\d+)$", sig.suffix)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -511,7 +511,7 @@ class Decoder:
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"^.[vV](\d+)", sig.suffix)
+                    found_version = re.search(r"^[vV](\d+)$", sig.suffix)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -622,7 +622,7 @@ class Decoder:
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"^.[vV](\d+)", sig.suffix)
+                    found_version = re.search(r"^[vV](\d+)$", sig.suffix)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -690,7 +690,7 @@ class Decoder:
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"^.[vV](\d+)", sig.suffix)
+                    found_version = re.search(r"^[vV](\d+)$", sig.suffix)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
