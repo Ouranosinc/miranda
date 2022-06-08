@@ -27,6 +27,7 @@ TIME_UNITS_TO_FREQUENCY = {
     "3hr": "3hr",
     "6-hourly": "6hr",
     "6hr": "6hr",
+    "Eday": "day",
     "daily": "day",
     "days": "day",
     "day": "day",
