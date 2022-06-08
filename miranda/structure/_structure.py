@@ -25,7 +25,9 @@ __all__ = [
 ]
 
 
-def _generate_version_hashes(in_file: Path, out_file: Path) -> None:
+def _generate_version_hashes(
+    in_file: Path, out_file: Path, verify: bool = False
+) -> None:
     if not out_file.exists():
         hash_sha256_writer = hashlib.sha256()
         with open(in_file, "rb") as f:
@@ -41,6 +43,25 @@ def _generate_version_hashes(in_file: Path, out_file: Path) -> None:
 
         del hash_sha256_writer
         del sha256sum
+    elif verify:
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        calculated_sha256sum = hash_sha256_writer.hexdigest()
+
+        try:
+            with open(out_file) as f:
+                found_sha256sum = f.read()
+
+            if calculated_sha256sum != found_sha256sum:
+                raise ValueError()
+        except ValueError:
+            logging.error(
+                f"Found sha256sum (ending: {found_sha256sum[-6:]}) "
+                f"does not match current value (ending: {calculated_sha256sum[-6:]}) "
+                f"for file `{in_file.name}."
+            )
+
     else:
         print(f"Writing sha256sum file `{out_file.name}` exists. Continuing...")
 
@@ -48,6 +69,7 @@ def _generate_version_hashes(in_file: Path, out_file: Path) -> None:
 def create_version_hashes(
     input_files: Optional[Union[os.PathLike, List[os.PathLike], GeneratorType]] = None,
     facet_dict: Optional[Dict] = None,
+    verify_hash: bool = False,
 ) -> None:
     if not facet_dict and not input_files:
         raise ValueError()
@@ -71,9 +93,11 @@ def create_version_hashes(
         version_hash_paths.update(
             {Path(file): Path(file).parent.joinpath(version_hash_file)}
         )
+
+    hash_func = partial(_generate_version_hashes, verify=verify_hash)
     with multiprocessing.Pool() as pool:
         pool.starmap(
-            _generate_version_hashes,
+            hash_func,
             zip(version_hash_paths.keys(), version_hash_paths.values()),
         )
         pool.close()
@@ -195,6 +219,7 @@ def structure_datasets(
     method: str = "copy",
     make_dirs: bool = False,
     set_version_hashes: bool = False,
+    verify_hashes: bool = False,
     filename_pattern: str = "*.nc",
 ) -> Mapping[Path, Path]:
     """
@@ -210,10 +235,12 @@ def structure_datasets(
       Prints changes that would have been made without performing them. Default: False.
     method: {"move", "copy"}
       Method to transfer files to intended location. Default: "move".
-    make_dirs:
+    make_dirs: bool
       Make folder tree if it does not already exist. Default: False.
-    set_version_hashes:
+    set_version_hashes: bool
       Make an accompanying file with version in filename and sha256sum in contents. Default: False.
+    verify_hashes: bool
+      Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
     filename_pattern: str
       If pattern ends with "zarr", will 'glob' with provided pattern.
       Otherwise, will perform an 'rglob' (recursive) operation.
@@ -264,9 +291,10 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     if set_version_hashes:
+        hash_func = partial(_generate_version_hashes, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
             pool.starmap(
-                _generate_version_hashes,
+                hash_func,
                 zip(version_hash_paths.keys(), version_hash_paths.values()),
             )
             pool.close()
