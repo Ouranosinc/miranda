@@ -295,6 +295,7 @@ class Decoder:
             else:
                 raise DecoderError(file)
 
+            # FIXME: This block seems to be quietly failing for some monthly-formatted datasets
             _ds = xarray.open_dataset(
                 file,
                 engine=engine,
