@@ -322,6 +322,10 @@ class Decoder:
             elif found_freq in ["month", "mon"]:
                 for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
                     if f in potential_times:
+                        logging.warning(
+                            "Month-like time frequency found in dataset on analysis was found in filename. "
+                            f"Basing fields on `{f}`."
+                        )
                         return time_dictionary[f]
             else:
                 logging.warning(
