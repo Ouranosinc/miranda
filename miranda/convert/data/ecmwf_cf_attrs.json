@@ -121,6 +121,11 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -155,6 +160,11 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -179,6 +189,11 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -202,6 +217,11 @@
         "era5-land": "J m-2",
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
       },
       "_offset_time": {
         "era5-land": true,
