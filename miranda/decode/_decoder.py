@@ -522,9 +522,12 @@ class Decoder:
         aws_keys = data.get("intake_esm_dataset_key")
         if aws_keys:
             facets["domain"] = aws_keys.split(".")[3]
-        regridded_domain_found = re.search(r"\w{3}-\d{2}i", data.get("title"))
-        if regridded_domain_found:
-            facets["domain"] = regridded_domain_found.group()
+
+        title = data.get("title")
+        if title:
+            regridded_domain_found = re.search(r"\w{3}-\d{2}i", title)
+            if regridded_domain_found:
+                facets["domain"] = regridded_domain_found.group()
 
         # The logic here is awful, but the information is bad to begin with.
         driving_model = None
