@@ -319,7 +319,7 @@ class Decoder:
                     f"Basing fields on `{found_freq}`."
                 )
                 return time_dictionary[found_freq]
-            elif found_freq == "month":
+            elif found_freq in ["month", "mon"]:
                 for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
                     if f in potential_times:
                         return time_dictionary[f]
