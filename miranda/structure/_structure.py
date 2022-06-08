@@ -7,12 +7,11 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import schema
 
-from miranda import Decoder
-from miranda.decode import guess_project
+from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
 from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
@@ -20,23 +19,65 @@ from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SC
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
+    "create_version_hashes",
     "build_path_from_schema",
     "structure_datasets",
 ]
 
 
-def generate_version_hashes(in_file: Path, out_file: Path):
-    hash_sha256_writer = hashlib.sha256()
-    with open(in_file, "rb") as f:
-        hash_sha256_writer.update(f.read())
-    sha256sum = hash_sha256_writer.hexdigest()
+def _generate_version_hashes(in_file: Path, out_file: Path) -> None:
+    if not out_file.exists():
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        sha256sum = hash_sha256_writer.hexdigest()
 
-    print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
-    with open(out_file, "w") as f:
-        f.write(sha256sum)
+        print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
+        try:
+            with open(out_file, "w") as f:
+                f.write(sha256sum)
+        except PermissionError:
+            logging.error("Unable to write file. Ensure access privileges.")
 
-    del hash_sha256_writer
-    del sha256sum
+        del hash_sha256_writer
+        del sha256sum
+    else:
+        print(f"Writing sha256sum file `{out_file.name}` exists. Continuing...")
+
+
+def create_version_hashes(
+    input_files: Optional[Union[os.PathLike, List[os.PathLike], GeneratorType]] = None,
+    facet_dict: Optional[Dict] = None,
+) -> None:
+    if not facet_dict and not input_files:
+        raise ValueError()
+
+    if input_files:
+        if isinstance(input_files, os.PathLike):
+            input_files = [input_files]
+        for f in input_files:
+            project = guess_project(f)
+            decoder = Decoder(project)
+            decoder.decode(f)
+            break
+        else:
+            raise FileNotFoundError()
+        decoder.decode(input_files)
+        facet_dict = decoder.file_facets()
+
+    version_hash_paths = dict()
+    for file, facets in facet_dict.items():
+        version_hash_file = f"{Path(file).stem}.{facets['version']}"
+        version_hash_paths.update(
+            {Path(file): Path(file).parent.joinpath(version_hash_file)}
+        )
+    with multiprocessing.Pool() as pool:
+        pool.starmap(
+            _generate_version_hashes,
+            zip(version_hash_paths.keys(), version_hash_paths.values()),
+        )
+        pool.close()
+        pool.join()
 
 
 def _structure_datasets(
@@ -225,7 +266,7 @@ def structure_datasets(
     if set_version_hashes:
         with multiprocessing.Pool() as pool:
             pool.starmap(
-                generate_version_hashes,
+                _generate_version_hashes,
                 zip(version_hash_paths.keys(), version_hash_paths.values()),
             )
             pool.close()

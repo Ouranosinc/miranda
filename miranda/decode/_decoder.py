@@ -350,6 +350,25 @@ class Decoder:
         facets["variable"] = variable
 
         try:
+            facets["version"] = data["version"]
+        except KeyError:
+            possible_version = Path(file).parent.name
+            if re.match(r"^[vV]\d+", possible_version):
+                facets["version"] = Path(file).parent.name
+            else:
+                possible_version_signature = Path(file).parent.glob(
+                    f"{Path(file).stem}.v*"
+                )
+                for sig in possible_version_signature:
+                    found_version = re.match(r"^[vV](\d+)", sig.suffix)
+                    if found_version:
+                        facets["version"] = found_version.group()
+                        facets["sha256sum"] = sig.open().read()
+                        break
+                else:
+                    facets["version"] = "vNotFound"
+
+        try:
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
@@ -438,7 +457,17 @@ class Decoder:
             if re.match(r"^[vV]\d+", possible_version):
                 facets["version"] = Path(file).parent.name
             else:
-                facets["version"] = "vNotFound"
+                possible_version_signature = Path(file).parent.glob(
+                    f"{Path(file).stem}.v*"
+                )
+                for sig in possible_version_signature:
+                    found_version = re.match(r"^[vV](\d+)", sig.suffix)
+                    if found_version:
+                        facets["version"] = found_version.group()
+                        facets["sha256sum"] = sig.open().read()
+                        break
+                else:
+                    facets["version"] = "vNotFound"
 
         try:
             facets["date_start"] = date_parser(date)
@@ -478,7 +507,17 @@ class Decoder:
             if re.match(r"^[vV]\d+", possible_version):
                 facets["version"] = Path(file).parent.name
             else:
-                facets["version"] = "vNotFound"
+                possible_version_signature = Path(file).parent.glob(
+                    f"{Path(file).stem}.v*"
+                )
+                for sig in possible_version_signature:
+                    found_version = re.match(r"^[vV](\d+)", sig.suffix)
+                    if found_version:
+                        facets["version"] = found_version.group()
+                        facets["sha256sum"] = sig.open().read()
+                        break
+                else:
+                    facets["version"] = "vNotFound"
 
         try:
             facets["date_start"] = date_parser(date)
@@ -579,7 +618,17 @@ class Decoder:
             if re.match(r"^[vV]\d+", possible_version):
                 facets["version"] = Path(file).parent.name
             else:
-                facets["version"] = "vNotFound"
+                possible_version_signature = Path(file).parent.glob(
+                    f"{Path(file).stem}.v*"
+                )
+                for sig in possible_version_signature:
+                    found_version = re.match(r"^[vV](\d+)", sig.suffix)
+                    if found_version:
+                        facets["version"] = found_version.group()
+                        facets["sha256sum"] = sig.open().read()
+                        break
+                else:
+                    facets["version"] = "vNotFound"
 
         try:
             facets["date_start"] = date_parser(date)
@@ -629,6 +678,25 @@ class Decoder:
         facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
         facets["type"] = "simulation"
         facets["variable"] = variable
+
+        try:
+            facets["version"] = data["version"]
+        except KeyError:
+            possible_version = Path(file).parent.name
+            if re.match(r"^[vV]\d+", possible_version):
+                facets["version"] = Path(file).parent.name
+            else:
+                possible_version_signature = Path(file).parent.glob(
+                    f"{Path(file).stem}.v*"
+                )
+                for sig in possible_version_signature:
+                    found_version = re.match(r"^[vV](\d+)", sig.suffix)
+                    if found_version:
+                        facets["version"] = found_version.group()
+                        facets["sha256sum"] = sig.open().read()
+                        break
+                else:
+                    facets["version"] = "vNotFound"
 
         try:
             facets["date_start"] = date_parser(date)
