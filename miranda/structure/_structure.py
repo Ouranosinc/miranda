@@ -304,6 +304,10 @@ def structure_datasets(
         hash_func = partial(_generate_version_hashes, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
             if existing_hashes:
+                print(
+                    f"Sha256sum signatures exist for {len(existing_hashes)} files. "
+                    f"Transferring them via `{method}` method."
+                )
                 pool.starmap(
                     getattr(shutil, method),
                     zip(existing_hashes.keys(), existing_hashes.values()),
