@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - setup.cfg
+      - setup.py
+      - miranda/__init__.py
   pull_request:
 
 jobs:
