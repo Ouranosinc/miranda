@@ -8,6 +8,7 @@ on:
       - setup.cfg
       - setup.py
       - miranda/__init__.py
+      - .github
 
 jobs:
   bump_patch_version:
