@@ -133,8 +133,10 @@ def build_path_from_schema(
         else:
             raise ValueError()
 
-    except schema.SchemaError:
-        logging.error(f"Validation issues found for file matching schema: {facets}")
+    except schema.SchemaError as e:
+        logging.error(
+            f"Validation issues found for file matching schema: {facets}: {e}"
+        )
     except ValueError:
         logging.error(
             f"No appropriate data schemas found for file matching schema: {facets}"

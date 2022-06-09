@@ -25,8 +25,8 @@ in different locations.
 e.g. /server/path/sample.tar becomes server.path.sample.tar
 The python trick to convert is::
 
-   >>> path_string = Path(dmf1_file).absolute() # to get full path if necessary.
-   >>> str(path_string).replace('/','.').lstrip('.')
+   >>> path_string = Path(dmf1_file).absolute()  # to get full path if necessary.
+   >>> str(path_string).replace("/", ".").lstrip(".")
 
 """
 import logging.config

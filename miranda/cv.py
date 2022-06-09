@@ -12,6 +12,7 @@ __all__ = [
     "CMIP6_MODELS",
     "CORDEX_INSTITUTES",
     "CORDEX_MODELS",
+    "DRIVING_MODELS",
     "GCM_MODELS",
     "INSTITUTIONS",
     "PROJECT_MODELS",
@@ -78,6 +79,9 @@ CMIP6_MODELS = [f.raw_name for f in CMIP6.source_id.terms]
 GCM_MODELS = list()
 GCM_MODELS.extend(CMIP5_MODELS)
 GCM_MODELS.extend(CMIP6_MODELS)
+
+DRIVING_MODELS = [f.raw_name for f in CORDEX.driving_model.terms]
+DRIVING_MODELS.extend(["UQAM-GEMatm-Can-ESMsea", "UQAM-GEMatm-MPI-ESMsea"])
 
 CORDEX_MODELS = list()
 CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_name.terms])

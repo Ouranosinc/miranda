@@ -204,14 +204,14 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         logging.info("Converting metadata to CF-like conventions.")
 
         # Conditional handling of source based on project name
-        if "_source" in m["header"].keys():
-            if p in m["header"]["_source"].keys():
-                m["header"]["source"] = m["header"]["_source"][p]
-                del m["header"]["_source"]
-            elif "source" in m["header"].keys():
+        if "_source" in m["Header"].keys():
+            if p in m["Header"]["_source"].keys():
+                m["Header"]["source"] = m["Header"]["_source"][p]
+            elif "source" in m["Header"].keys():
                 pass
             else:
                 raise AttributeError("Source not found for project dataset")
+            del m["Header"]["_source"]
 
         # Add global attributes
         d.attrs.update(m["Header"])

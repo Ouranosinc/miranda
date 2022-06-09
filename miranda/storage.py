@@ -256,10 +256,13 @@ def file_size(
         if isinstance(file_path_or_bytes, int):
             total = file_path_or_bytes
         elif isinstance(file_path_or_bytes, (list, GeneratorType)):
-            total = reduce(
-                (lambda x, y: x + y),
-                map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
-            )
+            try:
+                total = reduce(
+                    (lambda x, y: x + y),
+                    map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
+                )
+            except TypeError:
+                total = 0
         elif Path(file_path_or_bytes).is_file():
             total = Path(file_path_or_bytes).stat().st_size
         elif Path(file_path_or_bytes).is_dir():
