@@ -22,7 +22,7 @@ jobs:
           git config --local user.email "bumpversion[bot]@ouranos.ca"
           git config --local user.name "bumpversion[bot]"
       - name: Current Version
-        run: echo "current_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+        run: echo "current_version=$(grep -E '__version__'  miranda/__init__.py | cut -d ' ' -f3)"
       - name: Bump Patch Version
         run: |
           pip install bump2version
