@@ -29,9 +29,10 @@ jobs:
         run: |
           pip install bump2version
           bump2version patch
+          echo "new_version=$(grep -E '__version__'  miranda/__init__.py | cut -d ' ' -f3)"
       - name: Push Changes
         uses: ad-m/github-push-action@master
         with:
           force: false
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.BUMPVERSION_TOKEN }}
           branch: ${{ github.ref }}
