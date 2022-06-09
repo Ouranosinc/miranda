@@ -8,7 +8,7 @@ on:
       - setup.cfg
       - setup.py
       - miranda/__init__.py
-      - .github
+      - .github/workflows/*.yml
   pull_request:
 
 jobs:
