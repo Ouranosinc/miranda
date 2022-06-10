@@ -252,7 +252,7 @@ class Decoder:
                             return "fx"
                         if field == "timedelta":
                             return pd.NaT
-                        raise ValueError()
+                        raise ValueError(f"Field `{field}` not supported.")
                     if field == "timedelta":
                         return pd.to_timedelta(time_dictionary[potential_times[0]])
                     return time_dictionary[potential_times[0]]
@@ -283,6 +283,8 @@ class Decoder:
 
                 if potential_time in potential_times:
                     return time_dictionary[potential_time]
+                elif potential_times:
+                    break
 
             logging.warning(
                 f"Frequency from metadata (`{potential_time}`) not found in filename (`{Path(file).name}`): "
@@ -295,7 +297,6 @@ class Decoder:
             else:
                 raise DecoderError(file)
 
-            # FIXME: This block seems to be quietly failing for some monthly-formatted datasets
             _ds = xarray.open_dataset(
                 file,
                 engine=engine,
@@ -334,6 +335,7 @@ class Decoder:
                     f"Basing fields on `{found_freq}`."
                 )
                 return time_dictionary[found_freq]
+        raise RuntimeError(f"Time frequency indiscernible for file `{file}`.")
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:

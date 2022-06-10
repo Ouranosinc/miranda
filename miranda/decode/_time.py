@@ -36,6 +36,7 @@ TIME_UNITS_TO_FREQUENCY = {
     "sem": "sem",
     "monthly": "mon",
     "months": "mon",
+    "month": "mon",
     "mon": "mon",
     "monC": "monC",
     "Amon": "mon",
