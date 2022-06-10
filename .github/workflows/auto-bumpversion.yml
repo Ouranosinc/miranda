@@ -2,12 +2,12 @@ name: "Bump Patch Version"
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
     paths-ignore:
       - setup.cfg
       - setup.py
       - miranda/__init__.py
+      - .github/**.yml
 
 jobs:
   bump_patch_version:

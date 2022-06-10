@@ -16,7 +16,7 @@ limitations under the License.
 
 __author__ = "Trevor James Smith"
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.2.2-beta"
+__version__ = "0.2.5-beta"
 
 
 from . import (
@@ -29,10 +29,10 @@ from . import (
     ncar,
     remote,
     scripting,
+    structure,
     units,
     utils,
     validators,
 )
 from .data import DataBase
-from .decode import Decoder
 from .storage import FileMeta, StorageState
