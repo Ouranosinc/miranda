@@ -29,10 +29,10 @@ from . import (
     ncar,
     remote,
     scripting,
+    structure,
     units,
     utils,
     validators,
 )
 from .data import DataBase
-from .decode import Decoder
 from .storage import FileMeta, StorageState

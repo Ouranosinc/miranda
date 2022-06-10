@@ -7,12 +7,11 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import schema
 
-from miranda import Decoder
-from miranda.decode import guess_project
+from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
 from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
@@ -20,23 +19,89 @@ from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SC
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
+    "create_version_hashes",
     "build_path_from_schema",
     "structure_datasets",
 ]
 
 
-def generate_version_hashes(in_file: Path, out_file: Path):
-    hash_sha256_writer = hashlib.sha256()
-    with open(in_file, "rb") as f:
-        hash_sha256_writer.update(f.read())
-    sha256sum = hash_sha256_writer.hexdigest()
+def _generate_version_hashes(
+    in_file: Path, out_file: Path, verify: bool = False
+) -> None:
+    if not out_file.exists():
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        sha256sum = hash_sha256_writer.hexdigest()
 
-    print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
-    with open(out_file, "w") as f:
-        f.write(sha256sum)
+        print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
+        try:
+            with open(out_file, "w") as f:
+                f.write(sha256sum)
+        except PermissionError:
+            logging.error("Unable to write file. Ensure access privileges.")
 
-    del hash_sha256_writer
-    del sha256sum
+        del hash_sha256_writer
+        del sha256sum
+    elif verify:
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        calculated_sha256sum = hash_sha256_writer.hexdigest()
+
+        try:
+            with open(out_file) as f:
+                found_sha256sum = f.read()
+
+            if calculated_sha256sum != found_sha256sum:
+                raise ValueError()
+        except ValueError:
+            logging.error(
+                f"Found sha256sum (ending: {found_sha256sum[-6:]}) "
+                f"does not match current value (ending: {calculated_sha256sum[-6:]}) "
+                f"for file `{in_file.name}."
+            )
+
+    else:
+        print(f"Writing sha256sum file `{out_file.name}` exists. Continuing...")
+
+
+def create_version_hashes(
+    input_files: Optional[Union[os.PathLike, List[os.PathLike], GeneratorType]] = None,
+    facet_dict: Optional[Dict] = None,
+    verify_hash: bool = False,
+) -> None:
+    if not facet_dict and not input_files:
+        raise ValueError()
+
+    if input_files:
+        if isinstance(input_files, os.PathLike):
+            input_files = [input_files]
+        for f in input_files:
+            project = guess_project(f)
+            decoder = Decoder(project)
+            decoder.decode(f)
+            break
+        else:
+            raise FileNotFoundError()
+        decoder.decode(input_files)
+        facet_dict = decoder.file_facets()
+
+    version_hash_paths = dict()
+    for file, facets in facet_dict.items():
+        version_hash_file = f"{Path(file).stem}.{facets['version']}"
+        version_hash_paths.update(
+            {Path(file): Path(file).parent.joinpath(version_hash_file)}
+        )
+
+    hash_func = partial(_generate_version_hashes, verify=verify_hash)
+    with multiprocessing.Pool() as pool:
+        pool.starmap(
+            hash_func,
+            zip(version_hash_paths.keys(), version_hash_paths.values()),
+        )
+        pool.close()
+        pool.join()
 
 
 def _structure_datasets(
@@ -154,6 +219,7 @@ def structure_datasets(
     method: str = "copy",
     make_dirs: bool = False,
     set_version_hashes: bool = False,
+    verify_hashes: bool = False,
     filename_pattern: str = "*.nc",
 ) -> Mapping[Path, Path]:
     """
@@ -169,10 +235,12 @@ def structure_datasets(
       Prints changes that would have been made without performing them. Default: False.
     method: {"move", "copy"}
       Method to transfer files to intended location. Default: "move".
-    make_dirs:
+    make_dirs: bool
       Make folder tree if it does not already exist. Default: False.
-    set_version_hashes:
+    set_version_hashes: bool
       Make an accompanying file with version in filename and sha256sum in contents. Default: False.
+    verify_hashes: bool
+      Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
     filename_pattern: str
       If pattern ends with "zarr", will 'glob' with provided pattern.
       Otherwise, will perform an 'rglob' (recursive) operation.
@@ -197,6 +265,7 @@ def structure_datasets(
         decoder.decode(input_files)
 
     all_file_paths = dict()
+    existing_hashes = dict()
     version_hash_paths = dict()
     errored_files = list()
     for file, facets in decoder.file_facets().items():
@@ -209,9 +278,18 @@ def structure_datasets(
 
         if set_version_hashes:
             version_hash_file = f"{Path(file).stem}.{facets['version']}"
-            version_hash_paths.update(
-                {Path(file): output_filepath.joinpath(version_hash_file)}
-            )
+            if Path(file).parent.joinpath(version_hash_file).exists():
+                existing_hashes.update(
+                    {
+                        Path(file).parent.joinpath(
+                            version_hash_file
+                        ): output_filepath.joinpath(version_hash_file)
+                    }
+                )
+            else:
+                version_hash_paths.update(
+                    {Path(file): output_filepath.joinpath(version_hash_file)}
+                )
 
     if errored_files:
         logging.warning(
@@ -223,9 +301,19 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     if set_version_hashes:
+        hash_func = partial(_generate_version_hashes, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
+            if existing_hashes:
+                print(
+                    f"Sha256sum signatures exist for {len(existing_hashes)} files. "
+                    f"Transferring them via `{method}` method."
+                )
+                pool.starmap(
+                    getattr(shutil, method),
+                    zip(existing_hashes.keys(), existing_hashes.values()),
+                )
             pool.starmap(
-                generate_version_hashes,
+                hash_func,
                 zip(version_hash_paths.keys(), version_hash_paths.values()),
             )
             pool.close()
