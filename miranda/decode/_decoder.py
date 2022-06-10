@@ -56,7 +56,7 @@ class Decoder:
 
     @staticmethod
     def _decoder(
-        d: dict,
+        d: Dict,
         fail_early: bool,
         proj: str,
         lock: mp.Lock,
@@ -160,7 +160,18 @@ class Decoder:
         str
         """
         dimsvar_dict = dict()
-        coords = ("time", "lat", "lon", "rlat", "rlon", "height", "lev", "rotated_pole")
+        coords = (
+            "time",
+            "lat",
+            "latitude",
+            "lon",
+            "longitude",
+            "rlat",
+            "rlon",
+            "height",
+            "lev",
+            "rotated_pole",
+        )
         suggested_variable = file.name.split("_")[0]
 
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
@@ -338,7 +349,7 @@ class Decoder:
         raise RuntimeError(f"Time frequency indiscernible for file `{file}`.")
 
     @classmethod
-    def decode_converted(cls, file: Union[PathLike, str]) -> dict:
+    def decode_converted(cls, file: Union[PathLike, str]) -> Dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -384,20 +395,23 @@ class Decoder:
         return facets
 
     @staticmethod
-    def decode_eccc_obs(self, file: Union[PathLike, str]) -> dict:
+    def decode_eccc_obs(self, file: Union[PathLike, str]) -> Dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_ahccd_obs(self, file: Union[PathLike, str]) -> dict:
+    def decode_ahccd_obs(self, file: Union[PathLike, str]) -> Dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_melcc_obs(self, file: Union[PathLike, str]) -> dict:
+    def decode_melcc_obs(self, file: Union[PathLike, str]) -> Dict:
         raise NotImplementedError()
 
     @classmethod
-    def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> Optional[Dict]:
         variable, date, data = cls._from_dataset(file=file)
+
+        if "Derived" in Path(file).parents:
+            return
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -407,7 +421,9 @@ class Decoder:
         facets["domain"] = data["domain"]
         facets["experiment"] = str(data["GCM__experiment_id"]).replace(",", "-")
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+        facets["frequency"] = cls._decode_time_info(
+            data=data, file=file, field="frequency"
+        )
         facets["institution"] = data["GCM__institution_id"]
         facets["member"] = (
             f"r{data['GCM__realization_index']}"
@@ -418,7 +434,9 @@ class Decoder:
         facets["processing_level"] = "biasadjusted"
         facets["bias_adjust_project"] = "CanDCS-U6"
         facets["source"] = data["GCM__source_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
         facets["version"] = data["GCM__data_specs_version"]
@@ -432,7 +450,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip6(cls, file: Union[PathLike, str]) -> Dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -485,7 +503,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip5(cls, file: Union[PathLike, str]) -> Dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
@@ -535,7 +553,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cordex(cls, file: Union[PathLike, str]) -> Dict:
         variable, date, data = cls._from_dataset(file=file)
 
         # FIXME: What to do about our internal data that breaks all established conventions?
@@ -663,7 +681,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
+    def decode_isimip_ft(cls, file: Union[PathLike, str]) -> Dict:
         variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
