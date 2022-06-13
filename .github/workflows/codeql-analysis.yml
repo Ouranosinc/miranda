@@ -15,6 +15,7 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
+      - HISTORY.rst
       - setup.cfg
       - setup.py
       - miranda/__init__.py
