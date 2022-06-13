@@ -106,9 +106,9 @@ def request_era5(
         "era5-land", "era5-land-monthly-means"
     ].copy()
     del era5_single_levels["sde"]  # sde is not available for era5
-    era5_single_levels[
-        "sd"
-    ] = "snow_depth"  # note difference in name vs era5-land cf_variable == snw"
+    era5_single_levels.update(
+        sd="snow_depth"
+    )  # note difference in name vs era5-land cf_variable == snw"
     variable_reference[
         "era5-single-levels",
         "era5-single-levels-monthly-means",
