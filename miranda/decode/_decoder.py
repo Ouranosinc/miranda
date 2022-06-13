@@ -443,9 +443,9 @@ class Decoder:
         try:
             facets["version"] = f"v{data['GCM__data_specs_version']}"
         except KeyError:
-            possible_version_signature = Path(file).parent.glob(f"{Path(file).stem}.v*")
+            possible_version_signature = Path(file).parent.glob(Path(file).stem)
             for sig in possible_version_signature:
-                found_version = re.search(r"(v\d+)$", sig.suffix)
+                found_version = re.search(r"\.(v\d+.+)$", sig.name, re.IGNORECASE)
                 if found_version:
                     facets["version"] = found_version.group()
                     facets["sha256sum"] = sig.open().read()
@@ -491,14 +491,14 @@ class Decoder:
             facets["version"] = data["version"]
         except KeyError:
             possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
+            if re.match(r"^v\d+", possible_version, re.IGNORECASE):
                 facets["version"] = Path(file).parent.name
             else:
                 possible_version_signature = Path(file).parent.glob(
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.search(r"([vV]\d+)$", sig.suffix)
+                    found_version = re.search(r"(v\d+)$", sig.suffix, re.IGNORECASE)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -541,14 +541,14 @@ class Decoder:
             facets["version"] = data["version"]
         except KeyError:
             possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
+            if re.match(r"^v\d+", possible_version, re.IGNORECASE):
                 facets["version"] = Path(file).parent.name
             else:
                 possible_version_signature = Path(file).parent.glob(
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
+                    found_version = re.search(r"(v\d+)", sig.suffix, re.IGNORECASE)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -652,14 +652,14 @@ class Decoder:
             facets["version"] = data["version"]
         except KeyError:
             possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
+            if re.match(r"^v\d+", possible_version, re.IGNORECASE):
                 facets["version"] = Path(file).parent.name
             else:
                 possible_version_signature = Path(file).parent.glob(
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
+                    found_version = re.search(r"(v\d+)", sig.suffix, re.IGNORECASE)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
@@ -720,14 +720,14 @@ class Decoder:
             facets["version"] = data["version"]
         except KeyError:
             possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
+            if re.match(r"^v\d+", possible_version, re.IGNORECASE):
                 facets["version"] = Path(file).parent.name
             else:
                 possible_version_signature = Path(file).parent.glob(
                     f"{Path(file).stem}.v*"
                 )
                 for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
+                    found_version = re.search(r"(v\d+)", sig.suffix, re.IGNORECASE)
                     if found_version:
                         facets["version"] = found_version.group()
                         facets["sha256sum"] = sig.open().read()
