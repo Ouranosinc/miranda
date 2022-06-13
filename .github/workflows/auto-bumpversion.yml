@@ -9,6 +9,7 @@ on:
       - setup.py
       - miranda/__init__.py
       - .github/**.yml
+      - .pre-commit-config.yaml
 
 jobs:
   bump_patch_version:
