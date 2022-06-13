@@ -411,7 +411,7 @@ class Decoder:
         variable, date, data = cls._from_dataset(file=file)
 
         if "Derived" in Path(file).parents:
-            return
+            raise NotImplementedError()
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -439,7 +439,19 @@ class Decoder:
         )
         facets["type"] = "simulation"
         facets["variable"] = variable
-        facets["version"] = data["GCM__data_specs_version"]
+
+        try:
+            facets["version"] = f"v{data['GCM__data_specs_version']}"
+        except KeyError:
+            possible_version_signature = Path(file).parent.glob(f"{Path(file).stem}.v*")
+            for sig in possible_version_signature:
+                found_version = re.search(r"(v\d+)$", sig.suffix)
+                if found_version:
+                    facets["version"] = found_version.group()
+                    facets["sha256sum"] = sig.open().read()
+                    break
+            else:
+                facets["version"] = "vNotFound"
 
         try:
             facets["date_start"] = date_parser(date)
