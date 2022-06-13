@@ -9,12 +9,12 @@
       "era5-single-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
       "era5-single-levels-preliminary-back-extension": "ERA5-preliminary"
     },
-    "data_specs_version": "00.00.06",
+    "data_specs_version": "00.00.07",
     "institution": "ECMWF",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "2 June 2022",
+    "table_date": "13 June 2022",
     "type": "reconstruction"
   },
   "variable_entry": {
