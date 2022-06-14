@@ -4,10 +4,12 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
+      - HISTORY.rst
       - setup.cfg
       - setup.py
       - miranda/__init__.py
       - .github/**.yml
+      - .pre-commit-config.yaml
 
 jobs:
   bump_patch_version:

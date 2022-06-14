@@ -15,10 +15,12 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
+      - HISTORY.rst
       - setup.cfg
       - setup.py
       - miranda/__init__.py
       - .github/**.yml
+      - .pre-commit-config.yaml
   schedule:
     - cron: '30 23 * * 5'
 
