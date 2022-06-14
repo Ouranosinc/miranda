@@ -292,9 +292,14 @@ def structure_datasets(
                 )
 
     if errored_files:
-        logging.warning(
-            f"Some files were unable to be structured: [{', '.join(errored_files)}]"
-        )
+        if len(errored_files) < 10:
+            logging.warning(
+                f"Some files were unable to be structured: [{', '.join(errored_files)}]"
+            )
+        else:
+            logging.warning(
+                f"Many files were unable to be structured (n={len(errored_files)})"
+            )
 
     if make_dirs:
         for new_paths in set(all_file_paths.values()):

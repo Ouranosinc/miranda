@@ -52,7 +52,7 @@ def find_version_tags(file: Union[os.PathLike, str]) -> Dict:
     if re.match(r"^v\d+", possible_version, re.IGNORECASE):
         version_info["version"] = Path(file).parent.name
     else:
-        file_identity = str(Path(file)).split(".")[0]
+        file_identity = str(Path(file).name).split(".")[0]
         possible_version_signature = Path(file).parent.glob(f"{file_identity}.*")
         for sig in possible_version_signature:
             found_version = re.search(r"\.(v\d+.+)$", sig.name, re.IGNORECASE)
@@ -102,7 +102,8 @@ class Decoder:
                 if fail_early:
                     FACETS_SCHEMA.validate(_deciphered)
                 print(
-                    f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
+                    f"Deciphered the following from {Path(file).name}:\n"
+                    f"{_deciphered.items()}"
                 )
                 d[file] = _deciphered
 
@@ -110,7 +111,6 @@ class Decoder:
             print(f"Unable to read data from {Path(file).name}: {e}")
         except schema.SchemaError as e:
             print(f"Decoded facets from {Path(file).name} are not valid: {e}")
-            raise
 
     def decode(
         self,
@@ -381,7 +381,7 @@ class Decoder:
         facets["date"] = date
 
         file_format = data.get("output_format")
-        if format:
+        if file_format:
             facets["format"] = file_format
         else:
             facets["format"] = data["format"]
@@ -518,7 +518,9 @@ class Decoder:
         facets["processing_level"] = "raw"
         facets["mip_era"] = data["project_id"]
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -586,13 +588,13 @@ class Decoder:
             driving_institution = "-".join(driving_institution_parts[:3])
         elif data["driving_model_id"].startswith("GFDL"):
             driving_institution = "NOAA-GFDL"
-            facets["driving_model"] = f"NOAA-GFDL-{data['driving_model_id']}"
+            driving_model = f"NOAA-GFDL-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("MPI-ESM"):
             driving_institution = "MPI-M"
-            facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
+            driving_model = f"MPI-M-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("HadGEM2"):
             driving_institution = "MOHC"
-            facets["driving_model"] = f"MOHC-{data['driving_model_id']}"
+            driving_model = f"MOHC-{data['driving_model_id']}"
         else:
             raise AttributeError(
                 "driving_institution (from driving_model_id: "
@@ -600,7 +602,9 @@ class Decoder:
             )
 
         facets["driving_institution"] = driving_institution
-        if not driving_model:
+        if driving_model:
+            facets["driving_model"] = driving_model
+        else:
             facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(
@@ -614,7 +618,9 @@ class Decoder:
 
         facets["processing_level"] = "raw"
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -667,7 +673,9 @@ class Decoder:
         facets["modeling_realm"] = data["modeling_realm"]
         facets["social_forcing_id"] = data["social_forcing_id"]
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
 
