@@ -106,7 +106,7 @@ class Decoder:
                 )
                 d[file] = _deciphered
 
-        except AttributeError as e:
+        except (AttributeError, NotImplementedError) as e:
             print(f"Unable to read data from {Path(file).name}: {e}")
         except schema.SchemaError as e:
             print(f"Decoded facets from {Path(file).name} are not valid: {e}")
@@ -386,7 +386,9 @@ class Decoder:
         else:
             facets["format"] = data["format"]
 
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["variable"] = variable
 
         facets["version"] = data.get("version")
@@ -415,10 +417,10 @@ class Decoder:
 
     @classmethod
     def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> Optional[Dict]:
-        variable, date, data = cls._from_dataset(file=file)
-
         if "Derived" in Path(file).parents:
-            raise NotImplementedError()
+            raise NotImplementedError("Derived CanDCS-U6 variables are not supported.")
+
+        variable, date, data = cls._from_dataset(file=file)
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -520,24 +522,9 @@ class Decoder:
         facets["type"] = "simulation"
         facets["variable"] = variable
 
-        try:
-            facets["version"] = data["version"]
-        except KeyError:
-            possible_version = Path(file).parent.name
-            if re.match(r"^v\d+", possible_version, re.IGNORECASE):
-                facets["version"] = Path(file).parent.name
-            else:
-                possible_version_signature = Path(file).parent.glob(
-                    f"{Path(file).stem}.v*"
-                )
-                for sig in possible_version_signature:
-                    found_version = re.search(r"(v\d+)", sig.suffix, re.IGNORECASE)
-                    if found_version:
-                        facets["version"] = found_version.group()
-                        facets["sha256sum"] = sig.open().read()
-                        break
-                else:
-                    facets["version"] = "vNotFound"
+        facets["version"] = data.get("version")
+        if facets["version"] is None:
+            facets.update(find_version_tags(file=file))
 
         try:
             facets["date_start"] = date_parser(date)
