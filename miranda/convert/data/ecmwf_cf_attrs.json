@@ -9,12 +9,12 @@
       "era5-single-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
       "era5-single-levels-preliminary-back-extension": "ERA5-preliminary"
     },
-    "data_specs_version": "00.00.06",
+    "data_specs_version": "00.00.07",
     "institution": "ECMWF",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "2 June 2022",
+    "table_date": "13 June 2022",
     "type": "reconstruction"
   },
   "variable_entry": {
@@ -121,6 +121,11 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -155,6 +160,11 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -172,12 +182,46 @@
       "standard_name": "surface_upward_sensible_heat_flux",
       "units": "W m-2"
     },
+    "ssr": {
+      "_cf_variable_name": "rss",
+      "_corrected_units": {
+        "era5-land": "J m-2",
+        "era5-single-levels": "J m-2",
+        "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_invert_sign": {
+        "era5-land": false,
+        "era5-single-levels": false,
+        "era5-single-levels-preliminary-back-extension": false
+      },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "This parameter is the amount of solar radiation (also known as shortwave radiation) that reaches a horizontal plane at the surface of the Earth (both direct and diffuse) minus the amount reflected by the Earth's surface (which is governed by the albedo)",
+      "long_name": "Surface net downward shortwave flux",
+      "original_long_name": "Surface net solar radiation",
+      "standard_name": "surface_net_downward_shortwave_flux",
+      "units": "W m-2"
+    },
     "ssrd": {
       "_cf_variable_name": "rsds",
       "_corrected_units": {
         "era5-land": "J m-2",
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_invert_sign": {
+        "era5-land": false,
+        "era5-single-levels": false,
+        "era5-single-levels-preliminary-back-extension": false
       },
       "_offset_time": {
         "era5-land": true,
@@ -196,12 +240,46 @@
       "standard_name": "surface_downwelling_shortwave_flux",
       "units": "W m-2"
     },
+    "str": {
+      "_cf_variable_name": "rls",
+      "_corrected_units": {
+        "era5-land": "J m-2",
+        "era5-single-levels": "J m-2",
+        "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_invert_sign": {
+        "era5-land": false,
+        "era5-single-levels": false,
+        "era5-single-levels-preliminary-back-extension": false
+      },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Thermal radiation (also known as longwave or terrestrial radiation) refers to radiation emitted by the atmosphere, clouds and the surface of the Earth. This parameter is the difference between downward and upward thermal radiation at the surface of the Earth. It the amount passing through a horizontal plane.",
+      "long_name": "Surface net downward longwave flux",
+      "original_long_name": "Surface net thermal radiation",
+      "standard_name": "surface_net_downward_longwave_flux",
+      "units": "W m-2"
+    },
     "strd": {
       "_cf_variable_name": "rlds",
       "_corrected_units": {
         "era5-land": "J m-2",
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
+      },
+      "_invert_sign": {
+        "era5-land": false,
+        "era5-single-levels": false,
+        "era5-single-levels-preliminary-back-extension": false
       },
       "_offset_time": {
         "era5-land": true,
