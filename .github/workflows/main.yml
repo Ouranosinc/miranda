@@ -2,9 +2,9 @@ name: miranda
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
     paths-ignore:
+      - HISTORY.rst
       - setup.cfg
       - setup.py
       - miranda/__init__.py

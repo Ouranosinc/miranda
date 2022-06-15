@@ -187,6 +187,28 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                 d_out = d
         return d_out
 
+    def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+        key = "_invert_sign"
+        d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+        for vv in d.data_vars:
+            if p in m["variable_entry"][vv][key].keys():
+                if m["variable_entry"][vv][key][p]:
+                    logging.info(
+                        f"Inverting sign for `{vv}` (switching direction of values)."
+                    )
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv]
+                        d_out[out.name] = out.__invert__()
+                else:
+                    logging.info(
+                        f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
+                    )
+                    d_out = d
+            else:
+                logging.info(f"No sign inversion needed for `{vv}` in `{p}`.")
+                d_out = d
+        return d_out
+
     # For converting variable units to standard workflow units
     def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
         descriptions = m["variable_entry"]
@@ -271,6 +293,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
+    ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
     ds = _metadata_conversion(ds, project, output_format, metadata_definition)
     ds = _dims_conversion(ds)

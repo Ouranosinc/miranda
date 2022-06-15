@@ -106,7 +106,7 @@ SIMULATION_SCHEMA = Schema(
         "activity": str,
         "mip_era": str,
         "institution": Or(*INSTITUTIONS),
-        Or("driving_institution"): Or(*INSTITUTIONS),
+        Optional("driving_institution"): Or(*INSTITUTIONS),
         "source": str,
         "domain": str,
         Optional("driving_model"): Or(*DRIVING_MODELS),
