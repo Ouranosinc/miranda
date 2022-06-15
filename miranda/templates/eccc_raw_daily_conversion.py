@@ -39,8 +39,8 @@ if __name__ == "__main__":
     in_files = getenv("in")
     source_data = Path(in_files)
 
-    station_file = source_data.joinpath("Station Inventory EN.csv")
-    origin_files = source_data.parent.joinpath("eccc_source/20200618")
+    station_file = source_data.joinpath("swob-xml_station_list.csv")
+    origin_files = source_data.joinpath("source")
 
     daily = source_data.joinpath("daily")
     output_data = daily.joinpath("netcdf")

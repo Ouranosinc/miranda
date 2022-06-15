@@ -24,6 +24,7 @@ def cf_hourly_metadata(
     """
     ec_hourly_variables = {
         "061": {
+            "_table_name": {"HLY10"},
             "nc_units": "W m-2 h-1",
             "scale_factor": 1e6 / (60 * 60),
             "add_offset": 0,
@@ -32,6 +33,7 @@ def cf_hourly_metadata(
             "nc_name": "rf1_radiation",
         },
         "071": {
+            "_table_name": {"HLY01"},
             "nc_units": "m",
             "scale_factor": 30,
             "add_offset": 0,
@@ -40,6 +42,7 @@ def cf_hourly_metadata(
             "nc_name": "ceiling_hgt",
         },
         "072": {
+            "_table_name": {"HLY01"},
             "nc_units": "m",
             "scale_factor": 100,
             "add_offset": 0,
@@ -48,6 +51,7 @@ def cf_hourly_metadata(
             "nc_name": "visibility",
         },
         "073": {
+            "_table_name": {"HLY01"},
             "nc_units": "Pa",
             "scale_factor": 10,
             "add_offset": 0,
@@ -56,6 +60,7 @@ def cf_hourly_metadata(
             "nc_name": "psl",
         },
         "074": {
+            "_table_name": {"HLY01"},
             "nc_units": "K",
             "scale_factor": 0.1,
             "add_offset": 273.15,
@@ -64,6 +69,7 @@ def cf_hourly_metadata(
             "nc_name": "tds",
         },
         "075": {
+            "_table_name": {"HLY01"},
             "nc_units": "degree",
             "scale_factor": 10,
             "add_offset": 0,
@@ -72,6 +78,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_dir_u2a_16",
         },
         "076": {
+            "_table_name": {"HLY01"},
             "nc_units": "m s-1",
             "scale_factor": 0.277777778,
             "add_offset": 0,
@@ -80,6 +87,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_speed_u2a",
         },
         "077": {
+            "_table_name": {"HLY01"},
             "nc_units": "Pa",
             "scale_factor": 10,
             "add_offset": 0,
@@ -88,6 +96,7 @@ def cf_hourly_metadata(
             "nc_name": "pressure",
         },
         "078": {
+            "_table_name": {"HLY01"},
             "nc_units": "K",
             "scale_factor": 0.1,
             "add_offset": 273.15,
@@ -96,6 +105,7 @@ def cf_hourly_metadata(
             "nc_name": "tas_dry",
         },
         "079": {
+            "_table_name": {"HLY01"},
             "nc_units": "K",
             "scale_factor": 0.1,
             "add_offset": 273.15,
@@ -104,6 +114,7 @@ def cf_hourly_metadata(
             "nc_name": "tas_wet",
         },
         "080": {
+            "_table_name": {"HLY01"},
             "nc_units": "%",
             "scale_factor": 1,
             "add_offset": 0,
@@ -112,6 +123,7 @@ def cf_hourly_metadata(
             "nc_name": "hur",
         },
         "081": {
+            "_table_name": {"HLY01"},
             "nc_units": "%",
             "scale_factor": 10,
             "add_offset": 0,
@@ -120,6 +132,7 @@ def cf_hourly_metadata(
             "nc_name": "clo",
         },
         "082": {
+            "_table_name": {"HLY01"},
             "nc_units": "%",
             "scale_factor": 10,
             "add_offset": 0,
@@ -128,6 +141,7 @@ def cf_hourly_metadata(
             "nc_name": "clt",
         },
         "089": {
+            "_table_name": {"HLY01"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -136,6 +150,7 @@ def cf_hourly_metadata(
             "nc_name": "freeze_rain",
         },
         "094": {
+            "_table_name": {"HLY01"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -144,6 +159,7 @@ def cf_hourly_metadata(
             "nc_name": "ice_pellets",
         },
         "107": {
+            "_table_name": {"HLY01"},
             "nc_units": "%",
             "scale_factor": 10,
             "add_offset": 0,
@@ -152,6 +168,7 @@ def cf_hourly_metadata(
             "nc_name": "cloud_opac",
         },
         "108": {
+            "_table_name": {"HLY01"},
             "nc_units": "%",
             "scale_factor": 10,
             "add_offset": 0,
@@ -160,6 +177,7 @@ def cf_hourly_metadata(
             "nc_name": "cloud_frac",
         },
         "109": {
+            "_table_name": {"HLY01"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -168,6 +186,7 @@ def cf_hourly_metadata(
             "nc_name": "low_cloud_type",
         },
         "110": {
+            "_table_name": {"HLY01"},
             "nc_units": "m",
             "scale_factor": 30,
             "add_offset": 0,
@@ -176,6 +195,7 @@ def cf_hourly_metadata(
             "nc_name": "low_cloud_hgt",
         },
         "123": {
+            "_table_name": {"HLY01"},
             "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -184,6 +204,7 @@ def cf_hourly_metadata(
             "nc_name": "rainfall",
         },
         "133": {
+            "_table_name": {"HLY10"},
             "nc_units": "s",
             "scale_factor": 3600,
             "add_offset": 0,
@@ -192,6 +213,7 @@ def cf_hourly_metadata(
             "nc_name": "sun",
         },
         "156": {
+            "_table_name": {"HLY01"},
             "nc_units": "degree",
             "scale_factor": 10,
             "add_offset": 0,
@@ -200,6 +222,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_dir_u2a_36",
         },
         "262": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -208,6 +231,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation",
         },
         "263": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -216,6 +240,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_q1",
         },
         "264": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -224,6 +249,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_q2",
         },
         "265": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -232,6 +258,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_q3",
         },
         "266": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2 s-1",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -240,6 +267,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_q4",
         },
         "267": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -248,6 +276,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_weight_q1",
         },
         "268": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -256,6 +285,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_weight_q2",
         },
         "269": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -264,6 +294,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_weight_q3",
         },
         "270": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "kg m-2",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -272,6 +303,7 @@ def cf_hourly_metadata(
             "nc_name": "precipitation_weight_q4",
         },
         "271": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m s-1",
             "scale_factor": 0.02777778,
             "add_offset": 0,
@@ -280,6 +312,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_speed_q1",
         },
         "272": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m s-1",
             "scale_factor": 0.02777778,
             "add_offset": 0,
@@ -288,6 +321,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_speed_q2",
         },
         "273": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m s-1",
             "scale_factor": 0.02777778,
             "add_offset": 0,
@@ -296,6 +330,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_speed_q3",
         },
         "274": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m s-1",
             "scale_factor": 0.02777778,
             "add_offset": 0,
@@ -304,6 +339,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_speed_q4",
         },
         "275": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m",
             "scale_factor": 0.01,
             "add_offset": 0,
@@ -312,6 +348,7 @@ def cf_hourly_metadata(
             "nc_name": "snd_q4",
         },
         "276": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m",
             "scale_factor": 0.01,
             "add_offset": 0,
@@ -320,6 +357,7 @@ def cf_hourly_metadata(
             "nc_name": "snd_q1",
         },
         "277": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m",
             "scale_factor": 0.01,
             "add_offset": 0,
@@ -328,6 +366,7 @@ def cf_hourly_metadata(
             "nc_name": "snd_q2",
         },
         "278": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m",
             "scale_factor": 0.01,
             "add_offset": 0,
@@ -336,6 +375,7 @@ def cf_hourly_metadata(
             "nc_name": "snd_q3",
         },
         "279": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "degree",
             "scale_factor": 1,
             "add_offset": 0,
@@ -344,6 +384,7 @@ def cf_hourly_metadata(
             "nc_name": "wind_dir",
         },
         "280": {
+            "_table_name": {"HLY01_RCS"},
             "nc_units": "m s-1",
             "scale_factor": 0.02777778,
             "add_offset": 0,
@@ -380,6 +421,7 @@ def cf_daily_metadata(
     """
     ec_daily_variables = {
         "001": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "K",
             "scale_factor": 0.1,
             "add_offset": 273.15,
@@ -388,6 +430,7 @@ def cf_daily_metadata(
             "nc_name": "tasmax",
         },
         "002": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "K",
             "scale_factor": 0.1,
             "add_offset": 273.15,
@@ -396,6 +439,7 @@ def cf_daily_metadata(
             "nc_name": "tasmin",
         },
         "003": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "K",
             "scale_factor": 0.1,
             "add_offset": 273.15,
@@ -404,6 +448,7 @@ def cf_daily_metadata(
             "nc_name": "tas",
         },
         "010": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -412,6 +457,7 @@ def cf_daily_metadata(
             "nc_name": "prlptot",
         },
         "011": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "cm",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -420,6 +466,7 @@ def cf_daily_metadata(
             "nc_name": "prsntot",
         },
         "012": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "mm",
             "scale_factor": 0.1,
             "add_offset": 0,
@@ -436,6 +483,7 @@ def cf_daily_metadata(
             "nc_name": "sndtot",
         },
         "014": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -444,6 +492,7 @@ def cf_daily_metadata(
             "nc_name": "thunder",
         },
         "015": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -452,6 +501,7 @@ def cf_daily_metadata(
             "nc_name": "freezing_rain_drizzle",
         },
         "016": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -460,6 +510,7 @@ def cf_daily_metadata(
             "nc_name": "hail",
         },
         "017": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -468,6 +519,7 @@ def cf_daily_metadata(
             "nc_name": "fog_ice_fog",
         },
         "018": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -476,6 +528,7 @@ def cf_daily_metadata(
             "nc_name": "smoke_haze",
         },
         "019": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -484,6 +537,7 @@ def cf_daily_metadata(
             "nc_name": "blowing_dust_sand",
         },
         "020": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -492,6 +546,7 @@ def cf_daily_metadata(
             "nc_name": "blow_snow",
         },
         "021": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -500,6 +555,7 @@ def cf_daily_metadata(
             "nc_name": "wind_gt_28kt",
         },
         "022": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "1",
             "scale_factor": 1,
             "add_offset": 0,
@@ -508,6 +564,7 @@ def cf_daily_metadata(
             "nc_name": "wind_gt_34kt",
         },
         "023": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "degree",
             "scale_factor": 10,
             "add_offset": 0,
@@ -516,6 +573,7 @@ def cf_daily_metadata(
             "nc_name": "gust_dir",
         },
         "024": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "m s-1",
             "scale_factor": 0.2777778,
             "add_offset": 0,
@@ -524,6 +582,7 @@ def cf_daily_metadata(
             "nc_name": "gust_speed",
         },
         "025": {
+            "_table_name": {"DLY02", "DLY04"},
             "nc_units": "h",
             "scale_factor": 1,
             "add_offset": 0,
