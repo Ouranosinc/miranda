@@ -1,6 +1,6 @@
 import logging.config
 from datetime import datetime as dt
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Mapping, Tuple, Union
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -9,7 +9,9 @@ __all__ = ["cf_hourly_metadata", "cf_daily_metadata", "ahccd_metadata"]
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float]]:
+def cf_hourly_metadata(
+    variable_code: Union[int, str]
+) -> Mapping[str, Union[int, float, str]]:
     """
 
     Parameters
@@ -363,7 +365,9 @@ def cf_hourly_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, f
     return variable
 
 
-def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, float]]:
+def cf_daily_metadata(
+    variable_code: Union[int, str]
+) -> Mapping[str, Union[int, float, str]]:
     """
 
     Parameters
@@ -541,7 +545,7 @@ def cf_daily_metadata(variable_code: Union[int, str]) -> Dict[str, Union[int, fl
 
 def ahccd_metadata(
     code: str, gen: int
-) -> (Dict[str, Union[str, float]], Dict, List[Tuple[int, int]], int):
+) -> (Mapping[str, Union[int, float, str]], Dict, List[Tuple[int, int]], int):
     """
 
     Parameters
@@ -551,7 +555,7 @@ def ahccd_metadata(
 
     Returns
     -------
-    Dict[str, Union[str, float]], Dict, List[Tuple[int, int]], int
+    Mapping[str, Union[str, float]], Dict, List[Tuple[int, int]], int
     """
     generation = {1: "First", 2: "Second", 3: "Third"}.get(gen)
 

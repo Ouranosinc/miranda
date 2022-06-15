@@ -19,7 +19,7 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -301,7 +301,8 @@ def convert_daily_flat_files(
                 # Abort if the variable is not present
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        f"Variable `{variable_file_code}` not found for station `{code}` in file {fichier}. Continuing..."
+                        f"Variable `{variable_file_code}` not found for station `{code}` in file {fichier}. "
+                        "Continuing..."
                     )
                     continue
 
@@ -381,7 +382,7 @@ def convert_daily_flat_files(
                 else:
                     f_nc = f"{code}_{variable_code}_{variable_file_code}_{start_year}_{end_year}.nc"
 
-                ds.attrs["Conventions"] = "CF-1.7"
+                ds.attrs["Conventions"] = "CF-1.8"
                 ds.attrs[
                     "title"
                 ] = "Environment and Climate Change Canada (ECCC) weather eccc"
@@ -445,8 +446,8 @@ def aggregate_stations(
 
     if not station_metadata:
         raise RuntimeError(
-            "Download the data from ECCC's Google Drive at:\n"
-            "https://drive.google.com/open?id=1egfzGgzUb0RFu_EE5AYFZtsyXPfZ11y2"
+            "Download the data from Government of Canada Open Data at:\n"
+            "https://dd.weather.gc.ca/observations/doc/swob-xml_station_list.csv"
         )
 
     if isinstance(source_files, str):
@@ -483,8 +484,8 @@ def aggregate_stations(
         logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
         # Find the ECCC stations where we have available metadata
-        df_inv = pd.read_csv(str(station_metadata), header=3)
-        station_inventory = list(df_inv["Climate ID"].values)
+        df_inv = pd.read_csv(str(station_metadata), header=1)
+        station_inventory = list(df_inv["MSC_ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
@@ -536,13 +537,13 @@ def aggregate_stations(
             # filter metadata for station_ids in dataset
             logging.info("Writing out metadata.")
 
-            meta = df_inv.loc[df_inv["Climate ID"].isin(ds.station_id.values)]
+            meta = df_inv.loc[df_inv["MSC_ID"].isin(ds.station_id.values)]
             # Rearrange column order to have lon, lat, elev first
             cols = meta.columns.tolist()
             cols1 = [
-                "Latitude (Decimal Degrees)",
-                "Longitude (Decimal Degrees)",
-                "Elevation (m)",
+                "Latitude",
+                "Longitude",
+                "Elevation(m)",
             ]
             for rr in cols1:
                 cols.remove(rr)
@@ -550,23 +551,21 @@ def aggregate_stations(
             meta = meta[cols1]
             meta.index.rename("station", inplace=True)
             meta = meta.to_xarray()
-            meta.sortby(meta["Climate ID"])
+            meta.sortby(meta["MSC_ID"])
             meta = meta.assign({"station": ds.station.values})
 
             meta = meta.drop(
                 ["Longitude", "Latitude"]
             )  # these values are projected x,y values Need to know prj to potentially rename
-            np.testing.assert_array_equal(
-                meta["Climate ID"].values, ds.station_id.values
-            )
+            np.testing.assert_array_equal(meta["MSC_ID"].values, ds.station_id.values)
             ds = xr.merge([ds, meta])
             ds.attrs = attrs1
 
             # TODO rename Longitude / Latitude DD
-            rename = {
-                "Latitude (Decimal Degrees)": "lat",
-                "Longitude (Decimal Degrees)": "lon",
-            }
+            rename = dict(
+                Latitude="lat",
+                Longitude="lon",
+            )
             for i in rename.items():
                 ds = ds.rename({i[0]: i[1]})
 
@@ -657,7 +656,7 @@ def aggregate_stations(
             ds_out.close()
 
         else:
-            logging.info("No files found for variable: `%s`." % variable_name)
+            logging.info(f"No files found for variable: `{variable_name}`.")
 
     runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
     logging.warning(runtime)
@@ -699,7 +698,7 @@ def _tmp_nc(
 def merge_converted_variables(
     source: Union[str, Path],
     destination: Union[str, Path],
-    variables: Optional[Union[str, int, list[Union[str, int]]]] = None,
+    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
 ) -> None:
     """
 
@@ -714,7 +713,7 @@ def merge_converted_variables(
 
     """
 
-    def _combine_years(args: tuple[str, Union[str, Path], Union[str, Path]]) -> None:
+    def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
         varia, input_folder, output_folder = args
 
         ncfiles = sorted(list(input_folder.glob("*.nc")))
