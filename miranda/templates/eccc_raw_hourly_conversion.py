@@ -77,7 +77,10 @@ if __name__ == "__main__":
     final.mkdir(parents=True, exist_ok=True)
 
     convert_hourly_flat_files(
-        source_files=origin_files, output_folder=output_data, variables=var_codes
+        source_files=origin_files,
+        output_folder=output_data,
+        variables=var_codes,
+        n_workers=1,
     )
 
     merge_converted_variables(source=output_data, destination=merged)

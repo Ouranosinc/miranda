@@ -399,6 +399,7 @@ def cf_hourly_metadata(
     try:
         variable = ec_hourly_variables[code]
         variable["missing_flags"] = "M"
+        variable["missing_values"] = {-9999, "#####"}
         variable["least_significant_digit"] = ""
     except KeyError:
         logging.error(f"Hourly variable `{code}` not supported.")

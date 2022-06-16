@@ -12,8 +12,10 @@
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
 import contextlib
+import functools
 import itertools
 import logging
+import multiprocessing as mp
 import os
 import sys
 import tempfile
@@ -22,20 +24,19 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client as DaskClient
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.storage import file_size, report_file_size
+from miranda.units import GiB, MiB
+from miranda.utils import generic_extract_archive
 
-from ..storage import file_size
-from ..units import MiB
-from ..utils import generic_extract_archive
 from ._utils import cf_daily_metadata, cf_hourly_metadata
 
 config.dictConfig(LOGGING_CONFIG)
@@ -48,12 +49,273 @@ __all__ = [
 ]
 
 
+def _convert_station_file(
+    fichier: Path,
+    output_path: Path,
+    errored_files: List[Path],
+    mode: str,
+    add_offset: float,
+    col_dtypes: List[str],
+    col_names: List[str],
+    long_name: str,
+    missing_flags: Set[str],
+    missing_values: Set[str],
+    nc_name: str,
+    nc_units: str,
+    scale_factor: float,
+    standard_name: str,
+    variable_code: str,
+    **_,
+):
+    if mode == "hourly":
+        num_observations = 24
+        column_widths = [7, 4, 2, 2, 3] + [6, 1] * num_observations
+    elif mode == "daily":
+        num_observations = 31
+        column_widths = [7, 4, 2, 3] + [6, 1] * num_observations
+    else:
+        raise NotImplementedError()
+
+    if not missing_values:
+        missing_values = {-9999, "#####"}
+
+    with tempfile.TemporaryDirectory() as temp_folder:
+        if fichier.suffix in [".gz", ".tar", ".zip", ".7z"]:
+            data_files = generic_extract_archive(fichier, output_dir=temp_folder)
+        else:
+            data_files = [fichier]
+        logging.info(f"Processing file: {fichier}.")
+
+        size_limit = 1 * GiB
+
+        for data in data_files:
+            if file_size(data) > size_limit and "dask" in sys.modules:
+                logging.info(
+                    f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
+                )
+                pandas_reader = dd
+                using_dask_array = True
+                chunks = dict(blocksize=100 * MiB)
+                client = ProgressBar
+            else:
+                logging.info(
+                    f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
+                )
+                pandas_reader = pd
+                chunks = dict()
+                using_dask_array = False
+                client = contextlib.nullcontext
+
+            with client():
+                # Create a dataframe from the files
+                try:
+                    df = pandas_reader.read_fwf(
+                        data,
+                        widths=column_widths,
+                        names=col_names,
+                        dtype={
+                            name: data_type
+                            for name, data_type in zip(col_names, col_dtypes)
+                        },
+                        assume_missing=True,
+                        **chunks,
+                    )
+                except FileNotFoundError:
+                    logging.error(f"File {data} was not found.")
+                    errored_files.append(data)
+                    return
+
+                except (UnicodeDecodeError, Exception) as e:
+                    logging.error(
+                        f"File {data.name} was unable to be read. "
+                        f"This is probably an issue with the file: {e}"
+                    )
+                    errored_files.append(data)
+                    return
+
+                # Loop through the station codes
+                station_codes = df["code"].unique()
+                for code in station_codes:
+                    df_code = df[df["code"] == code]
+
+                    # Abort if the variable is not found
+                    if using_dask_array:
+                        has_variable_codes = (
+                            (df_code["code_var"] == variable_code).compute()
+                        ).any()
+                    else:
+                        has_variable_codes = (
+                            df_code["code_var"] == variable_code
+                        ).any()
+                    if not has_variable_codes:
+                        logging.info(
+                            f"Variable `{nc_name}` not found for station code: {code} in file {data}. Continuing..."
+                        )
+                        continue
+
+                    # Perform the data treatment
+                    logging.info(f"Converting `{nc_name}` for station code: {code}")
+
+                    # Dump the data into a DataFrame
+                    df_var = df_code[df_code["code_var"] == variable_code].copy()
+
+                    # Mask the data according to the missing values flag
+                    df_var = df_var.replace(missing_values, np.nan)
+
+                    # Decode the values and flags
+                    dfd = df_var.loc[
+                        :, [f"D{i:0n}" for i in range(1, num_observations + 1)]
+                    ]
+                    dff = df_var.loc[
+                        :, [f"F{i:0n}" for i in range(1, num_observations + 1)]
+                    ]
+
+                    # Remove the "NaN" flag
+                    dff = dff.fillna("")
+
+                    # Use the flag to mask the values
+                    try:
+                        val = np.asarray(dfd.values, float)
+                    except ValueError as e:
+                        logging.error(f"{e} raised from {dfd}, continuing...")
+                        continue
+                    try:
+                        flag = np.asarray(dff.values, str)
+                    except ValueError as e:
+                        logging.error(f"{e} raised from {dff}, continuing...")
+                        continue
+                    mask = np.isin(flag, missing_flags)
+                    val[mask] = np.nan
+
+                    # Treat according to units conversions
+                    val = val * scale_factor + add_offset
+
+                    # Create the DataArray
+                    date_summations = dict(time=list())
+                    if mode == "hourly":
+                        for index, row in df_var.iterrows():
+                            period = pd.Period(
+                                year=row.year, month=row.month, day=row.day, freq="D"
+                            )
+                            dates = pd.Series(
+                                pd.date_range(
+                                    start=period.start_time,
+                                    end=period.end_time,
+                                    freq="H",
+                                )
+                            )
+                            date_summations["time"].extend(dates)
+                        written_values = val.flatten()
+                        written_flags = flag.flatten()
+                    elif mode == "daily":
+                        value_days = list()
+                        flag_days = list()
+                        for i, (index, row) in enumerate(df_var.iterrows()):
+                            period = pd.Period(year=row.year, month=row.month, freq="M")
+                            dates = pd.Series(
+                                pd.date_range(
+                                    start=period.start_time,
+                                    end=period.end_time,
+                                    freq="D",
+                                )
+                            )
+                            date_summations["time"].extend(dates)
+
+                            value_days.extend(
+                                val[i][range(monthrange(row.year, row.month)[1])]
+                            )
+                            flag_days.extend(
+                                flag[i][range(monthrange(row.year, row.month)[1])]
+                            )
+                        written_values = value_days
+                        written_flags = flag_days
+
+                    ds = xr.Dataset()
+                    da_val = xr.DataArray(
+                        written_values, coords=date_summations, dims=["time"]
+                    )
+                    da_val = da_val.rename(nc_name)
+                    da_val.attrs["units"] = nc_units
+                    da_val.attrs["id"] = code
+                    da_val.attrs["element_number"] = variable_code
+                    da_val.attrs["standard_name"] = standard_name
+                    da_val.attrs["long_name"] = long_name
+
+                    da_flag = xr.DataArray(
+                        written_flags, coords=date_summations, dims=["time"]
+                    )
+                    da_flag.attrs["long_name"] = "data flag"
+                    da_flag.attrs[
+                        "note"
+                    ] = "See ECCC technical documentation for details"
+
+                    ds[nc_name] = da_val
+                    ds["flag"] = da_flag
+
+                    # save the file in NetCDF format
+                    start_year = ds.time.dt.year.values[0]
+                    end_year = ds.time.dt.year.values[-1]
+
+                    station_folder = output_path.joinpath(str(code))
+                    station_folder.mkdir(parents=True, exist_ok=True)
+
+                    f_nc = (
+                        f"{code}_{variable_code}_{nc_name}_"
+                        f"{start_year if start_year == end_year else '_'.join([start_year, end_year])}.nc"
+                    )
+
+                    ds.attrs["Conventions"] = "CF-1.8"
+                    ds.attrs[
+                        "title"
+                    ] = "Environment and Climate Change Canada (ECCC) weather eccc"
+                    ds.attrs["history"] = (
+                        f"{dt.now().strftime('%Y-%m-%d %X')}: "
+                        f"Merged from multiple individual station files to n-dimensional array."
+                    )
+                    ds.attrs["version"] = f"v{dt.now().strftime('%Y.%m')}"
+                    ds.attrs[
+                        "institution"
+                    ] = "Environment and Climate Change Canada (ECCC)"
+                    ds.attrs[
+                        "source"
+                    ] = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
+                    ds.attrs[
+                        "references"
+                    ] = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
+                    ds.attrs[
+                        "comment"
+                    ] = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
+                    ds.attrs[
+                        "redistribution"
+                    ] = "Redistribution policy unknown. For internal use only."
+
+                    logging.info(f"Exporting to: {station_folder.joinpath(f_nc)}")
+                    ds.to_netcdf(station_folder.joinpath(f_nc))
+
+                del df
+                del ds
+                del flag
+                del mask
+                del val
+                del da_val
+                del da_flag
+                del dfd
+                del dff
+                del written_values
+                del written_flags
+                del date_summations
+
+        if os.listdir(temp_folder):
+            for temporary_file in Path(temp_folder).glob("*"):
+                if temporary_file in data_files:
+                    temporary_file.unlink()
+
+
 def convert_hourly_flat_files(
     source_files: Union[str, Path],
     output_folder: Union[str, Path, List[Union[str, int]]],
     variables: Union[str, int, List[Union[str, int]]],
-    missing_values: List[Union[int, str]] = None,
-    dask_kwargs=None,
+    n_workers: int = 4,
 ) -> None:
     """
 
@@ -62,252 +324,69 @@ def convert_hourly_flat_files(
     source_files: str or Path
     output_folder: str or Path
     variables: str or List[str]
-    missing_values: List[Union[int, str]
-    dask_kwargs: Dict[str]
+    n_workers: int
 
     Returns
     -------
     None
     """
-    if dask_kwargs is None:
-        dask_kwargs = dict()
-    if not missing_values:
-        missing_values = [-9999, "#####"]
-
     func_time = time.time()
 
     if isinstance(variables, (str, int)):
         variables = [variables]
 
     for variable_code in variables:
-        info = cf_hourly_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
-        variable_name = info["standard_name"]
-        variable_file_name = info["nc_name"]
+        metadata = cf_hourly_metadata(variable_code)
+        nc_name = metadata["nc_name"]
 
         # Preparing the data extraction
         col_names = ["code", "year", "month", "day", "code_var"]
-        col_dtypes = {
-            "code": str,
-            "year": float,
-            "month": float,
-            "day": float,
-            "code_var": str,
-        }
+        col_dtypes = [str, float, float, float, str]
         for i in range(1, 25):
             data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
             col_names.append(data_entry)
             col_names.append(flag_entry)
-            col_dtypes.update({data_entry: str, flag_entry: str})
+            col_dtypes.extend([str, str])
 
-        rep_nc = Path(output_folder).joinpath(variable_file_name)
+        rep_nc = Path(output_folder).joinpath(nc_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
         logging.info(
-            f"Collecting files for variable '{info['standard_name']}' "
-            f"(filenames containing '{info['_table_name']}')."
+            f"Collecting files for variable '{metadata['standard_name']}' "
+            f"(filenames containing '{metadata['_table_name']}')."
         )
         list_files = list()
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         else:
-            glob_patterns = [g for g in info["_table_name"]]
+            glob_patterns = [g for g in metadata["_table_name"]]
             for pattern in glob_patterns:
                 list_files.extend(
                     [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
                 )
-        list_files.sort()
+        manager = mp.Manager()
+        errored_files = manager.list()
+        converter_func = functools.partial(
+            _convert_station_file,
+            output_path=rep_nc,
+            errored_files=errored_files,
+            mode="hourly",
+            variable_code=variable_code,
+            col_names=col_names,
+            col_dtypes=col_dtypes,
+            **metadata,
+        )
+        with mp.Pool(n_workers) as pool:
+            pool.map(converter_func, list_files)
+            pool.close()
+            pool.join()
 
-        errored_files = list()
-        for f in list_files:
-            with tempfile.TemporaryDirectory() as temp_folder:
-                if f.suffix in [".gz", ".tar", ".zip", ".7z"]:
-                    data_files = generic_extract_archive(f, output_dir=temp_folder)
-                else:
-                    data_files = [f]
-
-                for fichier in data_files:
-                    logging.info(f"Processing file: {fichier}.")
-
-                    if file_size(fichier) > 200000 * MiB and "dask" in sys.modules:
-                        logging.info("File exceeds 200 MiB - Using dask.dataframes.")
-                        pandas_reader = dd
-                        using_dask_array = True
-                        chunks = dict(blocksize=25 * MiB)
-                        dask_client = DaskClient
-                    else:
-                        logging.info("Using pandas dataframes.")
-                        pandas_reader = pd
-                        chunks = dict()
-                        using_dask_array = False
-                        dask_client = contextlib.nullcontext
-
-                    with dask_client(**dask_kwargs):
-                        # Create a dataframe from the files
-                        try:
-                            df = pandas_reader.read_fwf(
-                                fichier,
-                                widths=[7, 4, 2, 2, 3] + [6, 1] * 24,
-                                names=col_names,
-                                dtype=col_dtypes,
-                                assume_missing=True,
-                                **chunks,
-                            )
-                        except FileNotFoundError:
-                            logging.error(f"File {fichier} was not found.")
-                            errored_files.append(fichier)
-                            continue
-
-                        except (UnicodeDecodeError, Exception) as e:
-                            logging.error(
-                                f"File {fichier} was unable to be read. This is probably an issue with the file: "
-                                f"{e}"
-                            )
-                            errored_files.append(fichier)
-                            continue
-
-                        # Loop through the station codes
-                        station_codes = df["code"].unique()
-                        for code in station_codes:
-                            df_code = df[df["code"] == code]
-
-                            # Abort if the variable is not found
-                            if using_dask_array:
-                                has_variable_codes = (
-                                    (df_code["code_var"] == variable_code)
-                                    .compute()
-                                    .any()
-                                )
-                            else:
-                                has_variable_codes = (
-                                    df_code["code_var"] == variable_code
-                                ).any()
-                            if not has_variable_codes:
-                                logging.info(
-                                    f"Variable `{variable_file_name}` not found for station code: {code}. Continuing..."
-                                )
-                                continue
-
-                            # Treat the data
-                            logging.info(
-                                f"Converting `{variable_file_name}` for station code: {code}"
-                            )
-
-                            # Dump the data into a DataFrame
-                            df_var = df_code[
-                                df_code["code_var"] == variable_code
-                            ].copy()
-
-                            # Mask the data according to the missing values flag
-                            df_var = df_var.replace(missing_values, np.nan)
-
-                            # Decode the values and flags
-                            dfd = df_var.loc[:, [f"D{i:0n}" for i in range(1, 25)]]
-                            dff = df_var.loc[:, [f"F{i:0n}" for i in range(1, 25)]]
-
-                            # Remove the "NaN" flag
-                            dff = dff.fillna("")
-
-                            # Use the flag to mask the values
-                            try:
-                                val = np.asarray(dfd.values, float)
-                            except ValueError as e:
-                                logging.error(f"{e} raised from {dfd}, continuing...")
-                                continue
-                            try:
-                                flag = np.asarray(dff.values, str)
-                            except ValueError as e:
-                                logging.error(f"{e} raised from {dff}, continuing...")
-                                continue
-                            mask = np.isin(flag, info["missing_flags"])
-                            val[mask] = np.nan
-
-                            # Treat according to units conversions
-                            val = val * info["scale_factor"] + info["add_offset"]
-
-                            # Create the DataArray
-                            dates = dict(time=list())
-                            for index, row in df_var.iterrows():
-                                for h in range(0, 24):
-                                    dates["time"].append(
-                                        dt(
-                                            int(row.year),
-                                            int(row.month),
-                                            int(row.day),
-                                            h,
-                                        )
-                                    )
-
-                            logging.info("Handling data values")
-                            ds = xr.Dataset()
-                            da_val = xr.DataArray(
-                                val.flatten(), coords=dates, dims=["time"]
-                            )
-                            da_val = da_val.rename(variable_file_name)
-                            da_val.attrs["units"] = info["nc_units"]
-                            da_val.attrs["id"] = code
-                            da_val.attrs["element_number"] = variable_code
-                            da_val.attrs["standard_name"] = variable_name
-                            da_val.attrs["long_name"] = info["long_name"]
-
-                            logging.info("Handling flags.")
-                            da_flag = xr.DataArray(
-                                flag.flatten(), coords=dates, dims=["time"]
-                            )
-                            da_flag.attrs["long_name"] = "data flag"
-                            da_flag.attrs[
-                                "note"
-                            ] = "See ECCC technical documentation for details"
-
-                            ds[variable_file_name] = da_val
-                            ds["flag"] = da_flag
-
-                            # save the file in NetCDF format
-                            start_year = ds.time.dt.year.values[0]
-                            end_year = ds.time.dt.year.values[-1]
-
-                            station_folder = rep_nc.joinpath(str(code))
-                            station_folder.mkdir(parents=True, exist_ok=True)
-
-                            f_nc = (
-                                f"{code}_{variable_code}_{variable_file_name}_"
-                                f"{start_year if start_year == end_year else '_'.join([start_year, end_year])}.nc"
-                            )
-
-                            ds.attrs["Conventions"] = "CF-1.8"
-                            ds.attrs[
-                                "title"
-                            ] = "Environment and Climate Change Canada (ECCC) weather eccc"
-                            ds.attrs["history"] = (
-                                f"{dt.now().strftime('%Y-%m-%d %X')}: "
-                                f"Merged from multiple individual station files to n-dimensional array."
-                            )
-                            ds.attrs["version"] = f"v{dt.now().strftime('%Y.%m')}"
-                            ds.attrs[
-                                "institution"
-                            ] = "Environment and Climate Change Canada (ECCC)"
-                            ds.attrs[
-                                "source"
-                            ] = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
-                            ds.attrs[
-                                "references"
-                            ] = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
-                            ds.attrs[
-                                "comment"
-                            ] = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
-                            ds.attrs[
-                                "redistribution"
-                            ] = "Redistribution policy unknown. For internal use only."
-
-                            logging.info(
-                                f"Exporting to: {station_folder.joinpath(f_nc)}"
-                            )
-                            ds.to_netcdf(station_folder.joinpath(f_nc))
-
-                if os.listdir(temp_folder):
-                    for tmp_file in Path(temp_folder).glob("*"):
-                        tmp_file.unlink()
+        if errored_files:
+            logging.warning(
+                "Some files failed to be properly parsed:\n", ", ".join(errored_files)
+            )
 
     logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")
 
@@ -351,7 +430,7 @@ def convert_daily_flat_files(
             "month": float,
             "code_var": str,
         }
-        for i in range(1, 25):
+        for i in range(1, 32):
             data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
             col_names.append(data_entry)
             col_names.append(flag_entry)
