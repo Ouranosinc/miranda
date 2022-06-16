@@ -1,4 +1,7 @@
-import pyessv
+from miranda.utils import HiddenPrints
+
+with HiddenPrints():
+    import pyessv
 
 from miranda.ecmwf._era5 import ERA5_PROJECT_NAMES  # noqa
 

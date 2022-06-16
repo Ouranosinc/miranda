@@ -10,7 +10,7 @@ KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
-u = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+u = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
 
 # General purpose units
 null = pint.Context("none")
