@@ -18,6 +18,7 @@ from . import scripting
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
+    "HiddenPrints",
     "chunk_iterables",
     "creation_date",
     "discover_data",
@@ -35,6 +36,20 @@ ISO_8601 = (
     r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])"
     r"T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$"
 )
+
+
+class HiddenPrints:
+    # Solution from https://stackoverflow.com/a/45669280/7322852
+    # Credit to Alexander C (https://stackoverflow.com/users/2039471/alexander-c)
+    # CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, "w")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
 
 
 def discover_data(
