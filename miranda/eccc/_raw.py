@@ -130,11 +130,11 @@ def convert_hourly_flat_files(
                 for fichier in data_files:
                     logging.info(f"Processing file: {fichier}.")
 
-                    if file_size(fichier) > 200 * MiB and "dask" in sys.modules:
+                    if file_size(fichier) > 200000 * MiB and "dask" in sys.modules:
                         logging.info("File exceeds 200 MiB - Using dask.dataframes.")
                         pandas_reader = dd
                         using_dask_array = True
-                        chunks = dict(blocksize=50 * MiB)
+                        chunks = dict(blocksize=25 * MiB)
                         dask_client = DaskClient
                     else:
                         logging.info("Using pandas dataframes.")
@@ -270,10 +270,10 @@ def convert_hourly_flat_files(
                             station_folder = rep_nc.joinpath(str(code))
                             station_folder.mkdir(parents=True, exist_ok=True)
 
-                            if start_year == end_year:
-                                f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}.nc"
-                            else:
-                                f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}_{end_year}.nc"
+                            f_nc = (
+                                f"{code}_{variable_code}_{variable_file_name}_"
+                                f"{start_year if start_year == end_year else '_'.join([start_year, end_year])}.nc"
+                            )
 
                             ds.attrs["Conventions"] = "CF-1.8"
                             ds.attrs[
@@ -340,26 +340,42 @@ def convert_daily_flat_files(
     for variable_code in variables:
         info = cf_daily_metadata(variable_code)
         variable_code = str(variable_code).zfill(3)
-        variable_file_code = info["nc_name"]
+        # variable_name = info["standard_name"]
+        variable_file_name = info["nc_name"]
 
-        # Prepare the data extraction
-        titre_colonnes = "code year month code_var".split()
-        for i in range(1, 32):
-            titre_colonnes.append(f"D{i:0n}")
-            titre_colonnes.append(f"F{i:0n}")
+        # Preparing the data extraction
+        col_names = ["code", "year", "month", "code_var"]
+        col_dtypes = {
+            "code": str,
+            "year": float,
+            "month": float,
+            "code_var": str,
+        }
+        for i in range(1, 25):
+            data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
+            col_names.append(data_entry)
+            col_names.append(flag_entry)
+            col_dtypes.update({data_entry: str, flag_entry: str})
 
         # Create the output directory
-        rep_nc = Path(output_folder).joinpath(variable_file_code)
+        rep_nc = Path(output_folder).joinpath(variable_file_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
+        logging.info(
+            f"Collecting files for variable '{info['standard_name']}' "
+            f"(filenames containing '{info['_table_name']}')."
+        )
         list_files = list()
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         else:
-            list_files.extend(
-                [f for f in Path(source_files).rglob("*DLY*") if f.is_file()]
-            )
+            glob_patterns = [g for g in info["_table_name"]]
+            for pattern in glob_patterns:
+                list_files.extend(
+                    [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
+                )
+        list_files.sort()
 
         errored_files = list()
         for fichier in list_files:
@@ -370,8 +386,8 @@ def convert_daily_flat_files(
                 df = pd.read_fwf(
                     fichier,
                     widths=[7, 4, 2, 3] + [6, 1] * 31,
-                    names=titre_colonnes,
-                    dtype={"year": int, "month": int, "code_var": str},
+                    names=col_names,
+                    dtype=col_dtypes,
                 )
             except ValueError:
                 logging.error(
@@ -388,14 +404,14 @@ def convert_daily_flat_files(
                 # Abort if the variable is not present
                 if variable_code not in df_code["code_var"].unique():
                     logging.info(
-                        f"Variable `{variable_file_code}` not found for station `{code}` in file {fichier}. "
+                        f"Variable `{variable_file_name}` not found for station `{code}` in file {fichier}. "
                         "Continuing..."
                     )
                     continue
 
                 # Perform the data treatment
                 logging.info(
-                    f"Converting {variable_file_code} for station code: {code}"
+                    f"Converting {variable_file_name} for station code: {code}"
                 )
 
                 # Dump the values into a DataFrame
@@ -441,7 +457,7 @@ def convert_daily_flat_files(
 
                 ds = xr.Dataset()
                 da_val = xr.DataArray(value_days, coords=date_range, dims=["time"])
-                da_val = da_val.rename(variable_file_code)
+                da_val = da_val.rename(variable_file_name)
                 da_val.attrs["units"] = info["nc_units"]
                 da_val.attrs["id"] = code
                 da_val.attrs["element_number"] = variable_code
@@ -452,7 +468,7 @@ def convert_daily_flat_files(
                 da_flag.attrs["long_name"] = "data flag"
                 da_flag.attrs["note"] = "See ECCC technical documentation for details"
 
-                ds[variable_file_code] = da_val
+                ds[variable_file_name] = da_val
                 ds["flag"] = da_flag
 
                 # Save as a NetCDF file
@@ -464,10 +480,10 @@ def convert_daily_flat_files(
 
                 if start_year == end_year:
                     f_nc = (
-                        f"{code}_{variable_code}_{variable_file_code}_{start_year}.nc"
+                        f"{code}_{variable_code}_{variable_file_name}_{start_year}.nc"
                     )
                 else:
-                    f_nc = f"{code}_{variable_code}_{variable_file_code}_{start_year}_{end_year}.nc"
+                    f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}_{end_year}.nc"
 
                 ds.attrs["Conventions"] = "CF-1.8"
                 ds.attrs[
