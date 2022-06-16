@@ -11,22 +11,25 @@
 #
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
+import contextlib
 import itertools
 import logging
 import os
+import sys
 import tempfile
 import time
 from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
+from dask.distributed import Client as DaskClient
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -49,21 +52,28 @@ def convert_hourly_flat_files(
     source_files: Union[str, Path],
     output_folder: Union[str, Path, List[Union[str, int]]],
     variables: Union[str, int, List[Union[str, int]]],
-    missing_value: int = -9999,
+    missing_values: List[Union[int, str]] = None,
+    dask_kwargs=None,
 ) -> None:
     """
 
     Parameters
     ----------
-    source_files : str or Path
-    output_folder : str or Path
-    variables : str or List[str]
-    missing_value : int
+    source_files: str or Path
+    output_folder: str or Path
+    variables: str or List[str]
+    missing_values: List[Union[int, str]
+    dask_kwargs: Dict[str]
 
     Returns
     -------
     None
     """
+    if dask_kwargs is None:
+        dask_kwargs = dict()
+    if not missing_values:
+        missing_values = [-9999, "#####"]
+
     func_time = time.time()
 
     if isinstance(variables, (str, int)):
@@ -88,7 +98,7 @@ def convert_hourly_flat_files(
             data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
             col_names.append(data_entry)
             col_names.append(flag_entry)
-            col_dtypes.update({data_entry: float, flag_entry: str})
+            col_dtypes.update({data_entry: str, flag_entry: str})
 
         rep_nc = Path(output_folder).joinpath(variable_file_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
@@ -107,6 +117,7 @@ def convert_hourly_flat_files(
                 list_files.extend(
                     [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
                 )
+        list_files.sort()
 
         errored_files = list()
         for f in list_files:
@@ -119,149 +130,180 @@ def convert_hourly_flat_files(
                 for fichier in data_files:
                     logging.info(f"Processing file: {fichier}.")
 
-                    if file_size(fichier) > 200 * MiB:
+                    if file_size(fichier) > 200 * MiB and "dask" in sys.modules:
+                        logging.info("File exceeds 200 MiB - Using dask.dataframes.")
                         pandas_reader = dd
-                        pandas_kwargs = dict(
-                            assume_missing=True,
-                            blocksize=25 * MiB,
-                        )
+                        using_dask_array = True
+                        chunks = dict(blocksize=50 * MiB)
+                        dask_client = DaskClient
                     else:
+                        logging.info("Using pandas dataframes.")
                         pandas_reader = pd
-                        pandas_kwargs = dict()
+                        chunks = dict()
+                        using_dask_array = False
+                        dask_client = contextlib.nullcontext
 
-                    # Create a dataframe from the files
-                    try:
-                        df = pandas_reader.read_fwf(
-                            fichier,
-                            widths=[7, 4, 2, 2, 3] + [6, 1] * 24,
-                            names=col_names,
-                            dtype=col_dtypes,
-                            **pandas_kwargs,
-                        )
-                    except FileNotFoundError:
-                        logging.error(f"File {fichier} was not found.")
-                        errored_files.append(fichier)
-                        continue
-
-                    except (UnicodeDecodeError, Exception) as e:
-                        logging.error(
-                            f"File {fichier} was unable to be read. This is probably an issue with the file: "
-                            f"{e}"
-                        )
-                        errored_files.append(fichier)
-                        continue
-
-                    # Loop through the station codes
-                    l_codes = df["code"].unique()
-                    for code in l_codes:
-                        df_code = df[df["code"] == code]
-
-                        # Abort if the variable is not found
-                        if variable_code not in df_code["code_var"].unique():
-                            logging.info(
-                                f"Variable `{variable_file_name}` not found for station code: {code}. Continuing..."
-                            )
-                            continue
-
-                        # Treat the data
-                        logging.info(
-                            f"Converting `{variable_file_name}` for station code: {code}"
-                        )
-
-                        # Dump the data into a DataFrame
-                        df_var = df_code[df_code["code_var"] == variable_code].copy()
-
-                        # Mask the data according to the missing values flag
-                        df_var = df_var.replace(missing_value, np.nan)
-
-                        # Decode the values and flags
-                        dfd = df_var.loc[:, [f"D{i:0n}" for i in range(1, 25)]]
-                        dff = df_var.loc[:, [f"F{i:0n}" for i in range(1, 25)]]
-
-                        # Remove the "NaN" flag
-                        dff = dff.fillna("")
-
-                        # Use the flag to mask the values
+                    with dask_client(**dask_kwargs):
+                        # Create a dataframe from the files
                         try:
-                            val = np.asfarray(dfd.values)
-                        except ValueError as e:
-                            logging.error(f"{e} raised from {dfd}, continuing...")
+                            df = pandas_reader.read_fwf(
+                                fichier,
+                                widths=[7, 4, 2, 2, 3] + [6, 1] * 24,
+                                names=col_names,
+                                dtype=col_dtypes,
+                                assume_missing=True,
+                                **chunks,
+                            )
+                        except FileNotFoundError:
+                            logging.error(f"File {fichier} was not found.")
+                            errored_files.append(fichier)
                             continue
-                        flag = dff.values
-                        mask = np.isin(flag, info["missing_flags"])
-                        val[mask] = np.nan
 
-                        # Treat according to units conversions
-                        val = val * info["scale_factor"] + info["add_offset"]
+                        except (UnicodeDecodeError, Exception) as e:
+                            logging.error(
+                                f"File {fichier} was unable to be read. This is probably an issue with the file: "
+                                f"{e}"
+                            )
+                            errored_files.append(fichier)
+                            continue
 
-                        # Create the DataArray
-                        dates = dict(time=list())
-                        for index, row in df_var.iterrows():
-                            for h in range(0, 24):
-                                dates["time"].append(
-                                    dt(int(row.year), int(row.month), int(row.day), h)
+                        # Loop through the station codes
+                        station_codes = df["code"].unique()
+                        for code in station_codes:
+                            df_code = df[df["code"] == code]
+
+                            # Abort if the variable is not found
+                            if using_dask_array:
+                                has_variable_codes = (
+                                    (df_code["code_var"] == variable_code)
+                                    .compute()
+                                    .any()
                                 )
+                            else:
+                                has_variable_codes = (
+                                    df_code["code_var"] == variable_code
+                                ).any()
+                            if not has_variable_codes:
+                                logging.info(
+                                    f"Variable `{variable_file_name}` not found for station code: {code}. Continuing..."
+                                )
+                                continue
 
-                        ds = xr.Dataset()
-                        da_val = xr.DataArray(
-                            val.flatten(), coords=dates, dims=["time"]
-                        )
-                        da_val = da_val.rename(variable_file_name)
-                        da_val.attrs["units"] = info["nc_units"]
-                        da_val.attrs["id"] = code
-                        da_val.attrs["element_number"] = variable_code
-                        da_val.attrs["standard_name"] = variable_name
-                        da_val.attrs["long_name"] = info["long_name"]
+                            # Treat the data
+                            logging.info(
+                                f"Converting `{variable_file_name}` for station code: {code}"
+                            )
 
-                        da_flag = xr.DataArray(
-                            flag.flatten(), coords=dates, dims=["time"]
-                        )
-                        da_flag.attrs["long_name"] = "data flag"
-                        da_flag.attrs[
-                            "note"
-                        ] = "See ECCC technical documentation for details"
+                            # Dump the data into a DataFrame
+                            df_var = df_code[
+                                df_code["code_var"] == variable_code
+                            ].copy()
 
-                        ds[variable_file_name] = da_val
-                        ds["flag"] = da_flag
+                            # Mask the data according to the missing values flag
+                            df_var = df_var.replace(missing_values, np.nan)
 
-                        # save the file in NetCDF format
-                        start_year = ds.time.dt.year.values[0]
-                        end_year = ds.time.dt.year.values[-1]
+                            # Decode the values and flags
+                            dfd = df_var.loc[:, [f"D{i:0n}" for i in range(1, 25)]]
+                            dff = df_var.loc[:, [f"F{i:0n}" for i in range(1, 25)]]
 
-                        station_folder = rep_nc.joinpath(str(code))
-                        station_folder.mkdir(parents=True, exist_ok=True)
+                            # Remove the "NaN" flag
+                            dff = dff.fillna("")
 
-                        if start_year == end_year:
-                            f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}.nc"
-                        else:
-                            f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}_{end_year}.nc"
+                            # Use the flag to mask the values
+                            try:
+                                val = np.asarray(dfd.values, float)
+                            except ValueError as e:
+                                logging.error(f"{e} raised from {dfd}, continuing...")
+                                continue
+                            try:
+                                flag = np.asarray(dff.values, str)
+                            except ValueError as e:
+                                logging.error(f"{e} raised from {dff}, continuing...")
+                                continue
+                            mask = np.isin(flag, info["missing_flags"])
+                            val[mask] = np.nan
 
-                        ds.attrs["Conventions"] = "CF-1.7"
-                        ds.attrs[
-                            "title"
-                        ] = "Environment and Climate Change Canada (ECCC) weather eccc"
-                        ds.attrs["history"] = (
-                            f"{dt.now().strftime('%Y-%m-%d %X')}: "
-                            f"Merged from multiple individual station files to n-dimensional array."
-                        )
-                        ds.attrs["version"] = f"v{dt.now().strftime('%Y.%m')}"
-                        ds.attrs[
-                            "institution"
-                        ] = "Environment and Climate Change Canada (ECCC)"
-                        ds.attrs[
-                            "source"
-                        ] = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
-                        ds.attrs[
-                            "references"
-                        ] = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
-                        ds.attrs[
-                            "comment"
-                        ] = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
-                        ds.attrs[
-                            "redistribution"
-                        ] = "Redistribution policy unknown. For internal use only."
+                            # Treat according to units conversions
+                            val = val * info["scale_factor"] + info["add_offset"]
 
-                        ds.to_netcdf(station_folder.joinpath(f_nc))
+                            # Create the DataArray
+                            dates = dict(time=list())
+                            for index, row in df_var.iterrows():
+                                for h in range(0, 24):
+                                    dates["time"].append(
+                                        dt(
+                                            int(row.year),
+                                            int(row.month),
+                                            int(row.day),
+                                            h,
+                                        )
+                                    )
+
+                            logging.info("Handling data values")
+                            ds = xr.Dataset()
+                            da_val = xr.DataArray(
+                                val.flatten(), coords=dates, dims=["time"]
+                            )
+                            da_val = da_val.rename(variable_file_name)
+                            da_val.attrs["units"] = info["nc_units"]
+                            da_val.attrs["id"] = code
+                            da_val.attrs["element_number"] = variable_code
+                            da_val.attrs["standard_name"] = variable_name
+                            da_val.attrs["long_name"] = info["long_name"]
+
+                            logging.info("Handling flags.")
+                            da_flag = xr.DataArray(
+                                flag.flatten(), coords=dates, dims=["time"]
+                            )
+                            da_flag.attrs["long_name"] = "data flag"
+                            da_flag.attrs[
+                                "note"
+                            ] = "See ECCC technical documentation for details"
+
+                            ds[variable_file_name] = da_val
+                            ds["flag"] = da_flag
+
+                            # save the file in NetCDF format
+                            start_year = ds.time.dt.year.values[0]
+                            end_year = ds.time.dt.year.values[-1]
+
+                            station_folder = rep_nc.joinpath(str(code))
+                            station_folder.mkdir(parents=True, exist_ok=True)
+
+                            if start_year == end_year:
+                                f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}.nc"
+                            else:
+                                f_nc = f"{code}_{variable_code}_{variable_file_name}_{start_year}_{end_year}.nc"
+
+                            ds.attrs["Conventions"] = "CF-1.8"
+                            ds.attrs[
+                                "title"
+                            ] = "Environment and Climate Change Canada (ECCC) weather eccc"
+                            ds.attrs["history"] = (
+                                f"{dt.now().strftime('%Y-%m-%d %X')}: "
+                                f"Merged from multiple individual station files to n-dimensional array."
+                            )
+                            ds.attrs["version"] = f"v{dt.now().strftime('%Y.%m')}"
+                            ds.attrs[
+                                "institution"
+                            ] = "Environment and Climate Change Canada (ECCC)"
+                            ds.attrs[
+                                "source"
+                            ] = "Weather Station data <ec.services.climatiques-climate.services.ec@canada.ca>"
+                            ds.attrs[
+                                "references"
+                            ] = "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf"
+                            ds.attrs[
+                                "comment"
+                            ] = "Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques"
+                            ds.attrs[
+                                "redistribution"
+                            ] = "Redistribution policy unknown. For internal use only."
+
+                            logging.info(
+                                f"Exporting to: {station_folder.joinpath(f_nc)}"
+                            )
+                            ds.to_netcdf(station_folder.joinpath(f_nc))
 
                 if os.listdir(temp_folder):
                     for tmp_file in Path(temp_folder).glob("*"):

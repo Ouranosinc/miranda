@@ -1,13 +1,14 @@
 from os import getenv
 from pathlib import Path
 
-import dask.diagnostics
-
 from miranda.eccc import (
     aggregate_stations,
     convert_hourly_flat_files,
     merge_converted_variables,
 )
+
+# from dask.distributed import Client
+
 
 if __name__ == "__main__":
 
@@ -48,18 +49,18 @@ if __name__ == "__main__":
         280,
     ]
 
-    # var_codes = [
-    #     262,
-    #     263,
-    #     264,
-    #     265,
-    #     266,
-    #     267,
-    #     268,
-    #     269,
-    #     270,
-    #     271,
-    # ]
+    var_codes = [
+        262,
+        263,
+        264,
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+    ]
 
     in_files = getenv("in")
     source_data = Path(in_files)
