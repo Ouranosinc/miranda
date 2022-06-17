@@ -68,14 +68,15 @@ def _convert_station_file(
     variable_code: str,
     **_,
 ):
-    if mode == "hourly":
+
+    if mode.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
         column_widths = [7, 4, 2, 2, 3] + [6, 1] * num_observations
-    elif mode == "daily":
+    elif mode.lower() in ["d", "day", "daily"]:
         num_observations = 31
         column_widths = [7, 4, 2, 3] + [6, 1] * num_observations
     else:
-        raise NotImplementedError()
+        raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
 
     if not missing_values:
         missing_values = {-9999, "#####"}
@@ -354,18 +355,16 @@ def convert_flat_files(
     """
     func_time = time.time()
 
-    if mode == "hourly":
+    if mode.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
         column_names = ["code", "year", "month", "day", "code_var"]
         column_dtypes = [str, float, float, float, str]
-
-    elif mode == "daily":
+    elif mode.lower() in ["d", "day", "daily"]:
         num_observations = 31
         column_names = ["code", "year", "month", "code_var"]
         column_dtypes = [str, float, float, str]
-
     else:
-        raise NotImplementedError(mode)
+        raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
 
     # Preparing the data column headers
     for i in range(1, num_observations + 1):
@@ -428,7 +427,7 @@ def aggregate_stations(
     source_files: Optional[Union[str, Path]] = None,
     output_folder: Optional[Union[str, Path]] = None,
     station_metadata: Union[str, Path] = None,
-    time_step: str = "h",
+    time_step: str = None,
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
     groups: int = 5,
@@ -442,7 +441,7 @@ def aggregate_stations(
     source_files: Union[str, Path]
     output_folder: Union[str, Path]
     variables: Optional[Union[str, int, List[Union[str, int]]]]
-    time_step: str
+    time_step: {"hourly", "daily"}
     station_metadata: Union[str, Path]
     include_flags: bool
     groups: int
@@ -468,16 +467,16 @@ def aggregate_stations(
         source_files = Path(source_files)
 
     if time_step.lower() in ["h", "hour", "hourly"]:
-        hourly = True
+        mode = "hourly"
     elif time_step.lower() in ["d", "day", "daily"]:
-        hourly = False
+        mode = "daily"
     else:
         raise ValueError("Time step must be `h` / `hourly` or `d` / `daily`.")
 
     if isinstance(variables, (str, int)):
         variables = [variables]
     elif variables is None:
-        if hourly:
+        if mode == "hourly":
             variables = [
                 89,
                 94,
@@ -485,9 +484,11 @@ def aggregate_stations(
             ]
             variables.extend(range(76, 81))
             variables.extend(range(262, 281))
-        else:
+        elif mode == "daily":
             variables = [1, 2, 3]
             variables.extend(range(10, 26))
+    else:
+        raise NotImplementedError()
 
     for variable_code in variables:
         info = cf_station_metadata(variable_code)
@@ -496,7 +497,7 @@ def aggregate_stations(
 
         # Find the ECCC stations where we have available metadata
         df_inv = pd.read_csv(str(station_metadata), header=0)
-        station_inventory = list(df_inv["MSC_ID"].values)
+        station_inventory = set(df_inv["MSC_ID"].values)
 
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
@@ -519,17 +520,15 @@ def aggregate_stations(
                 ds = xr.open_mfdataset(
                     sorted(list(Path(temp_dir).glob("*.nc"))),
                     combine="nested",
-                    concat_dim="station",
+                    concat_dim={"station"},
                     chunks=dict(time=365),
                 )
 
                 # dask gives warnings about export 'object' data types
-                ds["station_id"] = ds["station_id"].astype(str)
+                ds["station_id"] = ds.station_id.astype(str)
         if ds:
             station_file_codes = [x.name.split("_")[0] for x in nc_list]
-            rejected_stations = set(station_file_codes).difference(
-                set(station_inventory)
-            )
+            rejected_stations = set(station_file_codes).difference(station_inventory)
 
             logging.info(f"{len(rejected_stations)} rejected due to missing metadata.")
             r_all = np.zeros(ds.station_id.shape) == 0
@@ -550,6 +549,7 @@ def aggregate_stations(
 
             meta = df_inv.loc[df_inv["MSC_ID"].isin(ds.station_id.values)]
             # Rearrange column order to have lon, lat, elev first
+            # FIXME: I don't think this actually works
             cols = meta.columns.tolist()
             cols1 = [
                 "Latitude",
@@ -565,20 +565,23 @@ def aggregate_stations(
             meta.sortby(meta["MSC_ID"])
             meta = meta.assign({"station": ds.station.values})
 
-            meta = meta.drop(
-                ["Longitude", "Latitude"]
-            )  # these values are projected x,y values Need to know prj to potentially rename
-            np.testing.assert_array_equal(meta["MSC_ID"].values, ds.station_id.values)
+            np.testing.assert_array_equal(
+                sorted(meta["MSC_ID"].values), sorted(ds.station_id.values)
+            )
             ds = xr.merge([ds, meta])
             ds.attrs = attrs1
 
-            # TODO rename Longitude / Latitude DD
-            rename = dict(
-                Latitude="lat",
-                Longitude="lon",
-            )
-            for i in rename.items():
-                ds = ds.rename({i[0]: i[1]})
+            rename = {
+                "Latitude": "lat",
+                "Longitude": "lon",
+                "Elevation(m)": "elevation",
+                "Dataset/Network": "network",
+                "Name": "name",
+                "Data_Provider": "provider",
+                "AUTO/MAN": "automated_manual",
+                "Province/Territory": "province_territory",
+            }
+            ds = ds.rename(rename)
 
             valid_stations = list(sorted(ds.station_id.values))
             valid_stations_count = len(valid_stations)
@@ -610,7 +613,7 @@ def aggregate_stations(
             time_index = pd.date_range(
                 start=f"{year_start}-01-01",
                 end=f"{year_end + 1}-01-01",
-                freq="H" if hourly else "D",
+                freq=mode[0].capitalize(),
             )[:-1]
 
             logging.info(
@@ -626,16 +629,13 @@ def aggregate_stations(
                 attrs=ds.attrs,
             )
 
+            # assign data variables to output dataset ... will align with time coords
             for vv in ds.data_vars:
-                ds_out[vv] = ds[
-                    vv
-                ]  # assign data variables to output dataset ... will align with time coords
+                ds_out[vv] = ds[vv]
 
             output_folder.mkdir(parents=True, exist_ok=True)
 
-            file_out = Path(output_folder).joinpath(
-                f"{variable_name}_eccc_{'hourly' if hourly else 'daily'}"
-            )
+            file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
 
             if mf_dataset_freq is not None:
                 _, datasets = zip(
@@ -645,9 +645,8 @@ def aggregate_stations(
                 datasets = [ds_out]
 
             paths = [
-                f"{file_out}_{dd.time.dt.year.min().values}-{dd.time.dt.year.max().values}_"
-                f'created{dt.now().strftime("%Y%m%d")}.nc'
-                for dd in datasets
+                f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
+                for data in datasets
             ]
 
             comp = dict(zlib=True, complevel=5)
@@ -657,8 +656,8 @@ def aggregate_stations(
                     encoding = {var: comp for var in ds_out.data_vars}
                     dataset.to_netcdf(
                         path,
-                        engine="h5netcdf",
-                        format="NETCDF4",
+                        engine="netcdf4",
+                        format="NETCDF4_CLASSIC",
                         encoding=encoding,
                     )
                     dataset.close()
@@ -684,7 +683,7 @@ def _tmp_nc(
     logging.info(f"Processing batch of files {ii + 1} of {batches}")
     station_file_codes = [x.name.split("_")[0] for x in nc]
 
-    ds = xr.open_mfdataset(nc, combine="nested", concat_dim="station")
+    ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
     ds = ds.assign_coords(
         station_id=xr.DataArray(station_file_codes, dims="station").astype(str)
     )
@@ -727,25 +726,25 @@ def merge_converted_variables(
     def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
         varia, input_folder, output_folder = args
 
-        ncfiles = sorted(list(input_folder.glob("*.nc")))
+        nc_files = sorted(list(input_folder.glob("*.nc")))
         logging.info(
-            f"Found {len(ncfiles)} files for station code {input_folder.name}."
+            f"Found {len(nc_files)} files for station code {input_folder.name}."
         )
-        logging.info(f"Opening: {ncfiles}")
+        logging.info(f"Opening: {nc_files}")
 
         ds = xr.open_mfdataset(
-            ncfiles, parallel=False, combine="by_coords", concat_dim={"time"}
+            nc_files, parallel=False, combine="nested", concat_dim={"time"}
         )
 
         outfile = output_folder.joinpath(
-            f'{ncfiles[0].name.split(f"_{varia}_")[0]}_{varia}_'
+            f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
             f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
         )
         if not outfile.exists():
             logging.info(f"Merging to {outfile.name}")
             comp = dict(zlib=True, complevel=5)
             encoding = {data_var: comp for data_var in ds.data_vars}
-            encoding["time"] = {"dtype": "single"}
+            encoding["time"] = dict(dtype="single")
             with ProgressBar():
                 ds.to_netcdf(outfile, encoding=encoding)
         else:

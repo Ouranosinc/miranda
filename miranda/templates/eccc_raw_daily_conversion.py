@@ -18,8 +18,6 @@ if __name__ == "__main__":
         1,
         2,
         3,
-        4,
-        5,
         10,
         11,
         12,
@@ -51,16 +49,16 @@ if __name__ == "__main__":
     merged.mkdir(parents=True, exist_ok=True)
     final = daily.joinpath("final")
     final.mkdir(parents=True, exist_ok=True)
+    #
+    # convert_flat_files(
+    #     source_files=origin_files,
+    #     output_folder=output_data,
+    #     variables=var_codes,
+    #     mode=time_step,
+    #     n_workers=1,
+    # )
 
-    convert_flat_files(
-        source_files=origin_files,
-        output_folder=output_data,
-        variables=var_codes,
-        mode=time_step,
-        n_workers=1,
-    )
-
-    merge_converted_variables(source=output_data, destination=merged)
+    # merge_converted_variables(source=output_data, destination=merged)
 
     aggregate_stations(
         source_files=merged,
