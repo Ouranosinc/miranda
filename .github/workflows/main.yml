@@ -40,7 +40,7 @@ jobs:
         include:
           - tox-env: py37
             python-version: "3.7"
-          - tox-env: py38
+          - tox-env: py38-pyston
             python-version: "3.8"
           - tox-env: py39-full
             python-version: "3.9"
