@@ -4,12 +4,12 @@ from typing import Dict, List, Mapping, Tuple, Union
 
 from miranda.scripting import LOGGING_CONFIG
 
-__all__ = ["cf_hourly_metadata", "cf_daily_metadata", "ahccd_metadata"]
+__all__ = ["cf_station_metadata", "cf_ahccd_metadata"]
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-def cf_hourly_metadata(
+def cf_station_metadata(
     variable_code: Union[int, str]
 ) -> Mapping[str, Union[int, float, str]]:
     """
@@ -23,6 +23,177 @@ def cf_hourly_metadata(
     dict
     """
     ec_hourly_variables = {
+        "001": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Daily Maximum Temperature",
+            "standard_name": "air_temperature_maximum",
+            "nc_name": "tasmax",
+        },
+        "002": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Daily Minimum Temperature",
+            "standard_name": "air_temperature_minimum",
+            "nc_name": "tasmin",
+        },
+        "003": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "K",
+            "scale_factor": 0.1,
+            "add_offset": 273.15,
+            "long_name": "Daily Mean Temperature",
+            "standard_name": "air_temperature",
+            "nc_name": "tas",
+        },
+        "010": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "mm",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Daily Total Rainfall",
+            "standard_name": "liquid_precipitation_amount",
+            "nc_name": "prlptot",
+        },
+        "011": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "cm",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Daily Total Snowfall",
+            "standard_name": "solid_precipitation_amount",
+            "nc_name": "prsntot",
+        },
+        "012": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "mm",
+            "scale_factor": 0.1,
+            "add_offset": 0,
+            "long_name": "Daily Total Precipitation",
+            "standard_name": "precipitation_amount",
+            "nc_name": "prcptot",
+        },
+        "013": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "m",
+            "scale_factor": 0.01,
+            "add_offset": 0,
+            "long_name": "Snow on the Ground",
+            "standard_name": "surface_snow_thickness",
+            "nc_name": "sndtot",
+        },
+        "014": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Thunderstorms",
+            "standard_name": "thunderstorm_presence",
+            "nc_name": "thunder",
+        },
+        "015": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Freezing rain or drizzle",
+            "standard_name": "freeze_rain_drizzle_presence",
+            "nc_name": "freezing_rain_drizzle",
+        },
+        "016": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Hail",
+            "standard_name": "hail_presence",
+            "nc_name": "hail",
+        },
+        "017": {
+            "_table_name": {"DLY02", "DLY04", "DLY44"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Fog or Ice Fog",
+            "standard_name": "fog_ice_fog_presence",
+            "nc_name": "fog_ice_fog",
+        },
+        "018": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Smoke or Haze",
+            "standard_name": "smoke_haze_presence",
+            "nc_name": "smoke_haze",
+        },
+        "019": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Blowing Dust or Sand",
+            "standard_name": "blowing_dust_sand_presence",
+            "nc_name": "blowing_dust_sand",
+        },
+        "020": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Blowing snow",
+            "standard_name": "blowing_snow_presence",
+            "nc_name": "blow_snow",
+        },
+        "021": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Wind speed >= 28 Knots",
+            "standard_name": "wind_exceeding_28_knots",
+            "nc_name": "wind_gt_28kt",
+        },
+        "022": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "1",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "Wind speed >= 34 Knots",
+            "standard_name": "wind_exceeding_34_knots",
+            "nc_name": "wind_gt_34kt",
+        },
+        "023": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "degree",
+            "scale_factor": 10,
+            "add_offset": 0,
+            "long_name": "Direction of extreme gust (16 pts) to December 1976",
+            "standard_name": "wind_to_direction",
+            "nc_name": "gust_dir",
+        },
+        "024": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "m s-1",
+            "scale_factor": 0.2777778,
+            "add_offset": 0,
+            "long_name": "Speed of extreme gust",
+            "standard_name": "wind_speed_of_gust",
+            "nc_name": "gust_speed",
+        },
+        "025": {
+            "_table_name": {"DLY02", "DLY04"},
+            "nc_units": "h",
+            "scale_factor": 1,
+            "add_offset": 0,
+            "long_name": "UTC hour of extreme gust",
+            "standard_name": "hour_of_extreme_gust",
+            "nc_name": "gust_hour",
+        },
         "061": {
             "_table_name": {"HLY10"},
             "nc_units": "W m-2 h-1",
@@ -407,203 +578,7 @@ def cf_hourly_metadata(
     return variable
 
 
-def cf_daily_metadata(
-    variable_code: Union[int, str]
-) -> Mapping[str, Union[int, float, str]]:
-    """
-
-    Parameters
-    ----------
-    variable_code: Union[int, str]
-
-    Returns
-    -------
-    dict
-    """
-    ec_daily_variables = {
-        "001": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "K",
-            "scale_factor": 0.1,
-            "add_offset": 273.15,
-            "long_name": "Daily Maximum Temperature",
-            "standard_name": "air_temperature_maximum",
-            "nc_name": "tasmax",
-        },
-        "002": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "K",
-            "scale_factor": 0.1,
-            "add_offset": 273.15,
-            "long_name": "Daily Minimum Temperature",
-            "standard_name": "air_temperature_minimum",
-            "nc_name": "tasmin",
-        },
-        "003": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "K",
-            "scale_factor": 0.1,
-            "add_offset": 273.15,
-            "long_name": "Daily Mean Temperature",
-            "standard_name": "air_temperature",
-            "nc_name": "tas",
-        },
-        "010": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "mm",
-            "scale_factor": 0.1,
-            "add_offset": 0,
-            "long_name": "Daily Total Rainfall",
-            "standard_name": "liquid_precipitation_amount",
-            "nc_name": "prlptot",
-        },
-        "011": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "cm",
-            "scale_factor": 0.1,
-            "add_offset": 0,
-            "long_name": "Daily Total Snowfall",
-            "standard_name": "solid_precipitation_amount",
-            "nc_name": "prsntot",
-        },
-        "012": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "mm",
-            "scale_factor": 0.1,
-            "add_offset": 0,
-            "long_name": "Daily Total Precipitation",
-            "standard_name": "precipitation_amount",
-            "nc_name": "prcptot",
-        },
-        "013": {
-            "nc_units": "m",
-            "scale_factor": 0.01,
-            "add_offset": 0,
-            "long_name": "Snow on the Ground",
-            "standard_name": "surface_snow_thickness",
-            "nc_name": "sndtot",
-        },
-        "014": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Thunderstorms",
-            "standard_name": "thunderstorm_presence",
-            "nc_name": "thunder",
-        },
-        "015": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Freezing rain or drizzle",
-            "standard_name": "freeze_rain_drizzle_presence",
-            "nc_name": "freezing_rain_drizzle",
-        },
-        "016": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Hail",
-            "standard_name": "hail_presence",
-            "nc_name": "hail",
-        },
-        "017": {
-            "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Fog or Ice Fog",
-            "standard_name": "fog_ice_fog_presence",
-            "nc_name": "fog_ice_fog",
-        },
-        "018": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Smoke or Haze",
-            "standard_name": "smoke_haze_presence",
-            "nc_name": "smoke_haze",
-        },
-        "019": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Blowing Dust or Sand",
-            "standard_name": "blowing_dust_sand_presence",
-            "nc_name": "blowing_dust_sand",
-        },
-        "020": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Blowing snow",
-            "standard_name": "blowing_snow_presence",
-            "nc_name": "blow_snow",
-        },
-        "021": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Wind speed >= 28 Knots",
-            "standard_name": "wind_exceeding_28_knots",
-            "nc_name": "wind_gt_28kt",
-        },
-        "022": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "1",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "Wind speed >= 34 Knots",
-            "standard_name": "wind_exceeding_34_knots",
-            "nc_name": "wind_gt_34kt",
-        },
-        "023": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "degree",
-            "scale_factor": 10,
-            "add_offset": 0,
-            "long_name": "Direction of extreme gust (16 pts) to December 1976",
-            "standard_name": "wind_to_direction",
-            "nc_name": "gust_dir",
-        },
-        "024": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "m s-1",
-            "scale_factor": 0.2777778,
-            "add_offset": 0,
-            "long_name": "Speed of extreme gust",
-            "standard_name": "wind_speed_of_gust",
-            "nc_name": "gust_speed",
-        },
-        "025": {
-            "_table_name": {"DLY02", "DLY04"},
-            "nc_units": "h",
-            "scale_factor": 1,
-            "add_offset": 0,
-            "long_name": "UTC hour of extreme gust",
-            "standard_name": "hour_of_extreme_gust",
-            "nc_name": "gust_hour",
-        },
-    }
-    code = str(variable_code).zfill(3)
-    try:
-        variable = ec_daily_variables[code]
-        variable["missing_flags"] = "M"
-        variable["least_significant_digit"] = ""
-    except KeyError:
-        logging.error(f"Daily variable `{code}` not supported.")
-        raise
-    return variable
-
-
-def ahccd_metadata(
+def cf_ahccd_metadata(
     code: str, gen: int
 ) -> (Mapping[str, Union[int, float, str]], Dict, List[Tuple[int, int]], int):
     """

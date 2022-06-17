@@ -1,7 +1,6 @@
 import gzip
 import logging.config
 import os
-import shutil
 import sys
 import tarfile
 import tempfile

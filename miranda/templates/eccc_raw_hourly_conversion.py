@@ -3,7 +3,7 @@ from pathlib import Path
 
 from miranda.eccc import (
     aggregate_stations,
-    convert_hourly_flat_files,
+    convert_flat_files,
     merge_converted_variables,
 )
 
@@ -76,10 +76,11 @@ if __name__ == "__main__":
     final = hourly.joinpath("final")
     final.mkdir(parents=True, exist_ok=True)
 
-    convert_hourly_flat_files(
+    convert_flat_files(
         source_files=origin_files,
         output_folder=output_data,
         variables=var_codes,
+        mode=time_step,
         n_workers=1,
     )
 
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         output_folder=final,
         variables=var_codes,
         station_metadata=station_file,
-        time_step="hourly",
+        time_step=time_step,
         mf_dataset_freq="5YS",
         temp_directory=hourly,
     )

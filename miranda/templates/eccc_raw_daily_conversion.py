@@ -3,7 +3,7 @@ from pathlib import Path
 
 from miranda.eccc import (
     aggregate_stations,
-    convert_daily_flat_files,
+    convert_flat_files,
     merge_converted_variables,
 )
 
@@ -18,6 +18,8 @@ if __name__ == "__main__":
         1,
         2,
         3,
+        4,
+        5,
         10,
         11,
         12,
@@ -50,8 +52,12 @@ if __name__ == "__main__":
     final = daily.joinpath("final")
     final.mkdir(parents=True, exist_ok=True)
 
-    convert_daily_flat_files(
-        source_files=origin_files, output_folder=source_data, variables=var_codes
+    convert_flat_files(
+        source_files=origin_files,
+        output_folder=output_data,
+        variables=var_codes,
+        mode=time_step,
+        n_workers=1,
     )
 
     merge_converted_variables(source=output_data, destination=merged)
@@ -61,7 +67,7 @@ if __name__ == "__main__":
         output_folder=final,
         variables=var_codes,
         station_metadata=station_file,
-        time_step="daily",
+        time_step=time_step,
         mf_dataset_freq="10YS",
         temp_directory=daily,
     )
