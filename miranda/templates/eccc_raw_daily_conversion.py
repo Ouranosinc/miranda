@@ -7,10 +7,6 @@ from miranda.eccc import (
     merge_converted_variables,
 )
 
-# from functools import partial
-# from multiprocessing import Pool
-# from miranda.eccc import convert_daily_flat_files
-
 if __name__ == "__main__":
 
     time_step = "daily"
@@ -49,16 +45,16 @@ if __name__ == "__main__":
     merged.mkdir(parents=True, exist_ok=True)
     final = daily.joinpath("final")
     final.mkdir(parents=True, exist_ok=True)
-    #
-    # convert_flat_files(
-    #     source_files=origin_files,
-    #     output_folder=output_data,
-    #     variables=var_codes,
-    #     mode=time_step,
-    #     n_workers=1,
-    # )
 
-    # merge_converted_variables(source=output_data, destination=merged)
+    convert_flat_files(
+        source_files=origin_files,
+        output_folder=output_data,
+        variables=var_codes,
+        mode=time_step,
+        n_workers=1,
+    )
+
+    merge_converted_variables(source=output_data, destination=merged)
 
     aggregate_stations(
         source_files=merged,

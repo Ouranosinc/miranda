@@ -7,9 +7,6 @@ from miranda.eccc import (
     merge_converted_variables,
 )
 
-# from dask.distributed import Client
-
-
 if __name__ == "__main__":
 
     time_step = "hourly"
