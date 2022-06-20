@@ -62,7 +62,6 @@ if __name__ == "__main__":
     in_files = getenv("in")
     source_data = Path(in_files)
 
-    station_file = source_data.joinpath("swob-xml_station_list.csv")
     origin_files = source_data.joinpath("source")
 
     hourly = source_data.joinpath("hourly")
@@ -87,7 +86,6 @@ if __name__ == "__main__":
         source_files=merged,
         output_folder=final,
         variables=var_codes,
-        station_metadata=station_file,
         time_step=time_step,
         mf_dataset_freq="5YS",
         temp_directory=hourly,

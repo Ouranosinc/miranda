@@ -25,12 +25,14 @@ from datetime import datetime as dt
 from logging import config
 from pathlib import Path
 from typing import List, Optional, Set, Tuple, Union
+from urllib.error import HTTPError
 
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
+from xclim.core.units import convert_units_to
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
@@ -62,7 +64,9 @@ def _convert_station_file(
     missing_flags: Set[str],
     missing_values: Set[str],
     nc_name: str,
-    nc_units: str,
+    original_units: str,
+    raw_units: str,
+    units: str,
     scale_factor: float,
     standard_name: str,
     variable_code: str,
@@ -240,9 +244,16 @@ def _convert_station_file(
                     da_val = xr.DataArray(
                         written_values, coords=date_summations, dims=["time"]
                     )
+
+                    if raw_units != units:
+                        da_val.attrs["units"] = raw_units
+                        da_val = convert_units_to(da_val, units)
+                    else:
+                        da_val.attrs["units"] = units
+
                     da_val = da_val.rename(nc_name)
                     variable_attributes = dict(
-                        units=nc_units,
+                        original_units=original_units,
                         variable_code=variable_code,
                         standard_name=standard_name,
                         long_name=long_name,
@@ -457,11 +468,31 @@ def aggregate_stations(
     """
     func_time = time.time()
 
-    if not station_metadata:
-        raise RuntimeError(
-            "Download the data from Government of Canada Open Data at:\n"
-            "https://dd.weather.gc.ca/observations/doc/swob-xml_station_list.csv"
-        )
+    # Find the ECCC stations where we have available metadata
+    if station_metadata:
+        df_inv = pd.read_csv(str(station_metadata), header=0)
+    else:
+        try:
+            import geopandas as gpd
+
+            station_metadata_url = "https://api.weather.gc.ca/collections/climate-stations/items?f=json&limit=15000000"
+            df_inv = gpd.read_file(station_metadata_url)
+        except HTTPError as e:
+            raise RuntimeError(
+                f"Station metadata table unable to be fetched. Considering downloading directly: {e}"
+            )
+
+    df_inv = df_inv.drop(["geometry"], axis=1)
+    df_inv.columns = [str(c).lower() for c in df_inv.columns]
+    rename = {
+        "latitude": "lat",
+        "longitude": "lon",
+        "tc_identifier": "TC_identifier",
+        "wmo_identifier": "WMO_identifier",
+    }
+    df_inv = df_inv.rename(rename)
+
+    station_inventory = set(df_inv["climate_identifier"].values)
 
     if isinstance(source_files, str):
         source_files = Path(source_files)
@@ -473,7 +504,9 @@ def aggregate_stations(
     else:
         raise ValueError("Time step must be `h` / `hourly` or `d` / `daily`.")
 
-    if isinstance(variables, (str, int)):
+    if isinstance(variables, list):
+        pass
+    elif isinstance(variables, (str, int)):
         variables = [variables]
     elif variables is None:
         if mode == "hourly":
@@ -495,13 +528,9 @@ def aggregate_stations(
         variable_name = info["nc_name"]
         logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
-        # Find the ECCC stations where we have available metadata
-        df_inv = pd.read_csv(str(station_metadata), header=0)
-        station_inventory = set(df_inv["MSC_ID"].values)
-
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
-        nc_list = sorted(list(source_files.joinpath(variable_name).rglob("*.nc")))
+        nc_list = list(source_files.joinpath(variable_name).rglob("*.nc"))
 
         ds = None
         if nc_list != list():
@@ -510,15 +539,20 @@ def aggregate_stations(
             with tempfile.TemporaryDirectory(
                 prefix="eccc", dir=temp_directory
             ) as temp_dir:
-                combinations = [(ii, nc, temp_dir) for ii, nc in enumerate(nc_lists)]
+                combinations = sorted(
+                    (ii, nc, temp_dir) for ii, nc in enumerate(nc_lists)
+                )
 
                 # TODO memory use seems ok here .. could try using Pool() to increase performance
                 for combo in combinations:
                     ii, nc, temp_dir = combo
                     _tmp_nc(ii, nc, temp_dir, groups)
 
+                netcdfs_found = [f for f in Path(temp_dir).glob("*.nc")]
+                logging.info(f"Found {len(netcdfs_found)} station files.")
+
                 ds = xr.open_mfdataset(
-                    sorted(list(Path(temp_dir).glob("*.nc"))),
+                    netcdfs_found,
                     combine="nested",
                     concat_dim={"station"},
                     chunks=dict(time=365),
@@ -547,14 +581,14 @@ def aggregate_stations(
             # filter metadata for station_ids in dataset
             logging.info("Writing out metadata.")
 
-            meta = df_inv.loc[df_inv["MSC_ID"].isin(ds.station_id.values)]
+            meta = df_inv.loc[df_inv["climate_identifier"].isin(ds.station_id.values)]
+
             # Rearrange column order to have lon, lat, elev first
-            # FIXME: I don't think this actually works
             cols = meta.columns.tolist()
             cols1 = [
-                "Latitude",
-                "Longitude",
-                "Elevation(m)",
+                "latitude",
+                "longitude",
+                "elevation",
             ]
             for rr in cols1:
                 cols.remove(rr)
@@ -562,26 +596,14 @@ def aggregate_stations(
             meta = meta[cols1]
             meta.index.rename("station", inplace=True)
             meta = meta.to_xarray()
-            meta.sortby(meta["MSC_ID"])
+            meta.sortby(meta["climate_identifier"])
             meta = meta.assign({"station": ds.station.values})
 
             np.testing.assert_array_equal(
-                sorted(meta["MSC_ID"].values), sorted(ds.station_id.values)
+                sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
             )
             ds = xr.merge([ds, meta])
             ds.attrs = attrs1
-
-            rename = {
-                "Latitude": "lat",
-                "Longitude": "lon",
-                "Elevation(m)": "elevation",
-                "Dataset/Network": "network",
-                "Name": "name",
-                "Data_Provider": "provider",
-                "AUTO/MAN": "automated_manual",
-                "Province/Territory": "province_territory",
-            }
-            ds = ds.rename(rename)
 
             valid_stations = list(sorted(ds.station_id.values))
             valid_stations_count = len(valid_stations)
@@ -698,8 +720,8 @@ def _tmp_nc(
     with ProgressBar():
         ds.load().to_netcdf(
             Path(tempdir).joinpath(f"{str(ii).zfill(3)}.nc"),
-            engine="h5netcdf",
-            format="NETCDF4",
+            engine="netcdf4",
+            format="NETCDF4_CLASSIC",
             encoding=encoding,
         )
         del ds
@@ -746,7 +768,12 @@ def merge_converted_variables(
             encoding = {data_var: comp for data_var in ds.data_vars}
             encoding["time"] = dict(dtype="single")
             with ProgressBar():
-                ds.to_netcdf(outfile, encoding=encoding)
+                ds.to_netcdf(
+                    outfile,
+                    engine="netcdf4",
+                    format="NETCDF4_CLASSIC",
+                    encoding=encoding,
+                )
         else:
             logging.info(f"Files exist for {outfile.name}. Continuing...")
 
