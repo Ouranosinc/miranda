@@ -4,7 +4,7 @@ import urllib
 from pathlib import Path
 from typing import Optional, Union
 
-import geopandas as gpd
+import pandas as pd
 
 "https://api.weather.gc.ca/collections/climate-daily/items?datetime=1840-03-01%2000:00:00/2021-06-02%2000:00:00&STN_ID=10761&f=json&limit=1500000&startindex=0"
 
@@ -16,7 +16,7 @@ def gather_eccc_stations(
     start_date: Optional[Union[datetime.datetime, str]] = None,
     end_date: Optional[Union[datetime.datetime, str]] = None,
     climate_id: Optional[str] = None,
-) -> gpd.GeoDataFrame:
+) -> pd.DataFrame:
 
     if timestep.lower() in ["hourly", "daily"]:
         base_url = f"https://api.weather.gc.ca/collections/climate-{timestep}/"
@@ -53,11 +53,8 @@ def gather_eccc_stations(
     request_facets = f"items?{'&'.join(facet_list)}"
     request_url = urllib.parse.urljoin(base_url, request_facets)  # noqa
 
-    print(request_url)
-    # Use geopandas to convert the json output to a GeoDataFrame.
-    gdf = gpd.read_file(request_url)
-
-    return gdf
+    # Use geopandas to convert the json output to a DataFrame.
+    return pd.read_file(request_url)
 
 
 if __name__ == "__main__":
