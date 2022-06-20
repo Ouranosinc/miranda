@@ -29,9 +29,8 @@ class TestEnvCanVariables:
             variables[key] = eccc_utils.cf_station_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"] == "dry_bulb_temperature":
-                assert variables[key]["add_offset"] == 273.15
-            else:
-                assert variables[key]["add_offset"] == 0
+                assert variables[key]["raw_units"] == "degC"
+                assert variables[key]["units"] == "K"
             assert variables[key]["missing_flags"] == "M"
 
         assert set(codes) == {
@@ -59,9 +58,11 @@ class TestEnvCanVariables:
             variables[key] = eccc_utils.cf_station_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"].startswith("air_temperature"):
-                assert variables[key]["add_offset"] == 273.15
-            else:
-                assert variables[key]["add_offset"] == 0
+                assert variables[key]["raw_units"] == "degC"
+                assert variables[key]["units"] == "K"
+            elif variables[key]["standard_name"].endswith("precipitation_amount"):
+                assert variables[key]["raw_units"] in ["cm", "mm"]
+                assert variables[key]["units"] == "m"
             assert variables[key]["missing_flags"] == "M"
 
         assert set(codes) == {
