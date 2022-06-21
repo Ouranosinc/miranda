@@ -13,7 +13,6 @@
 #######################################################################
 import contextlib
 import functools
-import itertools
 import logging
 import multiprocessing as mp
 import os
@@ -55,26 +54,23 @@ TABLE_DATE = dt.now().strftime("%d %B %Y")
 def load_station_metadata(meta: Union[str, Path]) -> xr.Dataset:
     if meta:
         df_inv = pd.read_csv(meta, header=0)
-        df_inv["LONGITUDE"] = df_inv.geometry.x
-        df_inv["LATITUDE"] = df_inv.geometry.y
-        df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)
-        df_inv = df_inv.drop(["geometry"], axis=1)
-        return df_inv.to_xarray()
     else:
         try:
             import geopandas as gpd
 
             station_metadata_url = "https://api.weather.gc.ca/collections/climate-stations/items?f=json&limit=15000000"
             df_inv = gpd.read_file(station_metadata_url)
-            df_inv["LONGITUDE"] = df_inv.geometry.x
-            df_inv["LATITUDE"] = df_inv.geometry.y
-            df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)
-            df_inv = df_inv.drop(["geometry"], axis=1)
-            return df_inv.to_xarray()
         except HTTPError as err:
             raise RuntimeError(
                 f"Station metadata table unable to be fetched. Considering downloading directly: {err}"
             )
+    df_inv["LONGITUDE"] = df_inv.geometry.x
+    df_inv["LATITUDE"] = df_inv.geometry.y
+    df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)
+    df_inv["CLIMATE_IDENTIFIER"] = df_inv["CLIMATE_IDENTIFIER"].astype(str)
+
+    df_inv = df_inv.drop(["geometry"], axis=1)
+    return df_inv.to_xarray()
 
 
 def _convert_station_file(
@@ -471,6 +467,7 @@ def aggregate_stations(
     groups: int = 1,
     mf_dataset_freq: Optional[str] = None,
     temp_directory: Optional[Union[str, Path]] = None,
+    n_workers: int = 1,
 ) -> None:
     """
 
@@ -487,6 +484,7 @@ def aggregate_stations(
       Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
     temp_directory: Optional[Union[str, Path]]
       Use another temporary directory location in case default location is not spacious enough.
+    n_workers: int
 
     Returns
     -------
@@ -533,24 +531,28 @@ def aggregate_stations(
         logging.info("Performing glob and sort.")
         nc_list = list(source_files.joinpath(variable_name).rglob("*.nc"))
 
-        ds = None
         if nc_list != list():
             nc_lists = np.array_split(nc_list, groups)
 
             with tempfile.TemporaryDirectory(
                 prefix="eccc", dir=temp_directory
             ) as temp_dir:
+
                 combinations = sorted(
-                    (ii, nc, temp_dir) for ii, nc in enumerate(nc_lists)
+                    (ii, nc, temp_dir, groups) for ii, nc in enumerate(nc_lists)
                 )
 
+                with mp.Pool(processes=n_workers) as pool:
+                    pool.starmap(_tmp_zarr, combinations)
+                    pool.close()
+                    pool.join()
+
                 # TODO memory use seems ok here .. could try using Pool() to increase performance
-                for combo in combinations:
-                    ii, nc, temp_dir = combo
-                    _tmp_zarr(ii, nc, temp_dir, groups)
 
                 zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
-                logging.info(f"Found {len(zarrs_found)} station files.")
+                logging.info(
+                    f"Found {len(zarrs_found)} intermediary aggregation files."
+                )
 
                 ds = xr.open_mfdataset(
                     zarrs_found,
@@ -591,7 +593,6 @@ def aggregate_stations(
             # ds = xr.merge([ds, meta])
             # ds.attrs = attrs1
 
-            # FIXME: We need a `station_id`?
             valid_stations = list(sorted(ds.station_id.values))
             valid_stations_count = len(valid_stations)
 
@@ -603,31 +604,27 @@ def aggregate_stations(
                 )
                 return
 
-            logging.warning(
+            logging.info(
                 f"Files exist for {len(station_file_codes)} ECCC stations. "
                 f"Metadata found for {valid_stations_count} stations. "
-                #     f"Rejecting {len(rejected_stations)} stations."
             )
-            # if rejected_stations:
-            #     logging.warning(
-            #         f"Rejected station codes are the following: {', '.join(rejected_stations)}."
-            #     )
 
-            logging.info("Preparing the NetCDF time period.")
+            # FIXME: Is this still needed?
+            # logging.info("Preparing the NetCDF time period.")
             # Create the time period timestamps
-            year_start = ds.time.dt.year.min().values
-            year_end = ds.time.dt.year.max().values
+            # year_start = ds.time.dt.year.min().values
+            # year_end = ds.time.dt.year.max().values
 
             # Calculate the time index dimensions of the output NetCDF
-            time_index = pd.date_range(
-                start=f"{year_start}-01-01",
-                end=f"{year_end + 1}-01-01",
-                freq=mode[0].capitalize(),
-            )[:-1]
+            # time_index = pd.date_range(
+            #     start=f"{year_start}-01-01",
+            #     end=f"{year_end + 1}-01-01",
+            #     freq=mode[0].capitalize(),
+            # )[:-1]
+            # logging.info(
+            #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
+            # )
 
-            logging.info(
-                f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
-            )
             output_folder.mkdir(parents=True, exist_ok=True)
             file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
 
@@ -645,7 +642,7 @@ def aggregate_stations(
 
             # FIXME: chunks need to be dealt with
             # chunks = [1, len(ds.time)]
-            comp = dict(zlib=True, complevel=5)  # , chunksizes=chunks)
+            comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
 
             with ProgressBar():
                 for dataset, path in zip(datasets, paths):
@@ -668,14 +665,16 @@ def aggregate_stations(
 
 
 def _tmp_zarr(
-    ii: int,
+    iterable: int,
     nc: Union[str, Path],
     tempdir: Union[str, Path],
-    batches: Optional[int] = None,
+    group: Optional[int] = None,
 ) -> None:
-    if batches is None:
-        batches = "X"
-    logging.info(f"Processing batch of files {ii + 1} of {batches}")
+
+    logging.info(
+        f"Processing batch of files {iterable + 1}"
+        f"{' of ' + str(group) if group is not None else ''}."
+    )
     station_file_codes = [x.name.split("_")[0] for x in nc]
 
     ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
@@ -689,7 +688,7 @@ def _tmp_zarr(
 
     with ProgressBar():
         ds.load().to_zarr(
-            Path(tempdir).joinpath(f"{str(ii).zfill(3)}.zarr"),
+            Path(tempdir).joinpath(f"{str(iterable).zfill(3)}.zarr"),
         )
     del ds
 
@@ -699,15 +698,14 @@ def _combine_years(
     varia: str,
     out_folder: Union[str, Path],
     meta_file: Union[str, Path],
+    rejected: List[str],
 ) -> None:
 
     nc_files = sorted(list(station_folder.glob("*.nc")))
     logging.info(f"Found {len(nc_files)} files for station code {station_folder.name}.")
     logging.info(f"Opening: {nc_files}")
 
-    ds = xr.open_mfdataset(
-        nc_files, parallel=False, combine="nested", concat_dim={"time"}
-    )
+    ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = out_folder.joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
         f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
@@ -717,11 +715,12 @@ def _combine_years(
 
     station_id = ds.attrs["member"]
     meta = df_inv.isel(index=df_inv.CLIMATE_IDENTIFIER == station_id)
-    meta = meta.rename({"index": "station"})
+    meta = meta.rename({"index": "station", "CLIMATE_IDENTIFIER": "station_id"})
     meta = meta.assign_coords(station=[0])
     if len(meta.indexes) > 1:
         raise ValueError("Found more than 1 station.")
     elif len(meta.indexes) == 0:
+        rejected.append(station_folder.name)
         logging.warning(
             f"No metadata found for station {station_folder}. Continuing..."
         )
@@ -731,8 +730,8 @@ def _combine_years(
         "time",
         "station",
         "station_id",
-        "longitude",
         "latitude",
+        "longitude",
         "elevation",
     ]
     for vv in meta.data_vars:
@@ -813,14 +812,23 @@ def merge_converted_variables(
         output_rep = destination.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
 
+        manager = mp.Manager()
+        rejected_stations = manager.list()
+
         combine_func = functools.partial(
             _combine_years,
             varia=variable,
             out_folder=output_rep,
             meta_file=metadata_file,
+            rejected=rejected_stations,
         )
 
         with mp.Pool(processes=n_workers) as pool:
             pool.map(combine_func, station_dirs)
             pool.close()
             pool.join()
+
+        if rejected_stations:
+            logging.warning(
+                f"Rejected station codes are the following: {', '.join(rejected_stations)}."
+            )
