@@ -39,7 +39,7 @@ class TestEnvCanVariables:
             "dry_bulb_temperature",
             "relative_humidity",
             "rainfall_flux",
-            "precipitation_flux",
+            "precipitation_amount",
         }
 
     def test_daily_cf_dictionaries(self):
