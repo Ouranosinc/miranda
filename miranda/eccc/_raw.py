@@ -52,6 +52,31 @@ __all__ = [
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
+def load_station_metadata(meta: Union[str, Path]) -> xr.Dataset:
+    if meta:
+        df_inv = pd.read_csv(meta, header=0)
+        df_inv["LONGITUDE"] = df_inv.geometry.x
+        df_inv["LATITUDE"] = df_inv.geometry.y
+        df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)
+        df_inv = df_inv.drop(["geometry"], axis=1)
+        return df_inv.to_xarray()
+    else:
+        try:
+            import geopandas as gpd
+
+            station_metadata_url = "https://api.weather.gc.ca/collections/climate-stations/items?f=json&limit=15000000"
+            df_inv = gpd.read_file(station_metadata_url)
+            df_inv["LONGITUDE"] = df_inv.geometry.x
+            df_inv["LATITUDE"] = df_inv.geometry.y
+            df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)
+            df_inv = df_inv.drop(["geometry"], axis=1)
+            return df_inv.to_xarray()
+        except HTTPError as err:
+            raise RuntimeError(
+                f"Station metadata table unable to be fetched. Considering downloading directly: {err}"
+            )
+
+
 def _convert_station_file(
     fichier: Path,
     output_path: Path,
@@ -424,7 +449,7 @@ def convert_flat_files(
             column_dtypes=column_dtypes,
             **metadata,
         )
-        with mp.Pool(n_workers) as pool:
+        with mp.Pool(processes=n_workers) as pool:
             pool.map(converter_func, list_files)
             pool.close()
             pool.join()
@@ -444,7 +469,7 @@ def aggregate_stations(
     time_step: str = None,
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
-    groups: int = 5,
+    groups: int = 1,
     mf_dataset_freq: Optional[str] = None,
     temp_directory: Optional[Union[str, Path]] = None,
 ) -> None:
@@ -456,7 +481,6 @@ def aggregate_stations(
     output_folder: Union[str, Path]
     variables: Optional[Union[str, int, List[Union[str, int]]]]
     time_step: {"hourly", "daily"}
-    station_metadata: Union[str, Path]
     include_flags: bool
     groups: int
       The number of file groupings used for converting to multi-file Datasets.
@@ -511,6 +535,7 @@ def aggregate_stations(
         pass
     elif isinstance(variables, (str, int)):
         variables = [variables]
+    # TODO: have the variable gathered from a JSON file
     elif variables is None:
         if mode == "hourly":
             variables = [
@@ -549,7 +574,7 @@ def aggregate_stations(
                 # TODO memory use seems ok here .. could try using Pool() to increase performance
                 for combo in combinations:
                     ii, nc, temp_dir = combo
-                    _tmp_nc(ii, nc, temp_dir, groups)
+                    _tmp_zarr(ii, nc, temp_dir, groups)
 
                 netcdfs_found = [f for f in Path(temp_dir).glob("*.nc")]
                 logging.info(f"Found {len(netcdfs_found)} station files.")
@@ -580,34 +605,38 @@ def aggregate_stations(
             # Ensure data is in order to add metadata
             ds = ds.sortby(ds.station_id)
 
-            attrs1 = ds.attrs
+            # attrs1 = ds.attrs
             # filter metadata for station_ids in dataset
-            logging.info("Writing out metadata.")
+            # logging.info(f"Writing out metadata for {variable_name}.")
 
-            meta = df_inv.loc[df_inv["climate_identifier"].isin(ds.station_id.values)]
+            # meta = df_inv.loc[df_inv["climate_identifier"].isin(ds.station_id.values)]
 
             # Rearrange column order to have lon, lat, elev first
-            cols = meta.columns.tolist()
-            cols1 = [
-                "latitude",
-                "longitude",
-                "elevation",
-            ]
-            for rr in cols1:
-                cols.remove(rr)
-            cols1.extend(cols)
-            meta = meta[cols1]
-            meta.index.rename("station", inplace=True)
-            meta = meta.to_xarray()
-            meta.sortby(meta["climate_identifier"])
-            meta = meta.assign({"station": ds.station.values})
+            # # FIXME: This doesn't work as intended - Assign coordinates instead
+            # cols = meta.columns.tolist()
+            # cols1 = [
+            #     "latitude",
+            #     "longitude",
+            #     "elevation",
+            # ]
+            # for rr in cols1:
+            #     cols.remove(rr)
+            # cols1.extend(cols)
+            # meta = meta[cols1]
+            # meta.index.rename("station", inplace=True)
+            # meta = meta.to_xarray()
+            # meta.sortby(meta["climate_identifier"])
+            # meta = meta.assign({"station": ds.station.values})
 
-            np.testing.assert_array_equal(
-                sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
-            )
-            ds = xr.merge([ds, meta])
-            ds.attrs = attrs1
+            # np.testing.assert_array_equal(
+            #     sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
+            # )
+            # for vv in meta.data_vars:
+            #     ds = ds.assign_coords({vv: meta[vv]})
+            # ds = xr.merge([ds, meta])
+            # ds.attrs = attrs1
 
+            # FIXME: We need a `station_id`?
             valid_stations = list(sorted(ds.station_id.values))
             valid_stations_count = len(valid_stations)
 
@@ -622,12 +651,12 @@ def aggregate_stations(
             logging.warning(
                 f"Files exist for {len(station_file_codes)} ECCC stations. "
                 f"Metadata found for {valid_stations_count} stations. "
-                f"Rejecting {len(rejected_stations)} stations."
+                #     f"Rejecting {len(rejected_stations)} stations."
             )
-            if rejected_stations:
-                logging.warning(
-                    f"Rejected station codes are the following: {', '.join(rejected_stations)}."
-                )
+            # if rejected_stations:
+            #     logging.warning(
+            #         f"Rejected station codes are the following: {', '.join(rejected_stations)}."
+            #     )
 
             logging.info("Preparing the NetCDF time period.")
             # Create the time period timestamps
@@ -644,41 +673,28 @@ def aggregate_stations(
             logging.info(
                 f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
             )
-
-            ds_out = xr.Dataset(
-                coords={
-                    "time": time_index,
-                    "station": ds.station,
-                    "station_id": ds.station_id,
-                },
-                attrs=ds.attrs,
-            )
-
-            # assign data variables to output dataset ... will align with time coords
-            for vv in ds.data_vars:
-                ds_out[vv] = ds[vv]
-
             output_folder.mkdir(parents=True, exist_ok=True)
-
             file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
 
+            ds = ds.assign_coords(station=range(0, len(ds.station)))
             if mf_dataset_freq is not None:
-                _, datasets = zip(
-                    *ds_out.resample(time=mf_dataset_freq)
-                )  # output mf_dataset using resampling frequency
+                # output mf_dataset using resampling frequency
+                _, datasets = zip(*ds.resample(time=mf_dataset_freq))
             else:
-                datasets = [ds_out]
+                datasets = [ds]
 
             paths = [
                 f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
                 for data in datasets
             ]
 
-            comp = dict(zlib=True, complevel=5)
+            # FIXME: chunks need to be dealt with
+            # chunks = [1, len(ds.time)]
+            comp = dict(zlib=True, complevel=5)  # , chunksizes=chunks)
 
             with ProgressBar():
                 for dataset, path in zip(datasets, paths):
-                    encoding = {var: comp for var in ds_out.data_vars}
+                    encoding = {var: comp for var in ds.data_vars}
                     dataset.to_netcdf(
                         path,
                         engine="netcdf4",
@@ -688,7 +704,6 @@ def aggregate_stations(
                     dataset.close()
                     del dataset
             ds.close()
-            ds_out.close()
 
         else:
             logging.info(f"No files found for variable: `{variable_name}`.")
@@ -697,7 +712,7 @@ def aggregate_stations(
     logging.warning(runtime)
 
 
-def _tmp_nc(
+def _tmp_zarr(
     ii: int,
     nc: Union[str, Path],
     tempdir: Union[str, Path],
@@ -717,68 +732,103 @@ def _tmp_nc(
         ds1["flag"] = ds.flag.astype(str)
         ds = ds1
 
-    comp = dict(zlib=True, complevel=5)
-    encoding = {var: comp for var in ds.data_vars}
-
     with ProgressBar():
-        ds.load().to_netcdf(
-            Path(tempdir).joinpath(f"{str(ii).zfill(3)}.nc"),
-            engine="netcdf4",
-            format="NETCDF4_CLASSIC",
-            encoding=encoding,
+        ds.load().to_zarr(
+            Path(tempdir).joinpath(f"{str(ii).zfill(3)}.zarr"),
         )
-        del ds
+    del ds
+
+
+def _combine_years(
+    station_folder: Union[str, Path],
+    varia: str,
+    out_folder: Union[str, Path],
+    meta_file: Union[str, Path],
+) -> None:
+
+    nc_files = sorted(list(station_folder.glob("*.nc")))
+    logging.info(f"Found {len(nc_files)} files for station code {station_folder.name}.")
+    logging.info(f"Opening: {nc_files}")
+
+    ds = xr.open_mfdataset(
+        nc_files, parallel=False, combine="nested", concat_dim={"time"}
+    )
+    outfile = out_folder.joinpath(
+        f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
+        f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
+    )
+
+    df_inv = xr.open_dataset(meta_file)
+
+    station_id = ds.attrs["member"]
+    meta = df_inv.isel(index=df_inv.CLIMATE_IDENTIFIER == station_id)
+    meta = meta.rename({"index": "station"})
+    meta = meta.assign_coords(station=[0])
+    if len(meta.indexes) > 1:
+        raise ValueError("Found more than 1 station.")
+    elif len(meta.indexes) == 0:
+        logging.warning(
+            f"No metadata found for station {station_folder}. Continuing..."
+        )
+        return
+
+    keep_coords = [
+        "time",
+        "station",
+        "station_id",
+        "longitude",
+        "latitude",
+        "elevation",
+    ]
+    for vv in meta.data_vars:
+        if vv.lower() not in keep_coords:
+            continue
+        ds = ds.assign_coords({vv.lower(): meta[vv]})
+
+    for vv in ds.data_vars:
+        if ds[vv].dtype == "O":
+            ds[vv] = ds[vv].astype(str)
+
+    if not outfile.exists():
+        logging.info(f"Merging to {outfile.name}")
+        comp = dict(zlib=True, complevel=5)
+        encoding = {data_var: comp for data_var in ds.data_vars}
+        encoding["time"] = dict(dtype="single")
+        with ProgressBar():
+            ds.to_netcdf(
+                outfile,
+                engine="netcdf4",
+                format="NETCDF4",
+                encoding=encoding,
+            )
+    else:
+        logging.info(f"Files exist for {outfile.name}. Continuing...")
 
 
 def merge_converted_variables(
     source: Union[str, Path],
     destination: Union[str, Path],
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
+    station_metadata: Optional[Union[str, Path]] = None,
+    n_workers: int = 1,
 ) -> None:
     """
 
     Parameters
     ----------
-    source : Union[str, Path]
-    destination : Union[str, Path]
-    variables : Optional[Union[str, int, List[Union[str, int]]]]
+    source: Union[str, Path]
+    destination: Union[str, Path]
+    variables: Optional[Union[str, int, List[Union[str, int]]]]
+    station_metadata: Optional[Union[str, Path]]
+    n_workers: int
 
     Returns
     -------
 
     """
-
-    def _combine_years(args: Tuple[str, Union[str, Path], Union[str, Path]]) -> None:
-        varia, input_folder, output_folder = args
-
-        nc_files = sorted(list(input_folder.glob("*.nc")))
-        logging.info(
-            f"Found {len(nc_files)} files for station code {input_folder.name}."
-        )
-        logging.info(f"Opening: {nc_files}")
-
-        ds = xr.open_mfdataset(
-            nc_files, parallel=False, combine="nested", concat_dim={"time"}
-        )
-
-        outfile = output_folder.joinpath(
-            f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
-            f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
-        )
-        if not outfile.exists():
-            logging.info(f"Merging to {outfile.name}")
-            comp = dict(zlib=True, complevel=5)
-            encoding = {data_var: comp for data_var in ds.data_vars}
-            encoding["time"] = dict(dtype="single")
-            with ProgressBar():
-                ds.to_netcdf(
-                    outfile,
-                    engine="netcdf4",
-                    format="NETCDF4_CLASSIC",
-                    encoding=encoding,
-                )
-        else:
-            logging.info(f"Files exist for {outfile.name}. Continuing...")
+    meta = load_station_metadata(station_metadata)
+    metadata_file = Path(tempfile.NamedTemporaryFile(suffix=".nc", delete=False).name)
+    meta.to_netcdf(metadata_file)
 
     if isinstance(source, str):
         source = Path(source)
@@ -804,14 +854,18 @@ def merge_converted_variables(
         logging.info(f"Merging files found for variable: `{variable}`.")
         station_dirs = [x for x in source.joinpath(variable).iterdir() if x.is_dir()]
         logging.info(f"Number of stations found: {len(station_dirs)}.")
-        outrep = destination.joinpath(variable)
 
-        Path(outrep).mkdir(parents=True, exist_ok=True)
-        combs = list(itertools.product(*[[variable], station_dirs, [outrep]]))
-        for c in combs:
-            try:
-                _combine_years(c)
-            except ValueError as e:
-                logging.error(
-                    f"`{e}` encountered for station `{c[1].name}`. Continuing..."
-                )
+        output_rep = destination.joinpath(variable)
+        Path(output_rep).mkdir(parents=True, exist_ok=True)
+
+        combine_func = functools.partial(
+            _combine_years,
+            varia=variable,
+            out_folder=output_rep,
+            meta_file=metadata_file,
+        )
+
+        with mp.Pool(processes=n_workers) as pool:
+            pool.map(combine_func, station_dirs)
+            pool.close()
+            pool.join()
