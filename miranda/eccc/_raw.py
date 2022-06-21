@@ -282,8 +282,11 @@ def _convert_station_file(
 
                     f_nc = (
                         f"{code}_{variable_code}_{nc_name}_"
-                        f"{start_year if start_year == end_year else '_'.join([start_year, end_year])}.nc"
+                        f"{start_year if start_year == end_year else '_'.join([str(start_year), str(end_year)])}.nc"
                     )
+
+                    if station_folder.joinpath(f_nc).exists():
+                        logging.warning(f"File `{f_nc}` already exists. Continuing...")
 
                     history = (
                         f"{dt.now().strftime('%Y-%m-%d %X')} converted from flat station file "
