@@ -465,7 +465,6 @@ def convert_flat_files(
 def aggregate_stations(
     source_files: Optional[Union[str, Path]] = None,
     output_folder: Optional[Union[str, Path]] = None,
-    station_metadata: Union[str, Path] = None,
     time_step: str = None,
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
@@ -494,32 +493,6 @@ def aggregate_stations(
     None
     """
     func_time = time.time()
-
-    # Find the ECCC stations where we have available metadata
-    if station_metadata:
-        df_inv = pd.read_csv(str(station_metadata), header=0)
-    else:
-        try:
-            import geopandas as gpd
-
-            station_metadata_url = "https://api.weather.gc.ca/collections/climate-stations/items?f=json&limit=15000000"
-            df_inv = gpd.read_file(station_metadata_url)
-        except HTTPError as e:
-            raise RuntimeError(
-                f"Station metadata table unable to be fetched. Considering downloading directly: {e}"
-            )
-
-    df_inv = df_inv.drop(["geometry"], axis=1)
-    df_inv.columns = [str(c).lower() for c in df_inv.columns]
-    rename = {
-        "latitude": "lat",
-        "longitude": "lon",
-        "tc_identifier": "TC_identifier",
-        "wmo_identifier": "WMO_identifier",
-    }
-    df_inv = df_inv.rename(rename)
-
-    station_inventory = set(df_inv["climate_identifier"].values)
 
     if isinstance(source_files, str):
         source_files = Path(source_files)
@@ -576,40 +549,22 @@ def aggregate_stations(
                     ii, nc, temp_dir = combo
                     _tmp_zarr(ii, nc, temp_dir, groups)
 
-                netcdfs_found = [f for f in Path(temp_dir).glob("*.nc")]
-                logging.info(f"Found {len(netcdfs_found)} station files.")
+                zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
+                logging.info(f"Found {len(zarrs_found)} station files.")
 
                 ds = xr.open_mfdataset(
-                    netcdfs_found,
+                    zarrs_found,
+                    engine="zarr",
                     combine="nested",
                     concat_dim={"station"},
-                    chunks=dict(time=365),
                 )
 
-                # dask gives warnings about export 'object' data types
-                ds["station_id"] = ds.station_id.astype(str)
-        if ds:
-            station_file_codes = [x.name.split("_")[0] for x in nc_list]
-            rejected_stations = set(station_file_codes).difference(station_inventory)
-
-            logging.info(f"{len(rejected_stations)} rejected due to missing metadata.")
-            r_all = np.zeros(ds.station_id.shape) == 0
-
-            for r in rejected_stations:
-                r_all[ds.station_id == r] = False
-            ds = ds.isel(station=r_all)
-            if not include_flags:
-                drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
-                ds = ds.drop_vars(drop_vars)
-
-            # Ensure data is in order to add metadata
-            ds = ds.sortby(ds.station_id)
-
-            # attrs1 = ds.attrs
-            # filter metadata for station_ids in dataset
-            # logging.info(f"Writing out metadata for {variable_name}.")
-
-            # meta = df_inv.loc[df_inv["climate_identifier"].isin(ds.station_id.values)]
+                if ds:
+                    station_file_codes = [x.name.split("_")[0] for x in nc_list]
+                    if not include_flags:
+                        drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
+                        ds = ds.drop_vars(drop_vars)
+                    ds = ds.sortby(ds.station_id)
 
             # Rearrange column order to have lon, lat, elev first
             # # FIXME: This doesn't work as intended - Assign coordinates instead
