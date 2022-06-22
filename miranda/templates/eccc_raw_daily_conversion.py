@@ -10,6 +10,7 @@ from miranda.eccc import (
 if __name__ == "__main__":
 
     time_step = "daily"
+    n_workers = 3
     var_codes = [
         1,
         2,
@@ -50,10 +51,12 @@ if __name__ == "__main__":
         output_folder=output_data,
         variables=var_codes,
         mode=time_step,
-        n_workers=1,
+        n_workers=n_workers,
     )
 
-    merge_converted_variables(source=output_data, destination=merged)
+    merge_converted_variables(
+        source=output_data, destination=merged, n_workers=n_workers
+    )
 
     aggregate_stations(
         source_files=merged,
@@ -62,4 +65,5 @@ if __name__ == "__main__":
         time_step=time_step,
         mf_dataset_freq="10YS",
         temp_directory=daily,
+        n_workers=n_workers,
     )
