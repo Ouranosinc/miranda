@@ -212,6 +212,7 @@ def cf_station_metadata(
         },
         "024": {
             "_table_name": {"DLY02", "DLY04"},
+            "original_units": "km/h",
             "raw_units": "km h-1",
             "units": "m s-1",
             "scale_factor": 1,
@@ -222,6 +223,7 @@ def cf_station_metadata(
         },
         "025": {
             "_table_name": {"DLY02", "DLY04"},
+            "original_units": "",
             "raw_units": "h",
             "units": "h",
             "scale_factor": 1,
