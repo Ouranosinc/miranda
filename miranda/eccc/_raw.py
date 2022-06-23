@@ -702,7 +702,7 @@ def _combine_years(
 
     nc_files = sorted(list(station_folder.glob("*.nc")))
     logging.info(f"Found {len(nc_files)} files for station code {station_folder.name}.")
-    logging.info(f"Opening: {nc_files}")
+    logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
 
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = out_folder.joinpath(
@@ -715,7 +715,14 @@ def _combine_years(
     station_id = ds.attrs["member"]
     meta = df_inv.isel(index=df_inv.CLIMATE_IDENTIFIER == station_id)
     meta = meta.rename({"index": "station", "CLIMATE_IDENTIFIER": "station_id"})
-    meta = meta.assign_coords(station=[0])
+    try:
+        meta = meta.assign_coords(station=[0])
+    except ValueError:
+        rejected.append(station_folder.name)
+        logging.error(
+            f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
+        )
+        return
     if len(meta.indexes) > 1:
         raise ValueError("Found more than 1 station.")
     elif len(meta.indexes) == 0:
