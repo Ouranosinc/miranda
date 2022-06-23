@@ -16,6 +16,7 @@ import functools
 import logging
 import multiprocessing as mp
 import os
+import re
 import sys
 import tempfile
 import time
@@ -702,7 +703,33 @@ def _combine_years(
 
     nc_files = sorted(list(station_folder.glob("*.nc")))
     logging.info(f"Found {len(nc_files)} files for station code {station_folder.name}.")
-    logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
+
+    # Remove range files if years are all present, otherwise default to range_file.
+    years_found = dict()
+    range_files_found = dict()
+    for f in nc_files:
+        groups = re.findall(r"\d{4}", f.stem)
+        if len(groups) == 1:
+            years_found[int(groups[0])] = f
+        if len(groups) == 2:
+            range_files_found[f] = set(range(int(groups[0]), int(groups[1])))
+    if range_files_found:
+        logging.warning(
+            f"Overlapping single-year and multi-year files found for {station_folder}. Removing overlaps."
+        )
+    for ranged_file, years in range_files_found.items():
+        if years.issubset(years_found.values()):
+            nc_files.remove(ranged_file)
+        else:
+            for y in years:
+                nc_files.remove(years_found[y])
+
+    year_range = min(years_found.keys()), max(years_found.keys())
+    logging.info(
+        "Years covered: "
+        f"{year_range[0]}{'- ' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
+        f"Opening: {', '.join([p.name for p in nc_files])}"
+    )
 
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = out_folder.joinpath(
