@@ -102,7 +102,6 @@ def cf_station_metadata(
         },
         "014": {
             "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -113,7 +112,6 @@ def cf_station_metadata(
         },
         "015": {
             "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -124,7 +122,6 @@ def cf_station_metadata(
         },
         "016": {
             "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -135,7 +132,6 @@ def cf_station_metadata(
         },
         "017": {
             "_table_name": {"DLY02", "DLY04", "DLY44"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -146,7 +142,6 @@ def cf_station_metadata(
         },
         "018": {
             "_table_name": {"DLY02", "DLY04"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -157,7 +152,6 @@ def cf_station_metadata(
         },
         "019": {
             "_table_name": {"DLY02", "DLY04"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -168,7 +162,6 @@ def cf_station_metadata(
         },
         "020": {
             "_table_name": {"DLY02", "DLY04"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -179,7 +172,6 @@ def cf_station_metadata(
         },
         "021": {
             "_table_name": {"DLY02", "DLY04"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -190,7 +182,6 @@ def cf_station_metadata(
         },
         "022": {
             "_table_name": {"DLY02", "DLY04"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,
@@ -223,7 +214,6 @@ def cf_station_metadata(
         },
         "025": {
             "_table_name": {"DLY02", "DLY04"},
-            "original_units": "",
             "raw_units": "h",
             "units": "h",
             "scale_factor": 1,
@@ -428,7 +418,6 @@ def cf_station_metadata(
         },
         "109": {
             "_table_name": {"HLY01"},
-            "original_units": "",
             "raw_units": "1",
             "units": "1",
             "scale_factor": 1,

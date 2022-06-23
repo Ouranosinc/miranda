@@ -85,15 +85,13 @@ def _convert_station_file(
     missing_flags: Set[str],
     missing_values: Set[str],
     nc_name: str,
-    original_units: str,
     raw_units: str,
     units: str,
     scale_factor: float,
     standard_name: str,
     variable_code: str,
-    **_,
+    **kwargs,
 ):
-
     if mode.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
         column_widths = [7, 4, 2, 2, 3] + [6, 1] * num_observations
@@ -274,11 +272,12 @@ def _convert_station_file(
 
                     da_val = da_val.rename(nc_name)
                     variable_attributes = dict(
-                        original_units=original_units,
                         variable_code=variable_code,
                         standard_name=standard_name,
                         long_name=long_name,
                     )
+                    if "original_units" in kwargs:
+                        variable_attributes["original_units"] = kwargs["original_units"]
                     da_val.attrs.update(variable_attributes)
 
                     da_flag = xr.DataArray(
