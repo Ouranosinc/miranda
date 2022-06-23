@@ -23,7 +23,7 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List, Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Union
 from urllib.error import HTTPError
 
 import dask.dataframe as dd
