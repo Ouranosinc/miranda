@@ -699,6 +699,7 @@ def _combine_years(
     out_folder: Union[str, Path],
     meta_file: Union[str, Path],
     rejected: List[str],
+    _verbose: bool = False,
 ) -> None:
 
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
@@ -745,7 +746,8 @@ def _combine_years(
             f"{year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
         )
 
-    logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
+    if _verbose:
+        logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = out_folder.joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
