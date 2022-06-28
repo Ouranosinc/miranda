@@ -734,7 +734,10 @@ def _combine_years(
                     nc_files.remove(ranged_file)
                 else:
                     for y in years:
-                        nc_files.remove(years_found[y])
+                        try:
+                            nc_files.remove(years_found[y])
+                        except (KeyError, ValueError):
+                            continue
 
         year_range = min(years_found.keys()), max(years_found.keys())
         logging.info(
