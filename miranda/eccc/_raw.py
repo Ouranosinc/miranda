@@ -694,43 +694,55 @@ def _tmp_zarr(
 
 
 def _combine_years(
-    station_folder: Union[str, Path],
+    station_folder: str,
     varia: str,
     out_folder: Union[str, Path],
     meta_file: Union[str, Path],
     rejected: List[str],
 ) -> None:
 
-    nc_files = sorted(list(station_folder.glob("*.nc")))
-    logging.info(f"Found {len(nc_files)} files for station code {station_folder.name}.")
+    nc_files = sorted(list(Path(station_folder).glob("*.nc")))
+    logging.info(
+        f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
+    )
 
     # Remove range files if years are all present, otherwise default to range_file.
     years_found = dict()
     range_files_found = dict()
+    years_parsed = True
     for f in nc_files:
-        groups = re.findall(r"\d{4}", f.stem)
+        groups = re.findall(r"_\d{4}", f.stem)
         if len(groups) == 1:
-            years_found[int(groups[0])] = f
-        if len(groups) == 2:
-            range_files_found[f] = set(range(int(groups[0]), int(groups[1])))
-    if range_files_found:
-        logging.warning(
-            f"Overlapping single-year and multi-year files found for {station_folder}. Removing overlaps."
-        )
-    for ranged_file, years in range_files_found.items():
-        if years.issubset(years_found.values()):
-            nc_files.remove(ranged_file)
+            year = int(groups[0].strip("_"))
+            years_found[year] = f
+        elif len(groups) == 2:
+            year_start, year_end = int(groups[0].strip("_")), int(groups[1].strip("_"))
+            range_files_found[f] = set(range(year_start, year_end))
         else:
-            for y in years:
-                nc_files.remove(years_found[y])
+            logging.warning(
+                "Years unable to be effectively parsed from series. Continuing with xarray solver..."
+            )
+            years_parsed = False
+            break
+    if years_parsed:
+        if len(range_files_found) > 0:
+            logging.warning(
+                f"Overlapping single-year and multi-year files found for {station_folder}. Removing overlaps."
+            )
+            for ranged_file, years in range_files_found.items():
+                if years.issubset(years_found.values()):
+                    nc_files.remove(ranged_file)
+                else:
+                    for y in years:
+                        nc_files.remove(years_found[y])
 
-    year_range = min(years_found.keys()), max(years_found.keys())
-    logging.info(
-        "Years covered: "
-        f"{year_range[0]}{'- ' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
-        f"Opening: {', '.join([p.name for p in nc_files])}"
-    )
+        year_range = min(years_found.keys()), max(years_found.keys())
+        logging.info(
+            "Year(s) covered: "
+            f"{year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
+        )
 
+    logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = out_folder.joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
@@ -745,7 +757,7 @@ def _combine_years(
     try:
         meta = meta.assign_coords(station=[0])
     except ValueError:
-        rejected.append(station_folder.name)
+        rejected.append(Path(station_folder).name)
         logging.error(
             f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
         )
@@ -753,7 +765,7 @@ def _combine_years(
     if len(meta.indexes) > 1:
         raise ValueError("Found more than 1 station.")
     elif len(meta.indexes) == 0:
-        rejected.append(station_folder.name)
+        rejected.append(Path(station_folder).name)
         logging.warning(
             f"No metadata found for station {station_folder}. Continuing..."
         )
