@@ -121,7 +121,7 @@ def _convert_station_file(
                 )
                 pandas_reader = dd
                 using_dask_array = True
-                chunks = dict(blocksize=100 * MiB)
+                chunks = dict(blocksize=200 * MiB)
                 client = ProgressBar
             else:
                 logging.info(
@@ -812,6 +812,7 @@ def merge_converted_variables(
     destination: Union[str, Path],
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     station_metadata: Optional[Union[str, Path]] = None,
+    overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
     """
@@ -822,10 +823,12 @@ def merge_converted_variables(
     destination: Union[str, Path]
     variables: Optional[Union[str, int, List[Union[str, int]]]]
     station_metadata: Optional[Union[str, Path]]
+    overwrite: bool
     n_workers: int
 
     Returns
     -------
+    None
 
     """
     meta = load_station_metadata(station_metadata)
@@ -859,6 +862,15 @@ def merge_converted_variables(
 
         output_rep = destination.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
+
+        if (
+            len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)
+        ) and not overwrite:
+            logging.warning(
+                f"Variable {variable} appears to have already been converted. Will be skipped. "
+                f"To force conversion of this variable, set `overwrite=True`."
+            )
+            continue
 
         manager = mp.Manager()
         rejected_stations = manager.list()
