@@ -572,7 +572,7 @@ def aggregate_stations(
                 )
 
                 if ds:
-                    station_file_codes = [x.name.split("_")[0] for x in nc_list]
+                    station_file_codes = [Path(x).name.split("_")[0] for x in nc_list]
                     if not include_flags:
                         drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
                         ds = ds.drop_vars(drop_vars)
