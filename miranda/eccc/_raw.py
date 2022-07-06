@@ -132,7 +132,7 @@ def _convert_station_file(
                 using_dask_array = False
                 client = contextlib.nullcontext
 
-            with client():
+            with client() as c:
                 # Create a dataframe from the files
                 try:
                     df = pandas_reader.read_fwf(
@@ -146,6 +146,9 @@ def _convert_station_file(
                         assume_missing=True,
                         **chunks,
                     )
+                    if using_dask_array:
+                        df = c.persist(df)
+
                 except FileNotFoundError:
                     logging.error(f"File {data} was not found.")
                     errored_files.append(data)
