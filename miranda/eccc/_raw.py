@@ -39,6 +39,7 @@ from miranda.storage import file_size, report_file_size
 from miranda.units import GiB, MiB
 from miranda.utils import generic_extract_archive
 
+from ..archive import group_by_length
 from ._utils import cf_station_metadata
 
 config.dictConfig(LOGGING_CONFIG)
@@ -472,7 +473,7 @@ def aggregate_stations(
     time_step: str = None,
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
-    groups: int = 1,
+    groupings: Optional[int] = None,
     mf_dataset_freq: Optional[str] = None,
     temp_directory: Optional[Union[str, os.PathLike]] = None,
     n_workers: int = 1,
@@ -486,8 +487,8 @@ def aggregate_stations(
     variables: Optional[Union[str, int, List[Union[str, int]]]]
     time_step: {"hourly", "daily"}
     include_flags: bool
-    groups: int
-      The number of file groupings used for converting to multi-file Datasets.
+    groupings: int
+      The number of files in each group used for converting to multi-file Datasets.
     mf_dataset_freq: Optional[str]
       Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
     temp_directory: Optional[Union[str, Path]]
@@ -537,17 +538,20 @@ def aggregate_stations(
 
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
-        nc_list = list(source_files.joinpath(variable_name).rglob("*.nc"))
+        nc_list = [str(nc) for nc in source_files.joinpath(variable_name).rglob("*.nc")]
 
-        if nc_list != list():
-            nc_lists = np.array_split(nc_list, groups)
+        if not groupings:
+            groupings = max(n_workers**2, 4)
+
+        if nc_list:
+            nc_lists = group_by_length(nc_list, groupings)
 
             with tempfile.TemporaryDirectory(
                 prefix="eccc", dir=temp_directory
             ) as temp_dir:
 
                 combinations = sorted(
-                    (ii, nc, temp_dir, groups) for ii, nc in enumerate(nc_lists)
+                    (ii, nc, temp_dir, groupings) for ii, nc in enumerate(nc_lists)
                 )
 
                 with mp.Pool(processes=n_workers) as pool:

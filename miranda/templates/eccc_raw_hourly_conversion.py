@@ -78,8 +78,8 @@ if __name__ == "__main__":
     aggregate_stations(
         source_files=merged,
         output_folder=final,
-        variables=var_codes,
         time_step=time_step,
+        variables=var_codes,
         mf_dataset_freq="5YS",
         temp_directory=hourly,
         n_workers=n_workers,
