@@ -333,15 +333,20 @@ def _convert_station_file(
                     global_attrs.update(
                         dict(
                             history=history,
+                            internal_comment=f"Converted by {os.environ.get('USER', os.environ.get('USERNAME'))}.",
                             institution="ECCC",
+                            license="https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
                             member=code,
                             processing_level="raw",
-                            redistribution="Redistribution policy unknown. For internal use only.",
+                            redistribution="Redistribution permitted.",
                             references="https://climate.weather.gc.ca/doc/Technical_Documentation.pdf",
                             source="historical-station-records",
                             table_date=TABLE_DATE,
-                            title="Environment and Climate Change Canada (ECCC) weather eccc",
+                            title="Environment and Climate Change Canada (ECCC) weather station observations",
                             type="station-obs",
+                            usage="The original data is owned by the Government of Canada (Environment and Climate "
+                            "Change Canada), and falls under the licence agreement for use of Environment and "
+                            "Climate Change Canada data",
                             variable=str(nc_name),
                             version=f"v{dt.now().strftime('%Y.%m.%V')}",  # Year.Month.Week
                         )
