@@ -555,8 +555,6 @@ def aggregate_stations(
                     pool.close()
                     pool.join()
 
-                # TODO memory use seems ok here .. could try using Pool() to increase performance
-
                 zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
                 logging.info(
                     f"Found {len(zarrs_found)} intermediary aggregation files."
@@ -711,9 +709,15 @@ def _combine_years(
 ) -> None:
 
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
-    logging.info(
-        f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
-    )
+    if len(nc_files):
+        logging.info(
+            f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
+        )
+    else:
+        logging.warning(
+            f"No readings found for station code {Path(station_folder).name}. Continuing..."
+        )
+        return
 
     # Remove range files if years are all present, otherwise default to range_file.
     years_found = dict()
@@ -736,7 +740,8 @@ def _combine_years(
     if years_parsed:
         if len(range_files_found) > 0:
             logging.warning(
-                f"Overlapping single-year and multi-year files found for {station_folder}. Removing overlaps."
+                f"Overlapping single-year and multi-year files found for station code {station_folder}. "
+                "Removing overlaps."
             )
             for ranged_file, years in range_files_found.items():
                 if years.issubset(years_found.values()):
@@ -780,7 +785,7 @@ def _combine_years(
     elif len(meta.indexes) == 0:
         rejected.append(Path(station_folder).name)
         logging.warning(
-            f"No metadata found for station {station_folder}. Continuing..."
+            f"No metadata found for station code {station_folder}. Continuing..."
         )
         return
 
@@ -818,8 +823,8 @@ def _combine_years(
 
 
 def merge_converted_variables(
-    source: Union[str, Path],
-    destination: Union[str, Path],
+    source_files: Union[str, Path],
+    output_folder: Union[str, Path],
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     station_metadata: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
@@ -829,8 +834,8 @@ def merge_converted_variables(
 
     Parameters
     ----------
-    source: Union[str, Path]
-    destination: Union[str, Path]
+    source_files: Union[str, Path]
+    output_folder: Union[str, Path]
     variables: Optional[Union[str, int, List[Union[str, int]]]]
     station_metadata: Optional[Union[str, Path]]
     overwrite: bool
@@ -845,10 +850,10 @@ def merge_converted_variables(
     metadata_file = Path(tempfile.NamedTemporaryFile(suffix=".nc", delete=False).name)
     meta.to_netcdf(metadata_file)
 
-    if isinstance(source, str):
-        source = Path(source)
-    if isinstance(destination, str):
-        destination = Path(destination)
+    if isinstance(source_files, str):
+        source_files = Path(source_files)
+    if isinstance(output_folder, str):
+        output_folder = Path(output_folder)
 
     selected_variables = list()
     if variables is not None:
@@ -857,7 +862,7 @@ def merge_converted_variables(
         for var in variables:
             selected_variables.append(cf_station_metadata(var))
 
-    variables_found = [x.name for x in source.iterdir() if x.is_dir()]
+    variables_found = [x.name for x in source_files.iterdir() if x.is_dir()]
     if selected_variables:
         variables_found = [
             x
@@ -867,10 +872,12 @@ def merge_converted_variables(
 
     for variable in variables_found:
         logging.info(f"Merging files found for variable: `{variable}`.")
-        station_dirs = [x for x in source.joinpath(variable).iterdir() if x.is_dir()]
+        station_dirs = [
+            x for x in source_files.joinpath(variable).iterdir() if x.is_dir()
+        ]
         logging.info(f"Number of stations found: {len(station_dirs)}.")
 
-        output_rep = destination.joinpath(variable)
+        output_rep = output_folder.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
 
         if (

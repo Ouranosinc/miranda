@@ -69,7 +69,10 @@ if __name__ == "__main__":
     )
 
     merge_converted_variables(
-        source=output_data, destination=merged, n_workers=n_workers
+        source_files=output_data,
+        output_folder=merged,
+        variables=var_codes,
+        n_workers=n_workers,
     )
 
     aggregate_stations(
