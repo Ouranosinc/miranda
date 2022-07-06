@@ -551,7 +551,7 @@ def aggregate_stations(
             ) as temp_dir:
 
                 combinations = sorted(
-                    (ii, nc, temp_dir, groupings) for ii, nc in enumerate(nc_lists)
+                    (ii, nc, temp_dir, len(nc_lists)) for ii, nc in enumerate(nc_lists)
                 )
 
                 with mp.Pool(processes=n_workers) as pool:
@@ -687,7 +687,16 @@ def _tmp_zarr(
     )
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
-    ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
+    try:
+        # FIXME: Lots of "cannot reindex or align along dimension 'time' because the index has duplicate values" errors
+        ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
+    except ValueError as e:
+        errored_nc_files = ", ".join([Path(f).name for f in nc])
+        logging.error(
+            f"Issues found with the following files: [{errored_nc_files}]: {e}"
+        )
+        return
+
     ds = ds.assign_coords(
         station_id=xr.DataArray(station_file_codes, dims="station").astype(str)
     )
