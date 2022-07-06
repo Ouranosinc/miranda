@@ -666,6 +666,7 @@ def aggregate_stations(
                     dataset.close()
                     del dataset
             ds.close()
+            del ds
 
         else:
             logging.info(f"No files found for variable: `{variable_name}`.")

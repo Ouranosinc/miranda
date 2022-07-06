@@ -33,8 +33,6 @@ if __name__ == "__main__":
         25,
     ]
 
-    var_codes = [2]
-
     in_files = getenv("in")
     source_data = Path(in_files)
 
@@ -48,20 +46,20 @@ if __name__ == "__main__":
     final = daily.joinpath("final")
     final.mkdir(parents=True, exist_ok=True)
 
-    # convert_flat_files(
-    #     source_files=origin_files,
-    #     output_folder=output_data,
-    #     variables=var_codes,
-    #     mode=time_step,
-    #     n_workers=n_workers,
-    # )
-    #
-    # merge_converted_variables(
-    #     source_files=output_data,
-    #     output_folder=merged,
-    #     variables=var_codes,
-    #     n_workers=n_workers,
-    # )
+    convert_flat_files(
+        source_files=origin_files,
+        output_folder=output_data,
+        variables=var_codes,
+        mode=time_step,
+        n_workers=n_workers,
+    )
+
+    merge_converted_variables(
+        source_files=output_data,
+        output_folder=merged,
+        variables=var_codes,
+        n_workers=n_workers,
+    )
 
     aggregate_stations(
         source_files=merged,
