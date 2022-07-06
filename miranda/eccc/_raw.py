@@ -52,7 +52,7 @@ __all__ = [
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
-def load_station_metadata(meta: Union[str, Path]) -> xr.Dataset:
+def load_station_metadata(meta: Union[str, os.PathLike]) -> xr.Dataset:
     if meta:
         df_inv = pd.read_csv(meta, header=0)
     else:
@@ -376,8 +376,8 @@ def _convert_station_file(
 
 
 def convert_flat_files(
-    source_files: Union[str, Path],
-    output_folder: Union[str, Path, List[Union[str, int]]],
+    source_files: Union[str, os.PathLike],
+    output_folder: Union[str, os.PathLike, List[Union[str, int]]],
     variables: Union[str, int, List[Union[str, int]]],
     mode: str = "hourly",
     n_workers: int = 4,
@@ -467,14 +467,14 @@ def convert_flat_files(
 
 
 def aggregate_stations(
-    source_files: Optional[Union[str, Path]] = None,
-    output_folder: Optional[Union[str, Path]] = None,
+    source_files: Optional[Union[str, os.PathLike]] = None,
+    output_folder: Optional[Union[str, os.PathLike]] = None,
     time_step: str = None,
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
     include_flags: bool = True,
     groups: int = 1,
     mf_dataset_freq: Optional[str] = None,
-    temp_directory: Optional[Union[str, Path]] = None,
+    temp_directory: Optional[Union[str, os.PathLike]] = None,
     n_workers: int = 1,
 ) -> None:
     """
@@ -631,7 +631,7 @@ def aggregate_stations(
             #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
             # )
 
-            output_folder.mkdir(parents=True, exist_ok=True)
+            Path(output_folder).mkdir(parents=True, exist_ok=True)
             file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
 
             ds = ds.assign_coords(station=range(0, len(ds.station)))
@@ -672,8 +672,8 @@ def aggregate_stations(
 
 def _tmp_zarr(
     iterable: int,
-    nc: Union[str, Path],
-    tempdir: Union[str, Path],
+    nc: List[Union[str, os.PathLike]],
+    tempdir: Union[str, os.PathLike],
     group: Optional[int] = None,
 ) -> None:
 
@@ -681,7 +681,7 @@ def _tmp_zarr(
         f"Processing batch of files {iterable + 1}"
         f"{' of ' + str(group) if group is not None else ''}."
     )
-    station_file_codes = [x.name.split("_")[0] for x in nc]
+    station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
     ds = ds.assign_coords(
@@ -702,8 +702,8 @@ def _tmp_zarr(
 def _combine_years(
     station_folder: str,
     varia: str,
-    out_folder: Union[str, Path],
-    meta_file: Union[str, Path],
+    out_folder: Union[str, os.PathLike],
+    meta_file: Union[str, os.PathLike],
     rejected: List[str],
     _verbose: bool = False,
 ) -> None:
@@ -762,7 +762,7 @@ def _combine_years(
     if _verbose:
         logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
-    outfile = out_folder.joinpath(
+    outfile = Path(out_folder).joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
         f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
     )
@@ -823,10 +823,10 @@ def _combine_years(
 
 
 def merge_converted_variables(
-    source_files: Union[str, Path],
-    output_folder: Union[str, Path],
+    source_files: Union[str, os.PathLike],
+    output_folder: Union[str, os.PathLike],
     variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
-    station_metadata: Optional[Union[str, Path]] = None,
+    station_metadata: Optional[Union[str, os.PathLike]] = None,
     overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
