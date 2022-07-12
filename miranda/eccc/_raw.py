@@ -587,95 +587,95 @@ def aggregate_stations(
                         ds = ds.drop_vars(drop_vars)
                     ds = ds.sortby(ds.station_id)
 
-            # Rearrange column order to have lon, lat, elev first
-            # # FIXME: This doesn't work as intended - Assign coordinates instead
-            # cols = meta.columns.tolist()
-            # cols1 = [
-            #     "latitude",
-            #     "longitude",
-            #     "elevation",
-            # ]
-            # for rr in cols1:
-            #     cols.remove(rr)
-            # cols1.extend(cols)
-            # meta = meta[cols1]
-            # meta.index.rename("station", inplace=True)
-            # meta = meta.to_xarray()
-            # meta.sortby(meta["climate_identifier"])
-            # meta = meta.assign({"station": ds.station.values})
+                # Rearrange column order to have lon, lat, elev first
+                # FIXME: This doesn't work as intended - Assign coordinates instead
+                # cols = meta.columns.tolist()
+                # cols1 = [
+                #     "latitude",
+                #     "longitude",
+                #     "elevation",
+                # ]
+                # for rr in cols1:
+                #     cols.remove(rr)
+                # cols1.extend(cols)
+                # meta = meta[cols1]
+                # meta.index.rename("station", inplace=True)
+                # meta = meta.to_xarray()
+                # meta.sortby(meta["climate_identifier"])
+                # meta = meta.assign({"station": ds.station.values})
 
-            # np.testing.assert_array_equal(
-            #     sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
-            # )
-            # for vv in meta.data_vars:
-            #     ds = ds.assign_coords({vv: meta[vv]})
-            # ds = xr.merge([ds, meta])
-            # ds.attrs = attrs1
+                # np.testing.assert_array_equal(
+                #     sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
+                # )
+                # for vv in meta.data_vars:
+                #     ds = ds.assign_coords({vv: meta[vv]})
+                # ds = xr.merge([ds, meta])
+                # ds.attrs = attrs1
 
-            valid_stations = list(sorted(ds.station_id.values))
-            valid_stations_count = len(valid_stations)
+                valid_stations = list(sorted(ds.station_id.values))
+                valid_stations_count = len(valid_stations)
 
-            logging.info(f"Processing stations for variable `{variable_name}`.")
+                logging.info(f"Processing stations for variable `{variable_name}`.")
 
-            if len(station_file_codes) == 0:
-                logging.error(
-                    f"No stations were found containing variable filename `{variable_name}`. Exiting."
-                )
-                return
-
-            logging.info(
-                f"Files exist for {len(station_file_codes)} ECCC stations. "
-                f"Metadata found for {valid_stations_count} stations. "
-            )
-
-            # FIXME: Is this still needed?
-            # logging.info("Preparing the NetCDF time period.")
-            # Create the time period timestamps
-            # year_start = ds.time.dt.year.min().values
-            # year_end = ds.time.dt.year.max().values
-
-            # Calculate the time index dimensions of the output NetCDF
-            # time_index = pd.date_range(
-            #     start=f"{year_start}-01-01",
-            #     end=f"{year_end + 1}-01-01",
-            #     freq=mode[0].capitalize(),
-            # )[:-1]
-            # logging.info(
-            #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
-            # )
-
-            Path(output_folder).mkdir(parents=True, exist_ok=True)
-            file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
-
-            ds = ds.assign_coords(station=range(0, len(ds.station)))
-            if mf_dataset_freq is not None:
-                # output mf_dataset using resampling frequency
-                _, datasets = zip(*ds.resample(time=mf_dataset_freq))
-            else:
-                datasets = [ds]
-
-            paths = [
-                f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
-                for data in datasets
-            ]
-
-            # FIXME: chunks need to be dealt with
-            # chunks = [1, len(ds.time)]
-            comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
-
-            with ProgressBar():
-                for dataset, path in zip(datasets, paths):
-                    encoding = {var: comp for var in ds.data_vars}
-                    dataset.to_netcdf(
-                        path,
-                        engine="netcdf4",
-                        format="NETCDF4_CLASSIC",
-                        encoding=encoding,
+                if len(station_file_codes) == 0:
+                    logging.error(
+                        f"No stations were found containing variable filename `{variable_name}`. Exiting."
                     )
-                    dataset.close()
-                    del dataset
-            ds.close()
-            del ds
+                    return
+
+                logging.info(
+                    f"Files exist for {len(station_file_codes)} ECCC stations. "
+                    f"Metadata found for {valid_stations_count} stations. "
+                )
+
+                # FIXME: Is this still needed?
+                # logging.info("Preparing the NetCDF time period.")
+                # Create the time period timestamps
+                # year_start = ds.time.dt.year.min().values
+                # year_end = ds.time.dt.year.max().values
+
+                # Calculate the time index dimensions of the output NetCDF
+                # time_index = pd.date_range(
+                #     start=f"{year_start}-01-01",
+                #     end=f"{year_end + 1}-01-01",
+                #     freq=mode[0].capitalize(),
+                # )[:-1]
+                # logging.info(
+                #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
+                # )
+
+                Path(output_folder).mkdir(parents=True, exist_ok=True)
+                file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
+
+                ds = ds.assign_coords(station=range(0, len(ds.station)))
+                if mf_dataset_freq is not None:
+                    # output mf_dataset using resampling frequency
+                    _, datasets = zip(*ds.resample(time=mf_dataset_freq))
+                else:
+                    datasets = [ds]
+
+                paths = [
+                    f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
+                    for data in datasets
+                ]
+
+                # FIXME: chunks need to be dealt with
+                # chunks = [1, len(ds.time)]
+                comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
+
+                with ProgressBar():
+                    for dataset, path in zip(datasets, paths):
+                        encoding = {var: comp for var in ds.data_vars}
+                        dataset.to_netcdf(
+                            path,
+                            engine="netcdf4",
+                            format="NETCDF4_CLASSIC",
+                            encoding=encoding,
+                        )
+                        dataset.close()
+                        del dataset
+                ds.close()
+                del ds
 
         else:
             logging.info(f"No files found for variable: `{variable_name}`.")
