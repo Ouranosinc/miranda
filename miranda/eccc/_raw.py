@@ -75,6 +75,15 @@ def load_station_metadata(meta: Union[str, os.PathLike]) -> xr.Dataset:
     return df_inv.to_xarray()
 
 
+def _remove_duplicates(ds):
+    if any(ds.get_index("time").duplicated()):
+        logging.info(
+            f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
+            f"for station {ds.station_id.values}. Assuming first value."
+        )
+    return ds.sel(time=~ds.get_index("time").duplicated())
+
+
 def _convert_station_file(
     fichier: Path,
     output_path: Path,
@@ -689,8 +698,9 @@ def _tmp_zarr(
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     try:
-        # FIXME: Lots of "cannot reindex or align along dimension 'time' because the index has duplicate values" errors
-        ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
+        ds = xr.open_mfdataset(
+            nc, combine="nested", concat_dim={"station"}, preprocess=_remove_duplicates
+        )
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])
         logging.error(
