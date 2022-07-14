@@ -576,7 +576,7 @@ def aggregate_stations(
                     if not include_flags:
                         drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
                         ds = ds.drop_vars(drop_vars)
-                    ds = ds.sortby(ds.station_id)
+                    ds = ds.sortby(ds.station_id, 'time')
 
             # Rearrange column order to have lon, lat, elev first
             # # FIXME: This doesn't work as intended - Assign coordinates instead
@@ -603,70 +603,69 @@ def aggregate_stations(
             # ds = xr.merge([ds, meta])
             # ds.attrs = attrs1
 
-            valid_stations = list(sorted(ds.station_id.values))
-            valid_stations_count = len(valid_stations)
+                # export done within tmddir context otherwise data is erased before final export!!
+                valid_stations = list(sorted(ds.station_id.values))
+                valid_stations_count = len(valid_stations)
 
-            logging.info(f"Processing stations for variable `{variable_name}`.")
+                logging.info(f"Processing stations for variable `{variable_name}`.")
 
-            if len(station_file_codes) == 0:
-                logging.error(
-                    f"No stations were found containing variable filename `{variable_name}`. Exiting."
-                )
-                return
-
-            logging.info(
-                f"Files exist for {len(station_file_codes)} ECCC stations. "
-                f"Metadata found for {valid_stations_count} stations. "
-            )
-
-            # FIXME: Is this still needed?
-            # logging.info("Preparing the NetCDF time period.")
-            # Create the time period timestamps
-            # year_start = ds.time.dt.year.min().values
-            # year_end = ds.time.dt.year.max().values
-
-            # Calculate the time index dimensions of the output NetCDF
-            # time_index = pd.date_range(
-            #     start=f"{year_start}-01-01",
-            #     end=f"{year_end + 1}-01-01",
-            #     freq=mode[0].capitalize(),
-            # )[:-1]
-            # logging.info(
-            #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
-            # )
-
-            Path(output_folder).mkdir(parents=True, exist_ok=True)
-            file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
-
-            ds = ds.assign_coords(station=range(0, len(ds.station)))
-            if mf_dataset_freq is not None:
-                # output mf_dataset using resampling frequency
-                _, datasets = zip(*ds.resample(time=mf_dataset_freq))
-            else:
-                datasets = [ds]
-
-            paths = [
-                f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
-                for data in datasets
-            ]
-
-            # FIXME: chunks need to be dealt with
-            # chunks = [1, len(ds.time)]
-            comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
-
-            with ProgressBar():
-                for dataset, path in zip(datasets, paths):
-                    encoding = {var: comp for var in ds.data_vars}
-                    dataset.to_netcdf(
-                        path,
-                        engine="netcdf4",
-                        format="NETCDF4_CLASSIC",
-                        encoding=encoding,
+                if len(station_file_codes) == 0:
+                    logging.error(
+                        f"No stations were found containing variable filename `{variable_name}`. Exiting."
                     )
-                    dataset.close()
-                    del dataset
-            ds.close()
-            del ds
+                    return
+
+                logging.info(
+                    f"Files exist for {len(station_file_codes)} ECCC stations. "
+                    f"Metadata found for {valid_stations_count} stations. "
+                )
+
+                # FIXME: Is this still needed?
+                # logging.info("Preparing the NetCDF time period.")
+                # Create the time period timestamps
+                # year_start = ds.time.dt.year.min().values
+                # year_end = ds.time.dt.year.max().values
+
+                # Calculate the time index dimensions of the output NetCDF
+                # time_index = pd.date_range(
+                #     start=f"{year_start}-01-01",
+                #     end=f"{year_end + 1}-01-01",
+                #     freq=mode[0].capitalize(),
+                # )[:-1]
+                # logging.info(
+                #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
+                # )
+
+                Path(output_folder).mkdir(parents=True, exist_ok=True)
+                file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
+
+                ds = ds.assign_coords(station=range(0, len(ds.station))).sortby('time')
+                if mf_dataset_freq is not None:
+                    # output mf_dataset using resampling frequency
+                    _, datasets = zip(*ds.resample(time=mf_dataset_freq))
+                else:
+                    datasets = [ds]
+
+                paths = [
+                    f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
+                    for data in datasets
+                ]
+
+                # FIXME: chunks need to be dealt with
+                # chunks = [1, len(ds.time)]
+                comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
+
+                with ProgressBar():
+                    # for dataset, path in zip(datasets, paths):
+                    #     _export_agg_nc(dataset,path)
+                    ## looping seems to cause increasing memory over time use a pool of one or 2??
+                    combs = zip(datasets, paths)
+                    pool = mp.Pool(2)
+                    pool.map(_export_agg_nc, combs)
+                    pool.close()
+                    pool.join()
+                ds.close()
+                del ds
 
         else:
             logging.info(f"No files found for variable: `{variable_name}`.")
@@ -674,6 +673,18 @@ def aggregate_stations(
     runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
     logging.warning(runtime)
 
+def _export_agg_nc(args):
+    dataset, path = args
+    comp = dict(zlib=True, complevel=5)
+    encoding = {var: comp for var in dataset.data_vars}
+    dataset.load().to_netcdf(
+        path,
+        engine="netcdf4",
+        format="NETCDF4_CLASSIC",
+        encoding=encoding,
+    )
+    dataset.close()
+    del dataset
 
 def _tmp_zarr(
     iterable: int,
@@ -690,7 +701,12 @@ def _tmp_zarr(
 
     try:
         # FIXME: Lots of "cannot reindex or align along dimension 'time' because the index has duplicate values" errors
-        ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"})
+        def _remove_duplicates(ds):
+            if any(ds.get_index("time").duplicated()):
+                logging.info(f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates for station {ds.station_id.values} .. taking first value")
+            return ds.sel(time=~ds.get_index("time").duplicated())  # keep values on first unique date drop others
+
+        ds = xr.open_mfdataset(nc, combine="nested", preprocess=_remove_duplicates, concat_dim={"station"})
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])
         logging.error(
@@ -708,7 +724,7 @@ def _tmp_zarr(
 
     with ProgressBar():
         ds.load().to_zarr(
-            Path(tempdir).joinpath(f"{str(iterable).zfill(3)}.zarr"),
+            Path(tempdir).joinpath(f"{str(iterable).zfill(4)}.zarr"),
         )
     del ds
 
