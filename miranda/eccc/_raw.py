@@ -585,32 +585,32 @@ def aggregate_stations(
                     if not include_flags:
                         drop_vars = [vv for vv in ds.data_vars if "flag" in vv]
                         ds = ds.drop_vars(drop_vars)
-                    ds = ds.sortby(ds.station_id, 'time')
+                    ds = ds.sortby(ds.station_id, "time")
 
-            # Rearrange column order to have lon, lat, elev first
-            # # FIXME: This doesn't work as intended - Assign coordinates instead
-            # cols = meta.columns.tolist()
-            # cols1 = [
-            #     "latitude",
-            #     "longitude",
-            #     "elevation",
-            # ]
-            # for rr in cols1:
-            #     cols.remove(rr)
-            # cols1.extend(cols)
-            # meta = meta[cols1]
-            # meta.index.rename("station", inplace=True)
-            # meta = meta.to_xarray()
-            # meta.sortby(meta["climate_identifier"])
-            # meta = meta.assign({"station": ds.station.values})
+                # Rearrange column order to have lon, lat, elev first
+                # # FIXME: This doesn't work as intended - Assign coordinates instead
+                # cols = meta.columns.tolist()
+                # cols1 = [
+                #     "latitude",
+                #     "longitude",
+                #     "elevation",
+                # ]
+                # for rr in cols1:
+                #     cols.remove(rr)
+                # cols1.extend(cols)
+                # meta = meta[cols1]
+                # meta.index.rename("station", inplace=True)
+                # meta = meta.to_xarray()
+                # meta.sortby(meta["climate_identifier"])
+                # meta = meta.assign({"station": ds.station.values})
 
-            # np.testing.assert_array_equal(
-            #     sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
-            # )
-            # for vv in meta.data_vars:
-            #     ds = ds.assign_coords({vv: meta[vv]})
-            # ds = xr.merge([ds, meta])
-            # ds.attrs = attrs1
+                # np.testing.assert_array_equal(
+                #     sorted(meta["climate_identifier"].values), sorted(ds.station_id.values)
+                # )
+                # for vv in meta.data_vars:
+                #     ds = ds.assign_coords({vv: meta[vv]})
+                # ds = xr.merge([ds, meta])
+                # ds.attrs = attrs1
 
                 # export done within tmddir context otherwise data is erased before final export!!
                 valid_stations = list(sorted(ds.station_id.values))
@@ -648,7 +648,7 @@ def aggregate_stations(
                 Path(output_folder).mkdir(parents=True, exist_ok=True)
                 file_out = Path(output_folder).joinpath(f"{variable_name}_eccc_{mode}")
 
-                ds = ds.assign_coords(station=range(0, len(ds.station))).sortby('time')
+                ds = ds.assign_coords(station=range(0, len(ds.station))).sortby("time")
                 if mf_dataset_freq is not None:
                     # output mf_dataset using resampling frequency
                     _, datasets = zip(*ds.resample(time=mf_dataset_freq))
@@ -682,6 +682,7 @@ def aggregate_stations(
     runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
     logging.warning(runtime)
 
+
 def _export_agg_nc(args):
     dataset, path = args
     comp = dict(zlib=True, complevel=5)
@@ -694,6 +695,7 @@ def _export_agg_nc(args):
     )
     dataset.close()
     del dataset
+
 
 def _tmp_zarr(
     iterable: int,
