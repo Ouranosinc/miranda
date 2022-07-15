@@ -21,6 +21,7 @@
     "d2m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -31,6 +32,7 @@
     "pev": {
       "_cf_variable_name": "evspsblpot",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -55,6 +57,7 @@
         "era5-single-levels": "kg m-3",
         "era5-single-levels-preliminary-back-extension": "kg m-3"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -71,6 +74,7 @@
         "era5-single-levels": "Mg m-2",
         "era5-single-levels-preliminary-back-extension": "Mg m-2"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -83,6 +87,7 @@
       "_corrected_units": {
         "era5-land": "m"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -97,6 +102,7 @@
         "era5-single-levels": "m",
         "era5-single-levels-preliminary-back-extension": "m"
       },
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -146,6 +152,7 @@
     "sp": {
       "_cf_variable_name": "ps",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -189,11 +196,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {
-        "era5-land": false,
-        "era5-single-levels": false,
-        "era5-single-levels-preliminary-back-extension": false
-      },
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -218,11 +221,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {
-        "era5-land": false,
-        "era5-single-levels": false,
-        "era5-single-levels-preliminary-back-extension": false
-      },
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -247,11 +246,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {
-        "era5-land": false,
-        "era5-single-levels": false,
-        "era5-single-levels-preliminary-back-extension": false
-      },
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -276,11 +271,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {
-        "era5-land": false,
-        "era5-single-levels": false,
-        "era5-single-levels-preliminary-back-extension": false
-      },
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -305,6 +296,7 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -320,6 +312,7 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -335,6 +328,7 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -350,6 +344,7 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -361,6 +356,7 @@
     "t2m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -371,6 +367,7 @@
     "tp": {
       "_cf_variable_name": "pr",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -391,6 +388,7 @@
     "u10": {
       "_cf_variable_name": "uas",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -402,6 +400,7 @@
     "v10": {
       "_cf_variable_name": "vas",
       "_corrected_units": {},
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",
@@ -418,6 +417,7 @@
         "era5-single-levels": "m2 s-2",
         "era5-single-levels-preliminary-back-extension": "m2 s-2"
       },
+      "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {},
       "cell_methods": "time: point",

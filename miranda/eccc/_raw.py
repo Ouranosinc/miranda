@@ -662,7 +662,7 @@ def aggregate_stations(
 
                 # FIXME: chunks need to be dealt with
                 # chunks = [1, len(ds.time)]
-                comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
+                # comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
 
                 with ProgressBar():
                     # for dataset, path in zip(datasets, paths):
