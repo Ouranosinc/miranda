@@ -242,9 +242,14 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         # Date-based versioning
         d.attrs.update(dict(version=f"v{VERSION}"))
 
+        if hasattr(d.attrs, "history"):
+            prev_history = f" {d.attrs['history']}"
+        else:
+            prev_history = ""
+
         history = (
-            f"{d.attrs['history']}\n[{datetime.datetime.now()}] Converted from original data to {o} "
-            "with modified metadata for CF-like compliance."
+            f"[{datetime.datetime.now()}] Converted from original data to {o} "
+            f"with modified metadata for CF-like compliance.{prev_history}"
         )
         d.attrs.update(dict(history=history))
         descriptions = m["variable_entry"]
@@ -255,6 +260,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         # Add variable metadata
         for v in d.data_vars:
             del descriptions[v]["_corrected_units"]
+            del descriptions[v]["_invert_sign"]
             del descriptions[v]["_offset_time"]
             del descriptions[v]["_transformation"]
             d[v].attrs.update(descriptions[v])
