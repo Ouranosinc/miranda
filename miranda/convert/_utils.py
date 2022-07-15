@@ -115,42 +115,46 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         key = "_transformation"
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
-            if p in m["variable_entry"][vv][key].keys():
-                try:
-                    offset, offset_meaning = get_time_frequency(d)
-                except TypeError:
-                    logging.error(
-                        f"Unable to parse the time frequency for variable `{vv}`. "
-                        "Verify data integrity before retrying."
-                    )
-                    raise
-
-                if m["variable_entry"][vv][key][p] == "deaccumulate":
-                    # Time-step accumulated total to time-based flux (de-accumulation)
-                    logging.info(f"De-accumulating units for variable `{vv}`.")
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv].diff(dim="time")
-                        out = d[vv].where(
-                            getattr(d[vv].time.dt, offset_meaning) == offset[0],
-                            out.broadcast_like(d[vv]),
+            converted = False
+            if hasattr(m["variable_entry"][vv], key):
+                if p in m["variable_entry"][vv][key].keys():
+                    try:
+                        offset, offset_meaning = get_time_frequency(d)
+                    except TypeError:
+                        logging.error(
+                            f"Unable to parse the time frequency for variable `{vv}`. "
+                            "Verify data integrity before retrying."
                         )
-                        out = units.amount2rate(out)
-                    d_out[out.name] = out
-                elif m["variable_entry"][vv][key][p] == "amount2rate":
-                    # frequency-based totals to time-based flux
-                    logging.info(
-                        f"Performing amount-to-rate units conversion for variable `{vv}`."
-                    )
-                    out = units.amount2rate(
-                        d[vv],
-                        out_units=m["variable_entry"][vv]["units"],
-                    )
-                    d_out[out.name] = out
-                else:
-                    raise NotImplementedError(
-                        f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
-                    )
-            else:
+                        raise
+
+                    if m["variable_entry"][vv][key][p] == "deaccumulate":
+                        # Time-step accumulated total to time-based flux (de-accumulation)
+                        logging.info(f"De-accumulating units for variable `{vv}`.")
+                        with xr.set_options(keep_attrs=True):
+                            out = d[vv].diff(dim="time")
+                            out = d[vv].where(
+                                getattr(d[vv].time.dt, offset_meaning) == offset[0],
+                                out.broadcast_like(d[vv]),
+                            )
+                            out = units.amount2rate(out)
+                        d_out[out.name] = out
+                        converted = True
+                    elif m["variable_entry"][vv][key][p] == "amount2rate":
+                        # frequency-based totals to time-based flux
+                        logging.info(
+                            f"Performing amount-to-rate units conversion for variable `{vv}`."
+                        )
+                        out = units.amount2rate(
+                            d[vv],
+                            out_units=m["variable_entry"][vv]["units"],
+                        )
+                        d_out[out.name] = out
+                        converted = True
+                    else:
+                        raise NotImplementedError(
+                            f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
+                        )
+            if not converted:
                 d_out[vv] = d[vv]
         return d_out
 
@@ -158,55 +162,65 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         key = "_offset_time"
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
-            if p in m["variable_entry"][vv][key].keys():
-                try:
-                    offset, offset_meaning = get_time_frequency(d)
-                except TypeError:
-                    logging.error(
-                        f"Unable to parse the time frequency for variable `{vv}`. "
-                        "Verify data integrity before retrying."
-                    )
-                    raise
+            converted = False
+            if hasattr(m["variable_entry"][vv], key):
+                if p in m["variable_entry"][vv][key].keys():
+                    try:
+                        offset, offset_meaning = get_time_frequency(d)
+                    except TypeError:
+                        logging.error(
+                            f"Unable to parse the time frequency for variable `{vv}`. "
+                            "Verify data integrity before retrying."
+                        )
+                        raise
 
-                if m["variable_entry"][vv][key][p]:
-                    # Offset time by value of one time-step
-                    logging.info(
-                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-                    )
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv]
-                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
-                        d_out[out.name] = out
+                    if m["variable_entry"][vv][key][p]:
+                        # Offset time by value of one time-step
+                        logging.info(
+                            f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                        )
+                        with xr.set_options(keep_attrs=True):
+                            out = d[vv]
+                            out["time"] = out.time - np.timedelta64(
+                                offset[0], offset[1]
+                            )
+                            d_out[out.name] = out
+                            converted = True
+                    else:
+                        logging.info(
+                            f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+                        )
                 else:
                     logging.info(
-                        f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+                        f"No time offsetting needed for `{vv}` in project `{p}`."
                     )
-                    d_out = d
-            else:
-                logging.info(f"No time offsetting needed for `{vv}` in project `{p}`.")
-                d_out = d
+            if not converted:
+                d_out[vv] = d[vv]
         return d_out
 
     def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         key = "_invert_sign"
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
-            if p in m["variable_entry"][vv][key].keys():
-                if m["variable_entry"][vv][key][p]:
-                    logging.info(
-                        f"Inverting sign for `{vv}` (switching direction of values)."
-                    )
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv]
-                        d_out[out.name] = out.__invert__()
+            converted = False
+            if hasattr(m["variable_entry"][vv], key):
+                if p in m["variable_entry"][vv][key].keys():
+                    if m["variable_entry"][vv][key][p]:
+                        logging.info(
+                            f"Inverting sign for `{vv}` (switching direction of values)."
+                        )
+                        with xr.set_options(keep_attrs=True):
+                            out = d[vv]
+                            d_out[out.name] = out.__invert__()
+                            converted = True
+                    else:
+                        logging.info(
+                            f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
+                        )
                 else:
-                    logging.info(
-                        f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
-                    )
-                    d_out = d
-            else:
-                logging.info(f"No sign inversion needed for `{vv}` in `{p}`.")
-                d_out = d
+                    logging.info(f"No sign inversion needed for `{vv}` in `{p}`.")
+            if not converted:
+                d_out[vv] = d[vv]
         return d_out
 
     # For converting variable units to standard workflow units
@@ -257,12 +271,17 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         if "time" in m["variable_entry"].keys():
             del descriptions["time"]["_corrected_units"]
 
-        # Add variable metadata
+        # Add variable metadata and remove nonstandard entries
+        correction_fields = [
+            "_corrected_units",
+            "_invert_sign",
+            "_offset_time",
+            "_transformation",
+        ]
         for v in d.data_vars:
-            del descriptions[v]["_corrected_units"]
-            del descriptions[v]["_invert_sign"]
-            del descriptions[v]["_offset_time"]
-            del descriptions[v]["_transformation"]
+            for field in correction_fields:
+                if hasattr(descriptions[v], field):
+                    del descriptions[v][field]
             d[v].attrs.update(descriptions[v])
 
         # Rename data variables
