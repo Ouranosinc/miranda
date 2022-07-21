@@ -110,7 +110,7 @@ class Decoder:
         if isinstance(files, (str, os.PathLike)):
             files = [files]
         if isinstance(files, list):
-            if len(list) >= 10:
+            if len(files) >= 10:
                 chunksize = 10
             else:
                 chunksize = len(list)
