@@ -182,7 +182,7 @@ def date_parser(
             # Return NaT for fixed/missing/ill-formatted date strings
             return pd.NaT
 
-    elif isinstance(date, cftime.datetime):
+    elif isinstance(date, cftime.datetime):  # noqa
         for n in range(3):
             try:
                 date = pd.Timestamp.fromisoformat((date - pd.Timedelta(n)).isoformat())
@@ -202,7 +202,6 @@ def date_parser(
             date = date + pd.tseries.offsets.YearEnd(1)  # noqa
         elif "d" not in date_format:
             date = date + pd.tseries.offsets.MonthEnd(1)  # noqa
-        # TODO: Implement sub-daily?
 
     if output_type == "str":
         return date.strftime(strftime_format)

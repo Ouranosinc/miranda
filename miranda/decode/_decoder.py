@@ -98,6 +98,7 @@ class Decoder:
     def decode(
         self,
         files: Union[os.PathLike, str, List[Union[str, os.PathLike]], GeneratorType],
+        chunks: Optional[int] = None,
         raise_error: bool = False,
     ) -> None:
         """Decode facets from file or list of files.
@@ -105,17 +106,23 @@ class Decoder:
         Parameters
         ----------
         files: Union[str, Path, List[Union[str, Path]]]
+        chunks: int, optional
         raise_error: bool
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
-        if isinstance(files, list):
-            if len(files) >= 10:
-                chunksize = 10
+
+        if chunks is None:
+            if isinstance(files, list):
+                if len(files) >= 10:
+                    chunksize = 10
+                else:
+                    chunksize = len(list)
             else:
-                chunksize = len(list)
+                chunksize = 10
         else:
-            chunksize = 10
+            chunksize = chunks
+
         if self.project is None:
             warnings.warn(
                 "The decoder 'project' is not set; Decoding step will be much slower."
@@ -318,7 +325,9 @@ class Decoder:
             elif Path(file).is_dir() and Path(file).suffix == ".zarr":
                 engine = "zarr"
             else:
-                raise DecoderError(file)
+                raise DecoderError(
+                    f"File is not valid netcdf or zarr: {Path(file).name}"
+                )
 
             _ds = xarray.open_dataset(
                 file,
