@@ -280,7 +280,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         ]
         for v in d.data_vars:
             for field in correction_fields:
-                if hasattr(descriptions[v], field):
+                if field in descriptions[v].keys():
                     del descriptions[v][field]
             d[v].attrs.update(descriptions[v])
 
