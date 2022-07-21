@@ -147,7 +147,12 @@ class Decoder:
     def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
         file_name = Path(file).stem
 
-        variable_name = cls._decode_primary_variable(file)
+        try:
+            variable_name = cls._decode_primary_variable(file)
+        except DecoderError:
+            logging.error(f"Unable to open dataset: {file.name}")
+            raise
+
         variable_date = file_name.split("_")[-1]
 
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
@@ -177,24 +182,27 @@ class Decoder:
         dimsvar_dict = dict()
         coords = ("time", "lat", "lon", "rlat", "rlon", "height", "lev", "rotated_pole")
         suggested_variable = file.name.split("_")[0]
+        try:
 
-        if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            data = nc.Dataset(file, mode="r")
-            for var_name, var_attrs in data.variables.items():
-                dimsvar_dict[var_name] = {
-                    k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
-                }
-            for k in dimsvar_dict.keys():
-                if not str(k).startswith(coords) and suggested_variable == k:
-                    return str(k)
+            if file.is_file() and file.suffix in [".nc", ".nc4"]:
+                data = nc.Dataset(file, mode="r")
+                for var_name, var_attrs in data.variables.items():
+                    dimsvar_dict[var_name] = {
+                        k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
+                    }
+                for k in dimsvar_dict.keys():
+                    if not str(k).startswith(coords) and suggested_variable == k:
+                        return str(k)
 
-        elif file.is_dir() and file.suffix == ".zarr":
-            data = zarr.open(str(file), mode="r")
-            for k in data.array_keys():
-                if not str(k).startswith(coords) and suggested_variable == k:
-                    return str(k)
-        else:
-            raise NotImplementedError()
+            elif file.is_dir() and file.suffix == ".zarr":
+                data = zarr.open(str(file), mode="r")
+                for k in data.array_keys():
+                    if not str(k).startswith(coords) and suggested_variable == k:
+                        return str(k)
+            else:
+                raise NotImplementedError()
+        except ValueError:
+            raise DecoderError()
 
     @staticmethod
     def _decode_time_info(
@@ -388,7 +396,10 @@ class Decoder:
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets.update(data)
@@ -428,7 +439,10 @@ class Decoder:
 
     @classmethod
     def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -464,7 +478,10 @@ class Decoder:
 
     @classmethod
     def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -499,7 +516,10 @@ class Decoder:
 
     @classmethod
     def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = "CMIP"
@@ -531,7 +551,10 @@ class Decoder:
 
     @classmethod
     def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         # FIXME: What to do about our internal data that breaks all established conventions?
         facets = dict()
@@ -641,7 +664,10 @@ class Decoder:
 
     @classmethod
     def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = "ISIMIP"
