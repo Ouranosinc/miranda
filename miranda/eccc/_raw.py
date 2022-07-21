@@ -665,9 +665,9 @@ def aggregate_stations(
                 # comp = dict(zlib=True, complevel=5)  # , chunk sizes=chunks)
 
                 with ProgressBar():
+                    # FIXME: looping seems to cause increasing memory over time use a pool of one or 2??
                     # for dataset, path in zip(datasets, paths):
                     #     _export_agg_nc(dataset,path)
-                    ## looping seems to cause increasing memory over time use a pool of one or 2??
                     combs = zip(datasets, paths)
                     pool = mp.Pool(2)
                     pool.map(_export_agg_nc, combs)
