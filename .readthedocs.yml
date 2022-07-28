@@ -3,12 +3,15 @@ version: 2
 build:
   os: ubuntu-20.04
   tools:
-    python: "3.8"
+    python: "mambaforge-4.10"
   jobs:
     post_install:
       - sphinx-apidoc -o docs/ --module-first miranda
     pre_build:
       - git clone https://github.com/ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
+
+conda:
+  environment: environment.yml
 
 python:
   install:
@@ -17,4 +20,6 @@ python:
       extra_requirements:
         - docs
 
-formats: all
+formats:
+  - htmlzip
+  - pdf
