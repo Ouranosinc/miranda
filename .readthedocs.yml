@@ -5,6 +5,8 @@ build:
   tools:
     python: "mambaforge-4.10"
   jobs:
+    pre_install:
+      - pip install llvmlite~=0.38 --ignore-installed
     post_install:
       - sphinx-apidoc -o docs/ --module-first miranda
     pre_build:
