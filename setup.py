@@ -5,7 +5,7 @@ import sys
 from setuptools import find_packages, setup
 
 NAME = "miranda"
-VERSION = "0.2.7-beta"
+VERSION = "0.2.8-beta"
 DESCRIPTION = "Python utilities for climate data collection and management"
 KEYWORDS = "climate meteorology archiving collection NetCDF"
 URL = "https://github.com/Ouranosinc/miranda"
@@ -34,7 +34,7 @@ with open("requirements_dev.txt") as dev:
         dev_requirements.append(dependency)
 dev_requirements.extend(full_requirements)
 
-docs_requirements = ["ipython", "nbsphinx", "pandoc", "sphinx"]
+docs_requirements = ["furo", "ipython", "nbsphinx", "pandoc", "sphinx"]
 
 readme = open("README.rst").read()
 doclink = """
