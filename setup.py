@@ -5,7 +5,7 @@ import sys
 from setuptools import find_packages, setup
 
 NAME = "miranda"
-VERSION = "0.2.0-beta"
+VERSION = "0.2.8-beta"
 DESCRIPTION = "Python utilities for climate data collection and management"
 KEYWORDS = "climate meteorology archiving collection NetCDF"
 URL = "https://github.com/Ouranosinc/miranda"
@@ -23,12 +23,18 @@ with open("requirements.txt") as req:
     for dependency in req.readlines():
         requirements.append(dependency)
 
+full_requirements = list()
+with open("requirements_full.txt") as dev:
+    for dependency in dev.readlines():
+        full_requirements.append(dependency)
+
 dev_requirements = list()
 with open("requirements_dev.txt") as dev:
     for dependency in dev.readlines():
         dev_requirements.append(dependency)
+dev_requirements.extend(full_requirements)
 
-docs_requirements = ["guzzle-sphinx-theme", "ipython", "nbsphinx", "pandoc", "sphinx"]
+docs_requirements = ["furo", "ipython", "nbsphinx", "pandoc", "sphinx"]
 
 readme = open("README.rst").read()
 doclink = """
@@ -51,7 +57,11 @@ setup(
     package_dir={"miranda": "miranda"},
     include_package_data=True,
     install_requires=requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    extras_require={
+        "docs": docs_requirements,
+        "full": full_requirements,
+        "dev": dev_requirements,
+    },
     license=LICENSE,
     zip_safe=False,
     keywords="climate meteorology archiving collection NetCDF",
@@ -64,5 +74,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )

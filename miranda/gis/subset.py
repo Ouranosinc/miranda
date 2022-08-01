@@ -5,8 +5,7 @@ from typing import List, Optional, Tuple, Union
 
 import fiona
 import geojson
-import numpy as np
-import rasterio.crs
+from rasterio.crs import CRS
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -16,7 +15,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["subsetting_domains"]
 
 
-def subsetting_domains(domain: str) -> np.array:
+def subsetting_domains(domain: str) -> List:
     """Provides the bounding box coordinates for specific domains.
     Parameters
     ----------
@@ -29,15 +28,15 @@ def subsetting_domains(domain: str) -> np.array:
     region = None
 
     if domain.upper() == "GLOBAL":
-        region = np.array([90.0, -180.0, -90.0, 180.0])
+        region = [90.0, -180.0, -90.0, 180.0]
     elif domain.upper() in ["AMNO", "NAM"]:
-        region = np.array([90.0, -179.9, 10.0, -10.0])
+        region = [90.0, -179.9, 10.0, -10.0]
     elif domain.upper() == "CAN":
-        region = np.array([83.5, -141.0, 41.5, -52.5])
+        region = [83.5, -141.0, 41.5, -52.5]
     elif domain.upper() == "QC":
-        region = np.array([63.0, -80.0, 44.5, -57.0])
+        region = [63.0, -80.0, 44.5, -57.0]
     elif domain.upper() == "MTL":
-        region = np.array([45.75, -74.05, 45.3, -73.4])
+        region = [45.75, -74.05, 45.3, -73.4]
     if region is not None:
         return region
 
@@ -46,7 +45,7 @@ def subsetting_domains(domain: str) -> np.array:
 
 def _read_geometries(
     shape: Union[str, Path], crs: Optional[Union[str, int, dict]] = None
-) -> Tuple[List[geojson.geometry.Geometry], rasterio.crs.CRS]:
+) -> Tuple[List[geojson.geometry.Geometry], CRS]:
     """
     A decorator to perform a check to verify a geometry is valid.
     Returns the function with geom set to the shapely Shape object.
@@ -64,9 +63,9 @@ def _read_geometries(
         with fiona.open(shape) as fio:
             logging.info("Vector read OK.")
             if crs:
-                shape_crs = rasterio.crs.CRS.from_user_input(crs)
+                shape_crs = CRS.from_user_input(crs)
             else:
-                shape_crs = rasterio.crs.CRS(fio.crs or 4326)
+                shape_crs = CRS(fio.crs or 4326)
             for i, feat in enumerate(fio):
                 g = geojson.GeoJSON(feat)
                 geom.append(g["geometry"])

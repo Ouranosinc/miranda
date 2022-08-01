@@ -2,8 +2,12 @@ name: miranda
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "main" ]
+    paths-ignore:
+      - HISTORY.rst
+      - setup.cfg
+      - setup.py
+      - miranda/__init__.py
   pull_request:
 
 jobs:
@@ -19,8 +23,8 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.7"
       - name: Install tox
@@ -36,33 +40,47 @@ jobs:
         include:
           - tox-env: py37
             python-version: "3.7"
-          - tox-env: py38
+          - tox-env: py38-pyston
             python-version: "3.8"
-          - tox-env: py39
+          - tox-env: py39-full
             python-version: "3.9"
+#          # Not supported yet with pure PyPI install
+#          - tox-env: py310
+#            python-version: "3.10-dev"
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - name: Set up Python3.10 (deadsnakes version)
+      if: "endsWith(matrix.python-version, '-dev')"
+      uses: deadsnakes/action@v2.1.1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }}
+      if: "!endsWith(matrix.python-version, '-dev')"
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install GDAL
+      if: "endsWith(matrix.python-version, '-dev')"
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: report coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        flag-name: run-${{ matrix.tox-env }}
-        parallel: true
+        COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
+        COVERALLS_PARALLEL: true
 
   finish:
     needs: test
     runs-on: ubuntu-latest
+    container: python:3-slim
     steps:
       - name: Coveralls Finished
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          parallel-finished: true
+        run: |
+          pip install --upgrade coveralls
+          coveralls --service=github --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

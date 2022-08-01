@@ -93,7 +93,7 @@ def reanalysis_processing(
 
         for domain in domains:
             if domain == "_DEFAULT":
-                logging.warning("No domain specified. proceeding with 'not-specified'")
+                logging.warning("No domain specified. proceeding with 'not-specified'.")
                 output_folder = output_folder
                 domain = "not-specified"
             elif isinstance(domain, str):
@@ -126,7 +126,7 @@ def reanalysis_processing(
 
                             logging.warning(
                                 "No `target_chunks` set. "
-                                f"Proceeding with following found chunks: {output_chunks}"
+                                f"Proceeding with following found chunks: {output_chunks}."
                             )
                         else:
                             output_chunks = target_chunks

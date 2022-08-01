@@ -1,20 +1,31 @@
 import ast
+import functools
 import json
-import logging
 import logging.config
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import intake
 import schema
 import xarray as xr
+from clisops.core import subset_bbox
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar as xcal  # noqa
 
+from miranda.gis import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+try:
+    import intake  # noqa
+    import intake_esm  # noqa
+    import numcodecs  # noqa
+    import s3fs  # noqa
+except ImportError:
+    raise ImportError(
+        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    )
 
 
 _allowed_args = schema.Schema(
@@ -80,7 +91,12 @@ def cordex_aws_download(
     *,
     search: Dict[str, Union[str, List[str]]],
     correct_times: bool = False,
+    domain: Optional[str] = None,
 ):
+    def _subset_preprocess(d: xr.Dataset, dom: List[float]) -> xr.Dataset:
+        n, w, s, e = subsetting_domains(dom)
+        return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
+
     schema.Schema(_allowed_args).validate(search)
 
     # Define the catalog description file location.
@@ -96,8 +112,16 @@ def cordex_aws_download(
 
     col_subset = col.search(**search)
 
+    additional_kwargs = dict()
+    if domain:
+        additional_kwargs["preprocess"] = functools.partial(
+            _subset_preprocess, dom=domain
+        )
+
     dsets = col_subset.to_dataset_dict(
-        zarr_kwargs={"consolidated": True}, storage_options={"anon": True}
+        zarr_kwargs={"consolidated": True},
+        storage_options={"anon": True},
+        **additional_kwargs,
     )
     logging.info(f"\nDataset dictionary keys:\n {dsets.keys()}")
 
@@ -111,13 +135,16 @@ def cordex_aws_download(
             scen = ds.attrs["experiment_id"]
             grid = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-2]
             bias_correction = str(ds.attrs["intake_esm_dataset_key"]).split(".")[-1]
+            attrs_ref = ds.attrs.copy()
+
             for i, member in enumerate(ds.member_id):
                 for var in ds.variables:
                     if var in search["variable"]:
                         var_out = var
+                        break
 
                 new_attrs = dict()
-                for key, vals in ds.attrs.items():
+                for key, vals in attrs_ref.items():
                     try:
                         mapped = json.loads(vals)
                         if isinstance(mapped, dict):
@@ -125,7 +152,10 @@ def cordex_aws_download(
                     except JSONDecodeError:
                         new_attrs[key] = vals
                     except TypeError:
-                        new_attrs[key] = vals[0]
+                        if len(vals) == 1:
+                            new_attrs[key] = vals[0]
+                        else:
+                            raise RuntimeError()
 
                 if correct_times:
                     try:
@@ -154,4 +184,19 @@ def cordex_aws_download(
                     for y in years
                     if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
                 ]
+
+                datasets = [
+                    d
+                    for y, d in zip(years, datasets)
+                    if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
+                ]
+
+                if len(datasets) == 0:
+                    logging.warning(
+                        f"All files currently exist for {scen} and {member.name}. Continuing..."
+                    )
+                    continue
+
+                logging.info(f"Final count of files: {len(datasets)}")
+
                 xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")

@@ -1,14 +1,27 @@
 version: 2
 
 build:
-  image: latest
+  os: ubuntu-20.04
+  tools:
+    python: "mambaforge-4.10"
+  jobs:
+    pre_install:
+      - pip install llvmlite~=0.38 --ignore-installed
+    post_install:
+      - sphinx-apidoc -o docs/ --module-first miranda
+    pre_build:
+      - git clone https://github.com/ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
+
+conda:
+  environment: environment.yml
 
 python:
-  version: "3.7"
   install:
     - method: pip
       path: .
       extra_requirements:
         - docs
 
-formats: all
+formats:
+  - htmlzip
+  - pdf

@@ -19,18 +19,26 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["rechunk_reanalysis"]
 
 
-def _rechunk_configurator(project, time_step):
+def _rechunk_configurator(project, time_step, levels: int = None):
     # ~35 Mo chunks
-    if project.lower() in ["era5-single-levels", "era5", "era5-land"]:
+    if project.lower() in [
+        "era5-single-levels",
+        "era5-single-levels-preliminary-back-extension",
+        "era5-land",
+    ] or (
+        project.lower()
+        in ["era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"]
+        and levels == 1
+    ):
         if time_step == "1hr":
-            # TODO: confirm new chunks.
+            # Chunks for monthly files, optimized for Zarr
             target_chunks = {
-                "time": 24 * 7,  # "time": 24 * 30,
-                "latitude": 225,  # "lat" : 50
-                "longitude": 252,  # "lon" : 50
+                "time": 24 * 7,
+                "latitude": 225,
+                "longitude": 252,
             }
         elif time_step == "day":
-            # TODO: confirm new chunks: target_chunks = {"time": 365, "latitude": 50, "longitude": 50}
+            # Chunks for annual files, optimized for Zarr
             target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
         else:
             raise NotImplementedError()
@@ -48,12 +56,17 @@ def rechunk_reanalysis(
     variables: Optional[Sequence[str]] = None,
     output_format: str = "zarr",
     overwrite: bool = False,
-):
+) -> None:
     """Rechunks ERA5 dataset for better loading/reading performance.
+
+    Warnings
+    --------
+    Globbing assumes that target datasets to be rechunked have been saved in NetCDF format.
+    File naming requires the following order of facets: `{variable}_{time_step}_{institute}_{project}_reanalysis_*.nc`.
 
     Parameters
     ----------
-    project : {"era5", "era5-land", "era5-single-levels"}
+    project : {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-single-levels", "era5-pressure-levels-preliminary-back-extension"}
       Supported reanalysis projects.
     input_folder : str or os.PathLike
       Folder to be examined. Performs globbing.
@@ -85,7 +98,7 @@ def rechunk_reanalysis(
             raise NotImplementedError()
 
     if project.startswith("era5") and variables is None:
-        variables = era5_variables.copy()
+        variables = list(era5_variables)
 
     errored = list()
     start_all = time.perf_counter()
@@ -123,13 +136,15 @@ def rechunk_reanalysis(
                 logging.warning(f"Removing existing zarr files for {out.name}.")
                 shutil.rmtree(out)
 
-            ds = xr.open_dataset(
-                file,
-                chunks={"time": -1},
-            )
+            ds = xr.open_dataset(file, chunks={"time": -1})
+
+            try:
+                levels = len(ds.level)
+            except AttributeError:
+                levels = None
 
             if target_chunks is None:
-                target_chunks = _rechunk_configurator(project, time_step)
+                target_chunks = _rechunk_configurator(project, time_step, levels)
 
             # Set correct chunks in encoding options
             encoding = dict()
@@ -202,8 +217,7 @@ def rechunk_reanalysis(
             ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
         except zarr.errors.ContainsGroupError:
             logging.error(
-                'Files exist for variable %s. Consider using "overwrite=True"'
-                % variable
+                f"Files exist for variable {variable}. Consider using `overwrite=True`"
             )
             raise
 
