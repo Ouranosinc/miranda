@@ -12,7 +12,6 @@ from subprocess import run
 import numpy as np
 import pandas as pd
 import xarray as xr
-from dateutil.parser import ParserError
 from pint.errors import DimensionalityError
 from xclim.core.units import amount2rate, convert_units_to, pint_multiply, str2pint
 
@@ -218,7 +217,9 @@ if __name__ == "__main__":
                             f"{n_conflicts} samples have multiple measurements for {var_name}/{freq}."
                         )
                     da = xr.merge(
-                        sorted(das, key=lambda da: da.instrument), compat="override"
+                        sorted(das, key=lambda da: da.instrument),
+                        compat="override",
+                        combine_attrs='drop_conflicts'
                     )[var_name]
                 else:
                     da = das[0]
