@@ -219,7 +219,7 @@ if __name__ == "__main__":
                     da = xr.merge(
                         sorted(das, key=lambda da: da.instrument),
                         compat="override",
-                        combine_attrs='drop_conflicts'
+                        combine_attrs="drop_conflicts",
                     )[var_name]
                 else:
                     da = das[0]
