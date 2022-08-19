@@ -33,7 +33,7 @@ with (Path(__file__).parent / "attrs.json").open() as f:
     melcc_attrs = json.load(f)
 
 
-def parse_var_code(vcode):
+def parse_var_code(vcode, definitions=None):
     vcode = vcode[:2] + vcode[2:-1].lower() + vcode[-1]
     match = re.match(r"([^\d]*)(\d*)([ABCFHQZ])", vcode)
     if match is None:
@@ -51,6 +51,8 @@ def parse_var_code(vcode):
     meta["attrs"] = {k: v for k, v in attrs.items() if not k.startswith("_")}
     meta["attrs"].update(instrument=np.int32(instrument), melcc_code=vcode)
     meta.update({k[1:]: v for k, v in attrs.items() if k.startswith("_")})
+    if definitions is not None and vcode.lower() in definitions:
+        meta["attrs"]["melcc_description"] = definitions.loc[vcode]
     return meta
 
 
@@ -92,8 +94,8 @@ def read_table(dbfile, table, **kwargs):
     return df[~df.index.duplicated()].to_xarray()
 
 
-def convert_melcc(da, vcode, stations=None):
-    data = parse_var_code(vcode)
+def convert_melcc(da, vcode, stations=None, definitions=None):
+    data = parse_var_code(vcode, definitions)
     da.attrs.update(data["attrs"])
     if "scale" in data:
         da = pint_multiply(da, str2pint(data["scale"]))
@@ -153,7 +155,70 @@ def read_stations(file):
     da["station_id"] = da["station_id"].astype(str)
     da["station_name"] = da["station_name"].astype(str)
     da["station_type"] = da["station_type"].astype(str)
+    da.station_opening.attrs.update(description="Date of station creation.")
+    da.station_closing.attrs.update(description="Date of station closure.")
     return da
+
+
+def read_definitions(file):
+    definitions = pd.read_excel(
+        file, skiprows=4, names=["num", "type", "vcode", "description"]
+    )
+    definitions["vcode"] = definitions.vcode.str.lower()
+    return definitions.set_index("vcode").description
+
+
+def convert_snow_levels(file):
+    # Stations
+    stations = pd.read_excel(file, sheet_name="Stations")
+    stations = stations.rename(
+        columns={
+            "No": "station",
+            "Nom": "station_name",
+            "LAT(°)": "lat",
+            "LONG(°)": "lon",
+            "ALT(m)": "elevation",
+            "OUVERTURE": "station_opening",
+            "FERMETURE": "station_closing",
+        }
+    )
+    statds = stations.set_index("station").to_xarray()
+    stations = statds.set_coords(statds.data_vars.keys()).station
+    stations.lat.attrs.update(units="degree_north", standard_name="latitude")
+    stations.lon.attrs.update(units="degree_east", standard_name="longitude")
+    stations.elevation.attrs.update(units="m", standard_name="height")
+    stations.station_opening.attrs.update(description="Date of station creation.")
+    stations.station_closing.attrs.update(description="Date of station closure.")
+
+    # Periods
+    periods = pd.read_excel(
+        file, sheet_name="Périodes standards", names=["start", "end", "middle"]
+    )
+    periods = (
+        periods.to_xarray()
+        .to_array()
+        .rename(variable="bnds", index="period")
+        .drop_vars("bnds")
+        .rename("period_bnds")
+    )
+
+    # Data
+    data = pd.read_excel(
+        file,
+        sheet_name="Données",
+        names=[
+            "station",
+            "time",
+            "snd",
+            "snd_flag",
+            "snow_density",
+            "snow_density_flag",
+            "snw",
+            "snw_flag",
+        ],
+    )
+    ds = data.set_index(["station", "time"]).to_xarray()
+    ds["station"] = stations.sel(station=ds.station)
 
 
 if __name__ == "__main__":
@@ -173,6 +238,11 @@ if __name__ == "__main__":
         "-o", "--output", help="Output folder where to put the netCDFs.", default="."
     )
     argparser.add_argument(
+        "-d",
+        "--definitions",
+        help="Excel file containing the variable code definitions. Optional if --concat is not passed, unused otherwise.",
+    )
+    argparser.add_argument(
         "stations", help="Path to the excel file including the station information."
     )
     argparser.add_argument(
@@ -182,6 +252,11 @@ if __name__ == "__main__":
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+
+    definitions = None
+    if args.definitions is not None:
+        # a pd.Series  : index is variable code and value is french description
+        definitions = read_definitions(args.definitions)
 
     output = Path(args.output)
 
@@ -195,7 +270,9 @@ if __name__ == "__main__":
         for table in tables:
             logger.info(f"Parsing {database}:{table}.")
             raw = read_table(database, table).rename(table)
-            da, data = convert_melcc(raw, table, stations=stations)
+            da, data = convert_melcc(
+                raw, table, stations=stations, definitions=definitions
+            )
             if args.concat:
                 dss.setdefault(data["freq"], {}).setdefault(da.name, []).append(da)
             else:
