@@ -168,58 +168,6 @@ def read_definitions(file):
     return definitions.set_index("vcode").description
 
 
-def convert_snow_levels(file):
-    # Stations
-    stations = pd.read_excel(file, sheet_name="Stations")
-    stations = stations.rename(
-        columns={
-            "No": "station",
-            "Nom": "station_name",
-            "LAT(°)": "lat",
-            "LONG(°)": "lon",
-            "ALT(m)": "elevation",
-            "OUVERTURE": "station_opening",
-            "FERMETURE": "station_closing",
-        }
-    )
-    statds = stations.set_index("station").to_xarray()
-    stations = statds.set_coords(statds.data_vars.keys()).station
-    stations.lat.attrs.update(units="degree_north", standard_name="latitude")
-    stations.lon.attrs.update(units="degree_east", standard_name="longitude")
-    stations.elevation.attrs.update(units="m", standard_name="height")
-    stations.station_opening.attrs.update(description="Date of station creation.")
-    stations.station_closing.attrs.update(description="Date of station closure.")
-
-    # Periods
-    periods = pd.read_excel(
-        file, sheet_name="Périodes standards", names=["start", "end", "middle"]
-    )
-    periods = (
-        periods.to_xarray()
-        .to_array()
-        .rename(variable="bnds", index="period")
-        .drop_vars("bnds")
-        .rename("period_bnds")
-    )
-
-    # Data
-    data = pd.read_excel(
-        file,
-        sheet_name="Données",
-        names=[
-            "station",
-            "time",
-            "snd",
-            "snd_flag",
-            "snow_density",
-            "snow_density_flag",
-            "snw",
-            "snw_flag",
-        ],
-    )
-    ds = data.set_index(["station", "time"]).to_xarray()
-    ds["station"] = stations.sel(station=ds.station)
-
 
 if __name__ == "__main__":
     argparser = ArgumentParser(
