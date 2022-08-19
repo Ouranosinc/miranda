@@ -150,6 +150,9 @@ def read_stations(file):
     da.lat.attrs.update(units="degree_north", standard_name="latitude")
     da.lon.attrs.update(units="degree_east", standard_name="longitude")
     da.elevation.attrs.update(units="m", standard_name="height")
+    da["station_id"] = da["station_id"].astype(str)
+    da["station_name"] = da["station_name"].astype(str)
+    da["station_type"] = da["station_type"].astype(str)
     return da
 
 
@@ -202,7 +205,7 @@ if __name__ == "__main__":
                     "history"
                 ] = f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{table} to netCDF."
                 da.to_netcdf(
-                    output / f"MDDELCC_{data['freq']}_{da.name}_{da.melcc_code}.nc"
+                    output / f"MELCC_{data['freq']}_{da.name}_{da.melcc_code}.nc"
                 )
 
     if args.concat:

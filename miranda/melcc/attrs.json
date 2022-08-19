@@ -228,26 +228,26 @@
       "_nc_name": "sfcWindfromdir",
       "long_name": "Instantaneous wind direction",
       "long_name_fr": "Direction du vent instantanée",
-      "standard_name": "wind_to_direction",
+      "standard_name": "wind_from_direction",
       "units": "degree"
     },
     "VDm": {
       "_nc_name": "sfcWindfromdir",
       "long_name": "Mean wind direction",
       "long_name_fr": "Direction du vent moyenne",
-      "standard_name": "wind_to_direction",
+      "standard_name": "wind_from_direction",
       "units": "degree"
     },
     "VDs": {
-      "_nc_name": "sfcWindtodir_sigma",
+      "_nc_name": "sfcWindfromdir_sigma",
       "long_name": "Wind direction standard deviation",
       "long_name_fr": "Écart-type de la direction du vent",
       "units": "degree"
     },
     "VDsi": {
-      "_nc_name": "sfcWindtodir_sigma",
-      "long_name": "Instantaneous wind direction standard deviation.",
-      "long_name_fr": "Écart-type de la direction du vent ",
+      "_nc_name": "sfcWindfromdir_sigma",
+      "long_name": "Instantaneous wind direction standard deviation on the last two minutes",
+      "long_name_fr": "Écart-type de la direction du vent sur les deux dernières minutes",
       "units": "degree"
     },
     "VE": {
