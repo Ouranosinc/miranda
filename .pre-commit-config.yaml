@@ -15,12 +15,12 @@ repos:
       - id: pretty-format-json
         args: [ '--autofix', '--no-ensure-ascii' ]
   - repo: https://github.com/pycqa/flake8
-    rev: 5.0.2
+    rev: 5.0.4
     hooks:
       - id: flake8
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
       - id: black
         args: [ '--target-version=py37' ]
@@ -40,12 +40,12 @@ repos:
 #      - id: pydocstyle
 #        args: [ '--config=setup.cfg' ]
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.5
+    rev: v0.3.6
     hooks:
       - id: blackdoc
         additional_dependencies: [ 'black==22.3.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.27.1
+    rev: v1.28.0
     hooks:
       - id: yamllint
         args: ['--config-file', '.yamllint.yaml']
