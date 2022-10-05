@@ -1,0 +1,27 @@
+{
+  "Header": {
+    "data_specs_version": "00.00.01",
+    "institution": "ECCC",
+    "product": "station-obs",
+    "realm": "land",
+    "table_date": "2022-04-22",
+    "table_id": "RAVEN"
+  },
+  "variable_entry": {
+    "qObs": {
+      "long_name": "River discharge",
+      "units": "m3 s-1"
+    },
+    "tasmax": {
+      "_corrected_units": {},
+      "_offset_time": {},
+      "_raven_variable_name": "tasmax",
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "long_name": "2 metre temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "tasmin": {}
+  }
+}

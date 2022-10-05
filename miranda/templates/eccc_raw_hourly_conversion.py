@@ -3,13 +3,14 @@ from pathlib import Path
 
 from miranda.eccc import (
     aggregate_stations,
-    convert_hourly_flat_files,
+    convert_flat_files,
     merge_converted_variables,
 )
 
 if __name__ == "__main__":
 
     time_step = "hourly"
+    n_workers = 3
     var_codes = [
         76,
         77,
@@ -46,14 +47,10 @@ if __name__ == "__main__":
         280,
     ]
 
-    var_codes = [107, 108, 109, 110, 133, 156]
-
     in_files = getenv("in")
-
     source_data = Path(in_files)
 
-    station_file = source_data.joinpath("Station Inventory EN.csv")
-    origin_files = source_data.parent.joinpath("eccc_source/20200618")
+    origin_files = source_data.joinpath("source")
 
     hourly = source_data.joinpath("hourly")
     output_data = hourly.joinpath("netcdf")
@@ -63,18 +60,27 @@ if __name__ == "__main__":
     final = hourly.joinpath("final")
     final.mkdir(parents=True, exist_ok=True)
 
-    convert_hourly_flat_files(
-        source_files=origin_files, output_folder=output_data, variables=var_codes
+    convert_flat_files(
+        source_files=origin_files,
+        output_folder=output_data,
+        variables=var_codes,
+        mode=time_step,
+        n_workers=n_workers,
     )
 
-    merge_converted_variables(source=output_data, destination=merged)
+    merge_converted_variables(
+        source_files=output_data,
+        output_folder=merged,
+        variables=var_codes,
+        n_workers=n_workers,
+    )
 
     aggregate_stations(
         source_files=merged,
         output_folder=final,
+        time_step=time_step,
         variables=var_codes,
-        station_metadata=station_file,
-        time_step="hourly",
         mf_dataset_freq="5YS",
         temp_directory=hourly,
+        n_workers=n_workers,
     )

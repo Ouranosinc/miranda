@@ -4,13 +4,13 @@ import pandas as pd
 import pint
 import xarray as xr
 from pint import Unit
-from xclim.core.calendar import parse_offset
+from xclim.core import calendar
 
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
-u = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+u = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
 
 # General purpose units
 null = pint.Context("none")
@@ -82,7 +82,9 @@ def get_time_frequency(d: xr.Dataset):
     freq = xr.infer_freq(d.time)
 
     # Hacky workaround for irregular Monthly data
-    if freq is None or (1 < int(parse_offset(freq)[0]) < 32 and freq.endswith("D")):
+    if freq is None or (
+        1 < int(calendar.parse_offset(freq)[0]) < 32 and freq.endswith("D")
+    ):
         if (
             (d.diff("time") < pd.Timedelta(32, "D"))
             & (d.diff("time") > pd.Timedelta(27, "D"))
@@ -91,7 +93,7 @@ def get_time_frequency(d: xr.Dataset):
         else:
             raise TypeError()
 
-    offset = [int(parse_offset(freq)[0]), parse_offset(freq)[1]]
+    offset = [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
 
     time_units = {
         "s": "second",

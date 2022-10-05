@@ -228,7 +228,7 @@ def structure_datasets(
     ----------
     input_files: str or Path or list of str or Path or GeneratorType
     output_folder: str or Path
-    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "converted", "pcic-candcs-u6"}, optional
+    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6"}, optional
     guess: bool
       If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
     dry_run: bool
@@ -250,7 +250,7 @@ def structure_datasets(
     dict
     """
     input_files = discover_data(input_files, filename_pattern)
-    if not project and guess:
+    if guess and project is None:
         # Examine the first file from a list or generator
         for f in input_files:
             project = guess_project(f)

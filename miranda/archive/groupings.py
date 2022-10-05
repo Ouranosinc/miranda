@@ -24,26 +24,30 @@ __all__ = [
 
 
 def group_by_length(
-    files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10
+    files: Union[GeneratorType, List[Union[str, Path]]],
+    size: int = 10,
+    sort: bool = False,
 ) -> List[List[Path]]:
     """Group files by an arbitrary number of file entries.
 
     Parameters
     ----------
-    files
-    size
+    files: Union[GeneratorType, List[Union[str, Path]]]
+    size: int
+    sort: bool
 
     Returns
     -------
-
+    List[List[Path]]
     """
     logging.info(f"Creating groups of {size} files")
-    files = [Path(f) for f in files]
-    files.sort()
+    if sort:
+        files = [Path(f) for f in files]
+        files.sort()
     grouped_list = list()
     group = list()
     for i, f in enumerate(files):
-        group.append(f)
+        group.append(Path(f))
         if (i + 1) % size == 0:
             grouped_list.append(group.copy())
             group.clear()
@@ -63,11 +67,11 @@ def group_by_deciphered_date(
 
     Parameters
     ----------
-    files
+    files: Union[GeneratorType, List[Union[str, Path]]]
 
     Returns
     -------
-
+    Dict[List[Path]]
     """
     logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
@@ -115,12 +119,12 @@ def group_by_size(
 
     Parameters
     ----------
-    files
-    size
+    files: Union[GeneratorType, List[Union[str, Path]]]
+    size: int
 
     Returns
     -------
-
+    List[List[Path]]
     """
 
     logging.info(
@@ -148,10 +152,19 @@ def group_by_size(
 
 
 def group_by_subdirectories(
-    files: Union[GeneratorType, List[Union[str, Path]]], within: str or Path = None
+    files: Union[GeneratorType, List[Union[str, Path]]], within: Union[str, Path] = None
 ) -> Dict[str, List[Path]]:
     """
     This function will group files based on the parent folder that they are located within.
+
+    Parameters
+    ----------
+    files: Union[GeneratorType, List[Union[str, Path]]]
+    within: Union[str, Path]
+
+    Returns
+    -------
+    Dict[List[Path]]
     """
     if not within:
         within = Path.cwd()
