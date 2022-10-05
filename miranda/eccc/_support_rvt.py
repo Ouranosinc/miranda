@@ -11,6 +11,7 @@ import pandas as pd
 # TODO: Investigate the API definition: https://api.weather.gc.ca/collections/climate-hourly
 
 
+# FIXME: This function is a WIP - requires work.
 def gather_eccc_stations(
     timestep: str,
     start_date: Optional[Union[datetime.datetime, str]] = None,
@@ -66,4 +67,3 @@ if __name__ == "__main__":
         end_date="2020-12-31",
         climate_id="7040815",
     )
-    print(data)

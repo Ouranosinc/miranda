@@ -264,7 +264,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     with open(file, encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
-    # Find each elements in the header
+    # Find each element in the header
     search_header = [0] * 9
     search_header[0] = [i for i, s in enumerate(lines) if "Station Name" in s][0]
     search_header[1] = [i for i, s in enumerate(lines) if "Province" in s][0]
@@ -311,9 +311,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     # Makes sure that the data starts on Jan 1st
     if data.values[0, 2] != 1 | data.values[0, 3] != 1:
         logging.warning(
-            "Data for file {} is not starting on January 1st. Make sure this is what you want!".format(
-                file.name
-            )
+            f"Data for file {file.name} is not starting on January 1st. Make sure this is what you want!"
         )
 
     return station_meta, data
