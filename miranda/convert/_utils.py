@@ -246,8 +246,18 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
             elif "source" in m["Header"].keys():
                 pass
             else:
-                raise AttributeError("Source not found for project dataset")
+                raise AttributeError("Source not found for project dataset.")
             del m["Header"]["_source"]
+
+        # Conditional handling of DOI based on project name
+        if "_doi" in m["Header"].keys():
+            if p in m["Header"]["_doi"].keys():
+                m["Header"]["doi"] = m["Header"]["_doi"][p]
+            elif "doi" in m["Header"].keys():
+                pass
+            else:
+                logging.warning("DOI not found for project dataset. Skipping.")
+            del m["Header"]["_doi"]
 
         # Add global attributes
         d.attrs.update(m["Header"])

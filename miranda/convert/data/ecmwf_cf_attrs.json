@@ -1,20 +1,38 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
+    "_doi": {
+      "era5-land": "https://doi.org/10.24381/cds.e2161bac",
+      "era5-land-monthly-means": "https://doi.org/10.24381/cds.68d2bb30",
+      "era5-pressure-levels": "https://doi.org/10.24381/cds.bd0915c6",
+      "era5-pressure-levels-monthly-means": "https://doi.org/10.24381/cds.6860a573",
+      "era5-pressure-levels-monthly-means-preliminary-back-extension": "https://doi.org/10.24381/cds.6860a573",
+      "era5-pressure-levels-preliminary-back-extension": "https://doi.org/10.24381/cds.bd0915c6",
+      "era5-single-levels": "https://doi.org/10.24381/cds.adbb2d47",
+      "era5-single-levels-monthly-means": "https://doi.org/10.24381/cds.f17050d7",
+      "era5-single-levels-monthly-means-preliminary-back-extension": "https://doi.org/10.24381/cds.f17050d7",
+      "era5-single-levels-preliminary-back-extension": "https://doi.org/10.24381/cds.adbb2d47"
+    },
     "_source": {
       "era5-land": "ERA5-Land",
       "era5-land-monthly-means": "ERA5-Land",
+      "era5-pressure-levels": "ERA5",
+      "era5-pressure-levels-monthly-means": "ERA5",
       "era5-pressure-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
       "era5-pressure-levels-preliminary-back-extension": "ERA5-preliminary",
+      "era5-single-levels": "ERA5",
+      "era5-single-levels-monthly-means": "ERA5",
       "era5-single-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
       "era5-single-levels-preliminary-back-extension": "ERA5-preliminary"
     },
-    "data_specs_version": "00.00.07",
+    "data_specs_version": "00.00.08",
     "institution": "ECMWF",
+    "licence_type": "permissive",
+    "license": "https://apps.ecmwf.int/datasets/licences/copernicus/",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "13 June 2022",
+    "table_date": "5 October 2022",
     "type": "reconstruction"
   },
   "variable_entry": {

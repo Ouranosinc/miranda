@@ -151,7 +151,7 @@ def request_era5(
             ):
                 project_year_start = 1950
             else:
-                project_year_start = 1979
+                project_year_start = 1959
         else:
             project_year_start = year_start
 

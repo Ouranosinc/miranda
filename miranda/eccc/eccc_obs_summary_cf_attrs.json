@@ -1,9 +1,12 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
+    "contact": "info.cccs-ccsc@canada.ca",
     "data_specs_version": "00.00.02",
     "institution": "ECCC",
     "int_missing_value": "-999",
+    "licence_type": "permissive",
+    "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
     "missing_value": "1e20",
     "processing_level": "raw",
     "realm": "atmos",
