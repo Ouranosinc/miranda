@@ -10,7 +10,7 @@ from dask.diagnostics import ProgressBar
 
 from miranda.utils import scripting
 
-from ._utils import ahccd_metadata
+from ._utils import cf_ahccd_metadata
 
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
@@ -31,7 +31,7 @@ def convert_ahccd(
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )
-    var, col_names, col_spaces, header_row, global_attrs = ahccd_metadata(
+    var, col_names, col_spaces, header_row, global_attrs = cf_ahccd_metadata(
         code, generation
     )
     gen = {2: "Second", 3: "Third"}.get(generation)
@@ -149,10 +149,10 @@ def convert_ahccd_fwf_files(
     )
 
     if attrs is None:
-        attrs, _, _, _, _ = ahccd_metadata(code, generation)
+        attrs, _, _, _, _ = cf_ahccd_metadata(code, generation)
     if cols_specs is None:
-        _, _, cols_specs, _, _ = ahccd_metadata(code, generation)
-    _, _, _, nhead, _ = ahccd_metadata(code, generation)
+        _, _, cols_specs, _, _ = cf_ahccd_metadata(code, generation)
+    _, _, _, nhead, _ = cf_ahccd_metadata(code, generation)
 
     df = pd.read_fwf(ff, header=nhead, colspecs=cols_specs)
     if "pr" in variable:

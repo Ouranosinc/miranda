@@ -13,6 +13,7 @@
 #####################################################################
 import json
 import logging
+from collections import defaultdict
 from logging import config
 from pathlib import Path
 from typing import Generator, List, Tuple, Union
@@ -57,9 +58,9 @@ def extract_daily_summaries(
     station_files = Path(path_station).rglob(file_suffix)
 
     # extract the .csv data
-    station = _read_multiple_daily_summaries(station_files, rm_flags=rm_flags)
+    stations = _read_multiple_daily_summaries(station_files, rm_flags=rm_flags)
 
-    return station
+    return stations
 
 
 # Uses xarray to transform the 'station' from find_and_extract_dly into a CF-Convention netCDF file
@@ -201,41 +202,53 @@ def _read_multiple_daily_summaries(
     """
 
     # Extract the data for each files
-    station_meta = None
-    datafull = None
+    all_stations = dict()
+    station_data = list()
 
     file_list = [Path(f) for f in files]
     file_list.sort()
 
+    station_codes = defaultdict(list)
     for f in file_list:
-        station_meta, data = _read_single_daily_summaries(f)
-        if datafull is None:
-            datafull = data
-        else:
-            datafull = datafull.append(data, ignore_index=True)
+        code = Path(f).name.split("_")[4]
+        station_codes[code].append(f)
 
-    # change the Date/Time column to a datetime64 type
-    datafull["Date/Time"] = pd.to_datetime(datafull["Date/Time"])
+    for station_code, summary_files in station_codes.items():
+        for summary in summary_files:
+            station = pd.read_csv(summary)
+            station_data.append(station)
 
-    # if wanted, remove the quality and flag columns
-    if rm_flags:
-        index_quality = [
-            i for i, s in enumerate(datafull.columns.values) if "Quality" in s
-        ]
-        datafull = datafull.drop(datafull.columns.values[index_quality], axis="columns")
-        index_flag = [i for i, s in enumerate(datafull.columns.values) if "Flag" in s]
-        datafull = datafull.drop(datafull.columns.values[index_flag], axis="columns")
+        station_summary_full = pd.DataFrame(
+            station_data
+        )  # FIXME: Find the way to combine list of dataframes into one
 
-    # combine everything in a single Dict
-    station = station_meta
-    station["data"] = datafull
+        # datafull = datafull.append(data, ignore_index=True)
 
-    return station
+        # change the Date/Time column to a datetime64 type
+        station_summary_full["Date/Time"] = pd.to_datetime(
+            station_summary_full["Date/Time"]
+        )
+
+        # if wanted, remove the quality and flag columns
+        # if rm_flags:
+        #     index_quality = [
+        #         i for i, s in enumerate(datafull.columns.values) if "Quality" in s
+        #     ]
+        #     datafull = datafull.drop(datafull.columns.values[index_quality], axis="columns")
+        #     index_flag = [i for i, s in enumerate(datafull.columns.values) if "Flag" in s]
+        #     datafull = datafull.drop(datafull.columns.values[index_flag], axis="columns")
+
+        # combine everything in a single Dict
+        # station = station_meta
+        all_stations[station_code] = station_summary_full
+
+    return all_stations
 
 
 # This is the script that actually reads the CSV files.
 # The metadata are saved in a Dict, while the data is returned as a pandas Dataframe.
 # FIXME: Climate Services Canada has changed the way they store metadata -- No longer in CSV heading
+# FIXME: Mohammad feel free to remove this
 def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataFrame]:
     """
 
@@ -251,7 +264,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     with open(file, encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
-    # Find each elements in the header
+    # Find each element in the header
     search_header = [0] * 9
     search_header[0] = [i for i, s in enumerate(lines) if "Station Name" in s][0]
     search_header[1] = [i for i, s in enumerate(lines) if "Province" in s][0]
@@ -261,9 +274,8 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     search_header[5] = [i for i, s in enumerate(lines) if "Climate Identifier" in s][0]
     search_header[6] = [i for i, s in enumerate(lines) if "WMO Identifier" in s][0]
     search_header[7] = [i for i, s in enumerate(lines) if "TC Identifier" in s][0]
-    search_header[8] = [i for i, s in enumerate(lines) if "Date/Time" in s][
-        0
-    ]  # This is where the data actually starts
+    search_header[8] = [i for i, s in enumerate(lines) if "Date/Time" in s][0]
+    # This is where the data actually starts
 
     # Does a bunch of stuff, but basically finds the right line, then cleans up the string
     station_meta = {
@@ -299,9 +311,7 @@ def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataF
     # Makes sure that the data starts on Jan 1st
     if data.values[0, 2] != 1 | data.values[0, 3] != 1:
         logging.warning(
-            "Data for file {} is not starting on January 1st. Make sure this is what you want!".format(
-                file.name
-            )
+            f"Data for file {file.name} is not starting on January 1st. Make sure this is what you want!"
         )
 
     return station_meta, data

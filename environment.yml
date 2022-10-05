@@ -28,9 +28,11 @@ dependencies:
   - paramiko >=2.6.0
   - pint
   - pre-commit
+  - pydantic
   - pyproj
   - pytest
   - python >=3.7
+  - pyupgrade
   - rasterio
   - regionmask
   - requests

@@ -46,9 +46,32 @@ def guess_project(file: Union[os.PathLike, str]) -> str:
     raise DecoderError(f"Unable to determine project from file name: '{file_name}'.")
 
 
+def find_version_tags(file: Union[os.PathLike, str]) -> Dict:
+    version_info = dict()
+    possible_version = Path(file).parent.name
+    if re.match(r"^v\d+", possible_version, re.IGNORECASE):
+        version_info["version"] = Path(file).parent.name
+    else:
+        file_identity = str(Path(file).name).split(".")[0]
+        possible_version_signature = Path(file).parent.glob(f"{file_identity}.*")
+        for sig in possible_version_signature:
+            found_version = re.search(r"\.(v\d+.+)$", sig.name, re.IGNORECASE)
+            if found_version:
+                try:
+                    version_info["version"] = found_version.group()
+                    version_info["sha256sum"] = int(sig.open().read())
+                except ValueError:
+                    continue
+                break
+        else:
+            version_info["version"] = "vNotFound"
+    return version_info
+
+
 class Decoder:
 
     project = None
+    guess = False
     _file_facets = dict()
 
     def __init__(self, project: Optional[str]):
@@ -56,22 +79,26 @@ class Decoder:
 
     @staticmethod
     def _decoder(
-        d: dict,
+        d: Dict,
         fail_early: bool,
         proj: str,
+        guess: bool,
         lock: mp.Lock,
         file: Union[str, Path],
     ) -> None:
         if proj is None:
-            try:
-                proj = guess_project(file)
-            except DecoderError:
-                print(
-                    "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
-                    f"{file}."
-                )
-                if fail_early:
-                    raise
+            if guess:
+                try:
+                    proj = guess_project(file)
+                except DecoderError:
+                    print(
+                        "Unable to determine 'activity': Signature for 'activity' must be set manually for file: "
+                        f"{file}."
+                    )
+                    if fail_early:
+                        raise
+            else:
+                proj = "converted"
 
         decode_function_name = f"decode_{proj.lower().replace('-','_')}"
         try:
@@ -80,19 +107,20 @@ class Decoder:
                 if fail_early:
                     FACETS_SCHEMA.validate(_deciphered)
                 print(
-                    f"Deciphered the following from {Path(file).name}: {_deciphered.items()}"
+                    f"Deciphered the following from {Path(file).name}:\n"
+                    f"{_deciphered.items()}"
                 )
                 d[file] = _deciphered
 
-        except AttributeError as e:
+        except (AttributeError, NotImplementedError) as e:
             print(f"Unable to read data from {Path(file).name}: {e}")
         except schema.SchemaError as e:
             print(f"Decoded facets from {Path(file).name} are not valid: {e}")
-            raise
 
     def decode(
         self,
         files: Union[os.PathLike, str, List[Union[str, os.PathLike]], GeneratorType],
+        chunks: Optional[int] = None,
         raise_error: bool = False,
     ) -> None:
         """Decode facets from file or list of files.
@@ -100,10 +128,23 @@ class Decoder:
         Parameters
         ----------
         files: Union[str, Path, List[Union[str, Path]]]
+        chunks: int, optional
         raise_error: bool
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
+
+        if chunks is None:
+            if isinstance(files, list):
+                if len(files) >= 10:
+                    chunksize = 10
+                else:
+                    chunksize = len(list)
+            else:
+                chunksize = 10
+        else:
+            chunksize = chunks
+
         if self.project is None:
             warnings.warn(
                 "The decoder 'project' is not set; Decoding step will be much slower."
@@ -114,9 +155,12 @@ class Decoder:
         manager = mp.Manager()
         _file_facets = manager.dict()
         lock = manager.Lock()
-        func = partial(self._decoder, _file_facets, raise_error, self.project, lock)
+        func = partial(
+            self._decoder, _file_facets, raise_error, self.project, self.guess, lock
+        )
+
         with mp.Pool() as pool:
-            pool.imap(func, files, chunksize=10)
+            pool.imap(func, files, chunksize=chunksize)
             pool.close()
             pool.join()
 
@@ -132,7 +176,12 @@ class Decoder:
     def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
         file_name = Path(file).stem
 
-        variable_name = cls._decode_primary_variable(file)
+        try:
+            variable_name = cls._decode_primary_variable(file)
+        except DecoderError:
+            logging.error(f"Unable to open dataset: {file.name}")
+            raise
+
         variable_date = file_name.split("_")[-1]
 
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
@@ -160,26 +209,40 @@ class Decoder:
         str
         """
         dimsvar_dict = dict()
-        coords = ("time", "lat", "lon", "rlat", "rlon", "height", "lev", "rotated_pole")
+        coords = (
+            "time",
+            "lat",
+            "latitude",
+            "lon",
+            "longitude",
+            "rlat",
+            "rlon",
+            "height",
+            "lev",
+            "rotated_pole",
+        )
         suggested_variable = file.name.split("_")[0]
+        try:
 
-        if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            data = nc.Dataset(file, mode="r")
-            for var_name, var_attrs in data.variables.items():
-                dimsvar_dict[var_name] = {
-                    k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
-                }
-            for k in dimsvar_dict.keys():
-                if not str(k).startswith(coords) and suggested_variable == k:
-                    return str(k)
+            if file.is_file() and file.suffix in [".nc", ".nc4"]:
+                data = nc.Dataset(file, mode="r")
+                for var_name, var_attrs in data.variables.items():
+                    dimsvar_dict[var_name] = {
+                        k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
+                    }
+                for k in dimsvar_dict.keys():
+                    if not str(k).startswith(coords) and suggested_variable == k:
+                        return str(k)
 
-        elif file.is_dir() and file.suffix == ".zarr":
-            data = zarr.open(str(file), mode="r")
-            for k in data.array_keys():
-                if not str(k).startswith(coords) and suggested_variable == k:
-                    return str(k)
-        else:
-            raise NotImplementedError()
+            elif file.is_dir() and file.suffix == ".zarr":
+                data = zarr.open(str(file), mode="r")
+                for k in data.array_keys():
+                    if not str(k).startswith(coords) and suggested_variable == k:
+                        return str(k)
+            else:
+                raise NotImplementedError()
+        except ValueError:
+            raise DecoderError()
 
     @staticmethod
     def _decode_time_info(
@@ -295,7 +358,9 @@ class Decoder:
             elif Path(file).is_dir() and Path(file).suffix == ".zarr":
                 engine = "zarr"
             else:
-                raise DecoderError(file)
+                raise DecoderError(
+                    f"File is not valid netcdf or zarr: {Path(file).name}"
+                )
 
             _ds = xarray.open_dataset(
                 file,
@@ -337,9 +402,46 @@ class Decoder:
                 return time_dictionary[found_freq]
         raise RuntimeError(f"Time frequency indiscernible for file `{file}`.")
 
+    @staticmethod
+    def _decode_version(file: Union[PathLike, str], data: Dict) -> dict:
+        """
+
+        Parameters
+        ----------
+        file: Union[os.PathLike, str]
+        data: dict
+
+        Returns
+        -------
+        dict
+        """
+        version_info = dict()
+        try:
+            version_info["version"] = data["version"]
+        except KeyError:
+            possible_version = Path(file).parent
+            if re.match(r"^[vV]\d+", possible_version.name):
+                version_info["version"] = possible_version.name
+            else:
+                possible_version_signature = possible_version.glob(
+                    f"{Path(file).stem}.v*"
+                )
+                for sig in possible_version_signature:
+                    found_version = re.match(r"([vV]\d+)$", sig.suffix)
+                    if found_version:
+                        version_info["version"] = found_version.group()
+                        version_info["sha256sum"] = sig.open().read()
+                        break
+                else:
+                    version_info["version"] = "vNotFound"
+        return version_info
+
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets.update(data)
@@ -348,32 +450,16 @@ class Decoder:
         facets["date"] = date
 
         file_format = data.get("output_format")
-        if format:
+        if file_format:
             facets["format"] = file_format
         else:
             facets["format"] = data["format"]
 
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["variable"] = variable
-
-        try:
-            facets["version"] = data["version"]
-        except KeyError:
-            possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
-                facets["version"] = Path(file).parent.name
-            else:
-                possible_version_signature = Path(file).parent.glob(
-                    f"{Path(file).stem}.v*"
-                )
-                for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
-                    if found_version:
-                        facets["version"] = found_version.group()
-                        facets["sha256sum"] = sig.open().read()
-                        break
-                else:
-                    facets["version"] = "vNotFound"
+        facets.update(cls._decode_version(data=data, file=file))
 
         try:
             facets["date_start"] = date_parser(date)
@@ -384,20 +470,26 @@ class Decoder:
         return facets
 
     @staticmethod
-    def decode_eccc_obs(self, file: Union[PathLike, str]) -> dict:
+    def decode_eccc_obs(self, file: Union[PathLike, str]) -> Dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_ahccd_obs(self, file: Union[PathLike, str]) -> dict:
+    def decode_ahccd_obs(self, file: Union[PathLike, str]) -> Dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_melcc_obs(self, file: Union[PathLike, str]) -> dict:
+    def decode_melcc_obs(self, file: Union[PathLike, str]) -> Dict:
         raise NotImplementedError()
 
     @classmethod
     def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        if "Derived" in Path(file).parents:
+            raise NotImplementedError("Derived CanDCS-U6 variables are not supported.")
+
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -407,7 +499,9 @@ class Decoder:
         facets["domain"] = data["domain"]
         facets["experiment"] = str(data["GCM__experiment_id"]).replace(",", "-")
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+        facets["frequency"] = cls._decode_time_info(
+            data=data, file=file, field="frequency"
+        )
         facets["institution"] = data["GCM__institution_id"]
         facets["member"] = (
             f"r{data['GCM__realization_index']}"
@@ -418,10 +512,15 @@ class Decoder:
         facets["processing_level"] = "biasadjusted"
         facets["bias_adjust_project"] = "CanDCS-U6"
         facets["source"] = data["GCM__source_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
-        facets["version"] = data["GCM__data_specs_version"]
+
+        facets["version"] = f"v{data.get('GCM__data_specs_version')}"
+        if facets["version"] is None:
+            facets.update(find_version_tags(file=file))
 
         try:
             facets["date_start"] = date_parser(date)
@@ -433,7 +532,10 @@ class Decoder:
 
     @classmethod
     def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = data["activity_id"]
@@ -456,25 +558,7 @@ class Decoder:
         )
         facets["type"] = "simulation"
         facets["variable"] = variable
-
-        try:
-            facets["version"] = data["version"]
-        except KeyError:
-            possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
-                facets["version"] = Path(file).parent.name
-            else:
-                possible_version_signature = Path(file).parent.glob(
-                    f"{Path(file).stem}.v*"
-                )
-                for sig in possible_version_signature:
-                    found_version = re.search(r"([vV]\d+)$", sig.suffix)
-                    if found_version:
-                        facets["version"] = found_version.group()
-                        facets["sha256sum"] = sig.open().read()
-                        break
-                else:
-                    facets["version"] = "vNotFound"
+        facets.update(cls._decode_version(data=data, file=file))
 
         try:
             facets["date_start"] = date_parser(date)
@@ -486,7 +570,10 @@ class Decoder:
 
     @classmethod
     def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = "CMIP"
@@ -503,28 +590,12 @@ class Decoder:
         facets["processing_level"] = "raw"
         facets["mip_era"] = data["project_id"]
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
-
-        try:
-            facets["version"] = data["version"]
-        except KeyError:
-            possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
-                facets["version"] = Path(file).parent.name
-            else:
-                possible_version_signature = Path(file).parent.glob(
-                    f"{Path(file).stem}.v*"
-                )
-                for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
-                    if found_version:
-                        facets["version"] = found_version.group()
-                        facets["sha256sum"] = sig.open().read()
-                        break
-                else:
-                    facets["version"] = "vNotFound"
+        facets.update(cls._decode_version(data=data, file=file))
 
         try:
             facets["date_start"] = date_parser(date)
@@ -536,7 +607,10 @@ class Decoder:
 
     @classmethod
     def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         # FIXME: What to do about our internal data that breaks all established conventions?
         facets = dict()
@@ -586,13 +660,13 @@ class Decoder:
             driving_institution = "-".join(driving_institution_parts[:3])
         elif data["driving_model_id"].startswith("GFDL"):
             driving_institution = "NOAA-GFDL"
-            facets["driving_model"] = f"NOAA-GFDL-{data['driving_model_id']}"
+            driving_model = f"NOAA-GFDL-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("MPI-ESM"):
             driving_institution = "MPI-M"
-            facets["driving_model"] = f"MPI-M-{data['driving_model_id']}"
+            driving_model = f"MPI-M-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("HadGEM2"):
             driving_institution = "MOHC"
-            facets["driving_model"] = f"MOHC-{data['driving_model_id']}"
+            driving_model = f"MOHC-{data['driving_model_id']}"
         else:
             raise AttributeError(
                 "driving_institution (from driving_model_id: "
@@ -600,7 +674,9 @@ class Decoder:
             )
 
         facets["driving_institution"] = driving_institution
-        if not driving_model:
+        if driving_model:
+            facets["driving_model"] = driving_model
+        else:
             facets["driving_model"] = data["driving_model_id"]
         facets["format"] = "netcdf"
         facets["frequency"] = cls._decode_time_info(
@@ -614,28 +690,12 @@ class Decoder:
 
         facets["processing_level"] = "raw"
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
-
-        try:
-            facets["version"] = data["version"]
-        except KeyError:
-            possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
-                facets["version"] = Path(file).parent.name
-            else:
-                possible_version_signature = Path(file).parent.glob(
-                    f"{Path(file).stem}.v*"
-                )
-                for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
-                    if found_version:
-                        facets["version"] = found_version.group()
-                        facets["sha256sum"] = sig.open().read()
-                        break
-                else:
-                    facets["version"] = "vNotFound"
+        facets.update(cls._decode_version(data=data, file=file))
 
         try:
             facets["date_start"] = date_parser(date)
@@ -664,7 +724,10 @@ class Decoder:
 
     @classmethod
     def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
-        variable, date, data = cls._from_dataset(file=file)
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return dict()
 
         facets = dict()
         facets["activity"] = "ISIMIP"
@@ -682,28 +745,12 @@ class Decoder:
         facets["modeling_realm"] = data["modeling_realm"]
         facets["social_forcing_id"] = data["social_forcing_id"]
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(data=data, field="timedelta")
+        facets["timedelta"] = cls._decode_time_info(
+            term=facets["frequency"], field="timedelta"
+        )
         facets["type"] = "simulation"
         facets["variable"] = variable
-
-        try:
-            facets["version"] = data["version"]
-        except KeyError:
-            possible_version = Path(file).parent.name
-            if re.match(r"^[vV]\d+", possible_version):
-                facets["version"] = Path(file).parent.name
-            else:
-                possible_version_signature = Path(file).parent.glob(
-                    f"{Path(file).stem}.v*"
-                )
-                for sig in possible_version_signature:
-                    found_version = re.match(r"([vV]\d+)", sig.suffix)
-                    if found_version:
-                        facets["version"] = found_version.group()
-                        facets["sha256sum"] = sig.open().read()
-                        break
-                else:
-                    facets["version"] = "vNotFound"
+        facets.update(cls._decode_version(data=data, file=file))
 
         try:
             facets["date_start"] = date_parser(date)

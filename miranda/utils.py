@@ -1,6 +1,11 @@
+import gzip
 import logging.config
 import os
 import sys
+import tarfile
+import tempfile
+import warnings
+import zipfile
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
@@ -12,10 +17,12 @@ from . import scripting
 logging.config.dictConfig(scripting.LOGGING_CONFIG)
 
 __all__ = [
+    "HiddenPrints",
     "chunk_iterables",
     "creation_date",
     "discover_data",
     "find_filepaths",
+    "generic_extract_archive",
     "list_paths_with_elements",
     "read_privileges",
     "single_item_list",
@@ -28,6 +35,20 @@ ISO_8601 = (
     r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])"
     r"T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$"
 )
+
+
+class HiddenPrints:
+    # Solution from https://stackoverflow.com/a/45669280/7322852
+    # Credit to Alexander C (https://stackoverflow.com/users/2039471/alexander-c)
+    # CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, "w")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
 
 
 def discover_data(
@@ -243,6 +264,75 @@ def single_item_list(iterable: Iterable) -> bool:
         iterator
     )  # carry on consuming until another true value / exhausted
     return has_true and not has_another_true  # True if exactly one true found
+
+
+def generic_extract_archive(
+    resources: Union[str, Path, List[Union[bytes, str, Path]]],
+    output_dir: Optional[Union[str, Path]] = None,
+) -> List[Path]:
+    """Extract archives (tar/zip) to a working directory.
+    Parameters
+    ----------
+    resources: Union[str, Path, List[Union[bytes, str, Path]]]
+      list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
+    output_dir: Optional[Union[str, Path]]
+      string or Path to a working location (default: temporary folder).
+    Returns
+    -------
+    list
+      List of original or of extracted files
+    """
+
+    archive_types = [".gz", ".tar", ".zip", ".7z"]
+    output_dir = output_dir or tempfile.gettempdir()
+
+    if not isinstance(resources, list):
+        resources = [resources]
+
+    files = list()
+
+    for arch in resources:
+        if any(ext in str(arch).lower() for ext in archive_types):
+            try:
+                logging.debug("archive=%s", arch)
+                file = Path(arch)
+
+                if file.suffix == ".nc":
+                    files.append(Path(output_dir.join(arch)))
+                elif file.suffix == ".tar":
+                    with tarfile.open(arch, mode="r") as tar:
+                        tar.extractall(path=output_dir)
+                        files.extend(
+                            [Path(output_dir).joinpath(f) for f in tar.getnames()]
+                        )
+                elif file.suffix == ".zip":
+                    with zipfile.ZipFile(arch, mode="r") as zf:
+                        zf.extractall(path=output_dir)
+                        files.extend(
+                            [Path(output_dir).joinpath(f) for f in zf.namelist()]
+                        )
+                elif file.suffix == ".gz":
+                    logging.warning(
+                        "GZIP file found. Can only extract one expected file."
+                    )
+                    with gzip.open(arch, "rb") as gf, open(
+                        Path(output_dir).joinpath(arch.stem), "w"
+                    ) as f_out:
+                        f_out.write(gf.read().decode("utf-8"))
+                        files.append(Path(output_dir).joinpath(arch.stem))
+                elif file.suffix == ".7z":
+                    msg = "7z file extraction is not supported at this time."
+                    logging.warning(msg)
+                    warnings.warn(msg, UserWarning)
+                else:
+                    logging.debug('File extension "%s" unknown' % file)
+            except Exception as e:
+                logging.error(f"Failed to extract sub archive {arch}: {e}")
+        else:
+            logging.warning("No archives found. Continuing...")
+            return resources
+
+    return files
 
 
 ########################################################################################

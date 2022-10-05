@@ -26,12 +26,11 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = eccc_utils.cf_hourly_metadata(key)
+            variables[key] = eccc_utils.cf_station_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"] == "dry_bulb_temperature":
-                assert variables[key]["add_offset"] == 273.15
-            else:
-                assert variables[key]["add_offset"] == 0
+                assert variables[key]["raw_units"] == "degC"
+                assert variables[key]["units"] == "K"
             assert variables[key]["missing_flags"] == "M"
 
         assert set(codes) == {
@@ -40,7 +39,7 @@ class TestEnvCanVariables:
             "dry_bulb_temperature",
             "relative_humidity",
             "rainfall_flux",
-            "precipitation_flux",
+            "precipitation_amount",
         }
 
     def test_daily_cf_dictionaries(self):
@@ -56,12 +55,14 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = eccc_utils.cf_daily_metadata(key)
+            variables[key] = eccc_utils.cf_station_metadata(key)
             codes.append(variables[key]["standard_name"])
             if variables[key]["standard_name"].startswith("air_temperature"):
-                assert variables[key]["add_offset"] == 273.15
-            else:
-                assert variables[key]["add_offset"] == 0
+                assert variables[key]["raw_units"] == "degC"
+                assert variables[key]["units"] == "K"
+            elif variables[key]["standard_name"].endswith("precipitation_amount"):
+                assert variables[key]["raw_units"] in ["cm", "mm"]
+                assert variables[key]["units"] == "m"
             assert variables[key]["missing_flags"] == "M"
 
         assert set(codes) == {

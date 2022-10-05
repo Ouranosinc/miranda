@@ -6,6 +6,7 @@ geojson
 h5netcdf
 netCDF4
 numpy
+geopandas
 pandas
 pint
 pyessv
