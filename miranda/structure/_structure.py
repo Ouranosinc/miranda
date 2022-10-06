@@ -25,14 +25,33 @@ __all__ = [
 ]
 
 
-def generate_hashfiles(in_file: Path, out_file: Path, verify: bool = False) -> None:
-    if not out_file.exists():
+def _verify(hash_value: str, hash_file: os.PathLike) -> None:
+    try:
+        with open(hash_file) as f:
+            found_sha256sum = f.read()
+
+        if hash_value != found_sha256sum:
+            raise ValueError()
+    except ValueError:
+        logging.error(
+            f"Found sha256sum (starting: {found_sha256sum[:6]}) "
+            f"does not match current value (starting: {hash_value[:6]}) "
+            f"for file `{Path(hash_file).name}."
+        )
+
+
+def generate_hash_file(
+    in_file: os.PathLike, out_file: os.PathLike, verify: bool = False
+) -> None:
+    if not Path(out_file).exists():
         hash_sha256_writer = hashlib.sha256()
         with open(in_file, "rb") as f:
             hash_sha256_writer.update(f.read())
         sha256sum = hash_sha256_writer.hexdigest()
 
-        print(f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {out_file.name}")
+        print(
+            f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {Path(out_file).name}"
+        )
         try:
             with open(out_file, "w") as f:
                 f.write(sha256sum)
@@ -47,27 +66,16 @@ def generate_hashfiles(in_file: Path, out_file: Path, verify: bool = False) -> N
             hash_sha256_writer.update(f.read())
         calculated_sha256sum = hash_sha256_writer.hexdigest()
 
-        try:
-            with open(out_file) as f:
-                found_sha256sum = f.read()
-
-            if calculated_sha256sum != found_sha256sum:
-                raise ValueError()
-        except ValueError:
-            logging.error(
-                f"Found sha256sum (starting: {found_sha256sum[:6]}) "
-                f"does not match current value (starting: {calculated_sha256sum[:6]}) "
-                f"for file `{in_file.name}."
-            )
+        _verify(calculated_sha256sum, out_file)
 
     else:
-        print(f"Writing sha256sum file `{out_file.name}` exists. Continuing...")
+        print(f"Writing sha256sum file `{Path(out_file).name}` exists. Continuing...")
 
 
 def generate_hash_metadata(
-    in_file: Path,
+    in_file: os.PathLike,
     version: Optional[str] = None,
-    hash_file: Optional[Path] = None,
+    hash_file: Optional[os.PathLike] = None,
     verify: bool = False,
 ) -> Mapping[str, List[str]]:
     hashversion = dict()
@@ -75,7 +83,7 @@ def generate_hash_metadata(
     if version is None:
         version = "vNotFound"
 
-    if not hash_file.exists():
+    if not Path(hash_file).exists():
         hash_sha256_writer = hashlib.sha256()
         with open(in_file, "rb") as f:
             hash_sha256_writer.update(f.read())
@@ -83,40 +91,33 @@ def generate_hash_metadata(
 
         print(f"Calculated sha256sum (starting: {sha256sum[:6]})")
 
-        hashversion[in_file.name] = [version, sha256sum]
+        hashversion[Path(in_file).name] = [version, sha256sum]
         del hash_sha256_writer
 
-    elif hash_file.exists() and verify:
+    else:
         hash_sha256_writer = hashlib.sha256()
         with open(in_file, "rb") as f:
             hash_sha256_writer.update(f.read())
         calculated_sha256sum = hash_sha256_writer.hexdigest()
 
-        try:
-            with open(hash_file) as f:
-                found_sha256sum = f.read()
+        if verify:
+            _verify(calculated_sha256sum, hash_file)
 
-            if calculated_sha256sum != found_sha256sum:
-                raise ValueError()
-        except ValueError:
-            logging.error(
-                f"Found sha256sum (starting: {found_sha256sum[:6]}) "
-                f"does not match current value (ending: {calculated_sha256sum[:6]}) "
-                f"for file `{in_file.name}."
-            )
-
-        hashversion[in_file.name] = [version, found_sha256sum]
+        hashversion[Path(in_file).name] = [version, calculated_sha256sum]
 
     return hashversion
 
 
 def create_version_hashes(
-    input_files: Optional[Union[os.PathLike, List[os.PathLike], GeneratorType]] = None,
+    input_files: Optional[
+        Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType]
+    ] = None,
     facet_dict: Optional[Dict] = None,
     verify_hash: bool = False,
-) -> None:
+    return_dictionary: bool = False,
+) -> Optional[Mapping[str, List[str]]]:
     if not facet_dict and not input_files:
-        raise ValueError()
+        raise ValueError("Facets dictionary or sequence of filepaths required.")
 
     if input_files:
         if isinstance(input_files, os.PathLike):
@@ -138,7 +139,7 @@ def create_version_hashes(
             {Path(file): Path(file).parent.joinpath(version_hash_file)}
         )
 
-    hash_func = partial(generate_hashfiles, verify=verify_hash)
+    hash_func = partial(generate_hash_file, verify=verify_hash)
     with multiprocessing.Pool() as pool:
         pool.starmap(
             hash_func,
@@ -149,11 +150,17 @@ def create_version_hashes(
 
 
 def _structure_datasets(
-    in_file: Path, out_path: Path, method: str, dry_run: bool = False
+    in_file: Union[str, os.PathLike],
+    out_path: Union[str, os.PathLike],
+    method: str,
+    dry_run: bool = False,
 ):
+    if isinstance(in_file, str):
+        in_file = Path(in_file)
+
     if method.lower() in ["move", "copy"]:
         meth = "Moved" if method.lower() == "move" else "Copied"
-        output_file = out_path.joinpath(in_file.name)
+        output_file = Path(out_path).joinpath(in_file.name)
         try:
             if not dry_run:
                 method_mod = ""
@@ -350,7 +357,7 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     if set_version_hashes:
-        hash_func = partial(generate_hashfiles, verify=verify_hashes)
+        hash_func = partial(generate_hash_file, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
             if existing_hashes:
                 print(
