@@ -25,16 +25,14 @@ __all__ = [
 ]
 
 
-def _generate_version_hashes(
-    in_file: Path, out_file: Path, verify: bool = False
-) -> None:
+def generate_hashfiles(in_file: Path, out_file: Path, verify: bool = False) -> None:
     if not out_file.exists():
         hash_sha256_writer = hashlib.sha256()
         with open(in_file, "rb") as f:
             hash_sha256_writer.update(f.read())
         sha256sum = hash_sha256_writer.hexdigest()
 
-        print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
+        print(f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {out_file.name}")
         try:
             with open(out_file, "w") as f:
                 f.write(sha256sum)
@@ -57,13 +55,59 @@ def _generate_version_hashes(
                 raise ValueError()
         except ValueError:
             logging.error(
-                f"Found sha256sum (ending: {found_sha256sum[-6:]}) "
-                f"does not match current value (ending: {calculated_sha256sum[-6:]}) "
+                f"Found sha256sum (starting: {found_sha256sum[:6]}) "
+                f"does not match current value (starting: {calculated_sha256sum[:6]}) "
                 f"for file `{in_file.name}."
             )
 
     else:
         print(f"Writing sha256sum file `{out_file.name}` exists. Continuing...")
+
+
+def generate_hash_metadata(
+    in_file: Path,
+    version: Optional[str] = None,
+    hash_file: Optional[Path] = None,
+    verify: bool = False,
+) -> Mapping[str, List[str]]:
+    hashversion = dict()
+
+    if version is None:
+        version = "vNotFound"
+
+    if not hash_file.exists():
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        sha256sum = hash_sha256_writer.hexdigest()
+
+        print(f"Calculated sha256sum (starting: {sha256sum[:6]})")
+
+        hashversion[in_file.name] = [version, sha256sum]
+        del hash_sha256_writer
+
+    elif hash_file.exists() and verify:
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        calculated_sha256sum = hash_sha256_writer.hexdigest()
+
+        try:
+            with open(hash_file) as f:
+                found_sha256sum = f.read()
+
+            if calculated_sha256sum != found_sha256sum:
+                raise ValueError()
+        except ValueError:
+            logging.error(
+                f"Found sha256sum (starting: {found_sha256sum[:6]}) "
+                f"does not match current value (ending: {calculated_sha256sum[:6]}) "
+                f"for file `{in_file.name}."
+            )
+
+        hashversion[in_file.name] = [version, found_sha256sum]
+
+    return hashversion
 
 
 def create_version_hashes(
@@ -94,7 +138,7 @@ def create_version_hashes(
             {Path(file): Path(file).parent.joinpath(version_hash_file)}
         )
 
-    hash_func = partial(_generate_version_hashes, verify=verify_hash)
+    hash_func = partial(generate_hashfiles, verify=verify_hash)
     with multiprocessing.Pool() as pool:
         pool.starmap(
             hash_func,
@@ -306,7 +350,7 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     if set_version_hashes:
-        hash_func = partial(_generate_version_hashes, verify=verify_hashes)
+        hash_func = partial(generate_hashfiles, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
             if existing_hashes:
                 print(
