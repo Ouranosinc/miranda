@@ -1,0 +1,79 @@
+---
+datasets:
+  station-obs:
+      type:
+        institution:
+          source:
+            version:
+              frequency:
+                - option: member
+                  field:
+                    member:
+                      variable
+                - else:
+                    variable
+  forecast:
+    type:
+      institution:
+        source:
+          domain:
+            frequency:
+              variable
+  gridded-obs:
+    type:
+      institution:
+        source:
+          domain:
+            frequency:
+              variable
+  reconstruction:
+    type:
+      institution:
+        source:
+          domain:
+            frequency:
+              variable
+  simulation:
+    type:
+      processing_level:
+        mip_era:
+          activity:
+            - option: processing_level
+              value: raw
+              field:
+                processing_level:
+                  domain:
+                    institution:
+                      source:
+                        - option: activity
+                          value: CORDEX
+                          field:
+                            driving_model:
+                              experiment:
+                                member:
+                                  frequency:
+                                    variable
+                        - else:
+                            experiment:
+                              member:
+                                frequency:
+                                  variable
+
+            - else:
+                bias_adjust_project:
+                  domain:
+                    institution:
+                      source:
+                        - option: activity
+                          value: CORDEX
+                          field:
+                            driving_model:
+                              experiment:
+                                member:
+                                  frequency:
+                                    variable
+                        - else:
+                            experiment:
+                              member:
+                                frequency:
+                                  variable
