@@ -1,6 +1,8 @@
 ---
 datasets:
-  station-obs:
+  - option: type
+    value: station-obs
+    field:
       type:
         institution:
           source:
@@ -12,68 +14,76 @@ datasets:
                       variable
                 - else:
                     variable
-  forecast:
-    type:
-      institution:
-        source:
-          domain:
-            frequency:
-              variable
-  gridded-obs:
-    type:
-      institution:
-        source:
-          domain:
-            frequency:
-              variable
-  reconstruction:
-    type:
-      institution:
-        source:
-          domain:
-            frequency:
-              variable
-  simulation:
-    type:
-      processing_level:
-        mip_era:
-          activity:
-            - option: processing_level
-              value: raw
-              field:
-                processing_level:
-                  domain:
-                    institution:
-                      source:
-                        - option: activity
-                          value: CORDEX
-                          field:
-                            driving_model:
+  - option: type
+    value: forecast
+    field:
+      type:
+        institution:
+          source:
+            domain:
+              frequency:
+                variable
+  - option: type
+    value: gridded-obs
+    field:
+      type:
+        institution:
+          source:
+            domain:
+              frequency:
+                variable
+  - option: type
+    value: reconstruction
+    field:
+      type:
+        institution:
+          source:
+            domain:
+              frequency:
+                variable
+  - option: type
+    value: simulation
+    field:
+      type:
+        processing_level:
+          mip_era:
+            activity:
+              - option: processing_level
+                value: raw
+                field:
+                  processing_level:
+                    domain:
+                      institution:
+                        source:
+                          - option: activity
+                            value: CORDEX
+                            field:
+                              driving_model:
+                                experiment:
+                                  member:
+                                    frequency:
+                                      variable
+                          - else:
                               experiment:
                                 member:
                                   frequency:
                                     variable
-                        - else:
-                            experiment:
-                              member:
-                                frequency:
-                                  variable
 
-            - else:
-                bias_adjust_project:
-                  domain:
-                    institution:
-                      source:
-                        - option: activity
-                          value: CORDEX
-                          field:
-                            driving_model:
+              - else:
+                  bias_adjust_project:
+                    domain:
+                      institution:
+                        source:
+                          - option: activity
+                            value: CORDEX
+                            field:
+                              driving_model:
+                                experiment:
+                                  member:
+                                    frequency:
+                                      variable
+                          - else:
                               experiment:
                                 member:
                                   frequency:
                                     variable
-                        - else:
-                            experiment:
-                              member:
-                                frequency:
-                                  variable

@@ -32,6 +32,7 @@ dependencies:
   - pytest
   - python >=3.7
   - pyupgrade
+  - pyyaml
   - rasterio
   - regionmask
   - requests

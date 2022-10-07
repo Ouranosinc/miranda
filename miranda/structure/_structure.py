@@ -7,19 +7,25 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
-import schema
+import yaml
+from schema import Schema, SchemaError
 
 from miranda.decode import Decoder, guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
-from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
+from miranda.validators import (
+    GRIDDED_SCHEMA,
+    SIMULATION_SCHEMA,
+    STATION_OBS_SCHEMA,
+    validation_schemas,
+)
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "create_version_hashes",
+    "create_version_hash_files",
     "build_path_from_schema",
     "structure_datasets",
 ]
@@ -108,14 +114,13 @@ def generate_hash_metadata(
     return hashversion
 
 
-def create_version_hashes(
+def create_version_hash_files(
     input_files: Optional[
         Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType]
     ] = None,
     facet_dict: Optional[Dict] = None,
     verify_hash: bool = False,
-    return_dictionary: bool = False,
-) -> Optional[Mapping[str, List[str]]]:
+) -> None:
     if not facet_dict and not input_files:
         raise ValueError("Facets dictionary or sequence of filepaths required.")
 
@@ -178,6 +183,81 @@ def _structure_datasets(
             print(f"{in_file.name} already exists at location. Continuing...")
 
 
+def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optional[Path]:
+    """Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
+
+    Parameters
+    ----------
+    facets : dict
+    schema : str or os.PathLike or dict
+
+    Returns
+    -------
+    Path or None
+    """
+
+    def _options_parser(entry, facet_dict) -> Mapping[str, Any]:
+        if len(entry) == 1:
+            combined = [entry, facet_dict]
+            common_key = str(set.intersection(*tuple(set(d.keys()) for d in combined)))
+
+            if len(common_key) == 1:
+                return {common_key: facet_dict[common_key]}
+            raise RuntimeError()
+
+        elif len(entry) > 1:
+            for options in entry:
+                if {"option", "field", "value"}.issubset(options.keys()):
+                    option = options["option"]
+                    value = options["value"]
+
+                    if isinstance(options["field"], dict):
+                        field = next(iter(options["field"].keys()))
+                    elif isinstance(options["field"], str):
+                        field = options["field"]
+                    else:
+                        raise RuntimeError()
+
+                    if option in facet_dict.keys():
+                        if facet_dict[option] == value:
+                            return {field: facet_dict[field]}
+                        continue
+
+                elif {"option", "field", "else"}.issubset(options.keys()):
+                    option = options["option"]
+                    field = next(iter(options["field"].keys()))
+
+                    if isinstance(options["else"], dict):
+                        other = next(iter(options["else"].keys()))
+                    elif isinstance(options["else"], str):
+                        other = options["else"]
+                    else:
+                        raise RuntimeError()
+
+                    if option in facet_dict.keys():
+                        return {field: facet_dict[field]}
+                    return {field: facet_dict[other]}
+
+                else:
+                    raise ValueError("Supplied schema is invalid.")
+
+    if isinstance(schema, (str, os.PathLike)):
+        with Path(schema).open() as f:
+            schema = yaml.safe_load(f.read())
+
+    try:
+        datasets = schema["datasets"]
+    except KeyError:
+        logging.error("Schema is not a valid facet-tree reference.")
+        raise
+
+    tree = Path()  # noqa
+
+    first_level = _options_parser(datasets, facets)  # noqa
+
+    raise RuntimeError("This function is not yet complete")
+
+
 def build_path_from_schema(
     facets: dict, output_folder: Union[str, os.PathLike]
 ) -> Optional[Path]:
@@ -185,10 +265,10 @@ def build_path_from_schema(
 
     Parameters
     ----------
-    facets: dict
-      Facets for a given dataset.
-    output_folder
-      Parent folder on which to extend the filetree structure.
+    facets : dict
+        Facets for a given dataset.
+    output_folder : str or os.PathLike
+        Parent folder on which to extend the filetree structure.
 
     Returns
     -------
@@ -249,7 +329,7 @@ def build_path_from_schema(
         else:
             raise ValueError()
 
-    except schema.SchemaError as e:
+    except SchemaError as e:
         logging.error(
             f"Validation issues found for file matching schema: {facets}: {e}"
         )

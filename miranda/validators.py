@@ -121,6 +121,17 @@ SIMULATION_SCHEMA = Schema(
 )
 
 
+validation_schemas = dict()
+validation_schemas["simulation"] = SIMULATION_SCHEMA
+validation_schemas["station-obs"] = STATION_OBS_SCHEMA
+validation_schemas.update(
+    {
+        data_type: GRIDDED_SCHEMA
+        for data_type in ["forecast", "gridded-obs", "reconstruction"]
+    }
+)
+
+
 def url_validate(target: str) -> typing.Optional[typing.Match[str]]:
     """Validate whether a supplied URL is reliably written.
 
