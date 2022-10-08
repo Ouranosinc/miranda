@@ -199,10 +199,11 @@ def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optiona
     def _common_keys(entry, facet_dict):
         if len(entry) == 1:
             combined = [entry, facet_dict]
-            common_key = str(set.intersection(*tuple(set(d.keys()) for d in combined)))
+            common_key = set.intersection(*tuple(set(d.keys()) for d in combined))
 
             if len(common_key) == 1:
-                return {common_key: facet_dict[common_key]}
+                key = next(iter(common_key))
+                return {key: facet_dict[key]}
             raise RuntimeError()
 
     def _options_parser(entry, facet_dict) -> Mapping[str, Any]:
