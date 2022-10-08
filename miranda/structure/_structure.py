@@ -196,7 +196,7 @@ def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optiona
     Path or None
     """
 
-    def _options_parser(entry, facet_dict) -> Mapping[str, Any]:
+    def _common_keys(entry, facet_dict):
         if len(entry) == 1:
             combined = [entry, facet_dict]
             common_key = str(set.intersection(*tuple(set(d.keys()) for d in combined)))
@@ -205,8 +205,9 @@ def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optiona
                 return {common_key: facet_dict[common_key]}
             raise RuntimeError()
 
-        elif len(entry) > 1:
-            for options in entry:
+    def _options_parser(entry, facet_dict) -> Mapping[str, Any]:
+        if len(entry) > 1:
+            for i, options in enumerate(entry):
                 if {"option", "field", "value"}.issubset(options.keys()):
                     option = options["option"]
                     value = options["value"]
@@ -216,11 +217,11 @@ def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optiona
                     elif isinstance(options["field"], str):
                         field = options["field"]
                     else:
-                        raise RuntimeError()
+                        raise RuntimeError(options)
 
                     if option in facet_dict.keys():
                         if facet_dict[option] == value:
-                            return {field: facet_dict[field]}
+                            return {"field": field, "branch": i}
                         continue
 
                 elif {"option", "field", "else"}.issubset(options.keys()):
@@ -232,14 +233,16 @@ def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optiona
                     elif isinstance(options["else"], str):
                         other = options["else"]
                     else:
-                        raise RuntimeError()
+                        raise RuntimeError(options)
 
                     if option in facet_dict.keys():
-                        return {field: facet_dict[field]}
-                    return {field: facet_dict[other]}
+                        return {"field": field, "branch": i}
+                    return {"other": other, "branch": i}
 
                 else:
                     raise ValueError("Supplied schema is invalid.")
+        else:
+            raise ValueError("Supplied schema is invalid.")
 
     if isinstance(schema, (str, os.PathLike)):
         with Path(schema).open() as f:
@@ -253,7 +256,12 @@ def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optiona
 
     tree = Path()  # noqa
 
-    first_level = _options_parser(datasets, facets)  # noqa
+    # FIXME: WIP below
+    data_branch = _options_parser(datasets, facets)
+    tree = tree.joinpath(data_branch["field"])
+
+    trunk = datasets[data_branch["branch"]]["field"]
+    second = _options_parser(trunk, facets)  # noqa
 
     raise RuntimeError("This function is not yet complete")
 
