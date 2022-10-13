@@ -681,7 +681,7 @@ class Decoder:
         if driving_model:
             facets["driving_model"] = driving_model.strip()
         else:
-            facets["driving_model"] = data["driving_model_id"]
+            facets["driving_model"] = str(data["driving_model_id"]).strip()
 
         facets["format"] = "netcdf"
 
