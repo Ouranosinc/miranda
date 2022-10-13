@@ -333,7 +333,8 @@ def build_path_from_schema(
             facet_tree = list()
             for facet in folder_tree_structure:
                 if facet:
-                    facet_tree.append(facets[facet])
+                    # Remove spaces in folder paths
+                    facet_tree.append(str(facets[facet]).replace(" ", "-"))
             return Path(output_folder).joinpath("/".join(facet_tree))
         else:
             raise ValueError()
