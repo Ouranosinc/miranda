@@ -677,9 +677,9 @@ class Decoder:
                 f"`{data['driving_model_id']}`) is not valid."
             )
 
-        facets["driving_institution"] = driving_institution
+        facets["driving_institution"] = driving_institution.strip()
         if driving_model:
-            facets["driving_model"] = driving_model
+            facets["driving_model"] = driving_model.strip()
         else:
             facets["driving_model"] = data["driving_model_id"]
 
