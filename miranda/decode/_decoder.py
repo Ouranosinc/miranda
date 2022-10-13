@@ -626,13 +626,13 @@ class Decoder:
         else:
             facets["date"] = date
 
-        domain = data.get("CORDEX_domain").strip()
+        domain = data.get("CORDEX_domain")
         if domain:
-            facets["domain"] = domain
+            facets["domain"] = domain.strip()
         else:
-            domain = data.get("ouranos_domain_name").strip()
+            domain = data.get("ouranos_domain_name")
             if domain:
-                facets["domain"] = domain
+                facets["domain"] = domain.strip()
             else:
                 msg = f"File {Path(file).name} has a nonstandard domain name."
                 logging.error(msg)
