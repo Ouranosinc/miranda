@@ -282,12 +282,17 @@ class Decoder:
             return pd.to_timedelta(time_dictionary[term])
 
         if data and not file:
-            potential_time = data["frequency"]
+            potential_time = data.get("frequency", "")
             if potential_time == "":
                 if hasattr(data, "time"):
                     time_units = data["time"].units
                     potential_time = time_units.split()[0]
-            if potential_time in ["ymon", "yseas"]:
+                else:
+                    logging.warning(
+                        f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
+                    )
+                    potential_time = "fx"
+            if potential_time in ["ymon", "yseas", "fixed", "fx"]:
                 logging.warning(f"Found `{potential_time}`. Frequency is likely `fx`.")
                 if field == "frequency":
                     return "fx"
@@ -303,7 +308,7 @@ class Decoder:
 
         if file and not data:
             for delimiter in ["_", "."]:
-                file_parts = Path(file).name.split(delimiter)
+                file_parts = Path(file).stem.split(delimiter)
                 potential_times = [
                     segment
                     for segment in file_parts
@@ -322,17 +327,22 @@ class Decoder:
 
         if file and data:
             for delimiter in ["_", "."]:
-                file_parts = Path(file).name.split(delimiter)
+                file_parts = Path(file).stem.split(delimiter)
                 potential_times = [
                     segment
                     for segment in file_parts
                     if segment in time_dictionary.keys()
                 ]
-                potential_time = data["frequency"]
+                potential_time = data.get("frequency", "")
                 if potential_time == "":
                     if hasattr(data, "time"):
                         time_units = data["time"].units
                         potential_time = time_units.split()[0]
+                    else:
+                        logging.warning(
+                            f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
+                        )
+                        potential_time = "fx"
                 if potential_time in ["ymon", "yseas", "fixed", "fx"]:
                     logging.warning(
                         f"Found `{potential_time}`. Frequency is likely `fx`."
