@@ -7,20 +7,15 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import yaml
-from schema import Schema, SchemaError
+from schema import SchemaError
 
-from miranda.decode import Decoder, guess_project
+from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
-from miranda.validators import (
-    GRIDDED_SCHEMA,
-    SIMULATION_SCHEMA,
-    STATION_OBS_SCHEMA,
-    validation_schemas,
-)
+from miranda.validators import validation_schemas
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -183,92 +178,87 @@ def _structure_datasets(
             print(f"{in_file.name} already exists at location. Continuing...")
 
 
-def parse_schema(facets: dict, schema: Union[str, os.PathLike, dict]) -> Optional[Path]:
+def parse_schema(
+    facets: dict, schema: Union[str, os.PathLike, dict], top_folder: str = "datasets"
+) -> list:
     """Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
 
     Parameters
     ----------
     facets : dict
     schema : str or os.PathLike or dict
+    top_folder : str
 
     Returns
     -------
-    Path or None
+    list
     """
 
-    def _common_keys(entry, facet_dict):
-        if len(entry) == 1:
-            combined = [entry, facet_dict]
-            common_key = set.intersection(*tuple(set(d.keys()) for d in combined))
+    def _parse_top_level(schematic: dict, facet_dict: dict, top: str):
+        try:
+            parent = schematic[top]
+        except KeyError:
+            logging.error("Schema is not a valid facet-tree reference.")
+            raise
 
-            if len(common_key) == 1:
-                key = next(iter(common_key))
-                return {key: facet_dict[key]}
-            raise RuntimeError()
+        for i, options in enumerate(parent):
+            if {"option", "structure", "value"}.issubset(options.keys()):
+                option = options["option"]
+                value = options["value"]
 
-    def _options_parser(entry, facet_dict) -> Mapping[str, Any]:
-        if len(entry) > 1:
-            for i, options in enumerate(entry):
-                if {"option", "field", "value"}.issubset(options.keys()):
-                    option = options["option"]
-                    value = options["value"]
+                if option in facet_dict.keys():
+                    if facet_dict[option] == value:
+                        return {"branch": value, "structure": options["structure"]}
+                    continue
 
-                    if isinstance(options["field"], dict):
-                        field = next(iter(options["field"].keys()))
-                    elif isinstance(options["field"], str):
-                        field = options["field"]
+    def _parse_structure(branch_dict: dict, facet_dict: dict) -> list:
+
+        structure = branch_dict.get("structure")
+        folder_tree = list()
+
+        for level in structure:
+            if isinstance(level, str):
+                folder_tree.append(level)
+                continue
+            elif isinstance(level, dict):
+                if {"option", "is_true"}.issubset(level.keys()):
+                    option = level["option"]
+                    if option not in facet_dict.keys():
+                        raise ValueError(
+                            f"Necessary facet not found for schema: `{option}`."
+                        )
+
+                    value = level.get("value")
+                    is_true = level.get("is_true")
+                    else_value = level.get("else")
+
+                    if facet_dict[option] == value:
+                        folder_tree.append(is_true)
+                    elif else_value:
+                        folder_tree.append(else_value)
                     else:
-                        raise RuntimeError(options)
-
-                    if option in facet_dict.keys():
-                        if facet_dict[option] == value:
-                            return {"field": field, "branch": i}
-                        continue
-
-                elif {"option", "field", "else"}.issubset(options.keys()):
-                    option = options["option"]
-                    field = next(iter(options["field"].keys()))
-
-                    if isinstance(options["else"], dict):
-                        other = next(iter(options["else"].keys()))
-                    elif isinstance(options["else"], str):
-                        other = options["else"]
-                    else:
-                        raise RuntimeError(options)
-
-                    if option in facet_dict.keys():
-                        return {"field": field, "branch": i}
-                    return {"other": other, "branch": i}
-
-                else:
-                    raise ValueError("Supplied schema is invalid.")
-        else:
-            raise ValueError("Supplied schema is invalid.")
+                        pass
+            else:
+                raise ValueError("Supplied schema is invalid.")
+        return folder_tree
 
     if isinstance(schema, (str, os.PathLike)):
         with Path(schema).open() as f:
             schema = yaml.safe_load(f.read())
 
-    try:
-        datasets = schema["datasets"]
-    except KeyError:
-        logging.error("Schema is not a valid facet-tree reference.")
-        raise
+    branch = _parse_top_level(schema, facets, top_folder)
+    tree = list()  # noqa
+    tree.extend(_parse_structure(branch, facets))
 
-    tree = Path()  # noqa
-
-    # FIXME: WIP below
-    data_branch = _options_parser(datasets, facets)
-    tree = tree.joinpath(data_branch["field"])
-
-    trunk = datasets[data_branch["branch"]]["field"]
-    second = _options_parser(trunk, facets)  # noqa
-
-    raise RuntimeError("This function is not yet complete")
+    return tree
 
 
 def build_path_from_schema(
-    facets: dict, output_folder: Union[str, os.PathLike]
+    facets: dict,
+    output_folder: Union[str, os.PathLike],
+    schema: Optional[Union[str, os.PathLike, dict]] = None,
+    top_folder: str = "datasets",
+    validate: bool = True,
 ) -> Optional[Path]:
     """Build a filepath based on a valid data schema.
 
@@ -278,76 +268,41 @@ def build_path_from_schema(
         Facets for a given dataset.
     output_folder : str or os.PathLike
         Parent folder on which to extend the filetree structure.
+    schema: str or os.PathLike, optional
+    top_folder : str
+    validate: bool
 
     Returns
     -------
     Path or None
     """
-    folder_tree_structure = None
-    try:
-        if facets["type"] == "station-obs":
-            STATION_OBS_SCHEMA.validate(facets)
-            folder_tree_structure = (
-                "type",
-                "institution",
-                "source",
-                "version",  # This suggests "date_created"
-                "frequency",
-                "member"
-                if hasattr(facets, "member")
-                else None,  # This suggests station code
-                "variable",
+
+    if schema is None:
+        schema = Path(__file__).parent.joinpath("data").joinpath("ouranos_schema.yml")
+
+    tree = parse_schema(facets, schema, top_folder)
+    branch = tree[0]
+
+    if validate and facets[branch] in validation_schemas.keys():
+        try:
+            validation_schemas[facets[branch]].validate(facets)
+        except SchemaError as e:
+            logging.error(
+                f"Validation issues found for file matching schema: {facets}: {e}"
             )
-
-        if facets["type"] in ["forecast", "gridded-obs", "reconstruction"]:
-            GRIDDED_SCHEMA.validate(facets)
-            folder_tree_structure = (
-                "type",
-                "institution",
-                "source",
-                "domain",
-                "frequency",
-                "variable",
-            )
-
-        if facets["type"] == "simulation":
-            SIMULATION_SCHEMA.validate(facets)
-            folder_tree_structure = (
-                "type",
-                "processing_level",
-                "mip_era",
-                "activity"
-                if facets["processing_level"] == "raw"
-                else "bias_adjust_project",
-                "domain",
-                "institution",
-                "source",
-                "driving_model" if facets["activity"] == "CORDEX" else None,
-                "experiment",
-                "member",
-                "frequency",
-                "variable",
-            )
-
-        if folder_tree_structure:
-            facet_tree = list()
-            for facet in folder_tree_structure:
-                if facet:
-                    # Remove spaces in folder paths
-                    facet_tree.append(str(facets[facet]).replace(" ", "-"))
-            return Path(output_folder).joinpath("/".join(facet_tree))
-        else:
-            raise ValueError()
-
-    except SchemaError as e:
+            return
+    elif validate and facets[branch] not in validation_schemas.keys():
         logging.error(
-            f"Validation issues found for file matching schema: {facets}: {e}"
+            f"No appropriate data schemas found for file matching schema: {facets}",
+            DecoderError,
         )
-    except ValueError:
-        logging.error(
-            f"No appropriate data schemas found for file matching schema: {facets}"
-        )
-    return
+        return
+
+    file_location = list()
+    for facet in tree:
+        # Remove spaces in folder paths
+        file_location.append(str(facets[facet]).replace(" ", "-"))
+    return Path(output_folder).joinpath("/".join(file_location))
 
 
 def structure_datasets(

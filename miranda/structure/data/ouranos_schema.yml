@@ -2,7 +2,7 @@
 datasets:
   - option: type
     value: station-obs
-    field:
+    structure:
       - type
       - institution
       - source
@@ -13,7 +13,7 @@ datasets:
       - variable
   - option: type
     value: forecast
-    field:
+    structure:
       - type
       - institution
       - source
@@ -22,7 +22,7 @@ datasets:
       - variable
   - option: type
     value: gridded-obs
-    field:
+    structure:
       - type
       - institution
       - source
@@ -31,7 +31,7 @@ datasets:
       - variable
   - option: type
     value: reconstruction
-    field:
+    structure:
       - type
       - institution
       - source
@@ -40,7 +40,7 @@ datasets:
       - variable
   - option: type
     value: simulation
-    field:
+    structure:
       - type
       - processing_level
       - mip_era
