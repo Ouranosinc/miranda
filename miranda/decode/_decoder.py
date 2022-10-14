@@ -559,11 +559,11 @@ class Decoder:
         facets.update(cls._decode_version(data=data, file=file))
 
         try:
-            facets["timedelta"] = cls._decode_time_info(
-                term=facets["frequency"], field="timedelta"
-            )
             facets["frequency"] = cls._decode_time_info(
                 data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
