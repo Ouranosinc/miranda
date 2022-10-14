@@ -17,6 +17,7 @@ import xarray as xr
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
+from miranda.convert import find_version_tags
 from miranda.cv import INSTITUTIONS, PROJECT_MODELS
 from miranda.decode._time import (
     TIME_UNITS_TO_FREQUENCY,
@@ -44,28 +45,6 @@ def guess_project(file: Union[os.PathLike, str]) -> str:
         if any([model in potential_names for model in models]):
             return project
     raise DecoderError(f"Unable to determine project from file name: '{file_name}'.")
-
-
-def find_version_tags(file: Union[os.PathLike, str]) -> Dict:
-    version_info = dict()
-    possible_version = Path(file).parent.name
-    if re.match(r"^v\d+", possible_version, re.IGNORECASE):
-        version_info["version"] = Path(file).parent.name
-    else:
-        file_identity = str(Path(file).name).split(".")[0]
-        possible_version_signature = Path(file).parent.glob(f"{file_identity}.*")
-        for sig in possible_version_signature:
-            found_version = re.search(r"\.(v\d+.+)$", sig.name, re.IGNORECASE)
-            if found_version:
-                try:
-                    version_info["version"] = found_version.group()
-                    version_info["sha256sum"] = int(sig.open().read())
-                except ValueError:
-                    continue
-                break
-        else:
-            version_info["version"] = "vNotFound"
-    return version_info
 
 
 class Decoder:

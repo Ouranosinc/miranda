@@ -1,0 +1,10 @@
+{
+  "Header": {
+    "_sha256sum": true,
+    "_version": true,
+    "data_specs_version": "00.00.01",
+    "processing_level": "raw",
+    "table_date": "14 October 2022",
+    "type": "simulation"
+  }
+}

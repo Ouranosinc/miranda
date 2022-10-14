@@ -1,8 +1,9 @@
 import json
 import logging.config
 import os
+import re
 from pathlib import Path
-from typing import List, Mapping, Union
+from typing import Dict, List, Mapping, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -10,20 +11,21 @@ from miranda.storage import report_file_size
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
+    "era5_variables",
+    "find_version_tags",
     "gather_agcfsr",
     "gather_agmerra",
-    "gather_era5_pressure_levels",
     "gather_era5_land",
+    "gather_era5_pressure_levels",
     "gather_era5_single_levels",
     "gather_nrcan_gridded_obs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
-    "era5_variables",
-    "nrcan_variables",
     "nasa_ag_variables",
+    "nrcan_variables",
+    "reanalysis_project_institutes",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
-    "reanalysis_project_institutes",
     "xarray_frequencies_to_cmip6like",
 ]
 
@@ -204,3 +206,25 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
         f"Found {len(infiles_sc_earth)} files, totalling {report_file_size(infiles_sc_earth)}."
     )
     return {"wfdei-gem-capa": infiles_sc_earth}
+
+
+def find_version_tags(file: Union[os.PathLike, str]) -> Dict:
+    version_info = dict()
+    possible_version = Path(file).parent.name
+    if re.match(r"^v\d+", possible_version, re.IGNORECASE):
+        version_info["version"] = Path(file).parent.name
+    else:
+        file_identity = str(Path(file).name).split(".")[0]
+        possible_version_signature = Path(file).parent.glob(f"{file_identity}.*")
+        for sig in possible_version_signature:
+            found_version = re.search(r"\.(v\d+.+)$", sig.name, re.IGNORECASE)
+            if found_version:
+                try:
+                    version_info["version"] = found_version.group()
+                    version_info["sha256sum"] = int(sig.open().read())
+                except ValueError:
+                    continue
+                break
+        else:
+            version_info["version"] = "vNotFound"
+    return version_info
