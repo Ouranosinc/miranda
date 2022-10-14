@@ -32,7 +32,7 @@
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "5 October 2022",
+    "table_date": "2022-10-05",
     "type": "reconstruction"
   },
   "variable_entry": {
