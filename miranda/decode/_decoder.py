@@ -671,8 +671,12 @@ class Decoder:
         elif data["driving_model_id"].startswith("HadGEM2"):
             driving_institution = "MOHC"
             driving_model = f"MOHC-{data['driving_model_id']}"
+        elif data["driving_model_id"].startswith("CNRM-CM5"):
+            driving_institution = "CNRM-CERFACS"
+            driving_model = f"CNRM-CERFACS-{data['driving_model_id']}"
+
         else:
-            raise AttributeError(
+            raise DecoderError(
                 "driving_institution (from driving_model_id: "
                 f"`{data['driving_model_id']}`) is not valid."
             )
