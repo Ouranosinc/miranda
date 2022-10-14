@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Union
 import netCDF4 as nc  # noqa
 import pandas as pd
 import schema
-import xarray
+import xarray as xr
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
@@ -137,13 +137,13 @@ class Decoder:
         if chunks is None:
             if isinstance(files, list):
                 if len(files) >= 10:
-                    chunksize = 10
+                    chunk_size = 10
                 else:
-                    chunksize = len(list)
+                    chunk_size = len(list)
             else:
-                chunksize = 10
+                chunk_size = 10
         else:
-            chunksize = chunks
+            chunk_size = chunks
 
         if self.project is None:
             warnings.warn(
@@ -160,7 +160,7 @@ class Decoder:
         )
 
         with mp.Pool() as pool:
-            pool.imap(func, files, chunksize=chunksize)
+            pool.imap(func, files, chunksize=chunk_size)
             pool.close()
             pool.join()
 
@@ -182,19 +182,19 @@ class Decoder:
             logging.error(f"Unable to open dataset: {file.name}")
             raise
 
-        variable_date = file_name.split("_")[-1]
+        datetimes = file_name.split("_")[-1]
 
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            ds = nc.Dataset(file)
-            data = dict()
-            for k in ds.ncattrs():
-                data[k] = getattr(ds, k)
+            with nc.Dataset(file, mode="r") as ds:
+                data = dict()
+                for k in ds.ncattrs():
+                    data[k] = getattr(ds, k)
         elif file.is_dir() and file.suffix == ".zarr":
-            ds = zarr.open(file, mode="r")
-            data = ds.attrs.asdict()
+            with zarr.open(file, mode="r") as ds:
+                data = ds.attrs.asdict()
         else:
             raise DecoderError(f"Unable to read dataset: `{file.name}`.")
-        return variable_name, variable_date, data
+        return variable_name, datetimes, data
 
     @staticmethod
     def _decode_primary_variable(file: Path) -> str:
@@ -202,7 +202,7 @@ class Decoder:
 
         Parameters
         ----------
-        file: Union[Path, str]
+        file: Path
 
         Returns
         -------
@@ -225,24 +225,63 @@ class Decoder:
         try:
 
             if file.is_file() and file.suffix in [".nc", ".nc4"]:
-                data = nc.Dataset(file, mode="r")
-                for var_name, var_attrs in data.variables.items():
-                    dimsvar_dict[var_name] = {
-                        k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
-                    }
+                with nc.Dataset(file, mode="r") as ds:
+                    for var_name, var_attrs in ds.variables.items():
+                        dimsvar_dict[var_name] = {
+                            k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
+                        }
                 for k in dimsvar_dict.keys():
                     if not str(k).startswith(coords) and suggested_variable == k:
                         return str(k)
 
             elif file.is_dir() and file.suffix == ".zarr":
-                data = zarr.open(str(file), mode="r")
-                for k in data.array_keys():
-                    if not str(k).startswith(coords) and suggested_variable == k:
-                        return str(k)
+                with zarr.open(str(file), mode="r") as ds:
+                    for k in ds.array_keys():
+                        if not str(k).startswith(coords) and suggested_variable == k:
+                            return str(k)
             else:
                 raise NotImplementedError()
         except ValueError:
             raise DecoderError()
+
+    @staticmethod
+    def _decode_hour_of_day_info(
+        file: Union[PathLike, str],
+    ) -> dict:
+        """
+
+        Parameters
+        ----------
+        file : Path or str
+
+        Returns
+        -------
+        dict
+        """
+        if isinstance(file, str):
+            file = Path(file)
+
+        if file.is_file() and file.suffix in [".nc", ".nc4"]:
+            with nc.Dataset(file, mode="r") as ds:
+                if "time" in ds.variables.keys():
+                    hour = nc.num2date(
+                        ds["time"][0], ds["time"].units, ds["time"].calendar
+                    ).hour
+                else:
+                    hour = None
+            return dict(hour_of_day=hour)
+
+        elif file.is_dir() and file.suffix == ".zarr":
+            warnings.warn("This is not currently implemented")
+
+            # with zarr.open(str(file), mode="r") as ds:
+            #     if "time" in ds.array_keys():
+            #         pass
+
+            return dict()
+
+        else:
+            raise NotImplementedError()
 
     @staticmethod
     def _decode_time_info(
@@ -256,9 +295,10 @@ class Decoder:
 
         Parameters
         ----------
-        file: Union[os.PathLike, str], optional
-        data: dict, optional
-        field: {"timedelta", "frequency"}
+        file : Union[os.PathLike, str], optional
+        data : dict, optional
+        term : str
+        field : {"timedelta", "frequency"}
 
         Returns
         -------
@@ -372,7 +412,7 @@ class Decoder:
                     f"File is not valid netcdf or zarr: {Path(file).name}"
                 )
 
-            _ds = xarray.open_dataset(
+            _ds = xr.open_dataset(
                 file,
                 engine=engine,
                 drop_variables="time_bnds",
@@ -467,6 +507,7 @@ class Decoder:
         facets["variable"] = variable
 
         facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
 
         try:
             if "frequency" not in facets:
@@ -530,6 +571,8 @@ class Decoder:
         if facets["version"] is None:
             facets.update(find_version_tags(file=file))
 
+        facets.update(cls._decode_hour_of_day_info(file=file))
+
         try:
             facets["frequency"] = cls._decode_time_info(
                 data=data, file=file, field="frequency"
@@ -567,6 +610,7 @@ class Decoder:
         facets["type"] = "simulation"
         facets["variable"] = variable
         facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
 
         try:
             facets["frequency"] = cls._decode_time_info(
@@ -604,6 +648,7 @@ class Decoder:
         facets["type"] = "simulation"
         facets["variable"] = variable
         facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
 
         try:
             facets["frequency"] = cls._decode_time_info(
@@ -710,6 +755,7 @@ class Decoder:
         facets["variable"] = variable
 
         facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
 
         try:
             facets["frequency"] = cls._decode_time_info(
@@ -767,6 +813,7 @@ class Decoder:
         facets["variable"] = variable
 
         facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
 
         try:
             facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
