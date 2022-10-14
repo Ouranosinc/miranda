@@ -112,8 +112,9 @@ class Decoder:
                 )
                 d[file] = _deciphered
 
-        except (AttributeError, NotImplementedError) as e:
-            print(f"Unable to read data from {Path(file).name}: {e}")
+        except (AttributeError, NotImplementedError):
+            print(f"Unable to read data from {Path(file)}. Ensure pathname is correct.")
+            raise
         except schema.SchemaError as e:
             print(f"Decoded facets from {Path(file).name} are not valid: {e}")
 
@@ -139,7 +140,7 @@ class Decoder:
                 if len(files) >= 10:
                     chunk_size = 10
                 else:
-                    chunk_size = len(list)
+                    chunk_size = len(files)
             else:
                 chunk_size = 10
         else:
