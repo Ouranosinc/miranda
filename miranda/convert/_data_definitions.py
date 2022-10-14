@@ -43,11 +43,16 @@ wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
 reanalysis_project_institutes = {
     "cfsr": "ncar",
     "era5": "ecmwf",
-    "era5-pressure-levels-preliminary-back-extension": "ecmwf",
-    "era5-pressure-levels": "ecmwf",
-    "era5-single-levels-preliminary-back-extension": "ecmwf",
-    "era5-single-levels": "ecmwf",
     "era5-land": "ecmwf",
+    "era5-land-monthly-means": "ecmwf",
+    "era5-monthly": "ecmwf",
+    "era5-pressure-levels": "ecmwf",
+    "era5-pressure-levels-preliminary-back-extension": "ecmwf",
+    "era5-pressure-monthly-means-levels-preliminary-back-extension": "ecmwf",
+    "era5-single-levels": "ecmwf",
+    "era5-single-levels-monthly-means": "ecmwf",
+    "era5-single-levels-monthly-means-preliminary-back-extension": "ecmwf",
+    "era5-single-levels-preliminary-back-extension": "ecmwf",
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
@@ -72,43 +77,51 @@ def _gather(
     variables: Mapping[str, List[str]],
     source: Union[str, os.PathLike],
     back_extension: bool,
+    monthly_means: bool,
 ) -> Mapping[str, List[Path]]:
-    # ERA5-Single-Levels source data
     source = Path(source)
+    name = (
+        f"{name}"
+        f"{'-monthly-means' if monthly_means else ''}"
+        f"{'-preliminary-back-extension' if back_extension else ''}"
+    )
     logging.info(f"Gathering {name} files from: {source.as_posix()}")
-    infiles = list()
+    in_files = list()
     for v in variables:
-        infiles.extend(
-            list(
-                sorted(
-                    source.rglob(
-                        f"{v}*{name}{'-preliminary-back-extension' if back_extension else ''}*.nc"
-                    )
-                )
-            )
-        )
-    logging.info(f"Found {len(infiles)} files, totalling {report_file_size(infiles)}.")
-    return {name: infiles}
+        in_files.extend(list(sorted(source.rglob(f"{v}*{name}*.nc"))))
+    logging.info(
+        f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
+    )
+    return {name: in_files}
 
 
 def gather_era5_single_levels(
-    path: Union[str, os.PathLike], back_extension: bool = False
+    path: Union[str, os.PathLike],
+    back_extension: bool = False,
+    monthly_means: bool = False,
 ) -> Mapping[str, List[Path]]:
     # ERA5-Single-Levels source data
     return _gather(
-        "era5-single-levels", era5_variables, source=path, back_extension=back_extension
+        "era5-single-levels",
+        era5_variables,
+        source=path,
+        back_extension=back_extension,
+        monthly_means=monthly_means,
     )
 
 
 def gather_era5_pressure_levels(
-    path: Union[str, os.PathLike], back_extension: bool = False
+    path: Union[str, os.PathLike],
+    back_extension: bool = False,
+    monthly_means: bool = False,
 ) -> Mapping[str, List[Path]]:
-    # ERA5-Single-Levels source data
+    # ERA5-Pressure-Levels source data
     return _gather(
         "era5-pressure-levels",
         era5_variables,
         source=path,
         back_extension=back_extension,
+        monthly_means=monthly_means,
     )
 
 
