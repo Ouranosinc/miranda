@@ -10,6 +10,7 @@ import numpy as np
 import xarray as xr
 import zarr
 from clisops.core import subset
+from dask.delayed import delayed
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
@@ -248,7 +249,7 @@ def delayed_write(
     target_chunks: dict,
     output_format: str,
     overwrite: bool,
-) -> Callable:
+) -> delayed:
     """
 
     Parameters
@@ -261,7 +262,7 @@ def delayed_write(
 
     Returns
     -------
-    Callable
+    dask.delayed.delayed
     """
     # Set correct chunks in encoding options
     kwargs = dict()

@@ -3,7 +3,6 @@ import json
 import logging.config
 import os
 import shutil
-import warnings
 from pathlib import Path
 from typing import Dict, Iterator, Optional, Sequence, Union
 
@@ -56,9 +55,10 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 if p in m["variable_entry"][v][key].keys():
                     d[v].attrs["units"] = m["variable_entry"][v][key][p]
 
-    if "time" in m["variable_entry"].keys():
-        if p in m["variable_entry"]["time"][key].keys():
-            d["time"].attrs["units"] = m["variable_entry"]["time"][key][p]
+    if m["variable_entry"].get("time"):
+        if hasattr(m["variable_entry"]["time"], key):
+            if p in m["variable_entry"]["time"][key].keys():
+                d["time"].attrs["units"] = m["variable_entry"]["time"][key][p]
 
     return d
 
@@ -69,44 +69,45 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     for vv in d.data_vars:
         converted = False
-        if hasattr(m["variable_entry"][vv], key):
-            if p in m["variable_entry"][vv][key].keys():
-                try:
-                    offset, offset_meaning = get_time_frequency(d)
-                except TypeError:
-                    logging.error(
-                        f"Unable to parse the time frequency for variable `{vv}`. "
-                        "Verify data integrity before retrying."
-                    )
-                    raise
-
-                if m["variable_entry"][vv][key][p] == "deaccumulate":
-                    # Time-step accumulated total to time-based flux (de-accumulation)
-                    logging.info(f"De-accumulating units for variable `{vv}`.")
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv].diff(dim="time")
-                        out = d[vv].where(
-                            getattr(d[vv].time.dt, offset_meaning) == offset[0],
-                            out.broadcast_like(d[vv]),
+        if m["variable_entry"].get(vv):
+            if hasattr(m["variable_entry"][vv], key):
+                if p in m["variable_entry"][vv][key].keys():
+                    try:
+                        offset, offset_meaning = get_time_frequency(d)
+                    except TypeError:
+                        logging.error(
+                            f"Unable to parse the time frequency for variable `{vv}`. "
+                            "Verify data integrity before retrying."
                         )
-                        out = units.amount2rate(out)
-                    d_out[out.name] = out
-                    converted = True
-                elif m["variable_entry"][vv][key][p] == "amount2rate":
-                    # frequency-based totals to time-based flux
-                    logging.info(
-                        f"Performing amount-to-rate units conversion for variable `{vv}`."
-                    )
-                    out = units.amount2rate(
-                        d[vv],
-                        out_units=m["variable_entry"][vv]["units"],
-                    )
-                    d_out[out.name] = out
-                    converted = True
-                else:
-                    raise NotImplementedError(
-                        f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
-                    )
+                        raise
+
+                    if m["variable_entry"][vv][key][p] == "deaccumulate":
+                        # Time-step accumulated total to time-based flux (de-accumulation)
+                        logging.info(f"De-accumulating units for variable `{vv}`.")
+                        with xr.set_options(keep_attrs=True):
+                            out = d[vv].diff(dim="time")
+                            out = d[vv].where(
+                                getattr(d[vv].time.dt, offset_meaning) == offset[0],
+                                out.broadcast_like(d[vv]),
+                            )
+                            out = units.amount2rate(out)
+                        d_out[out.name] = out
+                        converted = True
+                    elif m["variable_entry"][vv][key][p] == "amount2rate":
+                        # frequency-based totals to time-based flux
+                        logging.info(
+                            f"Performing amount-to-rate units conversion for variable `{vv}`."
+                        )
+                        out = units.amount2rate(
+                            d[vv],
+                            out_units=m["variable_entry"][vv]["units"],
+                        )
+                        d_out[out.name] = out
+                        converted = True
+                    else:
+                        raise NotImplementedError(
+                            f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
+                        )
         if not converted:
             d_out[vv] = d[vv]
     return d_out
@@ -117,33 +118,38 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     for vv in d.data_vars:
         converted = False
-        if hasattr(m["variable_entry"][vv], key):
-            if p in m["variable_entry"][vv][key].keys():
-                try:
-                    offset, offset_meaning = get_time_frequency(d)
-                except TypeError:
-                    logging.error(
-                        f"Unable to parse the time frequency for variable `{vv}`. "
-                        "Verify data integrity before retrying."
-                    )
-                    raise
+        if m["variable_entry"].get(vv):
+            if hasattr(m["variable_entry"][vv], key):
+                if p in m["variable_entry"][vv][key].keys():
+                    try:
+                        offset, offset_meaning = get_time_frequency(d)
+                    except TypeError:
+                        logging.error(
+                            f"Unable to parse the time frequency for variable `{vv}`. "
+                            "Verify data integrity before retrying."
+                        )
+                        raise
 
-                if m["variable_entry"][vv][key][p]:
-                    # Offset time by value of one time-step
-                    logging.info(
-                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-                    )
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv]
-                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
-                        d_out[out.name] = out
-                        converted = True
+                    if m["variable_entry"][vv][key][p]:
+                        # Offset time by value of one time-step
+                        logging.info(
+                            f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                        )
+                        with xr.set_options(keep_attrs=True):
+                            out = d[vv]
+                            out["time"] = out.time - np.timedelta64(
+                                offset[0], offset[1]
+                            )
+                            d_out[out.name] = out
+                            converted = True
+                    else:
+                        logging.info(
+                            f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+                        )
                 else:
                     logging.info(
-                        f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+                        f"No time offsetting needed for `{vv}` in project `{p}`."
                     )
-            else:
-                logging.info(f"No time offsetting needed for `{vv}` in project `{p}`.")
         if not converted:
             d_out[vv] = d[vv]
     return d_out
@@ -154,22 +160,23 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     for vv in d.data_vars:
         converted = False
-        if hasattr(m["variable_entry"][vv], key):
-            if p in m["variable_entry"][vv][key].keys():
-                if m["variable_entry"][vv][key][p]:
-                    logging.info(
-                        f"Inverting sign for `{vv}` (switching direction of values)."
-                    )
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv]
-                        d_out[out.name] = out.__invert__()
-                        converted = True
+        if m["variable_entry"].get(vv):
+            if hasattr(m["variable_entry"][vv], key):
+                if p in m["variable_entry"][vv][key].keys():
+                    if m["variable_entry"][vv][key][p]:
+                        logging.info(
+                            f"Inverting sign for `{vv}` (switching direction of values)."
+                        )
+                        with xr.set_options(keep_attrs=True):
+                            out = d[vv]
+                            d_out[out.name] = out.__invert__()
+                            converted = True
+                    else:
+                        logging.info(
+                            f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
+                        )
                 else:
-                    logging.info(
-                        f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
-                    )
-            else:
-                logging.info(f"No sign inversion needed for `{vv}` in `{p}`.")
+                    logging.info(f"No sign inversion needed for `{vv}` in `{p}`.")
         if not converted:
             d_out[vv] = d[vv]
     return d_out
@@ -180,10 +187,12 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
     descriptions = m["variable_entry"]
 
     if "time" in m["variable_entry"].keys():
-        d["time"]["units"] = m["variable_entry"]["time"]["units"]
+        if hasattr(m["variable_entry"]["time"], "units"):
+            d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
     for v in d.data_vars:
-        d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
+        if descriptions.get(v):
+            d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
 
     return d
 
@@ -197,13 +206,13 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     if miranda_version:
         if isinstance(miranda_version, bool):
             m["Header"]["miranda_version"] = __miranda_version__
-        if isinstance(miranda_version, dict):
+        elif isinstance(miranda_version, dict):
             if p in miranda_version.keys():
                 m["Header"]["miranda_version"] = __miranda_version__
         else:
-            warnings.warn("`__miranda_version__` not set for project. Not appending.")
+            logging.warning("`__miranda_version__` not set for project. Not appending.")
     if "_miranda_version" in m["Header"]:
-        del m["header"]["_miranda_version"]
+        del m["Header"]["_miranda_version"]
 
     # Conditional handling of global attributes based on project name
     cond_header = ["source", "doi"]
@@ -222,7 +231,8 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d.attrs.update(dict(project=p))
 
     # Date-based versioning
-    d.attrs.update(dict(version=f"v{VERSION}"))
+    if not hasattr(d.attrs, "version"):
+        d.attrs.update(dict(version=f"v{VERSION}"))
 
     if hasattr(d.attrs, "history"):
         prev_history = f" {d.attrs['history']}"
@@ -234,7 +244,8 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     descriptions = m["variable_entry"]
 
     if "time" in m["variable_entry"].keys():
-        del descriptions["time"]["_corrected_units"]
+        if "_corrected_units" in m["variable_entry"]["time"].keys():
+            del descriptions["time"]["_corrected_units"]
 
     # Add variable metadata and remove nonstandard entries
     correction_fields = [
@@ -245,19 +256,21 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     ]
     for v in d.data_vars:
         for field in correction_fields:
-            if field in descriptions[v].keys():
-                del descriptions[v][field]
-        d[v].attrs.update(descriptions[v])
+            if v in descriptions.keys():
+                if field in descriptions[v].keys():
+                    del descriptions[v][field]
+                d[v].attrs.update(descriptions[v])
 
     # Rename data variables
     for v in d.data_vars:
-        try:
-            cf_name = descriptions[v]["_cf_variable_name"]
-            d = d.rename({v: cf_name})
-            d[cf_name].attrs.update(dict(original_variable=v))
-            del d[cf_name].attrs["_cf_variable_name"]
-        except (ValueError, IndexError):
-            pass
+        if v in descriptions.keys():
+            try:
+                cf_name = descriptions[v]["_cf_variable_name"]
+                d = d.rename({v: cf_name})
+                d[cf_name].attrs.update(dict(original_variable=v))
+                del d[cf_name].attrs["_cf_variable_name"]
+            except (ValueError, IndexError):
+                pass
     return d
 
 
@@ -265,12 +278,14 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_ensure_correct_time"
 
     if "time" not in m["variable_entry"].keys():
-        warnings.warn(f"No time corrections listed for project `{p}`. Continuing...")
+        logging.warning(f"No time corrections listed for project `{p}`. Continuing...")
         return d
 
     if "time" not in d.data_vars:
-        warnings.warn(
-            f"No time dimension among data variables {d.data_vars}. Continuing..."
+        logging.info(
+            "No time dimension among data variables: "
+            f"{' ,'.join([str(v) for v in d.data_vars])}. "
+            "Continuing..."
         )
         return d
 
@@ -279,7 +294,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         freq_found = xr.infer_freq(d.time)
         if not freq_found:
             raise ValueError(
-                "Time frequency could not be found. There may be missing timesteps."
+                "Time frequency could not be found. " "There may be missing timesteps."
             )
 
         if freq_found in ["M", "A"]:
@@ -317,7 +332,7 @@ def _dims_conversion(d: xr.Dataset, p: str) -> xr.Dataset:
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
             sort_dims.append(new)
-        except KeyError:
+        except (KeyError, ValueError):
             pass
         if p in LATLON_COORDINATE_PRECISION.keys():
             d[new] = d[new].round(LATLON_COORDINATE_PRECISION[p])
@@ -351,9 +366,7 @@ def file_conversion(
     output_path: Union[str, os.PathLike],
     output_format: str,
     chunks: Optional[dict] = None,
-    # year_groupings: Optional[str] = None,
     overwrite: bool = False,
-    job_chunks: int = 12,
     **xr_kwargs,
 ) -> None:
     """
@@ -365,9 +378,7 @@ def file_conversion(
     output_path : str or os.PathLike
     output_format: {"netcdf", "zarr"}
     chunks : dict, optional
-    # year_groupings : str, optional
     overwrite: bool
-    job_chunks: int
     **xr_kwargs
 
     Returns
@@ -376,6 +387,8 @@ def file_conversion(
     """
     if output_format.lower() not in {"netcdf", "zarr"}:
         raise NotImplementedError(f"Format: {output_format}.")
+    else:
+        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
 
     if isinstance(output_path, str):
         output_path = Path(output_path)
@@ -392,33 +405,22 @@ def file_conversion(
 
     version_hashes = dict()
     for file in files:
-        version_hashes[file] = find_version_hash(file)
+        version_hashes[file.name] = find_version_hash(file)
 
-    jobs = list()
     if len(files) == 1:
         ds = xr.open_dataset(files[0], **xr_kwargs)
-        ds = variable_conversion(ds, project)
-        outfile_path = output_path.joinpath(Path(files[0].name))
-
-        if overwrite and outfile_path.exists():
-            logging.warning(
-                f"Removing existing {output_format} files for {files[0].name}."
-            )
-            if outfile_path.is_dir():
-                shutil.rmtree(outfile_path)
-            if outfile_path.is_file():
-                outfile_path.unlink()
-        delayed_write(ds, outfile_path, output_chunks, output_format, overwrite)
-
-    if len(jobs) == 0:
-        logging.warning(
-            "All output files currently exist. To overwrite them, set `overwrite=True`. Continuing..."
-        )
     else:
-        chunked_jobs = chunk_iterables(jobs, job_chunks)
-        logging.info(f"Processing jobs for {len(files)} files.")
-        iterations = 0
-        for chunk in chunked_jobs:
-            iterations += 1
-            logging.info(f"Writing out job chunk {iterations}.")
-            compute(chunk)
+        ds = xr.open_mfdataset(files, **xr_kwargs)
+    ds.attrs.update(dict(original_files=str(version_hashes)))
+    ds = variable_conversion(ds, project)
+    outfile = f"{Path(files[0].stem)}.{suffix}"
+    outfile_path = output_path.joinpath(outfile)
+
+    if overwrite and outfile_path.exists():
+        logging.warning(f"Removing existing {output_format} files for {files[0].name}.")
+        if outfile_path.is_dir():
+            shutil.rmtree(outfile_path)
+        if outfile_path.is_file():
+            outfile_path.unlink()
+
+    delayed_write(ds, outfile_path, output_chunks, output_format, overwrite).compute()
