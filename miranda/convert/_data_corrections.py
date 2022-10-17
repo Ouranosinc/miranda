@@ -8,13 +8,11 @@ from typing import Dict, Iterator, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
-from dask import compute
 from xclim.core import units
 
 from miranda import __version__ as __miranda_version__
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
-from miranda.utils import chunk_iterables
 
 from .utils import delayed_write, find_version_hash
 
@@ -367,6 +365,7 @@ def file_conversion(
     output_format: str,
     chunks: Optional[dict] = None,
     overwrite: bool = False,
+    add_version_hashes: bool = True,
     **xr_kwargs,
 ) -> None:
     """
@@ -379,6 +378,7 @@ def file_conversion(
     output_format: {"netcdf", "zarr"}
     chunks : dict, optional
     overwrite: bool
+    add_version_hashes: bool
     **xr_kwargs
 
     Returns
@@ -404,14 +404,18 @@ def file_conversion(
         files = [Path(f) for f in files]
 
     version_hashes = dict()
-    for file in files:
-        version_hashes[file.name] = find_version_hash(file)
+    if add_version_hashes:
+        for file in files:
+            version_hashes[file.name] = find_version_hash(file)
 
     if len(files) == 1:
         ds = xr.open_dataset(files[0], **xr_kwargs)
     else:
         ds = xr.open_mfdataset(files, **xr_kwargs)
-    ds.attrs.update(dict(original_files=str(version_hashes)))
+
+    if version_hashes:
+        ds.attrs.update(dict(original_files=str(version_hashes)))
+
     ds = variable_conversion(ds, project)
     outfile = f"{Path(files[0].stem)}.{suffix}"
     outfile_path = output_path.joinpath(outfile)
