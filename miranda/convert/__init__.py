@@ -1,4 +1,4 @@
-from . import deh, ecmwf, hq
+from . import deh, ecmwf, hq, utils
 from ._data_corrections import *
 from ._data_definitions import *
 from ._rechunk import *

@@ -1,15 +1,23 @@
 import datetime
 import json
 import logging.config
+import os
+import shutil
+import warnings
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Iterator, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
+from dask import compute
 from xclim.core import units
 
+from miranda import __version__ as __miranda_version__
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
+from miranda.utils import chunk_iterables
+
+from .utils import delayed_write, find_version_hash
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -18,7 +26,7 @@ LATLON_COORDINATE_PRECISION["era5-land"] = 4
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
-__all__ = ["load_json_data_mappings", "variable_conversion"]
+__all__ = ["file_conversion", "load_json_data_mappings", "variable_conversion"]
 
 
 def load_json_data_mappings(project: str) -> dict:
@@ -28,6 +36,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
+    elif project in ["cordex", "cmip5", "cmip6"]:
+        metadata_definition = json.load(open(data_folder / "cmip_ouranos_attrs.json"))
     elif project == "nrcan-gridded-10km":
         raise NotImplementedError()
     elif project == "wfdei-gem-capa":
@@ -41,8 +51,10 @@ def load_json_data_mappings(project: str) -> dict:
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
     for v in d.data_vars:
-        if p in m["variable_entry"][v][key].keys():
-            d[v].attrs["units"] = m["variable_entry"][v][key][p]
+        if m["variable_entry"].get(v):
+            if hasattr(m["variable_entry"][v], key):
+                if p in m["variable_entry"][v][key].keys():
+                    d[v].attrs["units"] = m["variable_entry"][v][key][p]
 
     if "time" in m["variable_entry"].keys():
         if p in m["variable_entry"]["time"][key].keys():
@@ -177,32 +189,37 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
 
 
 # Add and update existing metadata fields
-def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
+def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     logging.info("Converting metadata to CF-like conventions.")
 
-    # Conditional handling of source based on project name
-    if "_source" in m["Header"].keys():
-        if p in m["Header"]["_source"].keys():
-            m["Header"]["source"] = m["Header"]["_source"][p]
-        elif "source" in m["Header"].keys():
-            pass
+    # Static handling of version global attributes
+    miranda_version = m["Header"].get("_miranda_version")
+    if miranda_version:
+        if isinstance(miranda_version, bool):
+            m["Header"]["miranda_version"] = __miranda_version__
+        if isinstance(miranda_version, dict):
+            if p in miranda_version.keys():
+                m["Header"]["miranda_version"] = __miranda_version__
         else:
-            raise AttributeError("Source not found for project dataset.")
-        del m["Header"]["_source"]
+            warnings.warn("`__miranda_version__` not set for project. Not appending.")
+    if "_miranda_version" in m["Header"]:
+        del m["header"]["_miranda_version"]
 
-    # Conditional handling of DOI based on project name
-    if "_doi" in m["Header"].keys():
-        if p in m["Header"]["_doi"].keys():
-            m["Header"]["doi"] = m["Header"]["_doi"][p]
-        elif "doi" in m["Header"].keys():
-            pass
-        else:
-            logging.warning("DOI not found for project dataset. Skipping.")
-        del m["Header"]["_doi"]
+    # Conditional handling of global attributes based on project name
+    cond_header = ["source", "doi"]
+    for field in cond_header:
+        if f"_{field}" in m["Header"].keys():
+            if p in m["Header"][f"_{field}"].keys():
+                m["Header"][field] = m["Header"][f"_{field}"][p]
+            elif field in m["Header"].keys():
+                pass
+            else:
+                raise AttributeError(f"`{field}` not found for project dataset.")
+            del m["Header"][f"_{field}"]
 
     # Add global attributes
     d.attrs.update(m["Header"])
-    d.attrs.update(dict(project=p, format=o))
+    d.attrs.update(dict(project=p))
 
     # Date-based versioning
     d.attrs.update(dict(version=f"v{VERSION}"))
@@ -212,10 +229,7 @@ def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
     else:
         prev_history = ""
 
-    history = (
-        f"[{datetime.datetime.now()}] Converted from original data to {o} "
-        f"with modified metadata for CF-like compliance.{prev_history}"
-    )
+    history = f"[{datetime.datetime.now()}] Converted variables and modified metadata for CF-like compliance.{prev_history}"
     d.attrs.update(dict(history=history))
     descriptions = m["variable_entry"]
 
@@ -247,12 +261,57 @@ def _metadata_conversion(d: xr.Dataset, p: str, o: str, m: Dict) -> xr.Dataset:
     return d
 
 
+def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+    key = "_ensure_correct_time"
+
+    if "time" not in m["variable_entry"].keys():
+        warnings.warn(f"No time corrections listed for project `{p}`. Continuing...")
+        return d
+
+    if "time" not in d.data_vars:
+        warnings.warn(
+            f"No time dimension among data variables {d.data_vars}. Continuing..."
+        )
+        return d
+
+    if key in m["variable_entry"]["time"].keys():
+        correct_times = m["variable_entry"]["time"][key][p]
+        freq_found = xr.infer_freq(d.time)
+        if not freq_found:
+            raise ValueError(
+                "Time frequency could not be found. There may be missing timesteps."
+            )
+
+        if freq_found in ["M", "A"]:
+            freq_found = f"{freq_found}S"
+
+        if freq_found not in correct_times:
+            raise ValueError(
+                f"Time frequency {freq_found} not among allowed frequencies: "
+                f"{' ,'.join(correct_times)} for project `{p}`."
+            )
+
+        logging.info()
+        d_out = d.assign_coords(
+            time=d.time.resample(time=freq_found).mean(dim="time").time
+        )
+
+        if hasattr(d.attrs, "history"):
+            prev_history = f" {d.attrs['history']}"
+        else:
+            prev_history = ""
+        history = f"[{datetime.datetime.now()}] Resampled time with `freq={freq_found}`.{prev_history}"
+        d.attrs.update(dict(history=history))
+        d = d_out
+
+    return d
+
+
 # For renaming lat and lon dims
 def _dims_conversion(d: xr.Dataset, p: str) -> xr.Dataset:
     sort_dims = []
     for orig, new in dict(longitude="lon", latitude="lat").items():
         try:
-
             d = d.rename({orig: new})
             if new == "lon" and np.any(d.lon > 180):
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
@@ -267,15 +326,99 @@ def _dims_conversion(d: xr.Dataset, p: str) -> xr.Dataset:
     return d
 
 
-def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
+def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
+
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
-    ds = _metadata_conversion(ds, project, output_format, metadata_definition)
+    ds = _ensure_correct_time(ds, project, metadata_definition)
     ds = _dims_conversion(ds, project)
 
+    ds = metadata_conversion(ds, project, metadata_definition)
+
     return ds
+
+
+def file_conversion(
+    files: Union[
+        str, os.PathLike, Sequence[Union[str, os.PathLike]], Iterator[os.PathLike]
+    ],
+    project: str,
+    output_path: Union[str, os.PathLike],
+    output_format: str,
+    chunks: Optional[dict] = None,
+    # year_groupings: Optional[str] = None,
+    overwrite: bool = False,
+    job_chunks: int = 12,
+    **xr_kwargs,
+) -> None:
+    """
+
+    Parameters
+    ----------
+    files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike]
+    project : str
+    output_path : str or os.PathLike
+    output_format: {"netcdf", "zarr"}
+    chunks : dict, optional
+    # year_groupings : str, optional
+    overwrite: bool
+    job_chunks: int
+    **xr_kwargs
+
+    Returns
+    -------
+    None
+    """
+    if output_format.lower() not in {"netcdf", "zarr"}:
+        raise NotImplementedError(f"Format: {output_format}.")
+
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    if chunks is None:
+        output_chunks = dict()
+    else:
+        output_chunks = chunks
+
+    if isinstance(files, (str, os.PathLike)):
+        files = [Path(files)]
+    elif isinstance(files, (Sequence, Iterator)):
+        files = [Path(f) for f in files]
+
+    version_hashes = dict()
+    for file in files:
+        version_hashes[file] = find_version_hash(file)
+
+    jobs = list()
+    if len(files) == 1:
+        ds = xr.open_dataset(files[0], **xr_kwargs)
+        ds = variable_conversion(ds, project)
+        outfile_path = output_path.joinpath(Path(files[0].name))
+
+        if overwrite and outfile_path.exists():
+            logging.warning(
+                f"Removing existing {output_format} files for {files[0].name}."
+            )
+            if outfile_path.is_dir():
+                shutil.rmtree(outfile_path)
+            if outfile_path.is_file():
+                outfile_path.unlink()
+        delayed_write(ds, outfile_path, output_chunks, output_format, overwrite)
+
+    if len(jobs) == 0:
+        logging.warning(
+            "All output files currently exist. To overwrite them, set `overwrite=True`. Continuing..."
+        )
+    else:
+        chunked_jobs = chunk_iterables(jobs, job_chunks)
+        logging.info(f"Processing jobs for {len(files)} files.")
+        iterations = 0
+        for chunk in chunked_jobs:
+            iterations += 1
+            logging.info(f"Writing out job chunk {iterations}.")
+            compute(chunk)

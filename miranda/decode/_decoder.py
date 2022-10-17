@@ -17,7 +17,7 @@ import xarray as xr
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
-from miranda.convert import find_version_tags
+from miranda.convert.utils import find_version_hash  # noqa
 from miranda.cv import INSTITUTIONS, PROJECT_MODELS
 from miranda.decode._time import (
     TIME_UNITS_TO_FREQUENCY,
@@ -549,7 +549,7 @@ class Decoder:
 
         facets["version"] = f"v{data.get('GCM__data_specs_version')}"
         if facets["version"] is None:
-            facets.update(find_version_tags(file=file))
+            facets.update(find_version_hash(file=file))
 
         facets.update(cls._decode_hour_of_day_info(file=file))
 

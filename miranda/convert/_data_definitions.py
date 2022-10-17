@@ -1,9 +1,8 @@
 import json
 import logging.config
 import os
-import re
 from pathlib import Path
-from typing import Dict, List, Mapping, Union
+from typing import List, Mapping, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -12,7 +11,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "era5_variables",
-    "find_version_tags",
     "gather_agcfsr",
     "gather_agmerra",
     "gather_era5_land",
@@ -145,86 +143,66 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # agMERRA source data
     source_agmerra = Path(path)
     logging.info(f"Gathering agMERRA from: {source_agmerra.as_posix()}")
-    infiles_agmerra = list()
+    in_files_agmerra = list()
     for v in nasa_ag_variables:
-        infiles_agmerra.extend(list(sorted(source_agmerra.rglob(f"AgMERRA_*_{v}.nc4"))))
+        in_files_agmerra.extend(
+            list(sorted(source_agmerra.rglob(f"AgMERRA_*_{v}.nc4")))
+        )
     logging.info(
-        f"Found {len(infiles_agmerra)} files, totalling {report_file_size(infiles_agmerra)}."
+        f"Found {len(in_files_agmerra)} files, totalling {report_file_size(in_files_agmerra)}."
     )
-    return dict(cfsr=infiles_agmerra)
+    return dict(cfsr=in_files_agmerra)
 
 
 def gather_agcfsr(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # agCFSR source data
     source_agcfsr = Path(path)
     logging.info(f"Gathering CFSR from: {source_agcfsr.as_posix()}")
-    infiles_agcfsr = list()
+    in_files_agcfsr = list()
     for v in nasa_ag_variables:
-        infiles_agcfsr.extend(list(sorted(source_agcfsr.rglob(f"AgCFSR_*_{v}.nc4"))))
+        in_files_agcfsr.extend(list(sorted(source_agcfsr.rglob(f"AgCFSR_*_{v}.nc4"))))
     logging.info(
-        f"Found {len(infiles_agcfsr)} files, totalling {report_file_size(infiles_agcfsr)}."
+        f"Found {len(in_files_agcfsr)} files, totalling {report_file_size(in_files_agcfsr)}."
     )
-    return dict(cfsr=infiles_agcfsr)
+    return dict(cfsr=in_files_agcfsr)
 
 
 def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # NRCan Gridded Obs source data
     source_nrcan = Path(path)
     logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
-    infiles_nrcan = list()
+    in_files_nrcan = list()
     for v in nrcan_variables:
-        infiles_nrcan.extend(list(sorted(source_nrcan.joinpath(v).glob(f"*{v}_*.nc"))))
+        in_files_nrcan.extend(list(sorted(source_nrcan.joinpath(v).glob(f"*{v}_*.nc"))))
     logging.info(
-        f"Found {len(infiles_nrcan)} files, totalling {report_file_size(infiles_nrcan)}."
+        f"Found {len(in_files_nrcan)} files, totalling {report_file_size(in_files_nrcan)}."
     )
-    return dict(nrcan=infiles_nrcan)
+    return dict(nrcan=in_files_nrcan)
 
 
 def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # WFDEI-GEM-CaPa source data
     source_wfdei = Path(path)
     logging.info(f"Gathering WFDEI-GEM_CaPa from: {source_wfdei.as_posix()}")
-    infiles_wfdei = list()
+    in_files_wfdei = list()
     for v in wfdei_gem_capa_variables:
-        infiles_wfdei.extend(list(sorted(source_wfdei.rglob(f"{v}_*.nc"))))
+        in_files_wfdei.extend(list(sorted(source_wfdei.rglob(f"{v}_*.nc"))))
     logging.info(
-        f"Found {len(infiles_wfdei)} files, totalling {report_file_size(infiles_wfdei)}."
+        f"Found {len(in_files_wfdei)} files, totalling {report_file_size(in_files_wfdei)}."
     )
-    return {"wfdei-gem-capa": infiles_wfdei}
+    return {"wfdei-gem-capa": in_files_wfdei}
 
 
 def gather_sc_earth(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     # SC-Earth source data
     source_sc_earth = Path(path)
     logging.info(f"Gathering SC-Earth from: {source_sc_earth.as_posix()}")
-    infiles_sc_earth = list()
+    in_files_sc_earth = list()
     for v in sc_earth_variables:
-        infiles_sc_earth.extend(
+        in_files_sc_earth.extend(
             list(sorted(source_sc_earth.rglob(f"SC-Earth_{v}_*.nc")))
         )
     logging.info(
-        f"Found {len(infiles_sc_earth)} files, totalling {report_file_size(infiles_sc_earth)}."
+        f"Found {len(in_files_sc_earth)} files, totalling {report_file_size(in_files_sc_earth)}."
     )
-    return {"wfdei-gem-capa": infiles_sc_earth}
-
-
-def find_version_tags(file: Union[os.PathLike, str]) -> Dict:
-    version_info = dict()
-    possible_version = Path(file).parent.name
-    if re.match(r"^v\d+", possible_version, re.IGNORECASE):
-        version_info["version"] = Path(file).parent.name
-    else:
-        file_identity = str(Path(file).name).split(".")[0]
-        possible_version_signature = Path(file).parent.glob(f"{file_identity}.*")
-        for sig in possible_version_signature:
-            found_version = re.search(r"\.(v\d+.+)$", sig.name, re.IGNORECASE)
-            if found_version:
-                try:
-                    version_info["version"] = found_version.group()
-                    version_info["sha256sum"] = int(sig.open().read())
-                except ValueError:
-                    continue
-                break
-        else:
-            version_info["version"] = "vNotFound"
-    return version_info
+    return {"wfdei-gem-capa": in_files_sc_earth}
