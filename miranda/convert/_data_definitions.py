@@ -125,9 +125,19 @@ def gather_era5_pressure_levels(
     )
 
 
-def gather_era5_land(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+def gather_era5_land(
+    path: Union[str, os.PathLike],
+    back_extension: bool = False,
+    monthly_means: bool = False,
+) -> Mapping[str, List[Path]]:
     # ERA5-Land source data
-    return _gather("era5-land", era5_variables, source=path, back_extension=False)
+    return _gather(
+        "era5-land",
+        era5_variables,
+        source=path,
+        back_extension=back_extension,
+        monthly_means=monthly_means,
+    )
 
 
 def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Mapping[str, Path]:
