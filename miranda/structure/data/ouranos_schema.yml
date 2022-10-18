@@ -43,12 +43,11 @@ datasets:
     structure:
       - type
       - processing_level
+      - option: processing_level
+        value: biasadjusted
+        is_true: bias_adjust_project
       - mip_era
       - activity
-      - option: processing_level
-        value: raw
-        is_true: processing_level
-        else: bias_adjust_project
       - domain
       - institution
       - source
