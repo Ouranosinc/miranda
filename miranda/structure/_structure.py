@@ -268,9 +268,12 @@ def build_path_from_schema(
         Facets for a given dataset.
     output_folder : str or os.PathLike
         Parent folder on which to extend the filetree structure.
-    schema: str or os.PathLike, optional
+    schema : str or os.PathLike, optional
+        Path to YAML schematic of database structure. If None, will use Ouranos schema.
     top_folder : str
+        Top-level of supplied schema, used for validation purposes. Default: "datasets".
     validate: bool
+        Run facets-validation checks over given file. Default: True.
 
     Returns
     -------
@@ -322,24 +325,28 @@ def structure_datasets(
 
     Parameters
     ----------
-    input_files: str or Path or list of str or Path or GeneratorType
-    output_folder: str or Path
-    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6"}, optional
-    guess: bool
-      If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
-    dry_run: bool
-      Prints changes that would have been made without performing them. Default: False.
-    method: {"move", "copy"}
-      Method to transfer files to intended location. Default: "move".
-    make_dirs: bool
-      Make folder tree if it does not already exist. Default: False.
-    set_version_hashes: bool
-      Make an accompanying file with version in filename and sha256sum in contents. Default: False.
-    verify_hashes: bool
-      Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
-    filename_pattern: str
-      If pattern ends with "zarr", will 'glob' with provided pattern.
-      Otherwise, will perform an 'rglob' (recursive) operation.
+    input_files : str or Path or list of str or Path or GeneratorType
+    output_folder : str or Path
+
+    project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}, optional
+        Project used to parse the facets of all supplied datasets.
+        If not supplied, will attempt parsing with all available data categories for each file (slow)
+        unless `guess` is True.
+    guess : bool
+        If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
+    dry_run : bool
+        Prints changes that would have been made without performing them. Default: False.
+    method : {"move", "copy"}
+        Method to transfer files to intended location. Default: "move".
+    make_dirs : bool
+        Make folder tree if it does not already exist. Default: False.
+    set_version_hashes : bool
+        Make an accompanying file with version in filename and sha256sum in contents. Default: False.
+    verify_hashes : bool
+        Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
+    filename_pattern : str
+        If pattern ends with "zarr", will 'glob' with provided pattern.
+        Otherwise, will perform an 'rglob' (recursive) operation.
 
     Returns
     -------

@@ -26,25 +26,35 @@ __all__ = [
 ]
 
 
-def get_chunks_on_disk(nc_file: Union[os.PathLike, str]) -> dict:
+def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
     """
 
     Parameters
     ----------
-    nc_file: Path or str
+    file : str or os.PathLike
+        File to be examined. Supports NetCDF and Zarr.
 
     Returns
     -------
     dict
     """
-    # FIXME: This does not support zarr
-    # TODO: This needs to be optimized for dask. See: https://github.com/Ouranosinc/miranda/pull/24/files#r840617216
-    ds = netCDF4.Dataset(nc_file)
     chunks = dict()
-    for v in ds.variables:
-        chunks[v] = dict()
-        for ii, dim in enumerate(ds[v].dimensions):
-            chunks[v][dim] = ds[v].chunking()[ii]
+    file = Path(file)
+
+    if file.suffix.lower() in [".nc", ".nc4"]:
+        with netCDF4.Dataset(file) as ds:
+            for v in ds.variables:
+                chunks[v] = dict()
+                for ii, dim in enumerate(ds[v].dimensions):
+                    chunks[v][dim] = ds[v].chunking()[ii]
+    elif file.suffix.lower() == "zarr" and file.is_dir():
+        with zarr.open(file, "r") as ds:  # noqa
+            for v in ds.arrays():
+                # Check if variable is chunked
+                if v[1]:
+                    chunks[v[0]] = v[1]
+    else:
+        raise NotImplementedError(f"File type: {file.suffix}.")
     return chunks
 
 
@@ -143,10 +153,10 @@ def threshold_land_sea_mask(
 
     Parameters
     ----------
-    ds: Union[xr.Dataset, str, os.PathLike]
-    land_sea_mask: dict
-    land_sea_percentage: int
-    output_folder: str or os.PathLike, optional
+    ds : Union[xr.Dataset, str, os.PathLike]
+    land_sea_mask : dict
+    land_sea_percentage : int
+    output_folder : str or os.PathLike, optional
 
     Returns
     -------
@@ -258,7 +268,7 @@ def delayed_write(
     outfile : str or os.PathLike
     target_chunks : dict
     output_format : {"netcdf", "zarr"}
-    overwrite: bool
+    overwrite : bool
 
     Returns
     -------

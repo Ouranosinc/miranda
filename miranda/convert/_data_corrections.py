@@ -292,7 +292,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         freq_found = xr.infer_freq(d.time)
         if not freq_found:
             raise ValueError(
-                "Time frequency could not be found. " "There may be missing timesteps."
+                "Time frequency could not be found. There may be missing timesteps."
             )
 
         if freq_found in ["M", "A"]:
@@ -304,7 +304,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 f"{' ,'.join(correct_times)} for project `{p}`."
             )
 
-        logging.info()
+        logging.info(f"Resampling dataset with time frequency: {freq_found}.")
         d_out = d.assign_coords(
             time=d.time.resample(time=freq_found).mean(dim="time").time
         )
@@ -366,24 +366,38 @@ def file_conversion(
     chunks: Optional[dict] = None,
     overwrite: bool = False,
     add_version_hashes: bool = True,
+    compute: bool = True,
     **xr_kwargs,
 ) -> None:
-    """
+    """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
     ----------
     files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike]
-    project : str
+        Files to be converted.
+        If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
+    project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}
+
     output_path : str or os.PathLike
+        Output folder path.
     output_format: {"netcdf", "zarr"}
+        Output data container type.
     chunks : dict, optional
+        Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
     overwrite: bool
+        Whether to remove existing files or fail if files already exist.
     add_version_hashes: bool
+        If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
+    compute: bool
+        If True, files will be converted with each call to file conversion.
+        If False, will return a dask.Delayed object that can be computed later.
+        Default: True.
     **xr_kwargs
+        Arguments passed directly to xarray.
 
     Returns
     -------
-    None
+    dask.Delayed or None
     """
     if output_format.lower() not in {"netcdf", "zarr"}:
         raise NotImplementedError(f"Format: {output_format}.")
@@ -427,4 +441,9 @@ def file_conversion(
         if outfile_path.is_file():
             outfile_path.unlink()
 
-    delayed_write(ds, outfile_path, output_chunks, output_format, overwrite).compute()
+    write_object = delayed_write(
+        ds, outfile_path, output_chunks, output_format, overwrite
+    )
+    if compute:
+        return write_object.compute()
+    return write_object
