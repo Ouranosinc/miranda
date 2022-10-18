@@ -5,11 +5,20 @@ import multiprocessing
 import os
 import re
 import shutil
+import warnings
 from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Tuple, Union
 
 import xarray as xr
+
+try:
+    from cdsapi import Client  # noqa
+except ModuleNotFoundError:
+    warnings.warn(
+        "ERA5 downloading capabilities requires additional dependencies. "
+        "Please install them with `pip install miranda[full]`."
+    )
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
@@ -178,15 +187,26 @@ def request_era5(
         # Allow at least a two-month lag from current month before attempting to collect data
         months = [str(d).zfill(2) for d in range(1, 13)]
         yearmonth = list()
+
+        today = datetime.date.today()
+        two_months_ago = today - datetime.timedelta(60)
         for y in years:
-            for m in months:
-                request_date = datetime.date(y, int(m), 1)
-                if y < datetime.date.today().year - 2:
-                    yearmonth.append((y, m))
-                else:
-                    two_months_ago = datetime.date.today() - datetime.timedelta(60)
-                    if request_date < two_months_ago:
+            if "monthly-means" in project_name:
+                request_date = datetime.date(y, today.month, today.day)
+                if y < today.year:
+                    yearmonth.append((y, months))
+                elif two_months_ago.year == today.year:
+                    yearmonth.append(
+                        (y, [str(d).zfill(2) for d in range(1, two_months_ago.month)])
+                    )
+            else:
+                for m in months:
+                    request_date = datetime.date(y, int(m), today.day)
+                    if y < today.year - 2:
                         yearmonth.append((y, m))
+                    else:
+                        if request_date < two_months_ago:
+                            yearmonth.append((y, m))
 
         if "monthly-means" in project_name:
             product = "monthly_averaged_reanalysis"
@@ -217,6 +237,17 @@ def request_era5(
         else:
             pressure_levels_requested = None
 
+        if not dry_run:
+            client_kwargs = dict()
+            if url:
+                client_kwargs["url"] = url
+            if key:
+                client_kwargs["key"] = key
+
+            client = Client(**client_kwargs)
+        else:
+            client = None
+
         proc = multiprocessing.Pool(processes=processes)
         func = functools.partial(
             _request_direct_era,
@@ -229,6 +260,7 @@ def request_era5(
             dry_run,
             url,
             key,
+            client,
         )
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
@@ -248,66 +280,50 @@ def _request_direct_era(
     dry_run: bool,
     url: Optional[str],
     key: Optional[str],
+    client: Optional[Client],
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
 
-    def __request(
-        nc_name: str,
-        p: str,
-        rq_kwargs: Mapping[str, str],
-        u: Optional[str] = None,
-        k: Optional[str] = None,
-    ):
+    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str], c: Client):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
             return
 
         if not dry_run:
-            client_kwargs = dict()
-            if u:
-                client_kwargs[url] = u
-            if k:
-                client_kwargs[key] = k
-
-            with Client(**client_kwargs) as c:
-                c.retrieve(
-                    p,
-                    rq_kwargs,
-                    nc_name,
-                )
+            c.retrieve(
+                p,
+                rq_kwargs,
+                nc_name,
+            )
         else:
             logging.info(p)
             logging.info(rq_kwargs)
             logging.info(nc_name)
 
-    try:
-        from cdsapi import Client  # noqa
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(
-            f"{_request_direct_era.__name__} requires additional dependencies. "
-            "Please install them with `pip install miranda[full]`."
-        )
-
     year, month = yearmonth
-    days = [str(d).zfill(2) for d in range(32)]
+    year_month = f"{year}{month if not isinstance(month, list) else ''}"
+
     if "monthly-means" in project:
         times = "00:00"
+        day = dict()
+        timestep = "mon"
     else:
         times = [f"{str(t).zfill(2)}:00" for t in range(24)]
+        day = dict(day=[str(d).zfill(2) for d in range(32)])
+        timestep = "1h"
 
     if domain.upper() == "AMNO":
         domain = "NAM"
 
     region = subsetting_domains(domain)
-    timestep = "1h"
 
     for var in variables.keys():
         request_kwargs = dict(
             variable=variables[var],
             year=year,
             month=month,
-            day=days,
+            **day,
             time=times,
             area=region,
             format="netcdf",
@@ -326,7 +342,7 @@ def _request_direct_era(
                     request_kwargs.update(dict(pressure_level=[level]))
                     netcdf_name = (
                         f"{var}{level}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-                        f"_{product}_{domain.upper()}_{year}{month}.nc"
+                        f"_{product.replace('_', '-')}_{domain.upper()}_{year_month}.nc"
                     )
                     __request(netcdf_name, project, request_kwargs)
                 continue
@@ -335,9 +351,9 @@ def _request_direct_era(
 
         netcdf_name = (
             f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-            f"_{product}_{domain.upper()}_{year}{month}.nc"
+            f"_{product.replace('_', '-')}_{domain.upper()}_{year_month}.nc"
         )
-        __request(netcdf_name, project, request_kwargs, url, key)
+        __request(netcdf_name, project, request_kwargs, client)
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:
