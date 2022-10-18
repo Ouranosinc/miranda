@@ -19,15 +19,15 @@ def main():
     target_folder = Path(out_files).expanduser()
 
     variables = {
-        "d2m": "2m_dewpoint_temperature",
-        "pev": "potential_evaporation",
-        "rsn": "snow_density",
-        "sd": "snow_depth",
-        "sf": "snowfall",
-        "t2m": "2m_temperature",
-        "tp": "total_precipitation",
-        "u10": "10m_u_component_of_wind",
-        "v10": "10m_v_component_of_wind",
+        "d2m",  # "2m_dewpoint_temperature",
+        "pev",  # "potential_evaporation",
+        "rsn",  # "snow_density",
+        "sd",  # "snow_depth",
+        "sf",  # "snowfall",
+        "t2m",  # "2m_temperature",
+        "tp",  # "total_precipitation",
+        "u10",  # "10m_u_component_of_wind",
+        "v10",  # "10m_v_component_of_wind",
     }
     projects = [
         "era5-single-levels",

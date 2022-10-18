@@ -7,7 +7,7 @@ import re
 import shutil
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import List, Mapping, Optional, Sequence, Tuple, Union
 
 import xarray as xr
 
@@ -38,7 +38,7 @@ ERA5_PROJECT_NAMES = [
 def request_era5(
     projects: Union[str, List[str]],
     *,
-    variables: Optional[Mapping[str, str]] = None,
+    variables: Optional[str, Sequence[str]] = None,
     domain: str = "AMNO",
     pressure_levels: Optional[List[int]] = None,
     separate_pressure_levels: bool = True,
@@ -55,21 +55,30 @@ def request_era5(
     Parameters
     ----------
     projects : str or List[str]
-      Allowed keys: {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}
-    variables: Mapping[str, str]
+        Allowed keys: {"era5-land", "era5-land-monthly-means", "era5-single-levels", "era5-single-levels-monthly-means",
+        "era5-single-levels-preliminary-back-extension",  "era5-single-levels-monthly-means-preliminary-back-extension",
+        "era5-pressure-levels", "era5-pressure-levels-monthly-means" "era5-pressure-levels-preliminary-back-extension",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension"}
+    variables : Mapping[str, str]
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
-    pressure_levels: List[int], optional
-    separate_pressure_levels: bool
-      Separate files for each pressure level. Default: True
+        Geographic domain requested. Default: "AMNO" (North America).
+    pressure_levels : List[int], optional
+        If set and project requested has pressure levels, will download specific pressure levels.
+    separate_pressure_levels : bool
+        Whether to separate files for each pressure level. Default: True
     output_folder : str or os.PathLike, optional
+        Folder to send files to. If None, will create a "downloaded" folder in current working directory.
     year_start : int, optional
+        Starting year for data download. If None, will download from first available year for project.
     year_end : int, optional
-    dry_run: bool
-      Do not send request. For debugging purposes.
+        End year for data download. If None, will download files for current year and two months prior to present day.
+    dry_run : bool
+        Do not send request. For debugging purposes.
     processes : int
-    url: str, optional
-      URL for Copernicus Data Store API (if not already using .cdsapirc)
-    key: str, optional
+        The number of simultaneous download requests. Default: 10.
+    url : str, optional
+        URL for Copernicus Data Store API (if not already using .cdsapirc)
+    key : str, optional
       Personal access key for Copernicus Data Store (if not already using .cdsapirc)
 
     Returns
@@ -190,6 +199,8 @@ def request_era5(
             return
 
         if variables:
+            if isinstance(variables, str):
+                variables = [variables]
             for v in variables:
                 if v in variable_reference:
                     v_requested[v] = variable_reference[v]

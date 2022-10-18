@@ -20,7 +20,7 @@ from miranda.convert import rechunk_reanalysis
 if __name__ == "__main__":
     step = "hourly"  # "daily
     target_project = "era5-land"  # "era5-single-levels"
-    outfmt = "netcdf"  # "zarr"
+    out_fmt = "netcdf"  # "zarr"
 
     in_files = getenv("in")
     out_files = getenv("out")
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         input_folder=input_path,
         output_folder=output_path,
         time_step=step,
-        output_format=outfmt,
+        output_format=out_fmt,
     )
 
     if has_dask:
