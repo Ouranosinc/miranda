@@ -18,7 +18,7 @@ import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.convert.utils import find_version_hash  # noqa
-from miranda.cv import INSTITUTIONS, PROJECT_MODELS
+from miranda.cv import VALIDATION_ENABLED
 from miranda.decode._time import (
     TIME_UNITS_TO_FREQUENCY,
     TIME_UNITS_TO_TIMEDELTA,
@@ -27,7 +27,11 @@ from miranda.decode._time import (
 )
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
-from miranda.validators import FACETS_SCHEMA
+
+if VALIDATION_ENABLED:
+    from miranda.cv import INSTITUTIONS, PROJECT_MODELS
+    from miranda.validators import FACETS_SCHEMA
+
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -84,7 +88,12 @@ class Decoder:
             with lock:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
                 if fail_early:
-                    FACETS_SCHEMA.validate(_deciphered)
+                    if VALIDATION_ENABLED:
+                        FACETS_SCHEMA.validate(_deciphered)
+                    else:
+                        print(
+                            "Validation requires pyessv-archive source files. Skipping validation checks."
+                        )
                 print(
                     f"Deciphered the following from {Path(file).name}:\n"
                     f"{_deciphered.items()}"
@@ -689,15 +698,25 @@ class Decoder:
                 facets["domain"] = regridded_domain_found.group()
 
         # The logic here is awful, but the information is bad to begin with.
-        driving_model = None
+        driving_model = ""
+        driving_institution = ""
+
         driving_institution_parts = str(data["driving_model_id"]).split("-")
-        if driving_institution_parts[0] in INSTITUTIONS:
-            driving_institution = driving_institution_parts[0]
-        elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
-            driving_institution = "-".join(driving_institution_parts[:2])
-        elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
-            driving_institution = "-".join(driving_institution_parts[:3])
-        elif data["driving_model_id"].startswith("GFDL"):
+        if VALIDATION_ENABLED:
+            if driving_institution_parts[0] in INSTITUTIONS:
+                driving_institution = driving_institution_parts[0]
+            elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
+                driving_institution = "-".join(driving_institution_parts[:2])
+            elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
+                driving_institution = "-".join(driving_institution_parts[:3])
+        else:
+            logging.warning(
+                "CORDEX Metadata validation checks require PyESSV. "
+                "Driving institution cannot be determined."
+            )
+            driving_model = data["driving_model_id"]
+
+        if data["driving_model_id"].startswith("GFDL"):
             driving_institution = "NOAA-GFDL"
             driving_model = f"NOAA-GFDL-{data['driving_model_id']}"
         elif data["driving_model_id"].startswith("MPI-ESM"):
@@ -710,7 +729,7 @@ class Decoder:
             driving_institution = "CNRM-CERFACS"
             driving_model = f"CNRM-CERFACS-{data['driving_model_id']}"
 
-        else:
+        elif VALIDATION_ENABLED and not driving_institution:
             raise DecoderError(
                 "driving_institution (from driving_model_id: "
                 f"`{data['driving_model_id']}`) is not valid."

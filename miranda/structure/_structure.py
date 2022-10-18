@@ -12,10 +12,13 @@ from typing import Dict, List, Mapping, Optional, Union
 import yaml
 from schema import SchemaError
 
+from miranda.cv import VALIDATION_ENABLED
 from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
-from miranda.validators import validation_schemas
+
+if VALIDATION_ENABLED:
+    from miranda.validators import validation_schemas
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -286,20 +289,25 @@ def build_path_from_schema(
     tree = parse_schema(facets, schema, top_folder)
     branch = tree[0]
 
-    if validate and facets[branch] in validation_schemas.keys():
-        try:
-            validation_schemas[facets[branch]].validate(facets)
-        except SchemaError as e:
+    if validate and VALIDATION_ENABLED:
+        if facets[branch] in validation_schemas.keys():
+            try:
+                validation_schemas[facets[branch]].validate(facets)
+            except SchemaError as e:
+                logging.error(
+                    f"Validation issues found for file matching schema: {facets}: {e}"
+                )
+                return
+        elif facets[branch] not in validation_schemas.keys():
             logging.error(
-                f"Validation issues found for file matching schema: {facets}: {e}"
+                f"No appropriate data schemas found for file matching schema: {facets}",
+                DecoderError,
             )
             return
-    elif validate and facets[branch] not in validation_schemas.keys():
-        logging.error(
-            f"No appropriate data schemas found for file matching schema: {facets}",
-            DecoderError,
+    elif validate and not VALIDATION_ENABLED:
+        logging.warning(
+            "Facets validation requires pyessv-archive source files. Skipping validation checks."
         )
-        return
 
     file_location = list()
     for facet in tree:
