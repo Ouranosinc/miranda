@@ -38,7 +38,7 @@ ERA5_PROJECT_NAMES = [
 def request_era5(
     projects: Union[str, List[str]],
     *,
-    variables: Optional[str, Sequence[str]] = None,
+    variables: Optional[Union[str, Sequence[str]]] = None,
     domain: str = "AMNO",
     pressure_levels: Optional[List[int]] = None,
     separate_pressure_levels: bool = True,
@@ -56,10 +56,11 @@ def request_era5(
     ----------
     projects : str or List[str]
         Allowed keys: {"era5-land", "era5-land-monthly-means", "era5-single-levels", "era5-single-levels-monthly-means",
-        "era5-single-levels-preliminary-back-extension",  "era5-single-levels-monthly-means-preliminary-back-extension",
-        "era5-pressure-levels", "era5-pressure-levels-monthly-means" "era5-pressure-levels-preliminary-back-extension",
+        "era5-single-levels-preliminary-back-extension", "era5-single-levels-monthly-means-preliminary-back-extension",
+        "era5-pressure-levels", "era5-pressure-levels-monthly-means", "era5-pressure-levels-preliminary-back-extension",
         "era5-pressure-levels-monthly-means-preliminary-back-extension"}
-    variables : Mapping[str, str]
+    variables : str or Sequence[str]
+        Variable codes requested. If None, will attempt all hardcoded variables supported by miranda converter.
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
         Geographic domain requested. Default: "AMNO" (North America).
     pressure_levels : List[int], optional
@@ -187,7 +188,11 @@ def request_era5(
                     if request_date < two_months_ago:
                         yearmonth.append((y, m))
 
-        product = request_code.split("-")[0]
+        if "monthly-means" in project_name:
+            product = "monthly_averaged_reanalysis"
+        else:
+            product = "reanalysis"
+
         v_requested = dict()
         try:
             variable_reference = next(
@@ -251,8 +256,8 @@ def _request_direct_era(
         nc_name: str,
         p: str,
         rq_kwargs: Mapping[str, str],
-        u: Optional[str],
-        k: Optional[str],
+        u: Optional[str] = None,
+        k: Optional[str] = None,
     ):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
@@ -286,16 +291,15 @@ def _request_direct_era(
 
     year, month = yearmonth
     days = [str(d).zfill(2) for d in range(32)]
-    times = [f"{str(t).zfill(2)}:00" for t in range(24)]
+    if "monthly-means" in project:
+        times = "00:00"
+    else:
+        times = [f"{str(t).zfill(2)}:00" for t in range(24)]
 
     if domain.upper() == "AMNO":
         domain = "NAM"
 
     region = subsetting_domains(domain)
-
-    # TODO: Treatments necessary for data conversion still need to be verified for monthly datasets
-    if "monthly-means" in project:
-        raise NotImplementedError(project)
     timestep = "1h"
 
     for var in variables.keys():
@@ -312,6 +316,7 @@ def _request_direct_era(
         if (
             "reanalysis-era5-single-levels" in project
             or "reanalysis-era5-pressure-levels" in project
+            or "monthly-means" in project
         ):
             request_kwargs.update(dict(product_type=product))
 

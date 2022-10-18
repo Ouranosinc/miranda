@@ -112,23 +112,23 @@ def date_parser(
     output_type: str = "str",
     strftime_format: str = "%Y-%m-%d",
 ) -> Union[str, pd.Timestamp, NaTType]:
-    """Returns a datetime from a string.
+    """Parses datetime objects from a string representation of a date or both a start and end date.
 
     Parameters
     ----------
     date : str
-      Date to be converted.
+        Date to be converted.
     end_of_period : bool
-      If True, the date will be the end of month or year depending on what's most appropriate.
-    output_type: {"datetime", "str"}
-      Returned object type.
-    strftime_format: str
-      If output_type=='str', this sets the strftime format.
+        If True, the date will be the end of month or year depending on what's most appropriate.
+    output_type : {"datetime", "str"}
+        Desired returned object type.
+    strftime_format : str
+        If output_type=='str', this sets the strftime format.
 
     Returns
     -------
     pd.Timestamp or str or pd.NaT
-      Parsed date.
+        Parsed date.
 
     Notes
     -----
