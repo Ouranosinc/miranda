@@ -8,7 +8,7 @@ import shutil
 import warnings
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union
 
 import xarray as xr
 
@@ -258,8 +258,6 @@ def request_era5(
             separate_pressure_levels,
             product,
             dry_run,
-            url,
-            key,
             client,
         )
 
@@ -278,14 +276,12 @@ def _request_direct_era(
     separate_pressure_level_requests: bool,
     product: str,
     dry_run: bool,
-    url: Optional[str],
-    key: Optional[str],
-    client: Optional[Client],
+    client: Optional[Any],
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
 
-    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str], c: Client):
+    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str], c: Any):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
             return
