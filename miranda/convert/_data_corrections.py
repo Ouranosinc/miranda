@@ -237,27 +237,35 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     else:
         prev_history = ""
 
-    history = f"[{datetime.datetime.now()}] Converted variables and modified metadata for CF-like compliance.{prev_history}"
+    history = (
+        f"[{datetime.datetime.now()}] "
+        "Converted variables and modified metadata for CF-like compliance."
+        f"{prev_history}"
+    )
     d.attrs.update(dict(history=history))
     descriptions = m["variable_entry"]
 
+    time_correction_fields = ["_corrected_units", "_ensure_correct_time"]
+
     if "time" in m["variable_entry"].keys():
-        if "_corrected_units" in m["variable_entry"]["time"].keys():
-            del descriptions["time"]["_corrected_units"]
+        for field in time_correction_fields:
+            if field in m["variable_entry"]["time"].keys():
+                del descriptions["time"][field]
+        d["time"].attrs.update(descriptions["time"])
 
     # Add variable metadata and remove nonstandard entries
-    correction_fields = [
+    data_vars_correction_fields = [
         "_corrected_units",
         "_invert_sign",
         "_offset_time",
         "_transformation",
     ]
     for v in d.data_vars:
-        for field in correction_fields:
-            if v in descriptions.keys():
+        if v in descriptions.keys():
+            for field in data_vars_correction_fields:
                 if field in descriptions[v].keys():
                     del descriptions[v][field]
-                d[v].attrs.update(descriptions[v])
+            d[v].attrs.update(descriptions[v])
 
     # Rename data variables
     for v in d.data_vars:
