@@ -49,12 +49,13 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
     for v in d.data_vars:
         if m["variable_entry"].get(v):
-            if hasattr(m["variable_entry"][v], key):
+            if m["variable_entry"][v].get(key):
                 if p in m["variable_entry"][v][key].keys():
+                    print(m["variable_entry"][v][key][p])
                     d[v].attrs["units"] = m["variable_entry"][v][key][p]
 
     if m["variable_entry"].get("time"):
-        if hasattr(m["variable_entry"]["time"], key):
+        if m["variable_entry"]["time"].get(key):
             if p in m["variable_entry"]["time"][key].keys():
                 d["time"].attrs["units"] = m["variable_entry"]["time"][key][p]
 
@@ -68,8 +69,10 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     for vv in d.data_vars:
         converted = False
         if m["variable_entry"].get(vv):
-            if hasattr(m["variable_entry"][vv], key):
+            if m["variable_entry"][vv].get(key):
                 if p in m["variable_entry"][vv][key].keys():
+                    print("here!")
+
                     try:
                         offset, offset_meaning = get_time_frequency(d)
                     except TypeError:
@@ -117,7 +120,7 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     for vv in d.data_vars:
         converted = False
         if m["variable_entry"].get(vv):
-            if hasattr(m["variable_entry"][vv], key):
+            if m["variable_entry"][vv].get(key):
                 if p in m["variable_entry"][vv][key].keys():
                     try:
                         offset, offset_meaning = get_time_frequency(d)
@@ -159,7 +162,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     for vv in d.data_vars:
         converted = False
         if m["variable_entry"].get(vv):
-            if hasattr(m["variable_entry"][vv], key):
+            if m["variable_entry"][vv].get(key):
                 if p in m["variable_entry"][vv][key].keys():
                     if m["variable_entry"][vv][key][p]:
                         logging.info(
@@ -185,7 +188,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
     descriptions = m["variable_entry"]
 
     if "time" in m["variable_entry"].keys():
-        if hasattr(m["variable_entry"]["time"], "units"):
+        if m["variable_entry"]["time"].get("units"):
             d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
     for v in d.data_vars:
@@ -229,18 +232,14 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d.attrs.update(dict(project=p))
 
     # Date-based versioning
-    if not hasattr(d.attrs, "version"):
+    if not d.attrs.get("version"):
         d.attrs.update(dict(version=f"v{VERSION}"))
 
-    if hasattr(d.attrs, "history"):
-        prev_history = f" {d.attrs['history']}"
-    else:
-        prev_history = ""
-
+    prev_history = d.attrs.get("history", "")
     history = (
         f"[{datetime.datetime.now()}] "
         "Converted variables and modified metadata for CF-like compliance."
-        f"{prev_history}"
+        f" {prev_history}".strip()
     )
     d.attrs.update(dict(history=history))
     descriptions = m["variable_entry"]
@@ -317,10 +316,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             time=d.time.resample(time=freq_found).mean(dim="time").time
         )
 
-        if hasattr(d.attrs, "history"):
-            prev_history = f" {d.attrs['history']}"
-        else:
-            prev_history = ""
+        prev_history = d.attrs.get("history", "")
         history = f"[{datetime.datetime.now()}] Resampled time with `freq={freq_found}`.{prev_history}"
         d.attrs.update(dict(history=history))
         d = d_out
