@@ -98,19 +98,15 @@ def request_era5(
     # Variables of interest
     variable_reference = dict()
     variable_reference["era5-land", "era5-land-monthly-means"] = dict(
-        tp="total_precipitation",
-        v10="10m_v_component_of_wind",
-        u10="10m_u_component_of_wind",
         d2m="2m_dewpoint_temperature",
-        t2m="2m_temperature",
         pev="potential_evaporation",
         rsn="snow_density",
-        sde="snow_depth",
         sd="snow_depth_water_equivalent",
+        sde="snow_depth",
         sf="snowfall",
+        slhf="surface_latent_heat_flux",
         sp="surface_pressure",
         sshf="surface_sensible_heat_flux",
-        slhf="surface_latent_heat_flux",
         ssr="surface_net_solar_radiation",
         ssrd="surface_solar_radiation_downwards",
         str="surface_net_thermal_radiation",
@@ -119,6 +115,10 @@ def request_era5(
         swvl2="volumetric_soil_water_layer_2",
         swvl3="volumetric_soil_water_layer_3",
         swvl4="volumetric_soil_water_layer_4",
+        t2m="2m_temperature",
+        tp="total_precipitation",
+        u10="10m_u_component_of_wind",
+        v10="10m_v_component_of_wind",
     )
 
     era5_single_levels = variable_reference[
@@ -126,7 +126,7 @@ def request_era5(
     ].copy()
     del era5_single_levels["sde"]  # sde is not available for era5
     era5_single_levels.update(
-        sd="snow_depth"
+        msl="mean_sea_level_pressure", sd="snow_depth"
     )  # note difference in name vs era5-land cf_variable == snw"
     variable_reference[
         "era5-single-levels",

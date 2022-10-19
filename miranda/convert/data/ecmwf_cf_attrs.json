@@ -47,6 +47,17 @@
       "standard_name": "dew_point_temperature",
       "units": "K"
     },
+    "msl": {
+      "_cf_variable_name": "psl",
+      "_corrected_units": {},
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "long_name": "Mean sea level pressure",
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa"
+    },
     "pev": {
       "_cf_variable_name": "evspsblpot",
       "_corrected_units": {},
