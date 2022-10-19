@@ -282,12 +282,17 @@ class Decoder:
             return pd.to_timedelta(time_dictionary[term])
 
         if data and not file:
-            potential_time = data["frequency"]
+            potential_time = data.get("frequency", "")
             if potential_time == "":
                 if hasattr(data, "time"):
                     time_units = data["time"].units
                     potential_time = time_units.split()[0]
-            if potential_time in ["ymon", "yseas"]:
+                else:
+                    logging.warning(
+                        f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
+                    )
+                    potential_time = "fx"
+            if potential_time in ["ymon", "yseas", "fixed", "fx"]:
                 logging.warning(f"Found `{potential_time}`. Frequency is likely `fx`.")
                 if field == "frequency":
                     return "fx"
@@ -303,7 +308,7 @@ class Decoder:
 
         if file and not data:
             for delimiter in ["_", "."]:
-                file_parts = Path(file).name.split(delimiter)
+                file_parts = Path(file).stem.split(delimiter)
                 potential_times = [
                     segment
                     for segment in file_parts
@@ -322,18 +327,23 @@ class Decoder:
 
         if file and data:
             for delimiter in ["_", "."]:
-                file_parts = Path(file).name.split(delimiter)
+                file_parts = Path(file).stem.split(delimiter)
                 potential_times = [
                     segment
                     for segment in file_parts
                     if segment in time_dictionary.keys()
                 ]
-                potential_time = data["frequency"]
+                potential_time = data.get("frequency", "")
                 if potential_time == "":
                     if hasattr(data, "time"):
                         time_units = data["time"].units
                         potential_time = time_units.split()[0]
-                if potential_time in ["ymon", "yseas"]:
+                    else:
+                        logging.warning(
+                            f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
+                        )
+                        potential_time = "fx"
+                if potential_time in ["ymon", "yseas", "fixed", "fx"]:
                     logging.warning(
                         f"Found `{potential_time}`. Frequency is likely `fx`."
                     )
@@ -342,7 +352,7 @@ class Decoder:
                             return "fx"
                         if field == "timedelta":
                             return pd.NaT
-                        raise ValueError()
+                        raise ValueError(f"Field `{field}` not supported.")
 
                 if potential_time in potential_times:
                     return time_dictionary[potential_time]
@@ -375,7 +385,7 @@ class Decoder:
                     return "fx"
                 if field == "timedelta":
                     return pd.NaT
-                raise ValueError()
+                raise ValueError(f"Field `{field}` not supported.")
             else:
                 _, found_freq = get_time_frequency(_ds.time)
 
@@ -400,7 +410,7 @@ class Decoder:
                     f"Basing fields on `{found_freq}`."
                 )
                 return time_dictionary[found_freq]
-        raise RuntimeError(f"Time frequency indiscernible for file `{file}`.")
+        raise DecoderError(f"Time frequency indiscernible for file `{file}`.")
 
     @staticmethod
     def _decode_version(file: Union[PathLike, str], data: Dict) -> dict:
@@ -438,12 +448,12 @@ class Decoder:
 
     @classmethod
     def decode_converted(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
         except DecoderError:
-            return dict()
+            return facets
 
-        facets = dict()
         facets.update(data)
         del facets["history"]
 
@@ -454,14 +464,18 @@ class Decoder:
             facets["format"] = file_format
         else:
             facets["format"] = data["format"]
-
-        facets["timedelta"] = cls._decode_time_info(
-            term=facets["frequency"], field="timedelta"
-        )
         facets["variable"] = variable
+
         facets.update(cls._decode_version(data=data, file=file))
 
         try:
+            if "frequency" not in facets:
+                facets["timedelta"] = cls._decode_time_info(
+                    data=data, file=file, field="frequency"
+                )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
@@ -486,12 +500,12 @@ class Decoder:
         if "Derived" in Path(file).parents:
             raise NotImplementedError("Derived CanDCS-U6 variables are not supported.")
 
+        facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
         except DecoderError:
-            return dict()
+            return facets
 
-        facets = dict()
         facets["activity"] = data["activity_id"]
         facets["mip_era"] = data["project_id"]
         facets["bias_adjust_institution"] = "PCIC"
@@ -499,9 +513,6 @@ class Decoder:
         facets["domain"] = data["domain"]
         facets["experiment"] = str(data["GCM__experiment_id"]).replace(",", "-")
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(
-            data=data, file=file, field="frequency"
-        )
         facets["institution"] = data["GCM__institution_id"]
         facets["member"] = (
             f"r{data['GCM__realization_index']}"
@@ -512,9 +523,6 @@ class Decoder:
         facets["processing_level"] = "biasadjusted"
         facets["bias_adjust_project"] = "CanDCS-U6"
         facets["source"] = data["GCM__source_id"]
-        facets["timedelta"] = cls._decode_time_info(
-            term=facets["frequency"], field="timedelta"
-        )
         facets["type"] = "simulation"
         facets["variable"] = variable
 
@@ -523,6 +531,12 @@ class Decoder:
             facets.update(find_version_tags(file=file))
 
         try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
@@ -532,20 +546,17 @@ class Decoder:
 
     @classmethod
     def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
         except DecoderError:
-            return dict()
+            return facets
 
-        facets = dict()
         facets["activity"] = data["activity_id"]
         facets["date"] = date
         facets["domain"] = "global"
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(
-            data=data, file=file, field="frequency"
-        )
         facets["grid_label"] = data["grid_label"]
         facets["institution"] = data["institution_id"]
         facets["member"] = data["variant_label"]
@@ -553,14 +564,17 @@ class Decoder:
         facets["processing_level"] = "raw"
         facets["mip_era"] = data["mip_era"]
         facets["source"] = data["source_id"]
-        facets["timedelta"] = cls._decode_time_info(
-            term=facets["frequency"], field="timedelta"
-        )
         facets["type"] = "simulation"
         facets["variable"] = variable
         facets.update(cls._decode_version(data=data, file=file))
 
         try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
@@ -570,34 +584,34 @@ class Decoder:
 
     @classmethod
     def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
         except DecoderError:
-            return dict()
+            return facets
 
-        facets = dict()
         facets["activity"] = "CMIP"
         facets["date"] = date
         facets["domain"] = "global"
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(
-            data=data, file=file, field="frequency"
-        )
         facets["institution"] = data["institute_id"]
         facets["member"] = data["parent_experiment_rip"]
         facets["modeling_realm"] = data["modeling_realm"]
         facets["processing_level"] = "raw"
         facets["mip_era"] = data["project_id"]
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(
-            term=facets["frequency"], field="timedelta"
-        )
         facets["type"] = "simulation"
         facets["variable"] = variable
         facets.update(cls._decode_version(data=data, file=file))
 
         try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
@@ -607,13 +621,13 @@ class Decoder:
 
     @classmethod
     def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
         except DecoderError:
             return dict()
 
         # FIXME: What to do about our internal data that breaks all established conventions?
-        facets = dict()
         facets["activity"] = "CORDEX"
 
         if data.get("project_id") == "" or data.get("project_id") is None:
@@ -626,13 +640,13 @@ class Decoder:
         else:
             facets["date"] = date
 
-        domain = data.get("CORDEX_domain").strip()
+        domain = data.get("CORDEX_domain")
         if domain:
-            facets["domain"] = domain
+            facets["domain"] = domain.strip()
         else:
-            domain = data.get("ouranos_domain_name").strip()
+            domain = data.get("ouranos_domain_name")
             if domain:
-                facets["domain"] = domain
+                facets["domain"] = domain.strip()
             else:
                 msg = f"File {Path(file).name} has a nonstandard domain name."
                 logging.error(msg)
@@ -667,8 +681,12 @@ class Decoder:
         elif data["driving_model_id"].startswith("HadGEM2"):
             driving_institution = "MOHC"
             driving_model = f"MOHC-{data['driving_model_id']}"
+        elif data["driving_model_id"].startswith("CNRM-CM5"):
+            driving_institution = "CNRM-CERFACS"
+            driving_model = f"CNRM-CERFACS-{data['driving_model_id']}"
+
         else:
-            raise AttributeError(
+            raise DecoderError(
                 "driving_institution (from driving_model_id: "
                 f"`{data['driving_model_id']}`) is not valid."
             )
@@ -678,10 +696,8 @@ class Decoder:
             facets["driving_model"] = driving_model
         else:
             facets["driving_model"] = data["driving_model_id"]
+
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(
-            data=data, file=file, field="frequency"
-        )
 
         if data["institute_id"].strip() == "Our.":
             facets["institution"] = "Ouranos"
@@ -690,14 +706,18 @@ class Decoder:
 
         facets["processing_level"] = "raw"
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(
-            term=facets["frequency"], field="timedelta"
-        )
         facets["type"] = "simulation"
         facets["variable"] = variable
+
         facets.update(cls._decode_version(data=data, file=file))
 
         try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
@@ -724,35 +744,35 @@ class Decoder:
 
     @classmethod
     def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
         except DecoderError:
-            return dict()
+            return facets
 
-        facets = dict()
         facets["activity"] = "ISIMIP"
         facets["mip_era"] = data["project_id"]
-
         facets["date"] = date
         facets["domain"] = "global"
         facets["co2_forcing_id"] = data["co2_forcing_id"]
         facets["experiment"] = data["experiment_id"]
         facets["format"] = "netcdf"
-        facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
         facets["impact_model"] = data["impact_model_id"]
         facets["institution"] = data["institute_id"]
         facets["member"] = data["driving_model_ensemble_member"]
         facets["modeling_realm"] = data["modeling_realm"]
         facets["social_forcing_id"] = data["social_forcing_id"]
         facets["source"] = data["model_id"]
-        facets["timedelta"] = cls._decode_time_info(
-            term=facets["frequency"], field="timedelta"
-        )
         facets["type"] = "simulation"
         facets["variable"] = variable
+
         facets.update(cls._decode_version(data=data, file=file))
 
         try:
+            facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
         except DecoderError:
