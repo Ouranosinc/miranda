@@ -42,13 +42,27 @@ __all__ = [
 
 
 def guess_project(file: Union[os.PathLike, str]) -> str:
+    """Guess the name of the project
+
+    Parameters
+    ----------
+    file : str or os.PathLike
+
+    Returns
+    -------
+    str
+    """
     file_name = Path(file).stem
 
     potential_names = file_name.split("_")
-    for project, models in PROJECT_MODELS.items():
-        if any([model in potential_names for model in models]):
-            return project
-    raise DecoderError(f"Unable to determine project from file name: '{file_name}'.")
+    if VALIDATION_ENABLED:
+        for project, models in PROJECT_MODELS.items():
+            if any([model in potential_names for model in models]):
+                return project
+        raise DecoderError(
+            f"Unable to determine project from file name: '{file_name}'."
+        )
+    raise DecoderError("Project determination requires pyessv-archive source files.")
 
 
 class Decoder:
