@@ -36,6 +36,12 @@
     "type": "reconstruction"
   },
   "variable_entry": {
+    "lon": {
+      "_precision" : {"era5-land" : 4}
+    },
+    "lat": {
+      "_precision" : {"era5-land" : 4}
+    },
     "d2m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {},

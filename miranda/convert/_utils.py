@@ -8,6 +8,7 @@ from typing import Dict, Optional, Union
 import netCDF4
 import numpy as np
 import xarray as xr
+from xclim.core.units import str2pint, convert_units_to, pint_multiply
 import zarr
 from clisops.core import subset
 from xclim.core import units
@@ -26,8 +27,6 @@ __all__ = [
     "variable_conversion",
 ]
 
-LATLON_COORDINATE_PRECISION = dict()
-LATLON_COORDINATE_PRECISION["era5-land"] = 4
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
@@ -43,6 +42,8 @@ def load_json_data_mappings(project: str) -> dict:
         raise NotImplementedError()
     elif project == "wfdei-gem-capa":
         metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
+    elif project.startswith("melcc"):
+        metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -95,19 +96,28 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+def _get_var_entry_key(meta, var, key, project):
+    varmeta = meta['variable_entry'].get(var, {})
+    if key in varmeta:
+        if isinstance(varmeta[key], dict):
+            return varmeta[key][project]
+        return varmeta[key]
+    return None
+
+
 def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
 
     def _correct_units_names(d: xr.Dataset, p: str, m: Dict):
         key = "_corrected_units"
         for v in d.data_vars:
-            if p in m["variable_entry"][v][key].keys():
-                d[v].attrs["units"] = m["variable_entry"][v][key][project]
+            units = _get_var_entry_key(m, v, key, p)
+            if units is not None:
+                d[v].attrs["units"] = units
 
-        if "time" in m["variable_entry"].keys():
-            if p in m["variable_entry"]["time"][key].keys():
-                d["time"].attrs["units"] = m["variable_entry"]["time"][key][project]
-
+        time_units = _get_var_entry_key(m, 'time', key, p)
+        if time_units is not None:
+            d["time"].attrs["units"] = time_units
         return d
 
     # for de-accumulation or conversion to flux
@@ -116,44 +126,65 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
             converted = False
-            if hasattr(m["variable_entry"][vv], key):
-                if p in m["variable_entry"][vv][key].keys():
-                    try:
-                        offset, offset_meaning = get_time_frequency(d)
-                    except TypeError:
-                        logging.error(
-                            f"Unable to parse the time frequency for variable `{vv}`. "
-                            "Verify data integrity before retrying."
-                        )
-                        raise
+            transformation = _get_var_entry_key(m, vv, key, p)
+            if transformation is not None:
+                try:
+                    offset, offset_meaning = get_time_frequency(d)
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
+                    )
+                    raise
 
-                    if m["variable_entry"][vv][key][p] == "deaccumulate":
-                        # Time-step accumulated total to time-based flux (de-accumulation)
-                        logging.info(f"De-accumulating units for variable `{vv}`.")
-                        with xr.set_options(keep_attrs=True):
-                            out = d[vv].diff(dim="time")
-                            out = d[vv].where(
-                                getattr(d[vv].time.dt, offset_meaning) == offset[0],
-                                out.broadcast_like(d[vv]),
-                            )
-                            out = units.amount2rate(out)
-                        d_out[out.name] = out
-                        converted = True
-                    elif m["variable_entry"][vv][key][p] == "amount2rate":
-                        # frequency-based totals to time-based flux
-                        logging.info(
-                            f"Performing amount-to-rate units conversion for variable `{vv}`."
+                if transformation == "deaccumulate":
+                    # Time-step accumulated total to time-based flux (de-accumulation)
+                    logging.info(f"De-accumulating units for variable `{vv}`.")
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv].diff(dim="time")
+                        out = d[vv].where(
+                            getattr(d[vv].time.dt, offset_meaning) == offset[0],
+                            out.broadcast_like(d[vv]),
                         )
-                        out = units.amount2rate(
-                            d[vv],
-                            out_units=m["variable_entry"][vv]["units"],
-                        )
-                        d_out[out.name] = out
-                        converted = True
+                        out = units.amount2rate(out)
+                    d_out[out.name] = out
+                    converted = True
+                elif transformation == "amount2rate":
+                    # frequency-based totals to time-based flux
+                    logging.info(
+                        f"Performing amount-to-rate units conversion for variable `{vv}`."
+                    )
+                    out = units.amount2rate(
+                        d[vv],
+                        out_units=m["variable_entry"][vv]["units"],
+                    )
+                    d_out[out.name] = out
+                    converted = True
+                elif transformation.startswith('op '):
+                    op = transformation[3]
+                    value = transformation[4:].strip()
+                    if value.startswith('attrs'):
+                        value = str2pint(d[vv].attrs[value[6:]])
                     else:
-                        raise NotImplementedError(
-                            f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
-                        )
+                        value = str2pint(value)
+                    with xr.set_options(keep_attrs=True):
+                        if op == '+':
+                            value = convert_units_to(value, d[vv])
+                            d_out[vv] = d[vv] + value
+                        elif op == '-':
+                            value = convert_units_to(value, d[vv])
+                            d_out[vv] = d[vv] - value
+                        elif op == '*':
+                            d_out[vv] = pint_multiply(d[vv], value)
+                        elif op == '/':
+                            d_out[vv] = pint_multiply(d[vv], 1 / value)
+                        else:
+                            raise NotImplementedError(f'Op transform doesn\'t implement the «{op}» operator.')
+                    converted = True
+                else:
+                    raise NotImplementedError(
+                        f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
+                    )
             if not converted:
                 d_out[vv] = d[vv]
         return d_out
@@ -163,37 +194,37 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
             converted = False
-            if hasattr(m["variable_entry"][vv], key):
-                if p in m["variable_entry"][vv][key].keys():
-                    try:
-                        offset, offset_meaning = get_time_frequency(d)
-                    except TypeError:
-                        logging.error(
-                            f"Unable to parse the time frequency for variable `{vv}`. "
-                            "Verify data integrity before retrying."
-                        )
-                        raise
+            value = _get_var_entry_key(m, vv, key, p)
+            if value is not None:
+                try:
+                    offset, offset_meaning = get_time_frequency(d)
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
+                    )
+                    raise
 
-                    if m["variable_entry"][vv][key][p]:
-                        # Offset time by value of one time-step
-                        logging.info(
-                            f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                if value:
+                    # Offset time by value of one time-step
+                    logging.info(
+                        f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+                    )
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv]
+                        out["time"] = out.time - np.timedelta64(
+                            offset[0], offset[1]
                         )
-                        with xr.set_options(keep_attrs=True):
-                            out = d[vv]
-                            out["time"] = out.time - np.timedelta64(
-                                offset[0], offset[1]
-                            )
-                            d_out[out.name] = out
-                            converted = True
-                    else:
-                        logging.info(
-                            f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
-                        )
+                        d_out[out.name] = out
+                        converted = True
                 else:
                     logging.info(
-                        f"No time offsetting needed for `{vv}` in project `{p}`."
+                        f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
                     )
+            else:
+                logging.info(
+                    f"No time offsetting needed for `{vv}` in project `{p}` (Absent entry)."
+                )
             if not converted:
                 d_out[vv] = d[vv]
         return d_out
@@ -203,22 +234,22 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
         for vv in d.data_vars:
             converted = False
-            if hasattr(m["variable_entry"][vv], key):
-                if p in m["variable_entry"][vv][key].keys():
-                    if m["variable_entry"][vv][key][p]:
-                        logging.info(
-                            f"Inverting sign for `{vv}` (switching direction of values)."
-                        )
-                        with xr.set_options(keep_attrs=True):
-                            out = d[vv]
-                            d_out[out.name] = out.__invert__()
-                            converted = True
-                    else:
-                        logging.info(
-                            f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
-                        )
+            value = _get_var_entry_key(m, vv, key, p)
+            if value is not None:
+                if value:
+                    logging.info(
+                        f"Inverting sign for `{vv}` (switching direction of values)."
+                    )
+                    with xr.set_options(keep_attrs=True):
+                        out = d[vv]
+                        d_out[out.name] = out.__invert__()
+                        converted = True
                 else:
-                    logging.info(f"No sign inversion needed for `{vv}` in `{p}`.")
+                    logging.info(
+                        f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
+                    )
+            else:
+                logging.info(f"No sign inversion needed for `{vv}` in `{p}` (Absent entry).")
             if not converted:
                 d_out[vv] = d[vv]
         return d_out
@@ -230,8 +261,9 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         if "time" in m["variable_entry"].keys():
             d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
-        for v in d.data_vars:
-            d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
+        for v in set(d.data_vars.keys()).intersection(descriptions.keys()):
+            if 'units' in descriptions[v]:
+                d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
 
         return d
 
@@ -288,38 +320,38 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
             "_offset_time",
             "_transformation",
         ]
-        for v in d.data_vars:
+        for v in set(d.data_vars.keys()).intersection(descriptions.keys()):
             for field in correction_fields:
                 if field in descriptions[v].keys():
                     del descriptions[v][field]
             d[v].attrs.update(descriptions[v])
 
         # Rename data variables
-        for v in d.data_vars:
+        for v in set(d.data_vars.keys()).intersection(descriptions.keys()):
             try:
                 cf_name = descriptions[v]["_cf_variable_name"]
                 d = d.rename({v: cf_name})
                 d[cf_name].attrs.update(dict(original_variable=v))
+                if f"{v}_flag" in d.data_vars.keys():
+                    d = d.rename({f"{v}_flag": f"{cf_name}_flag"})
                 del d[cf_name].attrs["_cf_variable_name"]
             except (ValueError, IndexError):
                 pass
         return d
 
     # For renaming lat and lon dims
-    def _dims_conversion(d: xr.Dataset):
+    def _dims_conversion(d: xr.Dataset, p: str, m: dict):
         sort_dims = []
         for orig, new in dict(longitude="lon", latitude="lat").items():
-            try:
-
+            if orig in d:
                 d = d.rename({orig: new})
-                if new == "lon" and np.any(d.lon > 180):
-                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
-                    d[new] = lon1
-                sort_dims.append(new)
-            except KeyError:
-                pass
-            if project in LATLON_COORDINATE_PRECISION.keys():
-                d[new] = d[new].round(LATLON_COORDINATE_PRECISION[project])
+            if new == "lon" and np.any(d.lon > 180):
+                lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+                d[new] = lon1
+            sort_dims.append(new)
+            coord_precision = _get_var_entry_key(m, new, '_precision', p)
+            if coord_precision is not None:
+                d[new] = d[new].round(coord_precision)
         if sort_dims:
             d = d.sortby(sort_dims)
         return d
@@ -331,7 +363,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
     ds = _metadata_conversion(ds, project, output_format, metadata_definition)
-    ds = _dims_conversion(ds)
+    ds = _dims_conversion(ds, project, metadata_definition)
 
     return ds
 

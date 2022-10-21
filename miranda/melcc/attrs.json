@@ -6,262 +6,231 @@
     "license": "https://projets.ouranos.ca/attachments/download/3682/Conditions%20utilisation%20donn%C3%A9es%20m%C3%A9t%C3%A9o%20MDDEELCC%20recherche%20universitaire%20(1).pdf",
     "license_type": "private",
     "title": "Station observations of the MELCC",
-    "title_fr": "Observations aux stations du MELCC"
+    "title_fr": "Observations aux stations du MELCC",
+    "cmor_version": "3.5",
+    "data_specs_version": "00.00.01",
+    "product": "station-obs",
+    "realm": "atmos",
+    "table_date": "19 October 2022",
+    "table_id": "MELCC"
   },
   "variable_entry": {
     "GI": {
-      "_nc_name": "sleet_mask",
+      "_cf_variable_name": "sleet_mask",
       "long_name": "Sleet",
       "long_name_fr": "Giboulée"
     },
     "GR": {
-      "_nc_name": "hail_mask",
+      "_cf_variable_name": "hail_mask",
       "long_name": "Hail",
       "long_name_fr": "Grêle"
     },
     "HAx": {
-      "_convert_to": "1",
-      "_nc_name": "hursmax",
+      "_cf_variable_name": "hursmax",
       "long_name": "Maximal relative humidity",
       "long_name_fr": "Humidité relative maximale",
-      "units": "%"
+      "units": "1"
     },
     "NS": {
-      "_convert_to": "m",
-      "_nc_name": "snd",
+      "_cf_variable_name": "snd",
       "long_name": "Snow depth",
       "long_name_fr": "Épaisseur de la neige au sol",
       "standard_name": "surface_snow_thickness",
-      "units": "cm"
-    },
-    "PI": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RXN",
-      "_scale": null,
-      "long_name": "Maximal rain intensity over a given period.",
-      "long_name_fr": "Intensité maximale de la pluie sur une période donnée.",
-      "units": "mm"
+      "units": "m",
     },
     "PI007": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX5min",
-      "_scale": "0.2 min-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX5min",
+      "_transformation": "op * 0.2 min-1",
       "long_name": "Maximal rain intensity over 5 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 5 minutes.",
-      "units": "mm"
     },
     "PI008": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX5min",
-      "_scale": "0.2 min-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX5min",
+      "_transformation": "op * 0.2 min-1",
       "long_name": "Maximal rain intensity over 5 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 5 minutes.",
-      "units": "mm"
     },
     "PI012": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX10min",
-      "_scale": "0.1 min-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX10min",
+      "_transformation": "op * 0.1 min-1",
       "long_name": "Maximal rain intensity over 10 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 10 minutes.",
-      "units": "mm"
     },
     "PI013": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX10min",
-      "_scale": "0.1 min-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX10min",
+      "_transformation": "op * 0.1 min-1",
       "long_name": "Maximal rain intensity over 10 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 10 minutes.",
-      "units": "mm"
     },
     "PI017": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX15min",
-      "_scale": "4 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX15min",
+      "_transformation": "op * 4 h-1",
       "long_name": "Maximal rain intensity over 15 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 15 minutes.",
-      "units": "mm"
     },
     "PI018": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX15min",
-      "_scale": "4 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX15min",
+      "_transformation": "op * 4 h-1",
       "long_name": "Maximal rain intensity over 15 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 15 minutes.",
-      "units": "mm"
     },
     "PI032": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX30min",
-      "_scale": "2 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX30min",
+      "_transformation": "op * 2 h-1",
       "long_name": "Maximal rain intensity over 30 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 30 minutes.",
-      "units": "mm"
     },
     "PI033": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX30min",
-      "_scale": "2 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX30min",
+      "_transformation": "op * 2 h-1",
       "long_name": "Maximal rain intensity over 30 minutes.",
       "long_name_fr": "Intensité maximale de la pluie sur 30 minutes.",
-      "units": "mm"
     },
     "PI062": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX1hr",
-      "_scale": "1 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX1hr",
+      "_transformation": "op * 1 h-1",
       "long_name": "Maximal rain intensity over 1 hour.",
       "long_name_fr": "Intensité maximale de la pluie sur 1 heure.",
-      "units": "mm"
     },
     "PI063": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX1hr",
-      "_scale": "1 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX1hr",
+      "_transformation": "op * 1 h-1",
       "long_name": "Maximal rain intensity over 1 hour.",
       "long_name_fr": "Intensité maximale de la pluie sur 1 heure.",
-      "units": "mm"
     },
     "PI122": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX2hr",
-      "_scale": "0.5 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX2hr",
+      "_transformation": "op * 0.5 h-1",
       "long_name": "Maximal rain intensity over 2 hours.",
       "long_name_fr": "Intensité maximale de la pluie sur 2 heures.",
-      "units": "mm"
     },
     "PI123": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX2hr",
-      "_scale": "0.5 h-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX2hr",
+      "_transformation": "op * 0.5 h-1",
       "long_name": "Maximal rain intensity over 2 hours.",
       "long_name_fr": "Intensité maximale de la pluie sur 2 heures.",
-      "units": "mm"
     },
     "PI362": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX6hr",
-      "_scale": "0.25 d-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX6hr",
+      "_transformation": "op * 0.25 d-1",
       "long_name": "Maximal rain intensity over 6 hours.",
       "long_name_fr": "Intensité maximale de la pluie sur 6 heures.",
-      "units": "mm"
     },
     "PI363": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX6hr",
-      "_scale": "0.25 d-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX6hr",
+      "_transformation": "op * 0.25 d-1",
       "long_name": "Maximal rain intensity over 6 hours.",
       "long_name_fr": "Intensité maximale de la pluie sur 6 heures.",
-      "units": "mm"
     },
     "PI722": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX12hr",
-      "_scale": "0.5 d-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX12hr",
+      "_transformation": "op * 0.5 d-1",
       "long_name": "Maximal rain intensity over 12 hours.",
       "long_name_fr": "Intensité maximale de la pluie sur 12 heures.",
-      "units": "mm"
     },
     "PI723": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "RX12hr",
-      "_scale": "0.5 d-1",
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "RX12hr",
+      "_transformation": "op * 0.5 d-1",
       "long_name": "Maximal rain intensity over 12 hours.",
       "long_name_fr": "Intensité maximale de la pluie sur 12 heures.",
-      "units": "mm"
     },
     "PL": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "prlp",
-      "_to_rate": true,
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "prlp",
+      "_transformation": "op / attrs.sampling",
       "long_name": "Rainfall",
       "long_name_fr": "Pluie",
       "standard_name": "rainfall_flux",
-      "units": "mm"
     },
     "PT": {
-      "_convert_to": "kg m-2 s-1",
-      "_nc_name": "pr",
-      "_to_rate": true,
+      "units": "kg m-2 s-1",
+      "_cf_variable_name": "pr",
+      "_transformation": "op / attrs.sampling",
       "long_name": "Total precipitation",
       "long_name_fr": "Précipitation totale",
       "standard_name": "precipitation_flux",
-      "units": "mm"
     },
     "TAi": {
-      "_convert_to": "K",
-      "_nc_name": "tas",
+      "units": "K",
+      "_cf_variable_name": "tas",
       "cell_methods": "time: point",
       "long_name": "Instantaneous temperature",
       "long_name_fr": "Température instantanée",
       "standard_name": "air_temperature",
-      "units": "°C"
     },
     "TAm": {
-      "_convert_to": "K",
-      "_nc_name": "tas",
+      "units": "K",
+      "_cf_variable_name": "tas",
       "cell_methods": "time: mean",
       "long_name": "Mean temperature",
       "long_name_fr": "Température moyenne",
       "standard_name": "air_temperature",
-      "units": "°C"
     },
     "TAn": {
-      "_convert_to": "K",
-      "_nc_name": "tasmin",
+      "units": "K",
+      "_cf_variable_name": "tasmin",
       "cell_methods": "time: min",
       "long_name": "Minimum temperature",
       "long_name_fr": "Température minimale",
       "standard_name": "air_temperature",
-      "units": "°C"
     },
     "TAx": {
-      "_convert_to": "K",
-      "_nc_name": "tasmax",
+      "units": "K",
+      "_cf_variable_name": "tasmax",
       "cell_methods": "time: max",
       "long_name": "Maximum temperature",
       "long_name_fr": "Température maximale",
       "standard_name": "air_temperature",
-      "units": "°C"
     },
     "VDi": {
-      "_nc_name": "sfcWindfromdir",
+      "_cf_variable_name": "sfcWindfromdir",
       "long_name": "Instantaneous wind direction",
       "long_name_fr": "Direction du vent instantanée",
       "standard_name": "wind_from_direction",
-      "units": "degree"
     },
     "VDm": {
-      "_nc_name": "sfcWindfromdir",
+      "_cf_variable_name": "sfcWindfromdir",
       "long_name": "Mean wind direction",
       "long_name_fr": "Direction du vent moyenne",
       "standard_name": "wind_from_direction",
-      "units": "degree"
     },
     "VDs": {
-      "_nc_name": "sfcWindfromdir_sigma",
+      "_cf_variable_name": "sfcWindfromdir_sigma",
       "long_name": "Wind direction standard deviation",
       "long_name_fr": "Écart-type de la direction du vent",
-      "units": "degree"
     },
     "VDsi": {
-      "_nc_name": "sfcWindfromdir_sigma",
+      "_cf_variable_name": "sfcWindfromdir_sigma",
       "long_name": "Instantaneous wind direction standard deviation on the last two minutes",
       "long_name_fr": "Écart-type de la direction du vent sur les deux dernières minutes",
-      "units": "degree"
     },
     "VE": {
-      "_nc_name": "freezing_rain_mask",
+      "_cf_variable_name": "freezing_rain_mask",
       "long_name": "Freezing rain",
       "long_name_fr": "Verglas"
     },
     "VVxi": {
-      "_convert_to": "m s-1",
-      "_nc_name": "wsgmax",
+      "units": "m s-1",
+      "_cf_variable_name": "wsgmax",
       "long_name": "Wind speed of gust",
       "long_name_fr": "Vitesse de la pointe de vent",
       "standard_name": "wind_speed_of_gust",
-      "units": "km h-1"
     }
   }
 }
