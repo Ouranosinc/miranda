@@ -8,10 +8,10 @@ from typing import Dict, Optional, Union
 import netCDF4
 import numpy as np
 import xarray as xr
-from xclim.core.units import str2pint, convert_units_to, pint_multiply
 import zarr
 from clisops.core import subset
 from xclim.core import units
+from xclim.core.units import convert_units_to, pint_multiply, str2pint
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
@@ -97,7 +97,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
 
 
 def _get_var_entry_key(meta, var, key, project):
-    varmeta = meta['variable_entry'].get(var, {})
+    varmeta = meta["variable_entry"].get(var, {})
     if key in varmeta:
         if isinstance(varmeta[key], dict):
             return varmeta[key][project]
@@ -115,7 +115,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
             if units is not None:
                 d[v].attrs["units"] = units
 
-        time_units = _get_var_entry_key(m, 'time', key, p)
+        time_units = _get_var_entry_key(m, "time", key, p)
         if time_units is not None:
             d["time"].attrs["units"] = time_units
         return d
@@ -160,26 +160,28 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                     )
                     d_out[out.name] = out
                     converted = True
-                elif transformation.startswith('op '):
+                elif transformation.startswith("op "):
                     op = transformation[3]
                     value = transformation[4:].strip()
-                    if value.startswith('attrs'):
+                    if value.startswith("attrs"):
                         value = str2pint(d[vv].attrs[value[6:]])
                     else:
                         value = str2pint(value)
                     with xr.set_options(keep_attrs=True):
-                        if op == '+':
+                        if op == "+":
                             value = convert_units_to(value, d[vv])
                             d_out[vv] = d[vv] + value
-                        elif op == '-':
+                        elif op == "-":
                             value = convert_units_to(value, d[vv])
                             d_out[vv] = d[vv] - value
-                        elif op == '*':
+                        elif op == "*":
                             d_out[vv] = pint_multiply(d[vv], value)
-                        elif op == '/':
+                        elif op == "/":
                             d_out[vv] = pint_multiply(d[vv], 1 / value)
                         else:
-                            raise NotImplementedError(f'Op transform doesn\'t implement the «{op}» operator.')
+                            raise NotImplementedError(
+                                f"Op transform doesn't implement the «{op}» operator."
+                            )
                     converted = True
                 else:
                     raise NotImplementedError(
@@ -212,9 +214,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                     )
                     with xr.set_options(keep_attrs=True):
                         out = d[vv]
-                        out["time"] = out.time - np.timedelta64(
-                            offset[0], offset[1]
-                        )
+                        out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                         d_out[out.name] = out
                         converted = True
                 else:
@@ -249,7 +249,9 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
                     )
             else:
-                logging.info(f"No sign inversion needed for `{vv}` in `{p}` (Absent entry).")
+                logging.info(
+                    f"No sign inversion needed for `{vv}` in `{p}` (Absent entry)."
+                )
             if not converted:
                 d_out[vv] = d[vv]
         return d_out
@@ -262,7 +264,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
             d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
         for v in set(d.data_vars.keys()).intersection(descriptions.keys()):
-            if 'units' in descriptions[v]:
+            if "units" in descriptions[v]:
                 d[v] = units.convert_units_to(d[v], descriptions[v]["units"])
 
         return d
@@ -349,7 +351,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
             sort_dims.append(new)
-            coord_precision = _get_var_entry_key(m, new, '_precision', p)
+            coord_precision = _get_var_entry_key(m, new, "_precision", p)
             if coord_precision is not None:
                 d[new] = d[new].round(coord_precision)
         if sort_dims:
