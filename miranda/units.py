@@ -93,10 +93,10 @@ def get_time_frequency(d: xr.Dataset):
     if freq is None or (
         1 < int(calendar.parse_offset(freq)[0]) < 32 and freq.endswith("D")
     ):
-        if 'freq' in d.attrs:
-            freq = d.attrs['freq']
-        elif 'freq' in d.time.attrs:
-            freq = d.time.attrs['freq']
+        if "freq" in d.attrs:
+            freq = d.attrs["freq"]
+        elif "freq" in d.time.attrs:
+            freq = d.time.attrs["freq"]
         elif (
             (d.diff("time") < pd.Timedelta(32, "D"))
             & (d.diff("time") > pd.Timedelta(27, "D"))
