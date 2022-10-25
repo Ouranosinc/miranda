@@ -9,32 +9,53 @@ from pathlib import Path
 from types import GeneratorType
 from typing import Dict, List, Mapping, Optional, Union
 
-import schema
+import yaml
+from schema import SchemaError
 
-from miranda.decode import Decoder, guess_project
+from miranda.cv import VALIDATION_ENABLED
+from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import discover_data
-from miranda.validators import GRIDDED_SCHEMA, SIMULATION_SCHEMA, STATION_OBS_SCHEMA
+
+if VALIDATION_ENABLED:
+    from miranda.validators import validation_schemas
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "create_version_hashes",
+    "create_version_hash_files",
     "build_path_from_schema",
     "structure_datasets",
 ]
 
 
-def _generate_version_hashes(
-    in_file: Path, out_file: Path, verify: bool = False
+def _verify(hash_value: str, hash_file: os.PathLike) -> None:
+    try:
+        with open(hash_file) as f:
+            found_sha256sum = f.read()
+
+        if hash_value != found_sha256sum:
+            raise ValueError()
+    except ValueError:
+        logging.error(
+            f"Found sha256sum (starting: {found_sha256sum[:6]}) "
+            f"does not match current value (starting: {hash_value[:6]}) "
+            f"for file `{Path(hash_file).name}."
+        )
+
+
+def generate_hash_file(
+    in_file: os.PathLike, out_file: os.PathLike, verify: bool = False
 ) -> None:
-    if not out_file.exists():
+    if not Path(out_file).exists():
         hash_sha256_writer = hashlib.sha256()
         with open(in_file, "rb") as f:
             hash_sha256_writer.update(f.read())
         sha256sum = hash_sha256_writer.hexdigest()
 
-        print(f"Writing sha256sum (ending: {sha256sum[-6:]}) to file: {out_file.name}")
+        print(
+            f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {Path(out_file).name}"
+        )
         try:
             with open(out_file, "w") as f:
                 f.write(sha256sum)
@@ -49,30 +70,57 @@ def _generate_version_hashes(
             hash_sha256_writer.update(f.read())
         calculated_sha256sum = hash_sha256_writer.hexdigest()
 
-        try:
-            with open(out_file) as f:
-                found_sha256sum = f.read()
-
-            if calculated_sha256sum != found_sha256sum:
-                raise ValueError()
-        except ValueError:
-            logging.error(
-                f"Found sha256sum (ending: {found_sha256sum[-6:]}) "
-                f"does not match current value (ending: {calculated_sha256sum[-6:]}) "
-                f"for file `{in_file.name}."
-            )
+        _verify(calculated_sha256sum, out_file)
 
     else:
-        print(f"Writing sha256sum file `{out_file.name}` exists. Continuing...")
+        print(f"Writing sha256sum file `{Path(out_file).name}` exists. Continuing...")
 
 
-def create_version_hashes(
-    input_files: Optional[Union[os.PathLike, List[os.PathLike], GeneratorType]] = None,
+def generate_hash_metadata(
+    in_file: os.PathLike,
+    version: Optional[str] = None,
+    hash_file: Optional[os.PathLike] = None,
+    verify: bool = False,
+) -> Mapping[str, List[str]]:
+    hashversion = dict()
+
+    if version is None:
+        version = "vNotFound"
+
+    if not Path(hash_file).exists():
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        sha256sum = hash_sha256_writer.hexdigest()
+
+        print(f"Calculated sha256sum (starting: {sha256sum[:6]})")
+
+        hashversion[Path(in_file).name] = [version, sha256sum]
+        del hash_sha256_writer
+
+    else:
+        hash_sha256_writer = hashlib.sha256()
+        with open(in_file, "rb") as f:
+            hash_sha256_writer.update(f.read())
+        calculated_sha256sum = hash_sha256_writer.hexdigest()
+
+        if verify:
+            _verify(calculated_sha256sum, hash_file)
+
+        hashversion[Path(in_file).name] = [version, calculated_sha256sum]
+
+    return hashversion
+
+
+def create_version_hash_files(
+    input_files: Optional[
+        Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType]
+    ] = None,
     facet_dict: Optional[Dict] = None,
     verify_hash: bool = False,
 ) -> None:
     if not facet_dict and not input_files:
-        raise ValueError()
+        raise ValueError("Facets dictionary or sequence of filepaths required.")
 
     if input_files:
         if isinstance(input_files, os.PathLike):
@@ -94,7 +142,7 @@ def create_version_hashes(
             {Path(file): Path(file).parent.joinpath(version_hash_file)}
         )
 
-    hash_func = partial(_generate_version_hashes, verify=verify_hash)
+    hash_func = partial(generate_hash_file, verify=verify_hash)
     with multiprocessing.Pool() as pool:
         pool.starmap(
             hash_func,
@@ -105,11 +153,17 @@ def create_version_hashes(
 
 
 def _structure_datasets(
-    in_file: Path, out_path: Path, method: str, dry_run: bool = False
+    in_file: Union[str, os.PathLike],
+    out_path: Union[str, os.PathLike],
+    method: str,
+    dry_run: bool = False,
 ):
+    if isinstance(in_file, str):
+        in_file = Path(in_file)
+
     if method.lower() in ["move", "copy"]:
         meth = "Moved" if method.lower() == "move" else "Copied"
-        output_file = out_path.joinpath(in_file.name)
+        output_file = Path(out_path).joinpath(in_file.name)
         try:
             if not dry_run:
                 method_mod = ""
@@ -127,87 +181,139 @@ def _structure_datasets(
             print(f"{in_file.name} already exists at location. Continuing...")
 
 
+def parse_schema(
+    facets: dict, schema: Union[str, os.PathLike, dict], top_folder: str = "datasets"
+) -> list:
+    """Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
+
+    Parameters
+    ----------
+    facets : dict
+    schema : str or os.PathLike or dict
+    top_folder : str
+
+    Returns
+    -------
+    list
+    """
+
+    def _parse_top_level(schematic: dict, facet_dict: dict, top: str):
+        try:
+            parent = schematic[top]
+        except KeyError:
+            logging.error("Schema is not a valid facet-tree reference.")
+            raise
+
+        for i, options in enumerate(parent):
+            if {"option", "structure", "value"}.issubset(options.keys()):
+                option = options["option"]
+                value = options["value"]
+
+                if option in facet_dict.keys():
+                    if facet_dict[option] == value:
+                        return {"branch": value, "structure": options["structure"]}
+                    continue
+
+    def _parse_structure(branch_dict: dict, facet_dict: dict) -> list:
+
+        structure = branch_dict.get("structure")
+        folder_tree = list()
+
+        for level in structure:
+            if isinstance(level, str):
+                folder_tree.append(level)
+                continue
+            elif isinstance(level, dict):
+                if {"option", "is_true"}.issubset(level.keys()):
+                    option = level["option"]
+                    if option not in facet_dict.keys():
+                        raise ValueError(
+                            f"Necessary facet not found for schema: `{option}`."
+                        )
+
+                    value = level.get("value")
+                    is_true = level.get("is_true")
+                    else_value = level.get("else")
+
+                    if facet_dict[option] == value:
+                        folder_tree.append(is_true)
+                    elif else_value:
+                        folder_tree.append(else_value)
+                    else:
+                        pass
+            else:
+                raise ValueError("Supplied schema is invalid.")
+        return folder_tree
+
+    if isinstance(schema, (str, os.PathLike)):
+        with Path(schema).open() as f:
+            schema = yaml.safe_load(f.read())
+
+    branch = _parse_top_level(schema, facets, top_folder)
+    tree = list()  # noqa
+    tree.extend(_parse_structure(branch, facets))
+
+    return tree
+
+
 def build_path_from_schema(
-    facets: dict, output_folder: Union[str, os.PathLike]
+    facets: dict,
+    output_folder: Union[str, os.PathLike],
+    schema: Optional[Union[str, os.PathLike, dict]] = None,
+    top_folder: str = "datasets",
+    validate: bool = True,
 ) -> Optional[Path]:
     """Build a filepath based on a valid data schema.
 
     Parameters
     ----------
-    facets: dict
-      Facets for a given dataset.
-    output_folder
-      Parent folder on which to extend the filetree structure.
+    facets : dict
+        Facets for a given dataset.
+    output_folder : str or os.PathLike
+        Parent folder on which to extend the filetree structure.
+    schema : str or os.PathLike, optional
+        Path to YAML schematic of database structure. If None, will use Ouranos schema.
+    top_folder : str
+        Top-level of supplied schema, used for validation purposes. Default: "datasets".
+    validate: bool
+        Run facets-validation checks over given file. Default: True.
 
     Returns
     -------
     Path or None
     """
-    folder_tree_structure = None
-    try:
-        if facets["type"] == "station-obs":
-            STATION_OBS_SCHEMA.validate(facets)
-            folder_tree_structure = (
-                "type",
-                "institution",
-                "source",
-                "version",  # This suggests "date_created"
-                "frequency",
-                "member"
-                if hasattr(facets, "member")
-                else None,  # This suggests station code
-                "variable",
+
+    if schema is None:
+        schema = Path(__file__).parent.joinpath("data").joinpath("ouranos_schema.yml")
+
+    tree = parse_schema(facets, schema, top_folder)
+    branch = tree[0]
+
+    if validate and VALIDATION_ENABLED:
+        if facets[branch] in validation_schemas.keys():
+            try:
+                validation_schemas[facets[branch]].validate(facets)
+            except SchemaError as e:
+                logging.error(
+                    f"Validation issues found for file matching schema: {facets}: {e}"
+                )
+                return
+        elif facets[branch] not in validation_schemas.keys():
+            logging.error(
+                f"No appropriate data schemas found for file matching schema: {facets}",
+                DecoderError,
             )
-
-        if facets["type"] in ["forecast", "gridded-obs", "reconstruction"]:
-            GRIDDED_SCHEMA.validate(facets)
-            folder_tree_structure = (
-                "type",
-                "institution",
-                "source",
-                "domain",
-                "frequency",
-                "variable",
-            )
-
-        if facets["type"] == "simulation":
-            SIMULATION_SCHEMA.validate(facets)
-            folder_tree_structure = (
-                "type",
-                "processing_level",
-                "mip_era",
-                "activity"
-                if facets["processing_level"] == "raw"
-                else "bias_adjust_project",
-                "domain",
-                "institution",
-                "source",
-                "driving_model" if facets["activity"] == "CORDEX" else None,
-                "experiment",
-                "member",
-                "frequency",
-                "variable",
-            )
-
-        if folder_tree_structure:
-            facet_tree = list()
-            for facet in folder_tree_structure:
-                if facet:
-                    # Remove spaces in folder paths
-                    facet_tree.append(str(facets[facet]).replace(" ", "-"))
-            return Path(output_folder).joinpath("/".join(facet_tree))
-        else:
-            raise ValueError()
-
-    except schema.SchemaError as e:
-        logging.error(
-            f"Validation issues found for file matching schema: {facets}: {e}"
+            return
+    elif validate and not VALIDATION_ENABLED:
+        logging.warning(
+            "Facets validation requires pyessv-archive source files. Skipping validation checks."
         )
-    except ValueError:
-        logging.error(
-            f"No appropriate data schemas found for file matching schema: {facets}"
-        )
-    return
+
+    file_location = list()
+    for facet in tree:
+        # Remove spaces in folder paths
+        file_location.append(str(facets[facet]).replace(" ", "-"))
+    return Path(output_folder).joinpath("/".join(file_location))
 
 
 def structure_datasets(
@@ -227,24 +333,28 @@ def structure_datasets(
 
     Parameters
     ----------
-    input_files: str or Path or list of str or Path or GeneratorType
-    output_folder: str or Path
-    project: {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6"}, optional
-    guess: bool
-      If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
-    dry_run: bool
-      Prints changes that would have been made without performing them. Default: False.
-    method: {"move", "copy"}
-      Method to transfer files to intended location. Default: "move".
-    make_dirs: bool
-      Make folder tree if it does not already exist. Default: False.
-    set_version_hashes: bool
-      Make an accompanying file with version in filename and sha256sum in contents. Default: False.
-    verify_hashes: bool
-      Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
-    filename_pattern: str
-      If pattern ends with "zarr", will 'glob' with provided pattern.
-      Otherwise, will perform an 'rglob' (recursive) operation.
+    input_files : str or Path or list of str or Path or GeneratorType
+    output_folder : str or Path
+
+    project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}, optional
+        Project used to parse the facets of all supplied datasets.
+        If not supplied, will attempt parsing with all available data categories for each file (slow)
+        unless `guess` is True.
+    guess : bool
+        If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
+    dry_run : bool
+        Prints changes that would have been made without performing them. Default: False.
+    method : {"move", "copy"}
+        Method to transfer files to intended location. Default: "move".
+    make_dirs : bool
+        Make folder tree if it does not already exist. Default: False.
+    set_version_hashes : bool
+        Make an accompanying file with version in filename and sha256sum in contents. Default: False.
+    verify_hashes : bool
+        Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
+    filename_pattern : str
+        If pattern ends with "zarr", will 'glob' with provided pattern.
+        Otherwise, will perform an 'rglob' (recursive) operation.
 
     Returns
     -------
@@ -307,7 +417,7 @@ def structure_datasets(
             Path(new_paths).mkdir(exist_ok=True, parents=True)
 
     if set_version_hashes:
-        hash_func = partial(_generate_version_hashes, verify=verify_hashes)
+        hash_func = partial(generate_hash_file, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
             if existing_hashes:
                 print(

@@ -32,7 +32,7 @@
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "5 October 2022",
+    "table_date": "2022-10-05",
     "type": "reconstruction"
   },
   "variable_entry": {
@@ -55,7 +55,17 @@
     "lon": {
       "_precision": {
         "era5-land": 4
-      }
+      },
+    "msl": {
+      "_cf_variable_name": "psl",
+      "_corrected_units": {},
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "long_name": "Mean sea level pressure",
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa"
     },
     "pev": {
       "_cf_variable_name": "evspsblpot",

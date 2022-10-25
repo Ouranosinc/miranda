@@ -12,6 +12,7 @@ pandas
 pint
 pyessv
 pyproj
+pyyaml
 rasterio
 schema
 shapely

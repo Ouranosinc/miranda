@@ -5,11 +5,20 @@ import multiprocessing
 import os
 import re
 import shutil
+import warnings
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union
 
 import xarray as xr
+
+try:
+    from cdsapi import Client  # noqa
+except ModuleNotFoundError:
+    warnings.warn(
+        "ERA5 downloading capabilities requires additional dependencies. "
+        "Please install them with `pip install miranda[full]`."
+    )
 
 from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
@@ -38,7 +47,7 @@ ERA5_PROJECT_NAMES = [
 def request_era5(
     projects: Union[str, List[str]],
     *,
-    variables: Optional[Mapping[str, str]] = None,
+    variables: Optional[Union[str, Sequence[str]]] = None,
     domain: str = "AMNO",
     pressure_levels: Optional[List[int]] = None,
     separate_pressure_levels: bool = True,
@@ -55,21 +64,31 @@ def request_era5(
     Parameters
     ----------
     projects : str or List[str]
-      Allowed keys: {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-pressure-levels",  "era5-pressure-levels-preliminary-back-extension"}
-    variables: Mapping[str, str]
+        Allowed keys: {"era5-land", "era5-land-monthly-means", "era5-single-levels", "era5-single-levels-monthly-means",
+        "era5-single-levels-preliminary-back-extension", "era5-single-levels-monthly-means-preliminary-back-extension",
+        "era5-pressure-levels", "era5-pressure-levels-monthly-means", "era5-pressure-levels-preliminary-back-extension",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension"}
+    variables : str or Sequence[str]
+        Variable codes requested. If None, will attempt all hardcoded variables supported by miranda converter.
     domain : {"GLOBAL", "AMNO", "NAM", "CAN", "QC", "MTL"}
-    pressure_levels: List[int], optional
-    separate_pressure_levels: bool
-      Separate files for each pressure level. Default: True
+        Geographic domain requested. Default: "AMNO" (North America).
+    pressure_levels : List[int], optional
+        If set and project requested has pressure levels, will download specific pressure levels.
+    separate_pressure_levels : bool
+        Whether to separate files for each pressure level. Default: True
     output_folder : str or os.PathLike, optional
+        Folder to send files to. If None, will create a "downloaded" folder in current working directory.
     year_start : int, optional
+        Starting year for data download. If None, will download from first available year for project.
     year_end : int, optional
-    dry_run: bool
-      Do not send request. For debugging purposes.
+        End year for data download. If None, will download files for current year and two months prior to present day.
+    dry_run : bool
+        Do not send request. For debugging purposes.
     processes : int
-    url: str, optional
-      URL for Copernicus Data Store API (if not already using .cdsapirc)
-    key: str, optional
+        The number of simultaneous download requests. Default: 10.
+    url : str, optional
+        URL for Copernicus Data Store API (if not already using .cdsapirc)
+    key : str, optional
       Personal access key for Copernicus Data Store (if not already using .cdsapirc)
 
     Returns
@@ -79,19 +98,15 @@ def request_era5(
     # Variables of interest
     variable_reference = dict()
     variable_reference["era5-land", "era5-land-monthly-means"] = dict(
-        tp="total_precipitation",
-        v10="10m_v_component_of_wind",
-        u10="10m_u_component_of_wind",
         d2m="2m_dewpoint_temperature",
-        t2m="2m_temperature",
         pev="potential_evaporation",
         rsn="snow_density",
-        sde="snow_depth",
         sd="snow_depth_water_equivalent",
+        sde="snow_depth",
         sf="snowfall",
+        slhf="surface_latent_heat_flux",
         sp="surface_pressure",
         sshf="surface_sensible_heat_flux",
-        slhf="surface_latent_heat_flux",
         ssr="surface_net_solar_radiation",
         ssrd="surface_solar_radiation_downwards",
         str="surface_net_thermal_radiation",
@@ -100,6 +115,10 @@ def request_era5(
         swvl2="volumetric_soil_water_layer_2",
         swvl3="volumetric_soil_water_layer_3",
         swvl4="volumetric_soil_water_layer_4",
+        t2m="2m_temperature",
+        tp="total_precipitation",
+        u10="10m_u_component_of_wind",
+        v10="10m_v_component_of_wind",
     )
 
     era5_single_levels = variable_reference[
@@ -107,7 +126,7 @@ def request_era5(
     ].copy()
     del era5_single_levels["sde"]  # sde is not available for era5
     era5_single_levels.update(
-        sd="snow_depth"
+        msl="mean_sea_level_pressure", sd="snow_depth"
     )  # note difference in name vs era5-land cf_variable == snw"
     variable_reference[
         "era5-single-levels",
@@ -168,17 +187,32 @@ def request_era5(
         # Allow at least a two-month lag from current month before attempting to collect data
         months = [str(d).zfill(2) for d in range(1, 13)]
         yearmonth = list()
-        for y in years:
-            for m in months:
-                request_date = datetime.date(y, int(m), 1)
-                if y < datetime.date.today().year - 2:
-                    yearmonth.append((y, m))
-                else:
-                    two_months_ago = datetime.date.today() - datetime.timedelta(60)
-                    if request_date < two_months_ago:
-                        yearmonth.append((y, m))
 
-        product = request_code.split("-")[0]
+        today = datetime.date.today()
+        two_months_ago = today - datetime.timedelta(60)
+        for y in years:
+            if "monthly-means" in project_name:
+                request_date = datetime.date(y, today.month, today.day)
+                if y < today.year:
+                    yearmonth.append((y, months))
+                elif two_months_ago.year == today.year:
+                    yearmonth.append(
+                        (y, [str(d).zfill(2) for d in range(1, two_months_ago.month)])
+                    )
+            else:
+                for m in months:
+                    request_date = datetime.date(y, int(m), today.day)
+                    if y < today.year - 2:
+                        yearmonth.append((y, m))
+                    else:
+                        if request_date < two_months_ago:
+                            yearmonth.append((y, m))
+
+        if "monthly-means" in project_name:
+            product = "monthly_averaged_reanalysis"
+        else:
+            product = "reanalysis"
+
         v_requested = dict()
         try:
             variable_reference = next(
@@ -190,6 +224,8 @@ def request_era5(
             return
 
         if variables:
+            if isinstance(variables, str):
+                variables = [variables]
             for v in variables:
                 if v in variable_reference:
                     v_requested[v] = variable_reference[v]
@@ -201,6 +237,17 @@ def request_era5(
         else:
             pressure_levels_requested = None
 
+        if not dry_run:
+            client_kwargs = dict()
+            if url:
+                client_kwargs["url"] = url
+            if key:
+                client_kwargs["key"] = key
+
+            client = Client(**client_kwargs)
+        else:
+            client = None
+
         proc = multiprocessing.Pool(processes=processes)
         func = functools.partial(
             _request_direct_era,
@@ -211,8 +258,7 @@ def request_era5(
             separate_pressure_levels,
             product,
             dry_run,
-            url,
-            key,
+            client,
         )
 
         logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
@@ -230,69 +276,50 @@ def _request_direct_era(
     separate_pressure_level_requests: bool,
     product: str,
     dry_run: bool,
-    url: Optional[str],
-    key: Optional[str],
+    client: Optional[Any],
     yearmonth: Tuple[int, str],
 ):
     """Launch formatted request."""
 
-    def __request(
-        nc_name: str,
-        p: str,
-        rq_kwargs: Mapping[str, str],
-        u: Optional[str],
-        k: Optional[str],
-    ):
+    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str], c: Any):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
             return
 
         if not dry_run:
-            client_kwargs = dict()
-            if u:
-                client_kwargs[url] = u
-            if k:
-                client_kwargs[key] = k
-
-            with Client(**client_kwargs) as c:
-                c.retrieve(
-                    p,
-                    rq_kwargs,
-                    nc_name,
-                )
+            c.retrieve(
+                p,
+                rq_kwargs,
+                nc_name,
+            )
         else:
             logging.info(p)
             logging.info(rq_kwargs)
             logging.info(nc_name)
 
-    try:
-        from cdsapi import Client  # noqa
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(
-            f"{_request_direct_era.__name__} requires additional dependencies. "
-            "Please install them with `pip install miranda[full]`."
-        )
-
     year, month = yearmonth
-    days = [str(d).zfill(2) for d in range(32)]
-    times = [f"{str(t).zfill(2)}:00" for t in range(24)]
+    year_month = f"{year}{month if not isinstance(month, list) else ''}"
+
+    if "monthly-means" in project:
+        times = "00:00"
+        day = dict()
+        timestep = "mon"
+    else:
+        times = [f"{str(t).zfill(2)}:00" for t in range(24)]
+        day = dict(day=[str(d).zfill(2) for d in range(32)])
+        timestep = "1h"
 
     if domain.upper() == "AMNO":
         domain = "NAM"
 
     region = subsetting_domains(domain)
 
-    # TODO: Treatments necessary for data conversion still need to be verified for monthly datasets
-    if "monthly-means" in project:
-        raise NotImplementedError(project)
-    timestep = "1h"
-
     for var in variables.keys():
         request_kwargs = dict(
             variable=variables[var],
             year=year,
             month=month,
-            day=days,
+            **day,
             time=times,
             area=region,
             format="netcdf",
@@ -301,6 +328,7 @@ def _request_direct_era(
         if (
             "reanalysis-era5-single-levels" in project
             or "reanalysis-era5-pressure-levels" in project
+            or "monthly-means" in project
         ):
             request_kwargs.update(dict(product_type=product))
 
@@ -310,7 +338,7 @@ def _request_direct_era(
                     request_kwargs.update(dict(pressure_level=[level]))
                     netcdf_name = (
                         f"{var}{level}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-                        f"_{product}_{domain.upper()}_{year}{month}.nc"
+                        f"_{product.replace('_', '-')}_{domain.upper()}_{year_month}.nc"
                     )
                     __request(netcdf_name, project, request_kwargs)
                 continue
@@ -319,9 +347,9 @@ def _request_direct_era(
 
         netcdf_name = (
             f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-            f"_{product}_{domain.upper()}_{year}{month}.nc"
+            f"_{product.replace('_', '-')}_{domain.upper()}_{year_month}.nc"
         )
-        __request(netcdf_name, project, request_kwargs, url, key)
+        __request(netcdf_name, project, request_kwargs, client)
 
 
 def rename_era5_files(path: Union[os.PathLike, str]) -> None:

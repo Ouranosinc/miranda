@@ -1,0 +1,42 @@
+{
+  "Header": {
+    "_miranda_version": true,
+    "data_specs_version": "00.00.01",
+    "processing_level": "raw",
+    "table_date": "2022-10-14",
+    "type": "simulation"
+  },
+  "variable_entry": {
+    "time": {
+      "_ensure_correct_time": {
+        "cmip5": [
+          "H",
+          "3H",
+          "6H",
+          "D",
+          "7D",
+          "MS",
+          "AS"
+        ],
+        "cmip6": [
+          "H",
+          "3H",
+          "6H",
+          "D",
+          "7D",
+          "MS",
+          "AS"
+        ],
+        "cordex": [
+          "H",
+          "3H",
+          "6H",
+          "D",
+          "7D",
+          "MS",
+          "AS"
+        ]
+      }
+    }
+  }
+}

@@ -14,7 +14,7 @@ import xarray as xr
 from xclim.core.formatting import update_history
 from miranda import __version__
 from miranda.scripting import LOGGING_CONFIG
-from miranda.convert._utils import variable_conversion
+from miranda.convert._data_corrections import variable_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
