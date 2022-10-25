@@ -79,6 +79,14 @@ def units2pint(value: str) -> Unit:
 
 
 def get_time_frequency(d: xr.Dataset):
+    """Try to understand the datasets frequency.
+
+    If it can't be inferred with :py:func:`xarray.infer_freq` it tries to:
+    - look for a "freq" attrs in the global or time variable attributes.
+    - infer monthly frequency if all time steps are between 27 and 32 days
+
+    returns the offset a list of (multiplicator, base) and it's meaning (single word)
+    """
     freq = xr.infer_freq(d.time)
 
     # Hacky workaround for irregular Monthly data
@@ -87,6 +95,8 @@ def get_time_frequency(d: xr.Dataset):
     ):
         if 'freq' in d.attrs:
             freq = d.attrs['freq']
+        elif 'freq' in d.time.attrs:
+            freq = d.time.attrs['freq']
         elif (
             (d.diff("time") < pd.Timedelta(32, "D"))
             & (d.diff("time") > pd.Timedelta(27, "D"))

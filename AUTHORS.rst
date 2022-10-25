@@ -10,5 +10,6 @@ Development Lead
 Contributors
 ------------
 
+* Pascal Bourgault <bourgault.pascal@ouranos.ca>
 * Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca>
 * Sebastien Biner <biner.sebastien@ouranos.ca>

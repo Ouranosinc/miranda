@@ -127,7 +127,7 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         for vv in d.data_vars:
             converted = False
             transformation = _get_var_entry_key(m, vv, key, p)
-            if transformation is not None:
+            if transformation == "deaccumulate":
                 try:
                     offset, offset_meaning = get_time_frequency(d)
                 except TypeError:
@@ -136,55 +136,51 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
                         "Verify data integrity before retrying."
                     )
                     raise
-
-                if transformation == "deaccumulate":
-                    # Time-step accumulated total to time-based flux (de-accumulation)
-                    logging.info(f"De-accumulating units for variable `{vv}`.")
-                    with xr.set_options(keep_attrs=True):
-                        out = d[vv].diff(dim="time")
-                        out = d[vv].where(
-                            getattr(d[vv].time.dt, offset_meaning) == offset[0],
-                            out.broadcast_like(d[vv]),
-                        )
-                        out = units.amount2rate(out)
-                    d_out[out.name] = out
-                    converted = True
-                elif transformation == "amount2rate":
-                    # frequency-based totals to time-based flux
-                    logging.info(
-                        f"Performing amount-to-rate units conversion for variable `{vv}`."
+                # Time-step accumulated total to time-based flux (de-accumulation)
+                logging.info(f"De-accumulating units for variable `{vv}`.")
+                with xr.set_options(keep_attrs=True):
+                    out = d[vv].diff(dim="time")
+                    out = d[vv].where(
+                        getattr(d[vv].time.dt, offset_meaning) == offset[0],
+                        out.broadcast_like(d[vv]),
                     )
-                    out = units.amount2rate(
-                        d[vv],
-                        out_units=m["variable_entry"][vv]["units"],
-                    )
-                    d_out[out.name] = out
-                    converted = True
-                elif transformation.startswith('op '):
-                    op = transformation[3]
-                    value = transformation[4:].strip()
-                    if value.startswith('attrs'):
-                        value = str2pint(d[vv].attrs[value[6:]])
-                    else:
-                        value = str2pint(value)
-                    with xr.set_options(keep_attrs=True):
-                        if op == '+':
-                            value = convert_units_to(value, d[vv])
-                            d_out[vv] = d[vv] + value
-                        elif op == '-':
-                            value = convert_units_to(value, d[vv])
-                            d_out[vv] = d[vv] - value
-                        elif op == '*':
-                            d_out[vv] = pint_multiply(d[vv], value)
-                        elif op == '/':
-                            d_out[vv] = pint_multiply(d[vv], 1 / value)
-                        else:
-                            raise NotImplementedError(f'Op transform doesn\'t implement the «{op}» operator.')
-                    converted = True
+                    out = units.amount2rate(out)
+                d_out[out.name] = out
+                converted = True
+            elif transformation == "amount2rate":
+                # frequency-based totals to time-based flux
+                logging.info(
+                    f"Performing amount-to-rate units conversion for variable `{vv}`."
+                )
+                out = units.amount2rate(
+                    d[vv],
+                    out_units=m["variable_entry"][vv]["units"],
+                )
+                d_out[out.name] = out
+                converted = True
+            elif transformation is not None and transformation.startswith('op '):
+                op = transformation[3]
+                value = transformation[4:].strip()
+                if value.startswith('attrs'):
+                    value = str2pint(d[vv].attrs[value[6:]])
                 else:
-                    raise NotImplementedError(
-                        f"Unknown transformation: {m['variable_entry'][vv][key][p]}"
-                    )
+                    value = str2pint(value)
+                with xr.set_options(keep_attrs=True):
+                    if op == '+':
+                        value = convert_units_to(value, d[vv])
+                        d_out[vv] = d[vv] + value
+                    elif op == '-':
+                        value = convert_units_to(value, d[vv])
+                        d_out[vv] = d[vv] - value
+                    elif op == '*':
+                        d_out[vv] = pint_multiply(d[vv], value)
+                    elif op == '/':
+                        d_out[vv] = pint_multiply(d[vv], 1 / value)
+                    else:
+                        raise NotImplementedError(f'Op transform doesn\'t implement the «{op}» operator.')
+                converted = True
+            elif transformation is not None:
+                raise NotImplementedError(f"Unknown transformation: {transformation}")
             if not converted:
                 d_out[vv] = d[vv]
         return d_out
@@ -310,33 +306,21 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
         d.attrs.update(dict(history=history))
         descriptions = m["variable_entry"]
 
-        if "time" in m["variable_entry"].keys():
-            del descriptions["time"]["_corrected_units"]
-
-        # Add variable metadata and remove nonstandard entries
-        correction_fields = [
-            "_corrected_units",
-            "_invert_sign",
-            "_offset_time",
-            "_transformation",
-        ]
-        for v in set(d.data_vars.keys()).intersection(descriptions.keys()):
-            for field in correction_fields:
-                if field in descriptions[v].keys():
-                    del descriptions[v][field]
-            d[v].attrs.update(descriptions[v])
+        # Add variable metadata without nonstandard entries
+        for v in d.data_vars.keys():
+            if v in descriptions:
+                d[v].attrs.update(
+                    {k: v for k, v in descriptions[v].items() if not k.startswith('_')}
+                )
+            else:
+                logging.info(f'No attributes for variable {v}.')
 
         # Rename data variables
         for v in set(d.data_vars.keys()).intersection(descriptions.keys()):
-            try:
+            if '_cf_variable_name' in descriptions[v]:
                 cf_name = descriptions[v]["_cf_variable_name"]
                 d = d.rename({v: cf_name})
                 d[cf_name].attrs.update(dict(original_variable=v))
-                if f"{v}_flag" in d.data_vars.keys():
-                    d = d.rename({f"{v}_flag": f"{cf_name}_flag"})
-                del d[cf_name].attrs["_cf_variable_name"]
-            except (ValueError, IndexError):
-                pass
         return d
 
     # For renaming lat and lon dims
