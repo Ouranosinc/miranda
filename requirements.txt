@@ -9,7 +9,7 @@ numpy
 geopandas
 openpyxl
 pandas
-pint
+pint <0.20 # Temporary pin. See: https://github.com/Ouranosinc/xclim/issues/1211
 pyessv
 pyproj
 pyyaml
