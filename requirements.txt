@@ -7,9 +7,8 @@ h5netcdf
 netCDF4
 numpy
 geopandas
-openpyxl
 pandas
-pint <0.20 # Temporary pin. See: https://github.com/Ouranosinc/xclim/issues/1211
+pint
 pyessv
 pyproj
 pyyaml

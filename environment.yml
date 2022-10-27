@@ -23,10 +23,9 @@ dependencies:
   - numba >=0.55.2  # There's a problem with numba on conda
   - numcodecs
   - numpy
-  - openpyxl
   - pandas
   - paramiko >=2.6.0
-  - pint <0.20 # Temporary pin. See: https://github.com/Ouranosinc/xclim/issues/1211
+  - pint
   - pre-commit
   - pydantic
   - pyproj
