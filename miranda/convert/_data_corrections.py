@@ -54,7 +54,7 @@ def _get_var_entry_key(meta, var, key, project):
 
 
 def _iter_vars_key(ds, meta, key, project):
-    for vv in set(ds.data_vars).intersection(meta['variable_entry']):
+    for vv in set(ds.data_vars).intersection(meta["variable_entry"]):
         val = _get_var_entry_key(meta, vv, key, project)
         yield vv, val
 
@@ -65,7 +65,7 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if val is not None:
             d[var].attrs["units"] = val
 
-    valtime = _get_var_entry_key(m, 'time', key, p)
+    valtime = _get_var_entry_key(m, "time", key, p)
     if valtime is not None:
         d["time"].attrs["units"] = valtime
 
@@ -110,26 +110,28 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             )
             d_out[out.name] = out
             converted = True
-        elif trans is not None and trans.startswith('op '):
+        elif trans is not None and trans.startswith("op "):
             op = trans[3]
             value = trans[4:].strip()
-            if value.startswith('attrs'):
+            if value.startswith("attrs"):
                 value = units.str2pint(d[vv].attrs[value[6:]])
             else:
                 value = units.str2pint(value)
             with xr.set_options(keep_attrs=True):
-                if op == '+':
+                if op == "+":
                     value = units.convert_units_to(value, d[vv])
                     d_out[vv] = d[vv] + value
-                elif op == '-':
+                elif op == "-":
                     value = units.convert_units_to(value, d[vv])
                     d_out[vv] = d[vv] - value
-                elif op == '*':
+                elif op == "*":
                     d_out[vv] = units.pint_multiply(d[vv], value)
-                elif op == '/':
+                elif op == "/":
                     d_out[vv] = units.pint_multiply(d[vv], 1 / value)
                 else:
-                    raise NotImplementedError(f'Op transform doesn\'t implement the «{op}» operator.')
+                    raise NotImplementedError(
+                        f"Op transform doesn't implement the «{op}» operator."
+                    )
             converted = True
         elif trans is not None:
             raise NotImplementedError(f"Unknown transformation: {trans}")
@@ -159,9 +161,7 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             )
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
-                out["time"] = out.time - np.timedelta64(
-                    offset[0], offset[1]
-                )
+                out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                 d_out[out.name] = out
                 converted = True
         elif offs is False:
@@ -182,9 +182,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     for vv, invsign in _iter_vars_key(d, m, key, p):
         converted = False
         if invsign:
-            logging.info(
-                f"Inverting sign for `{vv}` (switching direction of values)."
-            )
+            logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = out.__invert__()

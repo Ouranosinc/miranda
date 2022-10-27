@@ -1,20 +1,21 @@
 import datetime as dt
 import logging
 import re
+import warnings
 from argparse import ArgumentParser
 from io import StringIO
 from pathlib import Path
 from subprocess import run
 from typing import Sequence
-import warnings
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from xclim.core.formatting import update_history
+
 from miranda import __version__
-from miranda.scripting import LOGGING_CONFIG
 from miranda.convert._data_corrections import variable_conversion
+from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def parse_var_code(vcode):
         # PI has different meanings, it's not just a different instrument.
         "var_name": short_code if short_code != "PI" else melcc_code[:-1],
         "instrument": np.int32(instrument),
-        "melcc_code": melcc_code
+        "melcc_code": melcc_code,
     }
 
 
@@ -79,9 +80,9 @@ def read_table(dbfile, table):
                 "CODE_STATUT_DONNEE": f"{table}_flag",
                 "VALEUR_DONNEE": table,
             }
-        ).drop(
-            columns=['STATUT_APPROBATION']  # I don't know what this is...
-        ).set_index(["station", "time"])
+        )
+        .drop(columns=["STATUT_APPROBATION"])  # I don't know what this is...
+        .set_index(["station", "time"])
     )
     NaT = df.index.get_level_values("time").isnull().sum()
     if NaT > 0:
@@ -122,7 +123,7 @@ def read_stations(dbfile):
     ds = df.set_index("station").to_xarray()
     da = ds.set_coords(ds.data_vars.keys()).station
     da.lat.attrs.update(units="degree_north", standard_name="latitude")
-    da['lon'] = -da.lon
+    da["lon"] = -da.lon
     da.lon.attrs.update(units="degree_east", standard_name="longitude")
     da.elevation.attrs.update(units="m", standard_name="height")
     da["station_id"] = da["station_id"].astype(str)
@@ -130,7 +131,7 @@ def read_stations(dbfile):
     da["station_type"] = da["station_type"].astype(str)
     da.station_opening.attrs.update(description="Date of station creation.")
     da.station_closing.attrs.update(description="Date of station closure.")
-    return da.isel(station=~da.indexes['station'].duplicated())
+    return da.isel(station=~da.indexes["station"].duplicated())
 
 
 def read_definitions(dbfile):
@@ -140,20 +141,22 @@ def read_definitions(dbfile):
         encoding="utf-8",
         check=True,
     )
-    definitions = pd.read_csv(
-        StringIO(res.stdout)
-    ).rename(
-        columns={
-            "GROUPE": "melcc_category",
-            "NOM_DD": "vcode",
-            "PRIORITE": "priority",
-            "UNITE": "units",
-            "Description": "description_fr"
-        }
-    ).drop(columns=['IND_TRANSFO'])  # TODO: Was ist das?
+    definitions = (
+        pd.read_csv(StringIO(res.stdout))
+        .rename(
+            columns={
+                "GROUPE": "melcc_category",
+                "NOM_DD": "vcode",
+                "PRIORITE": "priority",
+                "UNITE": "units",
+                "Description": "description_fr",
+            }
+        )
+        .drop(columns=["IND_TRANSFO"])
+    )  # TODO: Was ist das?
     definitions["vcode"] = definitions.vcode.str.lower()
-    definitions['units'] = definitions.units.fillna('').replace('mm+cm', 'mm')
-    definitions['priority'] = definitions.priority.astype(np.int32)
+    definitions["units"] = definitions.units.fillna("").replace("mm+cm", "mm")
+    definitions["priority"] = definitions.priority.astype(np.int32)
     return definitions.set_index("vcode")
 
 
@@ -162,7 +165,7 @@ def convert_mdb(
     stations: xr.Dataset,
     definitions: xr.Dataset,
     output: str | Path,
-    overwrite: bool = True
+    overwrite: bool = True,
 ):
     outs = {}
     tables = list_tables(database)
@@ -181,7 +184,7 @@ def convert_mdb(
             outs[('_'.join(file.stem.split('_')[2:-1]), code)] = file
             continue
         raw = read_table(database, table)
-        vv = meta.pop('var_name')
+        vv = meta.pop("var_name")
 
         raw = raw.rename({table: vv, f"{table}_flag": f"{vv}_flag"})
         raw.attrs['frequency'] = meta.pop('freq')
@@ -196,7 +199,7 @@ def convert_mdb(
         raw[f"{vv}_flag"] = raw[f"{vv}_flag"].fillna(0).astype(np.int32)
         raw[f"{vv}_flag"].attrs.update(
             standard_name="status_flag",
-            flag_values=np.array([0, 1, 3, 5, 7], dtype='int32'),
+            flag_values=np.array([0, 1, 3, 5, 7], dtype="int32"),
             flag_meanings="nodata good estimated forced trace",
             flag_meanings_fr="sansdonnée correcte estimée forcée trace",
             long_name=f"Quality flag for {code}."
@@ -208,7 +211,9 @@ def convert_mdb(
             logger.error(
                 f"The following station number were not found in the station list : {sorted(list(extra_stations))}"
             )
-            raw = xr.merge([raw, xr.Dataset().assign(station=stations)]).sel(station=raw.station)
+            raw = xr.merge([raw, xr.Dataset().assign(station=stations)]).sel(
+                station=raw.station
+            )
         else:
             raw = raw.assign_coords(station=stat)
 
@@ -227,9 +232,9 @@ def convert_melcc_obs(
     metafile: str | Path,
     folder: str | Path,
     output: str | Path | None = None,
-    overwrite: bool = True
+    overwrite: bool = True,
 ):
-    output = Path(output or '.')
+    output = Path(output or ".")
 
     stations = read_stations(metafile)
     definitions = read_definitions(metafile)
@@ -242,48 +247,54 @@ def convert_melcc_obs(
     return outs
 
 
-def concat(files: Sequence[str | Path], output_folder: str | Path, overwrite: bool = True):
+def concat(
+    files: Sequence[str | Path], output_folder: str | Path, overwrite: bool = True
+):
     logger.info(f"Concatening variables from {len(files)} files.")
     vname, _, melcc, freq, _ = Path(files[0]).stem.split('_')
     # Magic one-liner to parse all date_start and date_end entries from the file names.
     dates_start, dates_end = list(zip(*[map(int, Path(file).stem.split('_')[-1].split('-')) for file in files]))
     outpath = Path(output_folder) / f"{vname}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
     if outpath.is_file() and not overwrite:
-        logger.info(f'Already done in {outpath}. Skipping.')
+        logger.info(f"Already done in {outpath}. Skipping.")
         return outpath
 
     dss = {}
     for i, file in enumerate(files):
-        ds = xr.open_dataset(file, chunks={'time': 1000})
+        ds = xr.open_dataset(file, chunks={"time": 1000})
         for crd in ds.coords.values():
             crd.load()
         if i == 0:
-            vv = [v for v in ds.data_vars if not v.endswith('_flag')][0]
+            vv = [v for v in ds.data_vars if not v.endswith("_flag")][0]
         if list(sorted(ds.data_vars.keys())) != [vv, f"{vv}_flag"]:
-            raise ValueError(f"Unexpected variables in {file}. Got {ds.data_vars.keys()}, expected {vv} and {vv}_flag.")
+            raise ValueError(
+                f"Unexpected variables in {file}. Got {ds.data_vars.keys()}, expected {vv} and {vv}_flag."
+            )
 
-        priority = ds[vv].attrs['priority']
+        priority = ds[vv].attrs["priority"]
         if priority in dss:
-            raise ValueError(f'Variable {vv} of {file} has the same priority ({priority}) than another file of the same file list.')
+            raise ValueError(
+                f"Variable {vv} of {file} has the same priority ({priority}) than another file of the same file list."
+            )
         dss[priority] = ds
 
     ds_all = xr.merge([ds.coords.to_dataset() for ds in dss.values()], combine_attrs='drop_conflicts')
     for var in [vv, f"{vv}_flag"]:
         ds_all[var] = xr.concat(
             [ds[var] for ds in dss.values()],
-            dim=xr.DataArray(list(dss.keys()), dims=('priority',), name='priority'),
-            coords='all',
-            combine_attrs='drop_conflicts',
+            dim=xr.DataArray(list(dss.keys()), dims=("priority",), name="priority"),
+            coords="all",
+            combine_attrs="drop_conflicts",
         )
-    ds_all = ds_all.sortby('priority')
+    ds_all = ds_all.sortby("priority")
     ds_all[f"{vv}_flag"] = ds_all[f"{vv}_flag"].where(ds_all[vv].notnull())
 
-    ds_merged = ds_all.ffill('priority').isel(priority=-1, drop=True)
+    ds_merged = ds_all.ffill("priority").isel(priority=-1, drop=True)
     ds_merged[f"{vv}_flag"] = ds_merged[f"{vv}_flag"].fillna(0).astype(np.int8)
-    ds_merged.attrs['history'] = update_history(
+    ds_merged.attrs["history"] = update_history(
         f"Different instruments merged according to their priority - miranda {__version__}",
         new_name=vv,
-        **{f"priority={i}": ds for i, ds in dss.items()}
+        **{f"priority={i}": ds for i, ds in dss.items()},
     )
     instruments = [dss[p][vv].melcc_code for p in sorted(dss)]
     ds_merged[vv].attrs['melcc_code'] = "Merged sources in ascending priority : " + ' ,'.join(map(str, instruments))
@@ -320,7 +331,8 @@ if __name__ == "__main__":
         "-s", "--skip-existing", help="Do not overwrite existing files.", action="store_true"
     )
     argparser.add_argument(
-        "metafile", help="Path to the MDB file containing the station and variable information."
+        "metafile",
+        help="Path to the MDB file containing the station and variable information.",
     )
     argparser.add_argument(
         "folder", help="Path to a folder including many *.mdb files to convert."
