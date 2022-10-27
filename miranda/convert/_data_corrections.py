@@ -56,14 +56,14 @@ def _get_var_entry_key(meta, var, key, project):
 def _iter_vars_key(ds, meta, key, project):
     for vv in set(ds.data_vars).intersection(meta['variable_entry']):
         val = _get_var_entry_key(meta, vv, key, project)
-        if val is not None:
-            yield vv, val
+        yield vv, val
 
 
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
     for var, val in _iter_vars_key(d, m, key, p):
-        d[var].attrs["units"] = val
+        if val is not None:
+            d[var].attrs["units"] = val
 
     valtime = _get_var_entry_key(m, 'time', key, p)
     if valtime is not None:
@@ -133,7 +133,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             converted = True
         elif trans is not None:
             raise NotImplementedError(f"Unknown transformation: {trans}")
-        if not converted:
+        if not converted:  # trans is None
             d_out[vv] = d[vv]
     return d_out
 
@@ -143,17 +143,17 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     for vv, offs in _iter_vars_key(d, m, key, p):
         converted = False
-        try:
-            offset, offset_meaning = get_time_frequency(d)
-        except TypeError:
-            logging.error(
-                f"Unable to parse the time frequency for variable `{vv}`. "
-                "Verify data integrity before retrying."
-            )
-            raise
-
         if offs:
             # Offset time by value of one time-step
+            try:
+                offset, offset_meaning = get_time_frequency(d)
+            except TypeError:
+                logging.error(
+                    f"Unable to parse the time frequency for variable `{vv}`. "
+                    "Verify data integrity before retrying."
+                )
+                raise
+
             logging.info(
                 f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
             )
@@ -164,12 +164,15 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 )
                 d_out[out.name] = out
                 converted = True
-        else:
+        elif offs is False:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
-        if not converted:
+        if not converted:  # offs is None
             d_out[vv] = d[vv]
+            logging.info(
+                f"No time offsetting needed for `{vv}` in `{p}` (Absent from metadata)."
+            )
     return d_out
 
 
@@ -186,12 +189,15 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 out = d[vv]
                 d_out[out.name] = out.__invert__()
                 converted = True
-        else:
+        elif invsign is False:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
-        if not converted:
+        if not converted:  # invsign is None
             d_out[vv] = d[vv]
+            logging.info(
+                f"No sign inversion needed for `{vv}` in `{p}` (Absent from metadata)."
+            )
     return d_out
 
 
@@ -202,7 +208,8 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
             d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
     for vv, uni in _iter_vars_key(d, m, 'units', None):
-        d[vv] = units.convert_units_to(d[vv], uni)
+        if uni is not None:
+            d[vv] = units.convert_units_to(d[vv], uni)
 
     return d
 
@@ -277,9 +284,10 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     # Rename data variables
     for vv, cf_name in _iter_vars_key(d, m, "_cf_variable_name", None):
-        d = d.rename({v: cf_name})
-        d[cf_name].attrs.update(dict(original_variable=v))
-        del d[cf_name].attrs["_cf_variable_name"]
+        if cf_name is not None:
+            d = d.rename({vv: cf_name})
+            d[cf_name].attrs.update(dict(original_variable=v))
+            del d[cf_name].attrs["_cf_variable_name"]
 
     return d
 

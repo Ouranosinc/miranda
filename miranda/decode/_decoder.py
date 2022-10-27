@@ -224,7 +224,6 @@ class Decoder:
             "lev",
             "rotated_pole",
         )
-        suggested_variable = file.name.split("_")[0]
         try:
 
             if file.is_file() and file.suffix in [".nc", ".nc4"]:
@@ -234,13 +233,13 @@ class Decoder:
                             k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()
                         }
                 for k in dimsvar_dict.keys():
-                    if not str(k).startswith(coords) and suggested_variable == k:
+                    if not str(k).startswith(coords) and k in file.stem:
                         return str(k)
 
             elif file.is_dir() and file.suffix == ".zarr":
                 with zarr.open(str(file), mode="r") as ds:
                     for k in ds.array_keys():
-                        if not str(k).startswith(coords) and suggested_variable == k:
+                        if not str(k).startswith(coords) and k in file.stem:
                             return str(k)
             else:
                 raise NotImplementedError()
@@ -505,8 +504,12 @@ class Decoder:
         file_format = data.get("output_format")
         if file_format:
             facets["format"] = file_format
-        else:
+        elif 'format' in data:
             facets["format"] = data["format"]
+        elif Path(file).suffix in ['.nc', '.nc4']:
+            facets["format"] = "nc"
+        elif Path(file).suffix in ['.zarr']:
+            facets["format"] = "zarr"
         facets["variable"] = variable
 
         facets.update(cls._decode_version(data=data, file=file))
