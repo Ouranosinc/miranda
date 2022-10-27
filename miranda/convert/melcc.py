@@ -118,7 +118,7 @@ def read_stations(dbfile):
             "CODE_TYPE_POSTE": "station_type",
             "No_Seq_Station": "station",
         },
-        errors='ignore'
+        errors="ignore",
     )
     ds = df.set_index("station").to_xarray()
     da = ds.set_coords(ds.data_vars.keys()).station
@@ -170,28 +170,30 @@ def convert_mdb(
     outs = {}
     tables = list_tables(database)
     for table in tables:
-        if table.startswith("gdb") or table.startswith('~'):
+        if table.startswith("gdb") or table.startswith("~"):
             continue
         logger.info(f"Parsing {database}:{table}.")
         meta = parse_var_code(table)
-        code = meta['melcc_code']
+        code = meta["melcc_code"]
         existing = list(output.glob(f"MELCC_{meta['freq']}_*_{code}.nc"))
         if existing and not overwrite:
             if len(existing) > 1:
-                raise ValueError(f'Found more than one existing file for table {code}!')
+                raise ValueError(f"Found more than one existing file for table {code}!")
             file = existing[0]
             logger.info(f"File already exists {file}, skipping.")
-            outs[('_'.join(file.stem.split('_')[2:-1]), code)] = file
+            outs[("_".join(file.stem.split("_")[2:-1]), code)] = file
             continue
         raw = read_table(database, table)
         vv = meta.pop("var_name")
 
         raw = raw.rename({table: vv, f"{table}_flag": f"{vv}_flag"})
-        raw.attrs['frequency'] = meta.pop('freq')
+        raw.attrs["frequency"] = meta.pop("freq")
         raw[vv].attrs.update(**meta)
 
         if table.lower() not in definitions.index:
-            warnings.warn(f"The {code} variable wasn't defined in the definition table.")
+            warnings.warn(
+                f"The {code} variable wasn't defined in the definition table."
+            )
         else:
             dd = definitions.loc[table]
             raw[vv].attrs.update(**dd)
@@ -202,7 +204,7 @@ def convert_mdb(
             flag_values=np.array([0, 1, 3, 5, 7], dtype="int32"),
             flag_meanings="nodata good estimated forced trace",
             flag_meanings_fr="sansdonnée correcte estimée forcée trace",
-            long_name=f"Quality flag for {code}."
+            long_name=f"Quality flag for {code}.",
         )
         try:
             stat = stations.sel(station=raw.station)
@@ -218,12 +220,16 @@ def convert_mdb(
             raw = raw.assign_coords(station=stat)
 
         ds = variable_conversion(raw, "melcc-obs")
-        new_var_name = list(filter(lambda k: not k.endswith('_flag'), ds.data_vars.keys()))[0]
-        ds.attrs["history"] = (
-            f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{table} to netCDF."
+        new_var_name = list(
+            filter(lambda k: not k.endswith("_flag"), ds.data_vars.keys())
+        )[0]
+        ds.attrs[
+            "history"
+        ] = f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{table} to netCDF."
+        date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
+        outs[(new_var_name, code)] = (
+            output / f"{new_var_name}_{code}_MELCC_{raw.attrs['frequency']}_{date}.nc"
         )
-        date = '-'.join(ds.indexes['time'][[0, -1]].strftime('%Y%m'))
-        outs[(new_var_name, code)] = output / f"{new_var_name}_{code}_MELCC_{raw.attrs['frequency']}_{date}.nc"
         ds.to_netcdf(outs[(new_var_name, code)])
     return outs
 
@@ -251,10 +257,15 @@ def concat(
     files: Sequence[str | Path], output_folder: str | Path, overwrite: bool = True
 ):
     logger.info(f"Concatening variables from {len(files)} files.")
-    vname, _, melcc, freq, _ = Path(files[0]).stem.split('_')
+    vname, _, melcc, freq, _ = Path(files[0]).stem.split("_")
     # Magic one-liner to parse all date_start and date_end entries from the file names.
-    dates_start, dates_end = list(zip(*[map(int, Path(file).stem.split('_')[-1].split('-')) for file in files]))
-    outpath = Path(output_folder) / f"{vname}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
+    dates_start, dates_end = list(
+        zip(*[map(int, Path(file).stem.split("_")[-1].split("-")) for file in files])
+    )
+    outpath = (
+        Path(output_folder)
+        / f"{vname}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
+    )
     if outpath.is_file() and not overwrite:
         logger.info(f"Already done in {outpath}. Skipping.")
         return outpath
@@ -278,7 +289,9 @@ def concat(
             )
         dss[priority] = ds
 
-    ds_all = xr.merge([ds.coords.to_dataset() for ds in dss.values()], combine_attrs='drop_conflicts')
+    ds_all = xr.merge(
+        [ds.coords.to_dataset() for ds in dss.values()], combine_attrs="drop_conflicts"
+    )
     for var in [vv, f"{vv}_flag"]:
         ds_all[var] = xr.concat(
             [ds[var] for ds in dss.values()],
@@ -297,7 +310,9 @@ def concat(
         **{f"priority={i}": ds for i, ds in dss.items()},
     )
     instruments = [dss[p][vv].melcc_code for p in sorted(dss)]
-    ds_merged[vv].attrs['melcc_code'] = "Merged sources in ascending priority : " + ' ,'.join(map(str, instruments))
+    ds_merged[vv].attrs[
+        "melcc_code"
+    ] = "Merged sources in ascending priority : " + " ,".join(map(str, instruments))
 
     ds_merged.attrs.update(
         source="info-climat-merged",
@@ -325,10 +340,14 @@ if __name__ == "__main__":
         "-o", "--output", help="Output folder where to put the netCDFs.", default="."
     )
     argparser.add_argument(
-        "--raw-output", help="Output folder where to put the non-merged netCDFs.",
+        "--raw-output",
+        help="Output folder where to put the non-merged netCDFs.",
     )
     argparser.add_argument(
-        "-s", "--skip-existing", help="Do not overwrite existing files.", action="store_true"
+        "-s",
+        "--skip-existing",
+        help="Do not overwrite existing files.",
+        action="store_true",
     )
     argparser.add_argument(
         "metafile",
@@ -342,7 +361,12 @@ if __name__ == "__main__":
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    outs = convert_melcc_obs(args.metafile, args.folder, output=args.raw_output or args.output, overwrite=not args.skip_existing)
+    outs = convert_melcc_obs(
+        args.metafile,
+        args.folder,
+        output=args.raw_output or args.output,
+        overwrite=not args.skip_existing,
+    )
 
     if args.concat:
         new_vars = {}

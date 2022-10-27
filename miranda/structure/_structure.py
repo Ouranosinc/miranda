@@ -191,7 +191,7 @@ def parse_schema(
     facets : dict
     schema : str or os.PathLike or dict
     top_folder : str
-    
+
     Returns
     -------
     list
@@ -227,14 +227,16 @@ def parse_schema(
                 if {"option", "is_true"}.issubset(level.keys()):
                     option = level["option"]
 
-                    if option not in facet_dict and 'value' in level:
-                        raise ValueError(f"Necessary facet not found for schema: `{option}`.")
+                    if option not in facet_dict and "value" in level:
+                        raise ValueError(
+                            f"Necessary facet not found for schema: `{option}`."
+                        )
 
                     is_true = level.get("is_true")
                     else_value = level.get("else")
                     facet = facet_dict.get(option)
 
-                    if 'value' not in level:
+                    if "value" not in level:
                         # The absence of "value" means that "is_true / else" refer to the presence or not of "option" in the facets
                         # We also treat falsy values (empty string, None) as the absence of "option" from the facets
                         if not bool(facet) and else_value:

@@ -205,7 +205,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
         if m["variable_entry"]["time"].get("units"):
             d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
-    for vv, uni in _iter_vars_key(d, m, 'units', None):
+    for vv, uni in _iter_vars_key(d, m, "units", None):
         if uni is not None:
             d[vv] = units.convert_units_to(d[vv], uni)
 

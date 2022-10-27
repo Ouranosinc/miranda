@@ -504,11 +504,11 @@ class Decoder:
         file_format = data.get("output_format")
         if file_format:
             facets["format"] = file_format
-        elif 'format' in data:
+        elif "format" in data:
             facets["format"] = data["format"]
-        elif Path(file).suffix in ['.nc', '.nc4']:
+        elif Path(file).suffix in [".nc", ".nc4"]:
             facets["format"] = "nc"
-        elif Path(file).suffix in ['.zarr']:
+        elif Path(file).suffix in [".zarr"]:
             facets["format"] = "zarr"
         facets["variable"] = variable
 
