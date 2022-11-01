@@ -15,7 +15,11 @@ from xclim.core.formatting import update_history
 from xclim.core.units import convert_units_to, pint_multiply, str2pint
 
 from miranda import __version__
-from miranda.convert._data_corrections import variable_conversion, metadata_conversion, load_json_data_mappings
+from miranda.convert._data_corrections import (
+    load_json_data_mappings,
+    metadata_conversion,
+    variable_conversion,
+)
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -188,7 +192,7 @@ def convert_mdb(
         raw = read_table(database, table)
         if np.prod(list(raw.dims.values())) == 0:
             # If any dimension is 0.
-            logger.warning('The table is empty.')
+            logger.warning("The table is empty.")
             continue
         vv = meta.pop("var_name")
 
@@ -263,7 +267,7 @@ def concat(
     files: Sequence[str | Path], output_folder: str | Path, overwrite: bool = True
 ):
     *vv, _, melcc, freq, _ = Path(files[0]).stem.split("_")
-    vv = '_'.join(vv)
+    vv = "_".join(vv)
     logger.info(f"Concatening variables from {len(files)} files ({vv}).")
     # Magic one-liner to parse all date_start and date_end entries from the file names.
     dates_start, dates_end = list(
@@ -460,14 +464,16 @@ def convert_snow_table(file: str | Path, output: str | Path):
             **flag_attrs,
         )
 
-    ds.attrs.update(frequency='2sem')
-    meta = load_json_data_mappings('melcc-snow')
-    ds = metadata_conversion(ds, 'melcc-snow', meta)
+    ds.attrs.update(frequency="2sem")
+    meta = load_json_data_mappings("melcc-snow")
+    ds = metadata_conversion(ds, "melcc-snow", meta)
     date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
     # Save
     logging.info("Saving to files.")
-    for vv in ['sd', 'snd', 'snw']:
-        ds[[vv, f"{vv}_flag"]].to_netcdf(output / f"{vv}_{ds[vv].melcc_code}_MELCC_2sem_{date}.nc")
+    for vv in ["sd", "snd", "snw"]:
+        ds[[vv, f"{vv}_flag"]].to_netcdf(
+            output / f"{vv}_{ds[vv].melcc_code}_MELCC_2sem_{date}.nc"
+        )
 
 
 if __name__ == "__main__":

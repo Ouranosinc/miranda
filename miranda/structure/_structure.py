@@ -213,7 +213,7 @@ def parse_schema(
                     if facet_dict[option] == value:
                         return {"branch": value, "structure": options["structure"]}
                     continue
-        raise ValueError('Couldn\nt parse top level.')
+        raise ValueError("Couldn\nt parse top level.")
 
     def _parse_structure(branch_dict: dict, facet_dict: dict) -> list:
 

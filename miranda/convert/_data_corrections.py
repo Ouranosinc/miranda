@@ -233,7 +233,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         del m["Header"]["_miranda_version"]
 
     # Conditional handling of global attributes based on project name
-    for field in [f for f in m['Header'] if f.startswith('_')]:
+    for field in [f for f in m["Header"] if f.startswith("_")]:
         if p in m["Header"][field]:
             m["Header"][field[1:]] = m["Header"][field][p]
         elif field[1:] in m["Header"]:
