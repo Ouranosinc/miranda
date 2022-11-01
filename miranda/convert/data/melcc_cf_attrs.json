@@ -4,15 +4,18 @@
     "cmor_version": "3.5",
     "contact": "info-climat@environnement.gouv.qc.ca",
     "data_specs_version": "00.00.01",
-    "institution": "MELCC",
+    "institution": "GouvQc",
+    "organisation": "MELCC",
+    "source": "info-climat",
     "license": "https://projets.ouranos.ca/attachments/download/3682/Conditions%20utilisation%20donn%C3%A9es%20m%C3%A9t%C3%A9o%20MDDEELCC%20recherche%20universitaire%20(1).pdf",
     "license_type": "private",
-    "product": "station-obs",
+    "type": "station-obs",
     "realm": "atmos",
     "table_date": "19 October 2022",
     "table_id": "MELCC",
     "title": "Station observations of the MELCC",
-    "title_fr": "Observations aux stations du MELCC"
+    "title_fr": "Observations aux stations du MELCC",
+    "version": "v2021"
   },
   "variable_entry": {
     "GI": {
@@ -372,7 +375,7 @@
       "standard_name": "wind_from_direction"
     },
     "VDi_flag": {
-      "_cf_variable_name": "sfcWindfromdiri_flag"
+      "_cf_variable_name": "sfcWindfromdir_i_flag"
     },
     "VDm": {
       "_cf_variable_name": "sfcWindfromdir",
@@ -400,7 +403,7 @@
       "long_name_fr": "Écart-type de la direction du vent sur les deux dernières minutes"
     },
     "VDsi_flag": {
-      "_cf_variable_name": "sfcWindfromdir_sigmai_flag"
+      "_cf_variable_name": "sfcWindfromdir_sigma_i_flag"
     },
     "VE": {
       "_cf_variable_name": "freezing_rain_mask",

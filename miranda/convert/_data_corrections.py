@@ -38,6 +38,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
     elif project.startswith("melcc"):
         metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
+    elif project.startswith("ec"):
+        metadata_definition = json.load(open(data_folder / "ec_cf_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -76,9 +78,8 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_transformation"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+    converted = {}
     for vv, trans in _iter_vars_key(d, m, key, p):
-        converted = False
-
         if trans == "deaccumulate":
             # Time-step accumulated total to time-based flux (de-accumulation)
             try:
@@ -98,7 +99,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 )
                 out = units.amount2rate(out)
             d_out[out.name] = out
-            converted = True
+            converted[vv] = out.name
         elif trans == "amount2rate":
             # frequency-based totals to time-based flux
             logging.info(
@@ -109,7 +110,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 out_units=m["variable_entry"][vv]["units"],
             )
             d_out[out.name] = out
-            converted = True
+            converted[vv] = out.name
         elif trans is not None and trans.startswith("op "):
             op = trans[3]
             value = trans[4:].strip()
@@ -132,10 +133,13 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                     raise NotImplementedError(
                         f"Op transform doesn't implement the «{op}» operator."
                     )
-            converted = True
+            converted[vv] = out.name
         elif trans is not None:
             raise NotImplementedError(f"Unknown transformation: {trans}")
-        if not converted:  # trans is None
+
+    # Copy unconverted variables
+    for vv in d.data_vars:
+        if vv not in converted:
             d_out[vv] = d[vv]
     return d_out
 
@@ -143,8 +147,8 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_offset_time"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+    converted = {}
     for vv, offs in _iter_vars_key(d, m, key, p):
-        converted = False
         if offs:
             # Offset time by value of one time-step
             try:
@@ -163,39 +167,38 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 out = d[vv]
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                 d_out[out.name] = out
-                converted = True
+                converted[vv] = out.name
         elif offs is False:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
-        if not converted:  # offs is None
+    # Copy unconverted variables
+    for vv in d.data_vars:
+        if vv not in converted:
             d_out[vv] = d[vv]
-            logging.info(
-                f"No time offsetting needed for `{vv}` in `{p}` (Absent from metadata)."
-            )
     return d_out
 
 
 def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+    converted = {}
     for vv, invsign in _iter_vars_key(d, m, key, p):
-        converted = False
         if invsign:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = out.__invert__()
-                converted = True
+                converted[vv] = out.name
         elif invsign is False:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
-        if not converted:  # invsign is None
+
+    # Copy unconverted variables
+    for vv in d.data_vars:
+        if vv not in converted:
             d_out[vv] = d[vv]
-            logging.info(
-                f"No sign inversion needed for `{vv}` in `{p}` (Absent from metadata)."
-            )
     return d_out
 
 
@@ -230,16 +233,14 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         del m["Header"]["_miranda_version"]
 
     # Conditional handling of global attributes based on project name
-    cond_header = ["source", "doi"]
-    for field in cond_header:
-        if f"_{field}" in m["Header"].keys():
-            if p in m["Header"][f"_{field}"].keys():
-                m["Header"][field] = m["Header"][f"_{field}"][p]
-            elif field in m["Header"].keys():
-                pass
-            else:
-                raise AttributeError(f"`{field}` not found for project dataset.")
-            del m["Header"][f"_{field}"]
+    for field in [f for f in m['Header'] if f.startswith('_')]:
+        if p in m["Header"][field]:
+            m["Header"][field[1:]] = m["Header"][field][p]
+        elif field[1:] in m["Header"]:
+            pass
+        else:
+            raise AttributeError(f"`{field[1:]}` not found for project dataset.")
+        del m["Header"][field]
 
     # Add global attributes
     d.attrs.update(m["Header"])
@@ -356,7 +357,6 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
-
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
