@@ -2,6 +2,7 @@
 import os
 import sys
 
+from packaging import version
 from setuptools import find_packages, setup
 
 NAME = "miranda"
@@ -21,6 +22,8 @@ if sys.argv[-1] == "publish":
 requirements = list()
 with open("requirements.txt") as req:
     for dependency in req.readlines():
+        if dependency == "pint" and version.parse(sys.version) < version.parse("3.8"):
+            dependency = "pint<0.20"
         requirements.append(dependency)
 
 full_requirements = list()

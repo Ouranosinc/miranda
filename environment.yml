@@ -2,6 +2,7 @@ name: miranda
 channels:
   - conda-forge
 dependencies:
+  - python >=3.7
   - autopep8
   - black
   - bump2version
@@ -24,6 +25,7 @@ dependencies:
   - numcodecs
   - numpy
   - openpyxl
+  - packaging
   - pandas
   - paramiko >=2.6.0
   - pint
@@ -31,7 +33,6 @@ dependencies:
   - pydantic
   - pyproj
   - pytest
-  - python >=3.7
   - pyupgrade
   - pyyaml
   - rasterio
@@ -43,5 +44,5 @@ dependencies:
   - shapely
   - tox
   - xarray
-  - xclim >=0.35
+  - xclim >=0.33.0
   - zarr

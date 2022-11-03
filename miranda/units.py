@@ -3,7 +3,6 @@ import re
 import pandas as pd
 import pint
 import xarray as xr
-from pint import Unit
 from xclim.core import calendar
 
 KiB = int(pow(2, 10))
@@ -49,7 +48,7 @@ u.add_context(hq)
 u.enable_contexts(hq)
 
 
-def units2pint(value: str) -> Unit:
+def units2pint(value: str) -> pint.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
