@@ -213,6 +213,7 @@ def parse_schema(
                     if facet_dict[option] == value:
                         return {"branch": value, "structure": options["structure"]}
                     continue
+        raise ValueError("Couldn\nt parse top level.")
 
     def _parse_structure(branch_dict: dict, facet_dict: dict) -> list:
 
@@ -226,21 +227,35 @@ def parse_schema(
             elif isinstance(level, dict):
                 if {"option", "is_true"}.issubset(level.keys()):
                     option = level["option"]
-                    if option not in facet_dict.keys():
+
+                    if option not in facet_dict and "value" in level:
                         raise ValueError(
                             f"Necessary facet not found for schema: `{option}`."
                         )
 
-                    value = level.get("value")
                     is_true = level.get("is_true")
                     else_value = level.get("else")
+                    facet = facet_dict.get(option)
 
-                    if facet_dict[option] == value:
-                        folder_tree.append(is_true)
-                    elif else_value:
-                        folder_tree.append(else_value)
+                    if "value" not in level:
+                        # The absence of "value" means that "is_true / else" refer to the presence or not of "option" in the facets
+                        # We also treat falsy values (empty string, None) as the absence of "option" from the facets
+                        if not bool(facet) and else_value:
+                            folder_tree.append(else_value)
+                        elif bool(facet):
+                            folder_tree.append(is_true)
+                        else:
+                            # "option" absent from the facets and no "else": skip.
+                            pass
                     else:
-                        pass
+                        value = level["value"]
+                        if facet_dict[option] == value:
+                            folder_tree.append(is_true)
+                        elif else_value:
+                            folder_tree.append(else_value)
+                        else:
+                            # "option" not equal to "value", but no "else" : skip.
+                            pass
             else:
                 raise ValueError("Supplied schema is invalid.")
         return folder_tree

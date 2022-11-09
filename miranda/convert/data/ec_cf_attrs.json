@@ -1,0 +1,36 @@
+{
+  "Header": {
+    "Conventions": "CF-1.9",
+    "_contact": {
+      "ec-canswe": "vincent.vionnet@canada.ca"
+    },
+    "_doi": {
+      "ec-canswe": "10.5281/zenodo.6638382"
+    },
+    "_license": {
+      "ec-canswe": "https://open.canada.ca/en/open-government-licence-canada"
+    },
+    "_reference": {
+      "ec-canswe": "https://zenodo.org/record/6638382"
+    },
+    "_source": {
+      "ec-canswe": "CanSWE"
+    },
+    "_version": {
+      "ec-canswe": "v4"
+    },
+    "data_specs_version": "00.00.01",
+    "institution": "GouvCan",
+    "license_type": "open",
+    "organisation": "ECCC",
+    "realm": "atmos",
+    "table_date": "28 October 2022",
+    "table_id": "EC",
+    "type": "station-obs"
+  },
+  "variable_entry": {
+    "den": {
+      "_cf_variable_name": "sd"
+    }
+  }
+}

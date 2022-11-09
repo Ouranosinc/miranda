@@ -47,6 +47,16 @@
       "standard_name": "dew_point_temperature",
       "units": "K"
     },
+    "lat": {
+      "_precision": {
+        "era5-land": 4
+      }
+    },
+    "lon": {
+      "_precision": {
+        "era5-land": 4
+      }
+    },
     "msl": {
       "_cf_variable_name": "psl",
       "_corrected_units": {},
