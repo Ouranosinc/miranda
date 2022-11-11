@@ -70,8 +70,12 @@
     },
     "pev": {
       "_cf_variable_name": "evspsblpot",
-      "_corrected_units": {},
-      "_invert_sign": {},
+      "_corrected_units": false,
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
