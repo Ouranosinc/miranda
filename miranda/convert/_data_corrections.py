@@ -47,11 +47,11 @@ def load_json_data_mappings(project: str) -> dict:
 
 
 def _get_var_entry_key(meta, var, key, project):
-    varmeta = meta["variable_entry"].get(var, {})
-    if key in varmeta:
-        if isinstance(varmeta[key], dict):
-            return varmeta[key][project]
-        return varmeta[key]
+    var_meta = meta["variable_entry"].get(var, {})
+    if key in var_meta:
+        if isinstance(var_meta[key], dict):
+            return var_meta[key][project]
+        return var_meta[key]
     return None
 
 
@@ -67,9 +67,9 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if val is not None:
             d[var].attrs["units"] = val
 
-    valtime = _get_var_entry_key(m, "time", key, p)
-    if valtime is not None:
-        d["time"].attrs["units"] = valtime
+    val_time = _get_var_entry_key(m, "time", key, p)
+    if val_time is not None:
+        d["time"].attrs["units"] = val_time
 
     return d
 
@@ -133,7 +133,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                     raise NotImplementedError(
                         f"Op transform doesn't implement the «{op}» operator."
                     )
-            converted[vv] = out.name
+            converted[vv] = vv
         elif trans is not None:
             raise NotImplementedError(f"Unknown transformation: {trans}")
 
@@ -172,6 +172,7 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
+
     # Copy unconverted variables
     for vv in d.data_vars:
         if vv not in converted:
@@ -183,14 +184,14 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = {}
-    for vv, invsign in _iter_vars_key(d, m, key, p):
-        if invsign:
+    for vv, inv_sign in _iter_vars_key(d, m, key, p):
+        if inv_sign:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = out.__invert__()
                 converted[vv] = out.name
-        elif invsign is False:
+        elif inv_sign is False:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
@@ -211,82 +212,6 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
     for vv, uni in _iter_vars_key(d, m, "units", None):
         if uni is not None:
             d[vv] = units.convert_units_to(d[vv], uni)
-
-    return d
-
-
-# Add and update existing metadata fields
-def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
-    logging.info("Converting metadata to CF-like conventions.")
-
-    # Static handling of version global attributes
-    miranda_version = m["Header"].get("_miranda_version")
-    if miranda_version:
-        if isinstance(miranda_version, bool):
-            m["Header"]["miranda_version"] = __miranda_version__
-        elif isinstance(miranda_version, dict):
-            if p in miranda_version.keys():
-                m["Header"]["miranda_version"] = __miranda_version__
-        else:
-            logging.warning("`__miranda_version__` not set for project. Not appending.")
-    if "_miranda_version" in m["Header"]:
-        del m["Header"]["_miranda_version"]
-
-    # Conditional handling of global attributes based on project name
-    for field in [f for f in m["Header"] if f.startswith("_")]:
-        if p in m["Header"][field]:
-            m["Header"][field[1:]] = m["Header"][field][p]
-        elif field[1:] in m["Header"]:
-            pass
-        else:
-            raise AttributeError(f"`{field[1:]}` not found for project dataset.")
-        del m["Header"][field]
-
-    # Add global attributes
-    d.attrs.update(m["Header"])
-    d.attrs.update(dict(project=p))
-
-    # Date-based versioning
-    if not d.attrs.get("version"):
-        d.attrs.update(dict(version=f"v{VERSION}"))
-
-    prev_history = d.attrs.get("history", "")
-    history = (
-        f"[{datetime.datetime.now()}] "
-        "Converted variables and modified metadata for CF-like compliance."
-        f" {prev_history}".strip()
-    )
-    d.attrs.update(dict(history=history))
-    descriptions = m["variable_entry"]
-
-    time_correction_fields = ["_corrected_units", "_ensure_correct_time"]
-
-    if "time" in m["variable_entry"].keys():
-        for field in time_correction_fields:
-            if field in m["variable_entry"]["time"].keys():
-                del descriptions["time"][field]
-        d["time"].attrs.update(descriptions["time"])
-
-    # Add variable metadata and remove nonstandard entries
-    data_vars_correction_fields = [
-        "_corrected_units",
-        "_invert_sign",
-        "_offset_time",
-        "_transformation",
-    ]
-    for v in d.data_vars:
-        if v in descriptions.keys():
-            for field in data_vars_correction_fields:
-                if field in descriptions[v].keys():
-                    del descriptions[v][field]
-            d[v].attrs.update(descriptions[v])
-
-    # Rename data variables
-    for vv, cf_name in _iter_vars_key(d, m, "_cf_variable_name", None):
-        if cf_name is not None:
-            d = d.rename({vv: cf_name})
-            d[cf_name].attrs.update(dict(original_variable=v))
-            del d[cf_name].attrs["_cf_variable_name"]
 
     return d
 
@@ -351,6 +276,96 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d[new] = d[new].round(coord_precision)
     if sort_dims:
         d = d.sortby(sort_dims)
+    return d
+
+
+def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+    """Update xarray dataset and data_vars with project-specific metadata fields.
+
+    Parameters
+    ----------
+    d : xarray.Dataset
+        Dataset with metadata to be updated.
+    p : str
+        Dataset project name.
+    m : dict
+        Metadata definition dictionary for project and variable(s).
+
+    Returns
+    -------
+    xarray.Dataset
+    """
+    logging.info("Converting metadata to CF-like conventions.")
+
+    # Static handling of version global attributes
+    miranda_version = m["Header"].get("_miranda_version")
+    if miranda_version:
+        if isinstance(miranda_version, bool):
+            m["Header"]["miranda_version"] = __miranda_version__
+        elif isinstance(miranda_version, dict):
+            if p in miranda_version.keys():
+                m["Header"]["miranda_version"] = __miranda_version__
+        else:
+            logging.warning("`__miranda_version__` not set for project. Not appending.")
+    if "_miranda_version" in m["Header"]:
+        del m["Header"]["_miranda_version"]
+
+    # Conditional handling of global attributes based on project name
+    for field in [f for f in m["Header"] if f.startswith("_")]:
+        if p in m["Header"][field]:
+            m["Header"][field[1:]] = m["Header"][field][p]
+        elif field[1:] in m["Header"]:
+            pass
+        else:
+            raise AttributeError(f"`{field[1:]}` not found for project dataset.")
+        del m["Header"][field]
+
+    # Add global attributes
+    d.attrs.update(m["Header"])
+    d.attrs.update(dict(project=p))
+
+    # Date-based versioning
+    if not d.attrs.get("version"):
+        d.attrs.update(dict(version=f"v{VERSION}"))
+
+    prev_history = d.attrs.get("history", "")
+    history = (
+        f"[{datetime.datetime.now()}] "
+        "Converted variables and modified metadata for CF-like compliance."
+        f" {prev_history}".strip()
+    )
+    d.attrs.update(dict(history=history))
+    descriptions = m["variable_entry"]
+
+    time_correction_fields = ["_corrected_units", "_ensure_correct_time"]
+
+    if "time" in m["variable_entry"].keys():
+        for field in time_correction_fields:
+            if field in m["variable_entry"]["time"].keys():
+                del descriptions["time"][field]
+        d["time"].attrs.update(descriptions["time"])
+
+    # Add variable metadata and remove nonstandard entries
+    data_vars_correction_fields = [
+        "_corrected_units",
+        "_invert_sign",
+        "_offset_time",
+        "_transformation",
+    ]
+    for var in d.data_vars:
+        if var in descriptions.keys():
+            for field in data_vars_correction_fields:
+                if field in descriptions[var].keys():
+                    del descriptions[var][field]
+            d[var].attrs.update(descriptions[var])
+
+    # Rename data variables
+    for orig_var_name, cf_name in _iter_vars_key(d, m, "_cf_variable_name", None):
+        if cf_name is not None:
+            d = d.rename({orig_var_name: cf_name})
+            d[cf_name].attrs.update(dict(original_variable=orig_var_name))
+            del d[cf_name].attrs["_cf_variable_name"]
+
     return d
 
 
