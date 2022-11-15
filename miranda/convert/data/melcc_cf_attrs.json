@@ -8,6 +8,7 @@
     "license": "https://projets.ouranos.ca/attachments/download/3682/Conditions%20utilisation%20donn%C3%A9es%20m%C3%A9t%C3%A9o%20MDDEELCC%20recherche%20universitaire%20(1).pdf",
     "license_type": "private",
     "organisation": "MELCC",
+    "processing_level": "raw",
     "realm": "atmos",
     "source": "info-climat",
     "table_date": "2022-11-15",

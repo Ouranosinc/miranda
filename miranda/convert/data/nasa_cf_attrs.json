@@ -14,6 +14,7 @@
     "_miranda_version": true,
     "license": "https://www.earthdata.nasa.gov/learn/use-data/data-use-policy",
     "license_type": "open",
+    "processing_level": "raw",
     "realm": "atmos",
     "source": "daymet",
     "table_date": "2022-11-15",

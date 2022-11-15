@@ -6,6 +6,7 @@
     "int_missing_value": "-999",
     "license_type": "private",
     "missing_value": "1e20",
+    "processing_level": "raw",
     "realm": "atmos",
     "table_date": "2022-11-15",
     "table_id": "HQ",

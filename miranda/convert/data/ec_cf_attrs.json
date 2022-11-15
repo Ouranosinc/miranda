@@ -24,6 +24,7 @@
     "institution": "GouvCan",
     "license_type": "open",
     "organisation": "ECCC",
+    "processing_level": "raw",
     "realm": "atmos",
     "table_date": "28 October 2022",
     "table_id": "EC",

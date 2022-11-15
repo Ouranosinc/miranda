@@ -1,6 +1,7 @@
 {
   "Header": {
     "_miranda_version": true,
+    "institution": "CMIP",
     "processing_level": "raw",
     "table_date": "2022-10-14",
     "table_id": "CMIP-OURANOS",
