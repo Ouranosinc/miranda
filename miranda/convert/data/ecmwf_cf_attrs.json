@@ -410,9 +410,7 @@
     },
     "time": {
       "_ensure_correct_time": {
-        "era5-land": [
-          "H"
-        ],
+        "era5-land": "H",
         "era5-land-monthly-means": "MS",
         "era5-pressure-levels": "H",
         "era5-pressure-levels-monthly-means": "MS",
