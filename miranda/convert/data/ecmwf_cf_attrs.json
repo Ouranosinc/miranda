@@ -408,6 +408,22 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
+    "time": {
+      "_ensure_correct_time": {
+        "era5-land": [
+          "H"
+        ],
+        "era5-land-monthly-means": "MS",
+        "era5-pressure-levels": "H",
+        "era5-pressure-levels-monthly-means": "MS",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension": "MS",
+        "era5-pressure-levels-preliminary-back-extension": "H",
+        "era5-single-levels": "H",
+        "era5-single-levels-monthly-means": "MS",
+        "era5-single-levels-monthly-means-preliminary-back-extension": "MS",
+        "era5-single-levels-preliminary-back-extension": "H"
+      }
+    },
     "tp": {
       "_cf_variable_name": "pr",
       "_corrected_units": false,

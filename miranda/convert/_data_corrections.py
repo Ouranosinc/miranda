@@ -50,7 +50,7 @@ def _get_var_entry_key(meta, var, key, project):
     var_meta = meta["variable_entry"].get(var, {})
     if key in var_meta:
         if isinstance(var_meta[key], dict):
-            return var_meta[key][project]
+            return var_meta[key].get(project)
         return var_meta[key]
     return None
 
@@ -64,11 +64,11 @@ def _iter_vars_key(ds, meta, key, project):
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
     for var, val in _iter_vars_key(d, m, key, p):
-        if val is not None:
+        if val:
             d[var].attrs["units"] = val
 
     val_time = _get_var_entry_key(m, "time", key, p)
-    if val_time is not None:
+    if val_time:
         d["time"].attrs["units"] = val_time
 
     return d
@@ -80,63 +80,68 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = {}
     for vv, trans in _iter_vars_key(d, m, key, p):
-        if trans == "deaccumulate":
-            # Time-step accumulated total to time-based flux (de-accumulation)
-            try:
-                offset, offset_meaning = get_time_frequency(d)
-            except TypeError:
-                logging.error(
-                    f"Unable to parse the time frequency for variable `{vv}`. "
-                    "Verify data integrity before retrying."
-                )
-                raise
-            logging.info(f"De-accumulating units for variable `{vv}`.")
-            with xr.set_options(keep_attrs=True):
-                out = d[vv].diff(dim="time")
-                out = d[vv].where(
-                    getattr(d[vv].time.dt, offset_meaning) == offset[0],
-                    out.broadcast_like(d[vv]),
-                )
-                out = units.amount2rate(out)
-            d_out[out.name] = out
-            converted[vv] = out.name
-        elif trans == "amount2rate":
-            # frequency-based totals to time-based flux
-            logging.info(
-                f"Performing amount-to-rate units conversion for variable `{vv}`."
-            )
-            out = units.amount2rate(
-                d[vv],
-                out_units=m["variable_entry"][vv]["units"],
-            )
-            d_out[out.name] = out
-            converted[vv] = out.name
-        elif trans is not None and trans.startswith("op "):
-            op = trans[3]
-            value = trans[4:].strip()
-            if value.startswith("attrs"):
-                value = units.str2pint(d[vv].attrs[value[6:]])
-            else:
-                value = units.str2pint(value)
-            with xr.set_options(keep_attrs=True):
-                if op == "+":
-                    value = units.convert_units_to(value, d[vv])
-                    d_out[vv] = d[vv] + value
-                elif op == "-":
-                    value = units.convert_units_to(value, d[vv])
-                    d_out[vv] = d[vv] - value
-                elif op == "*":
-                    d_out[vv] = units.pint_multiply(d[vv], value)
-                elif op == "/":
-                    d_out[vv] = units.pint_multiply(d[vv], 1 / value)
-                else:
-                    raise NotImplementedError(
-                        f"Op transform doesn't implement the «{op}» operator."
+        if trans:
+            if trans == "deaccumulate":
+                # Time-step accumulated total to time-based flux (de-accumulation)
+                try:
+                    offset, offset_meaning = get_time_frequency(d)
+                except TypeError:
+                    logging.error(
+                        f"Unable to parse the time frequency for variable `{vv}`. "
+                        "Verify data integrity before retrying."
                     )
-            converted[vv] = vv
-        elif trans is not None:
-            raise NotImplementedError(f"Unknown transformation: {trans}")
-
+                    raise
+                logging.info(f"De-accumulating units for variable `{vv}`.")
+                with xr.set_options(keep_attrs=True):
+                    out = d[vv].diff(dim="time")
+                    out = d[vv].where(
+                        getattr(d[vv].time.dt, offset_meaning) == offset[0],
+                        out.broadcast_like(d[vv]),
+                    )
+                    out = units.amount2rate(out)
+                d_out[out.name] = out
+                converted[vv] = out.name
+            elif trans == "amount2rate":
+                # frequency-based totals to time-based flux
+                logging.info(
+                    f"Performing amount-to-rate units conversion for variable `{vv}`."
+                )
+                out = units.amount2rate(
+                    d[vv],
+                    out_units=m["variable_entry"][vv]["units"],
+                )
+                d_out[out.name] = out
+                converted[vv] = out.name
+            elif isinstance(trans, str):
+                if trans.startswith("op "):
+                    op = trans[3]
+                    value = trans[4:].strip()
+                    if value.startswith("attrs"):
+                        value = units.str2pint(d[vv].attrs[value[6:]])
+                    else:
+                        value = units.str2pint(value)
+                    with xr.set_options(keep_attrs=True):
+                        if op == "+":
+                            value = units.convert_units_to(value, d[vv])
+                            d_out[vv] = d[vv] + value
+                        elif op == "-":
+                            value = units.convert_units_to(value, d[vv])
+                            d_out[vv] = d[vv] - value
+                        elif op == "*":
+                            d_out[vv] = units.pint_multiply(d[vv], value)
+                        elif op == "/":
+                            d_out[vv] = units.pint_multiply(d[vv], 1 / value)
+                        else:
+                            raise NotImplementedError(
+                                f"Op transform doesn't implement the «{op}» operator."
+                            )
+                converted[vv] = vv
+            else:
+                raise NotImplementedError(f"Unknown transformation: {trans}")
+        elif trans is False:
+            logging.info(
+                f"No transformations needed for `{vv}` (Explicitly set to False)."
+            )
     # Copy unconverted variables
     for vv in d.data_vars:
         if vv not in converted:
@@ -189,7 +194,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
-                d_out[out.name] = out.__invert__()
+                d_out[out.name] = -out
                 converted[vv] = out.name
         elif inv_sign is False:
             logging.info(
@@ -210,7 +215,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
             d["time"]["units"] = m["variable_entry"]["time"]["units"]
 
     for vv, uni in _iter_vars_key(d, m, "units", None):
-        if uni is not None:
+        if uni:
             d[vv] = units.convert_units_to(d[vv], uni)
 
     return d
@@ -232,7 +237,6 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         return d
 
     if key in m["variable_entry"]["time"].keys():
-        correct_times = m["variable_entry"]["time"][key][p]
         freq_found = xr.infer_freq(d.time)
         if not freq_found:
             raise ValueError(
@@ -242,11 +246,28 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if freq_found in ["M", "A"]:
             freq_found = f"{freq_found}S"
 
+        correct_time_entry = m["variable_entry"]["time"][key]
+        if isinstance(correct_time_entry, dict):
+            correct_times = correct_time_entry.get(p)
+            if correct_times is None:
+                logging.warning(f"No time corrections set for specified project `{p}`.")
+            else:
+                correct_times = correct_times
+        else:
+            correct_times = correct_time_entry
+        if isinstance(correct_times, str):
+            correct_times = [correct_times]
+
         if freq_found not in correct_times:
-            raise ValueError(
+            error_msg = (
                 f"Time frequency {freq_found} not among allowed frequencies: "
-                f"{' ,'.join(correct_times)} for project `{p}`."
+                f"{' ,'.join(correct_times)}"
             )
+            if isinstance(correct_time_entry, dict):
+                error_msg = f"{error_msg} for project `{p}`."
+            else:
+                error_msg = f"{error_msg}."
+            raise ValueError(error_msg)
 
         logging.info(f"Resampling dataset with time frequency: {freq_found}.")
         d_out = d.assign_coords(

@@ -1,4 +1,5 @@
 import re
+from typing import List, Tuple, Union
 
 import pandas as pd
 import pint
@@ -77,14 +78,14 @@ def units2pint(value: str) -> pint.Unit:
         return u.parse_expression(_transform(value)).units
 
 
-def get_time_frequency(d: xr.Dataset):
-    """Try to understand the datasets frequency.
+def get_time_frequency(d: xr.Dataset) -> Tuple[List[Union[int, str]], str]:
+    """Try to understand the Dataset frequency.
 
     If it can't be inferred with :py:func:`xarray.infer_freq` it tries to:
     - look for a "freq" attrs in the global or time variable attributes.
     - infer monthly frequency if all time steps are between 27 and 32 days
 
-    returns the offset a list of (multiplicator, base) and it's meaning (single word)
+    returns the offset a list of (multiplier, base) and its meaning (single word)
     """
     freq = xr.infer_freq(d.time)
 
