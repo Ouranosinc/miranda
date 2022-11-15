@@ -1,14 +1,15 @@
 {
   "Header": {
     "Conventions": "CF-1.7 CMIP-6.2",
+    "_miranda_version": true,
     "cmor_version": "3.5",
-    "data_specs_version": "00.00.01",
     "int_missing_value": "-999",
+    "license_type": "private",
     "missing_value": "1e20",
-    "product": "station-obs",
     "realm": "atmos",
-    "table_date": "2020-01-21",
-    "table_id": "HQ"
+    "table_date": "2022-11-15",
+    "table_id": "HQ",
+    "type": "station-obs"
   },
   "variable_entry": {
     "hurs": {

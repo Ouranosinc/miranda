@@ -1,9 +1,9 @@
 {
   "Header": {
     "_miranda_version": true,
-    "data_specs_version": "00.00.01",
     "processing_level": "raw",
     "table_date": "2022-10-14",
+    "table_id": "CMIP-OURANOS",
     "type": "simulation"
   },
   "variable_entry": {

@@ -1,6 +1,6 @@
 {
   "Header": {
-    "Conventions": "CF-1.8",
+    "Conventions": "CF-1.9",
     "_doi": {
       "era5-land": "https://doi.org/10.24381/cds.e2161bac",
       "era5-land-monthly-means": "https://doi.org/10.24381/cds.68d2bb30",
@@ -13,6 +13,7 @@
       "era5-single-levels-monthly-means-preliminary-back-extension": "https://doi.org/10.24381/cds.f17050d7",
       "era5-single-levels-preliminary-back-extension": "https://doi.org/10.24381/cds.adbb2d47"
     },
+    "_miranda_version": true,
     "_source": {
       "era5-land": "ERA5-Land",
       "era5-land-monthly-means": "ERA5-Land",
@@ -28,11 +29,11 @@
     "institution": "ECMWF",
     "licence_type": "permissive",
     "license": "https://apps.ecmwf.int/datasets/licences/copernicus/",
-    "miranda_version": true,
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "2022-11-11",
+    "table_date": "2022-11-15",
+    "table_id": "ECMWF",
     "type": "reconstruction"
   },
   "variable_entry": {
