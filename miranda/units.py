@@ -29,12 +29,12 @@ def get_time_frequency(d: xr.Dataset) -> Tuple[List[Union[int, str]], str]:
         elif "freq" in d.time.attrs:
             freq = d.time.attrs["freq"]
         elif (
-            (d.diff("time") < pd.Timedelta(32, "D"))
-            & (d.diff("time") > pd.Timedelta(27, "D"))
+            (d.time.diff("time") < pd.Timedelta(32, "D"))
+            & (d.time.diff("time") > pd.Timedelta(27, "D"))
         ).all():
             freq = "1M"
         else:
-            raise TypeError()
+            raise TypeError("Dataset time component may be discontinuous.")
 
     offset = [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
 
