@@ -420,7 +420,8 @@
         "era5-single-levels-monthly-means": "MS",
         "era5-single-levels-monthly-means-preliminary-back-extension": "MS",
         "era5-single-levels-preliminary-back-extension": "H"
-      }
+      },
+      "_strict_time": false
     },
     "tp": {
       "_cf_variable_name": "pr",

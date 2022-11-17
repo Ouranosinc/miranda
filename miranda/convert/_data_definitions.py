@@ -2,7 +2,7 @@ import json
 import logging.config
 import os
 from pathlib import Path
-from typing import List, Mapping, Union
+from typing import Dict, List, Mapping, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -78,8 +78,8 @@ def _gather(
     source: Union[str, os.PathLike],
     back_extension: bool,
     monthly_means: bool,
-) -> Mapping[str, List[Path]]:
-    source = Path(source)
+) -> Dict[str, List[Path]]:
+    source = Path(source).expanduser()
     name = (
         f"{name}"
         f"{'-monthly-means' if monthly_means else ''}"
@@ -88,7 +88,7 @@ def _gather(
     logging.info(f"Gathering {name} files from: {source.as_posix()}")
     in_files = list()
     for v in variables:
-        in_files.extend(list(sorted(source.rglob(f"{v}*{name}*.nc"))))
+        in_files.extend(list(sorted(source.rglob(f"{v}_*_{name}_*.nc"))))
     logging.info(
         f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
     )
@@ -99,7 +99,7 @@ def gather_era5_single_levels(
     path: Union[str, os.PathLike],
     back_extension: bool = False,
     monthly_means: bool = False,
-) -> Mapping[str, List[Path]]:
+) -> Dict[str, List[Path]]:
     # ERA5-Single-Levels source data
     return _gather(
         "era5-single-levels",
@@ -114,7 +114,7 @@ def gather_era5_pressure_levels(
     path: Union[str, os.PathLike],
     back_extension: bool = False,
     monthly_means: bool = False,
-) -> Mapping[str, List[Path]]:
+) -> Dict[str, List[Path]]:
     # ERA5-Pressure-Levels source data
     return _gather(
         "era5-pressure-levels",
@@ -129,7 +129,7 @@ def gather_era5_land(
     path: Union[str, os.PathLike],
     back_extension: bool = False,
     monthly_means: bool = False,
-) -> Mapping[str, List[Path]]:
+) -> Dict[str, List[Path]]:
     # ERA5-Land source data
     return _gather(
         "era5-land",
@@ -140,7 +140,7 @@ def gather_era5_land(
     )
 
 
-def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Mapping[str, Path]:
+def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict[str, Path]:
     try:
         land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*era5*.nc")))
     except StopIteration:
@@ -149,7 +149,7 @@ def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Mapping[str, Pat
     return land_sea_mask
 
 
-def gather_agmerra(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # agMERRA source data
     source_agmerra = Path(path)
     logging.info(f"Gathering agMERRA from: {source_agmerra.as_posix()}")
@@ -164,7 +164,7 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     return dict(cfsr=in_files_agmerra)
 
 
-def gather_agcfsr(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # agCFSR source data
     source_agcfsr = Path(path)
     logging.info(f"Gathering CFSR from: {source_agcfsr.as_posix()}")
@@ -177,7 +177,7 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
     return dict(cfsr=in_files_agcfsr)
 
 
-def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # NRCan Gridded Obs source data
     source_nrcan = Path(path)
     logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
@@ -190,7 +190,7 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Mapping[str, List
     return dict(nrcan=in_files_nrcan)
 
 
-def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # WFDEI-GEM-CaPa source data
     source_wfdei = Path(path)
     logging.info(f"Gathering WFDEI-GEM_CaPa from: {source_wfdei.as_posix()}")
@@ -203,7 +203,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Mapping[str, List[Pa
     return {"wfdei-gem-capa": in_files_wfdei}
 
 
-def gather_sc_earth(path: Union[str, os.PathLike]) -> Mapping[str, List[Path]]:
+def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # SC-Earth source data
     source_sc_earth = Path(path)
     logging.info(f"Gathering SC-Earth from: {source_sc_earth.as_posix()}")

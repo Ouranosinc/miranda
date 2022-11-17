@@ -79,18 +79,20 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_transformation"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = {}
+    offset, offset_meaning = None, None
     for vv, trans in _iter_vars_key(d, m, key, p):
         if trans:
             if trans == "deaccumulate":
                 # Time-step accumulated total to time-based flux (de-accumulation)
-                try:
-                    offset, offset_meaning = get_time_frequency(d)
-                except TypeError:
-                    logging.error(
-                        f"Unable to parse the time frequency for variable `{vv}`. "
-                        "Verify data integrity before retrying."
-                    )
-                    raise
+                if offset is None and offset_meaning is None:
+                    try:
+                        offset, offset_meaning = get_time_frequency(d)
+                    except TypeError:
+                        logging.error(
+                            "Unable to parse the time frequency. Verify data integrity before retrying."
+                        )
+                        raise
+
                 logging.info(f"De-accumulating units for variable `{vv}`.")
                 with xr.set_options(keep_attrs=True):
                     out = d[vv].diff(dim="time")
@@ -153,17 +155,18 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_offset_time"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = {}
+    offset, offset_meaning = None, None
     for vv, offs in _iter_vars_key(d, m, key, p):
         if offs:
             # Offset time by value of one time-step
-            try:
-                offset, offset_meaning = get_time_frequency(d)
-            except TypeError:
-                logging.error(
-                    f"Unable to parse the time frequency for variable `{vv}`. "
-                    "Verify data integrity before retrying."
-                )
-                raise
+            if offset is None and offset_meaning is None:
+                try:
+                    offset, offset_meaning = get_time_frequency(d)
+                except TypeError:
+                    logging.error(
+                        "Unable to parse the time frequency. Verify data integrity before retrying."
+                    )
+                    raise
 
             logging.info(
                 f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
@@ -223,25 +226,33 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
 
 def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_ensure_correct_time"
+    strict_time = "_strict_time"
 
     if "time" not in m["variable_entry"].keys():
         logging.warning(f"No time corrections listed for project `{p}`. Continuing...")
         return d
 
-    if "time" not in d.data_vars:
+    if "time" not in list(d.variables.keys()):
         logging.info(
             "No time dimension among data variables: "
-            f"{' ,'.join([str(v) for v in d.data_vars])}. "
+            f"{' ,'.join([str(v) for v in d.variables.keys()])}. "
             "Continuing..."
         )
         return d
 
     if key in m["variable_entry"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
-        if not freq_found:
-            raise ValueError(
-                "Time frequency could not be found. There may be missing timesteps."
-            )
+
+        if strict_time in m["variable_entry"]["time"].keys():
+            if not freq_found:
+                msg = (
+                    "Time frequency could not be found. There may be missing timesteps."
+                )
+                if m["variable_entry"]["time"].get(strict_time):
+                    raise ValueError(msg)
+                else:
+                    logging.warning(f"{msg} Continuing...")
+                    return d
 
         if freq_found in ["M", "A"]:
             freq_found = f"{freq_found}S"
