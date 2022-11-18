@@ -1,6 +1,7 @@
 import logging
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 from xclim.core.calendar import parse_offset
@@ -68,11 +69,6 @@ def get_time_frequency(
                 min_period = parse_offset(minimum_continuous_period)[1]
                 collected_freqs = []
                 problem_periods = []
-                format_str = {
-                    "H": "%Y-%m",
-                    "M": "%Y",
-                    "A": "%Y",
-                }[e_period]
 
                 if e_period != "M" and min_period != "M":
                     if pd.Timedelta(expected_period) > pd.Timedelta(
@@ -89,19 +85,19 @@ def get_time_frequency(
 
                 for period, ds_part in zip(time_periods, datasets):
                     if len(ds_part) == 1:
-                        logging.info(f"Skipping {period.strftime(format_str)}.")
+                        logging.info(f"Skipping {str(np.datetime_as_string(period))}.")
+                        # In the event that a deaccumulation/shift has created a period with one data value,
+                        # we are safe in ignoring this.
                         continue
+
                     try:
                         f = xr.infer_freq(ds_part)
                     except ValueError as e:
                         raise ValueError(f"Issues found with {period}.") from e
+
                     if f is None:
-                        if len(ds_part) == 1:
-                            # In the event that a deaccumulation/shift has created a period with one data value,
-                            # we are safe in ignoring this.
-                            continue
-                        else:
-                            problem_periods.append(period.strftime(format_str))
+                        problem_periods.append(str(np.datetime_as_string(period)))
+
                     if (
                         (d.time.diff("time") < pd.Timedelta(32, "D"))
                         & (d.time.diff("time") > pd.Timedelta(27, "D"))

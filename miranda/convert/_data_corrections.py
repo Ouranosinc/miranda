@@ -79,7 +79,7 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_transformation"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
-    converted = {}
+    converted = []
     offset, offset_meaning = None, None
 
     time_freq = dict()
@@ -107,20 +107,23 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                         getattr(d[vv].time.dt, offset_meaning) == offset[0],
                         out.broadcast_like(d[vv]),
                     )
-                    out = units.amount2rate(out)
-                d_out[out.name] = out
-                converted[vv] = out.name
+                    out = units.amount2rate(
+                        out, out_units=m["variable_entry"][vv]["units"]
+                    )
+                    d_out[vv] = out
+                converted.append(vv)
             elif trans == "amount2rate":
                 # frequency-based totals to time-based flux
                 logging.info(
                     f"Performing amount-to-rate units conversion for variable `{vv}`."
                 )
-                out = units.amount2rate(
-                    d[vv],
-                    out_units=m["variable_entry"][vv]["units"],
-                )
-                d_out[out.name] = out
-                converted[vv] = out.name
+                with xr.set_options(keep_attrs=True):
+                    out = units.amount2rate(
+                        d[vv],
+                        out_units=m["variable_entry"][vv]["units"],
+                    )
+                    d_out[vv] = out
+                converted.append(vv)
             elif isinstance(trans, str):
                 if trans.startswith("op "):
                     op = trans[3]
@@ -144,7 +147,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                             raise NotImplementedError(
                                 f"Op transform doesn't implement the «{op}» operator."
                             )
-                converted[vv] = vv
+                converted.append(vv)
             else:
                 raise NotImplementedError(f"Unknown transformation: {trans}")
         elif trans is False:
@@ -161,7 +164,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_offset_time"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
-    converted = {}
+    converted = []
     offset, offset_meaning = None, None
 
     time_freq = dict()
@@ -187,8 +190,8 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
-                d_out[out.name] = out
-                converted[vv] = out.name
+                d_out[vv] = out
+            converted.append(vv)
         elif offs is False:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
@@ -204,14 +207,14 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
-    converted = {}
+    converted = []
     for vv, inv_sign in _iter_vars_key(d, m, key, p):
         if inv_sign:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = -out
-                converted[vv] = out.name
+            converted.append(vv)
         elif inv_sign is False:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
@@ -232,7 +235,8 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
 
     for vv, uni in _iter_vars_key(d, m, "units", None):
         if uni:
-            d[vv] = units.convert_units_to(d[vv], uni)
+            with xr.set_options(keep_attrs=True):
+                d[vv] = units.convert_units_to(d[vv], uni)
 
     return d
 
