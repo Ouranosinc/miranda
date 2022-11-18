@@ -9,6 +9,7 @@ from typing import Dict, Iterator, Optional, Sequence, Union
 import numpy as np
 import xarray as xr
 from xclim.core import units
+from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
 from miranda.scripting import LOGGING_CONFIG
@@ -80,13 +81,19 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = {}
     offset, offset_meaning = None, None
+
+    time_freq = dict()
+    expected_period = _get_var_entry_key(m, "time", "_ensure_correct_time", p)
+    if isinstance(expected_period, str):
+        time_freq["expected_period"] = expected_period
+
     for vv, trans in _iter_vars_key(d, m, key, p):
         if trans:
             if trans == "deaccumulate":
                 # Time-step accumulated total to time-based flux (de-accumulation)
                 if offset is None and offset_meaning is None:
                     try:
-                        offset, offset_meaning = get_time_frequency(d)
+                        offset, offset_meaning = get_time_frequency(d, **time_freq)
                     except TypeError:
                         logging.error(
                             "Unable to parse the time frequency. Verify data integrity before retrying."
@@ -156,12 +163,18 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = {}
     offset, offset_meaning = None, None
+
+    time_freq = dict()
+    expected_period = _get_var_entry_key(m, "time", "_ensure_correct_time", p)
+    if isinstance(expected_period, str):
+        time_freq["expected_period"] = expected_period
+
     for vv, offs in _iter_vars_key(d, m, key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
                 try:
-                    offset, offset_meaning = get_time_frequency(d)
+                    offset, offset_meaning = get_time_frequency(d, **time_freq)
                 except TypeError:
                     logging.error(
                         "Unable to parse the time frequency. Verify data integrity before retrying."
@@ -263,11 +276,11 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             if correct_times is None:
                 logging.warning(f"No time corrections set for specified project `{p}`.")
             else:
-                correct_times = correct_times
+                correct_times = [parse_offset(t)[1] for t in correct_times]
         else:
             correct_times = correct_time_entry
         if isinstance(correct_times, str):
-            correct_times = [correct_times]
+            correct_times = [parse_offset(correct_times)[1]]
 
         if freq_found not in correct_times:
             error_msg = (

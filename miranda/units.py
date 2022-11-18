@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import xarray as xr
-from xclim.core import calendar
+from xclim.core.calendar import parse_offset
 
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
@@ -12,7 +12,7 @@ GiB = int(pow(2, 30))
 def get_time_frequency(
     d: xr.Dataset,
     expected_period: Optional[str] = None,
-    minimum_continuous_period: str = "M",
+    minimum_continuous_period: str = "1M",
 ) -> Tuple[List[Union[int, str]], str]:
     """Try to understand the Dataset frequency.
 
@@ -27,11 +27,13 @@ def get_time_frequency(
     Parameters
     ----------
     d : xr.Dataset
-    expected_period : {"1H", "3H", "6H", "1D", "7D", "1M", "1Y"}
-        The time period expected of the input dataset.
+    expected_period : {"1H", "3H", "6H", "1D", "7D", "1M", "1A"}
+        The time period expected of the input dataset. Must be Pandas TimeDelta compatible.
+        The "1M" period is specially-handled.
     minimum_continuous_period : str
-        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1Y")
+        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A")
         The minimum expected granular period that data should have continuous values for.
+        The "1M" period is specially-handled.
 
     Returns
     -------
@@ -39,17 +41,16 @@ def get_time_frequency(
         The offset a list of (multiplier, base)
     offset_meaning : str
         The offset meaning (single word)
+
     """
     if expected_period is not None:
-        if expected_period not in ["1H", "3H", "6H", "1D", "7D", "1M", "1Y"]:
+        if not [expected_period.endswith(end) for end in ["H", "D", "M", "A"]]:
             raise ValueError(f"Expected period (`{expected_period}`) not supported.")
 
     freq = xr.infer_freq(d.time)
 
     # Hacky workaround for irregular Monthly data
-    if freq is None or (
-        1 < int(calendar.parse_offset(freq)[0]) < 32 and freq.endswith("D")
-    ):
+    if freq is None or (1 < int(parse_offset(freq)[0]) < 32 and freq.endswith("D")):
         if "freq" in d.attrs:
             freq = d.attrs["freq"]
         elif "freq" in d.time.attrs:
@@ -61,25 +62,29 @@ def get_time_frequency(
             freq = "1M"
         else:
             if expected_period:
+                e_period = parse_offset(expected_period)[1]
+                min_period = parse_offset(minimum_continuous_period)[1]
                 collected_freqs = []
                 problem_periods = []
                 format_str = {
-                    "1H": "%Y-%m",
-                    "3H": "%Y-%m",
-                    "6H": "%Y-%m",
-                    "1D": "%Y-%m",
-                    "7D": "%Y-%m",
-                    "1M": "%Y",
-                    "1Y": "%Y",
-                }[expected_period]
-                if pd.Timedelta(expected_period) > pd.Timedelta(
-                    minimum_continuous_period
-                ):
-                    minimum_continuous_period = expected_period
+                    "H": "%Y-%m",
+                    "M": "%Y",
+                    "A": "%Y",
+                }[e_period]
+
+                if e_period != "M" and min_period != "M":
+                    if pd.Timedelta(expected_period) > pd.Timedelta(
+                        minimum_continuous_period
+                    ):
+                        minimum_continuous_period = expected_period
+                elif e_period == "M":
+                    if pd.Timedelta(minimum_continuous_period) < pd.Timedelta(28, "D"):
+                        minimum_continuous_period = expected_period
 
                 time_periods, datasets = zip(
                     *d.time.resample(time=minimum_continuous_period)
                 )
+
                 for period, ds_part in zip(time_periods, datasets):
                     f = xr.infer_freq(ds_part)
                     if f is None:
@@ -110,7 +115,7 @@ def get_time_frequency(
             else:
                 raise ValueError("Dataset time component may be discontinuous.")
 
-    offset = [int(calendar.parse_offset(freq)[0]), calendar.parse_offset(freq)[1]]
+    offset = [int(parse_offset(freq)[0]), parse_offset(freq)[1]]
 
     time_units = {
         "s": "second",
