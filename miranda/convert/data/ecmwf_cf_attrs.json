@@ -27,8 +27,8 @@
       "era5-single-levels-preliminary-back-extension": "ERA5-preliminary"
     },
     "institution": "ECMWF",
-    "licence_type": "permissive",
     "license": "https://apps.ecmwf.int/datasets/licences/copernicus/",
+    "license_type": "permissive",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
@@ -414,7 +414,7 @@
         "era5-land-monthly-means": "1M",
         "era5-pressure-levels": "1H",
         "era5-pressure-levels-monthly-means": "1M",
-        "era5-pressure-levels-monthly-means-preliminary-back-extension": "MS",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension": "1M",
         "era5-pressure-levels-preliminary-back-extension": "1H",
         "era5-single-levels": "1H",
         "era5-single-levels-monthly-means": "1M",

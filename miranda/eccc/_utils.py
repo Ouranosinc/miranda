@@ -989,8 +989,8 @@ def cf_ahccd_metadata(
             institute_id="ECCC",
             dataset_id=f"AHCCD_gen{gen}_day_{variable['variable']}",
             frequency="day",
-            licence_type="permissive",
-            licence="https:/open.canada.ca/en/open-government-licence-canada",
+            license_type="permissive",
+            license="https:/open.canada.ca/en/open-government-licence-canada",
             citation=_citation,
         )
 
