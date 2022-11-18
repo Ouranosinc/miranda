@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, Tuple, Union
 
 import pandas as pd
@@ -27,8 +28,9 @@ def get_time_frequency(
     Parameters
     ----------
     d : xr.Dataset
-    expected_period : {"1H", "3H", "6H", "1D", "7D", "1M", "1A"}
-        The time period expected of the input dataset. Must be Pandas TimeDelta compatible.
+    expected_period : str
+        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A")
+        The time period expected of the input dataset.
         The "1M" period is specially-handled.
     minimum_continuous_period : str
         An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A")
@@ -86,7 +88,13 @@ def get_time_frequency(
                 )
 
                 for period, ds_part in zip(time_periods, datasets):
-                    f = xr.infer_freq(ds_part)
+                    if len(ds_part) == 1:
+                        logging.info(f"Skipping {period.strftime(format_str)}.")
+                        continue
+                    try:
+                        f = xr.infer_freq(ds_part)
+                    except ValueError as e:
+                        raise ValueError(f"Issues found with {period}.") from e
                     if f is None:
                         if len(ds_part) == 1:
                             # In the event that a deaccumulation/shift has created a period with one data value,
