@@ -275,16 +275,19 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             freq_found = f"{freq_found}S"
 
         correct_time_entry = m["variable_entry"]["time"][key]
-        if isinstance(correct_time_entry, dict):
+        if isinstance(correct_time_entry, str):
+            correct_times = [parse_offset(correct_time_entry)[1]]
+        elif isinstance(correct_time_entry, dict):
             correct_times = correct_time_entry.get(p)
-            if correct_times is None:
-                logging.warning(f"No time corrections set for specified project `{p}`.")
-            else:
+            if isinstance(correct_times, list):
                 correct_times = [parse_offset(t)[1] for t in correct_times]
-        else:
+            if correct_times is None:
+                logging.warning(f"No expected times set for specified project `{p}`.")
+        elif isinstance(correct_time_entry, list):
             correct_times = correct_time_entry
-        if isinstance(correct_times, str):
-            correct_times = [parse_offset(correct_times)[1]]
+        else:
+            logging.warning("No expected times set for family of projects.")
+            return d
 
         if freq_found not in correct_times:
             error_msg = (
