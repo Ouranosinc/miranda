@@ -34,7 +34,15 @@ with open("requirements_dev.txt") as dev:
         dev_requirements.append(dependency)
 dev_requirements.extend(full_requirements)
 
-docs_requirements = ["furo", "ipython", "nbsphinx", "pandoc", "sphinx"]
+docs_requirements = [
+    "furo",
+    "ipython",
+    "nbsphinx",
+    "pandoc",
+    "sphinx",
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
+]
 
 readme = open("README.rst").read()
 doclink = """

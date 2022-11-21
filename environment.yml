@@ -39,6 +39,8 @@ dependencies:
   - schema
   - scp
   - shapely
+  - sphinx_codeautolink
+  - sphinx_copybutton
   - tox
   - xarray
   - xclim >=0.35
