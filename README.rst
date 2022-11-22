@@ -1,6 +1,6 @@
-================================
-Miranda
-================================
+==============
+Miranda |logo|
+==============
 
 |build| |coveralls| |codefactor| |black|
 
@@ -89,3 +89,7 @@ See the contributing documentation: https://miranda.readthedocs.io/en/latest/con
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
         :target: https://github.com/psf/black
         :alt: Python Black
+
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/add_logo/docs/_static/images/miranda-logo-small.png
+        :target: https://github.com/Ouranosinc/miranda
+        :alt: Miranda

@@ -16,6 +16,7 @@ dependencies:
   - fabric
   - fiona
   - flake8
+  - furo
   - geojson
   - h5netcdf
   - intake
@@ -42,6 +43,9 @@ dependencies:
   - schema
   - scp
   - shapely
+  - sphinx
+  - sphinx-codeautolink
+  - sphinx-copybutton
   - tox
   - xarray
   - xclim >=0.33.0
