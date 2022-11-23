@@ -28,6 +28,11 @@ except ImportError:
     )
 
 
+__all__ = [
+    "cordex_aws_calendar_correction",
+    "cordex_aws_download",
+]
+
 _allowed_args = schema.Schema(
     {
         schema.Optional("variable"): schema.Schema(
