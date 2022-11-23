@@ -3,6 +3,7 @@ import logging.config
 import tarfile
 import tempfile
 import time
+import warnings
 from pathlib import Path
 from typing import List, Union
 
@@ -15,7 +16,7 @@ try:
     from paramiko import SFTPClient, SSHClient, SSHException  # noqa
     from scp import SCPClient, SCPException  # noqa
 except ImportError:
-    raise ImportError(
+    warnings.warn(
         f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
     )
 
