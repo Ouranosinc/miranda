@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import logging.config
+import os
 import tarfile
 import tempfile
 import time
@@ -26,8 +29,8 @@ __all__ = ["create_archive", "create_remote_directory", "transfer_file"]
 
 
 def create_remote_directory(
-    directory: Union[str, Path],
-    transport: Union[SSHClient, fabric.Connection, Connection],
+    directory: str | os.PathLike,
+    transport: SSHClient | fabric.Connection | Connection,
 ) -> None:
     """
     This calls a "mkdir -p" function to create a folder structure over SFTP/SSH and waits
@@ -35,7 +38,7 @@ def create_remote_directory(
 
     Parameters
     ----------
-    directory : Union[str, Path]
+    directory : Union[str, os.PathLike]
     transport : Union[SSHClient, fabric.Connection, Connection]
 
     Returns
@@ -65,9 +68,9 @@ def create_remote_directory(
 
 
 def create_archive(
-    source_files: List[Union[Path, str]],
-    destination: Union[Path, str],
-    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection] = None,
+    source_files: list[str | os.PathLike],
+    destination: str | os.PathLike,
+    transport: SCPClient | SFTPClient | fabric.Connection | Connection = None,
     delete: bool = True,
     compression: bool = False,
     recursive: bool = True,
@@ -76,12 +79,12 @@ def create_archive(
 
     Parameters
     ----------
-    source_files: List[Union[Path, str]]
-    destination: Union[Path, str]
-    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection]
-    delete: bool
-    compression: bool = False
-    recursive: bool = True
+    source_files : List[Union[str, os.PathLike]]
+    destination : Union[str, os.PathLike]
+    transport : Union[SCPClient, SFTPClient, fabric.Connection, Connection]
+    delete : bool
+    compression : bool
+    recursive : bool
 
     Returns
     -------
@@ -100,10 +103,10 @@ def create_archive(
         with tarfile.open(archive_file, write) as tar:
             for name in source_files:
                 try:
-                    logging.info(f"Tarring {name.name}")
-                    tar.add(name.relative_to(Path.cwd()), recursive=recursive)
+                    logging.info(f"Tarring {Path(name).name}")
+                    tar.add(Path(name).relative_to(Path.cwd()), recursive=recursive)
                 except Exception as e:
-                    msg = f'File "{name.name}" failed to be tarred: {e}'
+                    msg = f'File "{Path(name).name}" failed to be tarred: {e}'
                     logging.warning(msg)
             tar.close()
         transfer_file(archive_file, destination, transport)
@@ -111,17 +114,17 @@ def create_archive(
 
 
 def transfer_file(
-    source_file: Union[Path, str],
-    destination_file: Union[Path, str],
-    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection] = None,
+    source_file: str | os.PathLike,
+    destination_file: str | os.PathLike,
+    transport: SCPClient | SFTPClient | fabric.Connection | Connection = None,
 ) -> bool:
     """
 
     Parameters
     ----------
-    source_file: Union[Path, str]
-    destination_file: Union[Path, str]
-    transport: Union[SCPClient, SFTPClient, fabric.Connection, Connection]
+    source_file : Union[str, os.PathLike]
+    destination_file : Union[str, os.PathLike]
+    transport : Union[SCPClient, SFTPClient, fabric.Connection, Connection]
 
     Returns
     -------
