@@ -56,7 +56,7 @@ def discover_data(
     suffix: str = ".nc",
     recurse: bool = True,
 ) -> Union[List[os.PathLike], GeneratorType]:
-    """
+    """Discover data.
 
     Parameters
     ----------
@@ -93,7 +93,7 @@ def discover_data(
 
 
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
-    """Generates lists of `chunk_size` elements from `iterable`.
+    """Generate lists of `chunk_size` elements from `iterable`.
 
     Notes
     -----
@@ -113,8 +113,8 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
 
 
 def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
-    """
-    Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+    """Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+
     See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
@@ -138,8 +138,7 @@ def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
 
 
 def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
-    """
-    Determine whether a user has read privileges to a specific file
+    """Determine whether a user has read privileges to a specific file.
 
     Parameters
     ----------
@@ -175,7 +174,8 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
 
 @contextmanager
 def working_directory(directory: Union[str, Path]) -> None:
-    """
+    """Change the working directory within a context object.
+
     This function momentarily changes the working directory within the context and reverts to the file working directory
     when the code block it is acting upon exits
 
@@ -206,7 +206,7 @@ def find_filepaths(
     file_suffixes: Optional[Union[str, List[str]]] = None,
     **_,
 ) -> List[Path]:
-    """
+    """Find all available filepaths at a given source.
 
     Parameters
     ----------
@@ -246,12 +246,13 @@ def find_filepaths(
 
 
 def single_item_list(iterable: Iterable) -> bool:
-    """
+    """Ascertain whether a list has exactly one entry.
+
     See: https://stackoverflow.com/a/16801605/7322852
 
     Parameters
     ----------
-    iterable: Iterable
+    iterable : Iterable
 
     Returns
     -------
@@ -271,16 +272,18 @@ def generic_extract_archive(
     output_dir: Optional[Union[str, Path]] = None,
 ) -> List[Path]:
     """Extract archives (tar/zip) to a working directory.
+
     Parameters
     ----------
-    resources: Union[str, Path, List[Union[bytes, str, Path]]]
-      list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
-    output_dir: Optional[Union[str, Path]]
-      string or Path to a working location (default: temporary folder).
+    resources : Union[str, Path, List[Union[bytes, str, Path]]]
+        list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
+    output_dir : Optional[Union[str, Path]]
+        string or Path to a working location (default: temporary folder).
+
     Returns
     -------
     list
-      List of original or of extracted files
+        List of original or of extracted files
     """
 
     archive_types = [".gz", ".tar", ".zip", ".7z"]
@@ -340,14 +343,15 @@ def generic_extract_archive(
 
 def yesno_prompt(query: str) -> bool:
     """Prompt user for a yes/no answer.
+
     Parameters
     ----------
     query : str
-        the yes/no question to ask the user.
+        The yes/no question to ask the user.
 
     Returns
     -------
-    out : bool
+    bool
         True (yes) or False (otherwise).
     """
 
@@ -367,14 +371,14 @@ def list_paths_with_elements(
     Parameters
     ----------
     base_paths : List[str]
-      list of paths from which to start the search.
+        list of paths from which to start the search.
     elements : List[str]
-      ordered list of the expected elements.
+        ordered list of the expected elements.
 
     Returns
     -------
     List[Dict]
-      The keys are 'path' and each of the members of the given elements, the path is the absolute path.
+        The keys are 'path' and each of the members of the given elements, the path is the absolute path.
 
     Notes
     -----
