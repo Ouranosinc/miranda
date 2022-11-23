@@ -2,7 +2,7 @@
 Miranda |logo|
 ==============
 
-|build| |coveralls| |codefactor| |black|
+|build| |coveralls| |black|
 
 Python utilities for climate data collection, conversion, and management
 
@@ -20,12 +20,12 @@ Data collection functions for climate and forecast data hosted at:
 Data conversion for `Climate and Forecasting (CF) <https://cfconventions.org/>`_ Variable and Metadata compliance:
     * ECMWF (ERA5, ERA5-Land, TIGGE - In Development)
     * ECCC (Canada) (Flat File Observations, Monthly Climate Summaries, Adjusted and Homogenized Climate Data, ECCC GEOAPI - In Development)
-    * MELCC (Québec) (In Development)
+    * MELCC (Québec)
     * Hydro-Québec (In Development)
 
 Database structuring and facets validation:
     * Simulations:
-       * WCRP (CORDEX, CORDEX-ADJUST, CMIP5, CMIP6, ISIMIP, etc.)
+       * WCRP (CMIP5, CMIP6, CMIP5-CORDEX, CORDEX-ADJUST, ISIMIP, etc.)
     * Station-Observations:
        * MELCC (Québec) (Needs `mdbtools <https://github.com/mdbtools/mdbtools>`_ installed)
        * ECCC (Canada) (In Development)
@@ -73,10 +73,6 @@ See the contributing documentation: https://miranda.readthedocs.io/en/latest/con
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/miranda/badge.svg
         :target: https://coveralls.io/github/Ouranosinc/miranda
         :alt: Coveralls
-
-.. |codefactor| image:: https://www.codefactor.io/repository/github/Ouranosinc/miranda/badge
-        :target: https://www.codefactor.io/repository/github/Ouranosinc/miranda
-        :alt: CodeFactor
 
 .. |docs| image:: https://readthedocs.org/projects/miranda/badge
         :target: https://miranda.readthedocs.io/en/latest
