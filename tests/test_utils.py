@@ -101,6 +101,8 @@ class TestReadPrivileges:
     @pytest.mark.skipif(os.name != "posix", reason="not Windows")
     def test_forbidden_folder_lax(self):
         root_folder = Path.cwd().root
+        if os.getenv("CI"):
+            root_folder = Path(Path.cwd().root) / "root"
         allowed = utils.read_privileges(root_folder, strict=False)
         if os.getenv("CI"):
             assert not allowed
