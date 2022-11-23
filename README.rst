@@ -90,6 +90,6 @@ See the contributing documentation: https://miranda.readthedocs.io/en/latest/con
         :target: https://github.com/psf/black
         :alt: Python Black
 
-.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/add_logo/docs/_static/images/miranda-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/main/docs/_static/images/miranda-logo-small.png
         :target: https://github.com/Ouranosinc/miranda
         :alt: Miranda
