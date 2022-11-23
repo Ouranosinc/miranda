@@ -2,7 +2,7 @@ import logging
 import logging.config
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import List, Union
 
 from miranda.archive.groupings import (
     group_by_deciphered_date,

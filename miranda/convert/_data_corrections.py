@@ -21,7 +21,12 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
-__all__ = ["file_conversion", "load_json_data_mappings", "variable_conversion"]
+__all__ = [
+    "file_conversion",
+    "load_json_data_mappings",
+    "metadata_conversion",
+    "variable_conversion",
+]
 
 
 def load_json_data_mappings(project: str) -> dict:

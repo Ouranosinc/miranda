@@ -2,6 +2,7 @@ import ast
 import functools
 import json
 import logging.config
+import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -23,8 +24,9 @@ try:
     import numcodecs  # noqa
     import s3fs  # noqa
 except ImportError:
-    raise ImportError(
-        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    warnings.warn(
+        f"{__name__} functions require additional dependencies. "
+        "Please install them with `pip install miranda[full]`."
     )
 
 

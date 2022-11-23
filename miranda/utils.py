@@ -12,9 +12,9 @@ from pathlib import Path
 from types import GeneratorType
 from typing import Dict, Iterable, List, Optional, Sequence, Union
 
-from . import scripting
+from .scripting import LOGGING_CONFIG
 
-logging.config.dictConfig(scripting.LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "HiddenPrints",
