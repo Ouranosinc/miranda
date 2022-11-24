@@ -14,6 +14,6 @@ Co-Developers
 
 Contributors
 ------------
-
+* Sébastien Biner <biner.sebastien@hydroquebec.com> `@sbiner <https://github.com/sbiner>`_
+* David Huard <huard.david@ouranos.ca> `@huard <https://github.com/huard>`_
 * Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca> `@RondeauG <https://github.com/RondeauG>`_
-* Sébastien Biner <biner.sebastien@ouranos.ca> `@sbiner <https://github.com/sbiner>`_
