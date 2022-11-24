@@ -50,6 +50,11 @@ repos:
     hooks:
       - id: yamllint
         args: ['--config-file=.yamllint.yaml']
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: [ '--baseline=.secrets.baseline' ]
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.48"
     hooks:
