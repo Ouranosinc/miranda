@@ -7,8 +7,10 @@ include requirements_full.txt
 recursive-include miranda *.csv
 recursive-include miranda *.json
 recursive-include miranda *.py
+recursive-include miranda *.yml
 
 recursive-exclude docs *
+recursive-exclude templates *
 recursive-exclude tests *
 
 exclude Makefile

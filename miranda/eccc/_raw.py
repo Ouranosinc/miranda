@@ -34,12 +34,12 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 from xclim.core.units import convert_units_to
 
+from miranda.archive import group_by_length
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
 from miranda.units import GiB, MiB
 from miranda.utils import generic_extract_archive
 
-from ..archive import group_by_length
 from ._utils import cf_station_metadata
 
 config.dictConfig(LOGGING_CONFIG)

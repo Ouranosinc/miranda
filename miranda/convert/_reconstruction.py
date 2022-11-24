@@ -15,16 +15,12 @@ from miranda.gis.subset import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
+from ._data_corrections import variable_conversion
 from ._data_definitions import (
     reanalysis_project_institutes,
     xarray_frequencies_to_cmip6like,
 )
-from ._utils import (
-    daily_aggregation,
-    delayed_write,
-    get_chunks_on_disk,
-    variable_conversion,
-)
+from .utils import daily_aggregation, delayed_write, get_chunks_on_disk
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -177,9 +173,7 @@ def reanalysis_processing(
                             )
 
                         ds.attrs.update(dict(frequency=time_freq, domain=domain))
-                        ds = variable_conversion(
-                            ds, project=project, output_format=output_format
-                        )
+                        ds = variable_conversion(ds, project=project)
 
                         if time_freq.lower() == "day":
                             dataset = daily_aggregation(ds)

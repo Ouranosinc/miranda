@@ -71,7 +71,7 @@ def group_by_deciphered_date(
 
     Returns
     -------
-    Dict[List[Path]]
+    Dict[str, List[Path]]
     """
     logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
@@ -164,7 +164,7 @@ def group_by_subdirectories(
 
     Returns
     -------
-    Dict[List[Path]]
+    Dict[str, List[Path]]
     """
     if not within:
         within = Path.cwd()

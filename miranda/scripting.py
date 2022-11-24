@@ -53,7 +53,7 @@ LOGGING_CONFIG = {
         },
         "__main__": {  # if __name__ == '__main__'
             "handlers": ["default"],
-            "level": "WARNING",
+            "level": "INFO",
             "propagate": False,
         },
     },

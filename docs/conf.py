@@ -33,21 +33,28 @@ sys.path.insert(0, parent)
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "sphinx_copybutton",
-    "sphinx_codeautolink",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.todo",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.coverage",
-    "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.coverage",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
+
+extlinks = {
+    "issue": ("https://github.com/Ouranosinc/miranda/issues/%s", "GH/%s"),
+    "pull": ("https://github.com/Ouranosinc/miranda/pull/%s", "PR/%s"),
+    "user": ("https://github.com/%s", "@%s"),
+}
 
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False

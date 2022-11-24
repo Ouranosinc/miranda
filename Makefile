@@ -48,8 +48,8 @@ coverage:
 docs:
 	rm -f docs/miranda.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ --module-first miranda
 	$(MAKE) -C docs clean
+	sphinx-apidoc -o docs/ --module-first miranda
 	$(MAKE) -C docs html
 	xdg-open docs/_build/html/index.html
 

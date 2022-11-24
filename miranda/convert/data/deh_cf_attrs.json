@@ -1,12 +1,15 @@
 {
   "Header": {
     "Conventions": "CF-1.7 CMIP-6.2",
+    "_miranda_version": true,
     "data_specs_version": "00.00.01",
     "institution": "DEH",
-    "product": "station-obs",
+    "license_type": "private",
+    "processing_level": "raw",
     "realm": "land",
-    "table_date": "2021-10-26",
-    "table_id": "DEH"
+    "table_date": "2022-11-15",
+    "table_id": "DEH",
+    "type": "station-obs"
   },
   "variable_entry": {
     "flag": {

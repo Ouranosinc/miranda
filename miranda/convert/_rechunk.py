@@ -10,8 +10,7 @@ import zarr
 
 from miranda.scripting import LOGGING_CONFIG
 
-from . import reanalysis_project_institutes
-from ._data_definitions import era5_variables
+from ._data_definitions import era5_variables, reanalysis_project_institutes
 
 logging.config.dictConfig(LOGGING_CONFIG)
 

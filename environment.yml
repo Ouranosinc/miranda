@@ -1,8 +1,8 @@
 name: miranda
 channels:
   - conda-forge
-  - defaults
 dependencies:
+  - python >=3.7
   - autopep8
   - black
   - bump2version
@@ -22,8 +22,11 @@ dependencies:
   - intake
   - intake-esm
   - netCDF4
+  - numba >=0.55.2  # There's a problem with numba on conda
   - numcodecs
   - numpy
+  - openpyxl
+  - packaging
   - pandas
   - paramiko >=2.6.0
   - pint
@@ -31,8 +34,8 @@ dependencies:
   - pydantic
   - pyproj
   - pytest
-  - python >=3.7
   - pyupgrade
+  - pyyaml
   - rasterio
   - regionmask
   - requests
@@ -45,5 +48,5 @@ dependencies:
   - sphinx-copybutton
   - tox
   - xarray
-  - xclim >=0.35
+  - xclim >=0.33.0
   - zarr
