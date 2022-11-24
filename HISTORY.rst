@@ -5,7 +5,7 @@ History
 =======
 
 0.3.0 (2022-11-24)
-++++++++++++++++++
+------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Travis Logan (:user:`tlogan2000`), Gabriel Rondeau-Genesse (:user:`RondeauG`), and Sébastien Biner (:user:`sbiner`).
 
 Announcements
