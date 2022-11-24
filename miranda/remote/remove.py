@@ -1,4 +1,5 @@
 import logging.config
+import warnings
 from datetime import date
 from getpass import getpass
 from pathlib import Path
@@ -14,10 +15,18 @@ logging.config.dictConfig(LOGGING_CONFIG)
 try:
     import fabric  # noqa
 except ImportError:
-    raise ImportError(
+    warnings.warn(
         f"{__name__} functions require additional dependencies. "
         "Please install them with `pip install miranda[full]`."
     )
+
+
+__all__ = [
+    "delete_by_date",
+    "delete_by_variable",
+    "delete_duplicates",
+    "file_emptier",
+]
 
 
 def file_emptier(*, file_list: Union[List[Union[str, Path]], GeneratorType]) -> None:

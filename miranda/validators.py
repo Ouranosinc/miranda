@@ -5,10 +5,10 @@ import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
-from miranda.cv import VALIDATION_ENABLED
+from .cv import VALIDATION_ENABLED
 
 if VALIDATION_ENABLED:
-    from miranda.cv import (
+    from .cv import (
         ACTIVITIES,
         BIAS_ADJUST_INSTITUTIONS,
         DRIVING_MODELS,

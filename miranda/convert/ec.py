@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from miranda.convert._data_corrections import variable_conversion
+from ._data_corrections import variable_conversion
 
 
 def convert_canswe(file: str | Path, output: str | Path):

@@ -7,7 +7,7 @@ import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import yaml
 from schema import SchemaError
@@ -81,7 +81,7 @@ def generate_hash_metadata(
     version: Optional[str] = None,
     hash_file: Optional[os.PathLike] = None,
     verify: bool = False,
-) -> Mapping[str, List[str]]:
+) -> Dict[str, List[str]]:
     hashversion = dict()
 
     if version is None:
@@ -343,7 +343,7 @@ def structure_datasets(
     set_version_hashes: bool = False,
     verify_hashes: bool = False,
     filename_pattern: str = "*.nc",
-) -> Mapping[Path, Path]:
+) -> Dict[Path, Path]:
     """
 
     Parameters
@@ -373,7 +373,7 @@ def structure_datasets(
 
     Returns
     -------
-    dict
+    Dict[Path, Path]
     """
     input_files = discover_data(input_files, filename_pattern)
     if guess and project is None:

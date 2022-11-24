@@ -19,14 +19,15 @@ from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.convert.utils import find_version_hash  # noqa
 from miranda.cv import VALIDATION_ENABLED
-from miranda.decode._time import (
+from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
+
+from ._time import (
     TIME_UNITS_TO_FREQUENCY,
     TIME_UNITS_TO_TIMEDELTA,
     DecoderError,
     date_parser,
 )
-from miranda.scripting import LOGGING_CONFIG
-from miranda.units import get_time_frequency
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS

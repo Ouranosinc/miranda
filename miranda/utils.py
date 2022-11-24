@@ -1,6 +1,7 @@
 import gzip
 import logging.config
 import os
+import re
 import sys
 import tarfile
 import tempfile
@@ -8,13 +9,14 @@ import warnings
 import zipfile
 from contextlib import contextmanager
 from datetime import date
+from io import StringIO
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, Iterable, List, Optional, Sequence, Union
+from typing import Dict, Iterable, List, Optional, Sequence, TextIO, Union
 
-from . import scripting
+from .scripting import LOGGING_CONFIG
 
-logging.config.dictConfig(scripting.LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "HiddenPrints",
@@ -24,6 +26,7 @@ __all__ = [
     "find_filepaths",
     "generic_extract_archive",
     "list_paths_with_elements",
+    "publish_release_notes",
     "read_privileges",
     "single_item_list",
     "working_directory",
@@ -56,7 +59,7 @@ def discover_data(
     suffix: str = ".nc",
     recurse: bool = True,
 ) -> Union[List[os.PathLike], GeneratorType]:
-    """
+    """Discover data.
 
     Parameters
     ----------
@@ -93,7 +96,7 @@ def discover_data(
 
 
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
-    """Generates lists of `chunk_size` elements from `iterable`.
+    """Generate lists of `chunk_size` elements from `iterable`.
 
     Notes
     -----
@@ -113,8 +116,8 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
 
 
 def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
-    """
-    Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+    """Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+
     See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
@@ -138,8 +141,7 @@ def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
 
 
 def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
-    """
-    Determine whether a user has read privileges to a specific file
+    """Determine whether a user has read privileges to a specific file.
 
     Parameters
     ----------
@@ -175,7 +177,8 @@ def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
 
 @contextmanager
 def working_directory(directory: Union[str, Path]) -> None:
-    """
+    """Change the working directory within a context object.
+
     This function momentarily changes the working directory within the context and reverts to the file working directory
     when the code block it is acting upon exits
 
@@ -206,7 +209,7 @@ def find_filepaths(
     file_suffixes: Optional[Union[str, List[str]]] = None,
     **_,
 ) -> List[Path]:
-    """
+    """Find all available filepaths at a given source.
 
     Parameters
     ----------
@@ -246,12 +249,13 @@ def find_filepaths(
 
 
 def single_item_list(iterable: Iterable) -> bool:
-    """
+    """Ascertain whether a list has exactly one entry.
+
     See: https://stackoverflow.com/a/16801605/7322852
 
     Parameters
     ----------
-    iterable: Iterable
+    iterable : Iterable
 
     Returns
     -------
@@ -271,16 +275,18 @@ def generic_extract_archive(
     output_dir: Optional[Union[str, Path]] = None,
 ) -> List[Path]:
     """Extract archives (tar/zip) to a working directory.
+
     Parameters
     ----------
-    resources: Union[str, Path, List[Union[bytes, str, Path]]]
-      list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
-    output_dir: Optional[Union[str, Path]]
-      string or Path to a working location (default: temporary folder).
+    resources : Union[str, Path, List[Union[bytes, str, Path]]]
+        list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
+    output_dir : Optional[Union[str, Path]]
+        string or Path to a working location (default: temporary folder).
+
     Returns
     -------
     list
-      List of original or of extracted files
+        List of original or of extracted files
     """
 
     archive_types = [".gz", ".tar", ".zip", ".7z"]
@@ -340,14 +346,15 @@ def generic_extract_archive(
 
 def yesno_prompt(query: str) -> bool:
     """Prompt user for a yes/no answer.
+
     Parameters
     ----------
     query : str
-        the yes/no question to ask the user.
+        The yes/no question to ask the user.
 
     Returns
     -------
-    out : bool
+    bool
         True (yes) or False (otherwise).
     """
 
@@ -367,14 +374,14 @@ def list_paths_with_elements(
     Parameters
     ----------
     base_paths : List[str]
-      list of paths from which to start the search.
+        list of paths from which to start the search.
     elements : List[str]
-      ordered list of the expected elements.
+        ordered list of the expected elements.
 
     Returns
     -------
     List[Dict]
-      The keys are 'path' and each of the members of the given elements, the path is the absolute path.
+        The keys are 'path' and each of the members of the given elements, the path is the absolute path.
 
     Notes
     -----
@@ -419,3 +426,75 @@ def list_paths_with_elements(
             for my_path, my_item in zip(next_base_paths, path_content):
                 paths_elements.append({"path": my_path, elements[0]: my_item})
     return paths_elements
+
+
+def publish_release_notes(
+    style: str = "md", file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
+) -> Optional[str]:
+    """Format release history in Markdown or ReStructuredText.
+    Parameters
+    ----------
+    style: {"rst", "md"}
+      Use ReStructuredText formatting or Markdown. Default: Markdown.
+    file: {os.PathLike, StringIO, TextIO}, optional
+      If provided, prints to the given file-like object. Otherwise, returns a string.
+    Returns
+    -------
+    str, optional
+    Notes
+    -----
+    This function is solely for development purposes.
+    """
+    history_file = Path(__file__).parent.parent.joinpath("HISTORY.rst")
+
+    if not history_file.exists():
+        raise FileNotFoundError("History file not found in miranda file tree.")
+
+    with open(history_file) as hf:
+        history = hf.read()
+
+    if style == "rst":
+        hyperlink_replacements = {
+            r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/miranda/issues/\1>`_",
+            r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/miranda/pull/\>`_",
+            r":user:`([a-zA-Z0-9_.-]+)`": r"`@\1 <https://github.com/\1>`_",
+        }
+    elif style == "md":
+        hyperlink_replacements = {
+            r":issue:`([0-9]+)`": r"[GH/\1](https://github.com/Ouranosinc/miranda/issues/\1)",
+            r":pull:`([0-9]+)`": r"[PR/\1](https://github.com/Ouranosinc/miranda/pull/\1)",
+            r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
+        }
+    else:
+        raise NotImplementedError()
+
+    for search, replacement in hyperlink_replacements.items():
+        history = re.sub(search, replacement, history)
+
+    if style == "md":
+        history = history.replace(".. :changelog:\n\n", "")
+        history = history.replace("=======\nHistory\n=======", "# History")
+
+        titles = {r"\n(.*?)\n([\-]{1,})": "-", r"\n(.*?)\n([\^]{1,})": "^"}
+        for title_expression, level in titles.items():
+            found = re.findall(title_expression, history)
+            for grouping in found:
+                fixed_grouping = (
+                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
+                )
+                search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
+                replacement = f"{'##' if level=='-' else '###'} {grouping[0]}"
+                history = re.sub(search, replacement, history)
+
+        link_expressions = r"[\`]{1}([\w\s]+)\s<(.+)>`\_"
+        found = re.findall(link_expressions, history)
+        for grouping in found:
+            search = rf"`{grouping[0]} <.+>`\_"
+            replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
+            history = re.sub(search, replacement, history)
+
+    if not file:
+        return history
+    if isinstance(file, (Path, os.PathLike)):
+        file = Path(file).open("w")
+    print(history, file=file)
