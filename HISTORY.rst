@@ -27,7 +27,7 @@ New features
 * Module (``miranda.ncar``) for fetching interpolated CORDEX-NAM (22i/44i) from NCAR AWS data storage.
 * Module (``miranda.ecmwf``) for fetching ECMWF ERA5/-Land (single-levels, pressure-levels, monthly-means) datasets via CDSAPI.
 * Module (``miranda.gis``) for setting specific subsetting domains used when converting gridded datasets.
-* Modules (``miranda.archive`` and ``miranda.remote``) for performing data archiving actions locally and remotely, using `fabric` and `paramiko` (WIP).
+* Modules (``miranda.archive`` and ``miranda.remote``) for performing data archiving actions locally and remotely (powered by `fabric <https://github.com/fabric/fabric>`_ and `paramiko <https://github.com/paramiko/paramiko>`_) (WIP).
 * Module (``miranda.decode``) for ingesting and parsing dataset metadata based on filename and dataset attributes. Supported datasets are:
     - `miranda` converted datasets
     - CMIP6
