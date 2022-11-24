@@ -432,15 +432,19 @@ def publish_release_notes(
     style: str = "md", file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
 ) -> Optional[str]:
     """Format release history in Markdown or ReStructuredText.
+
     Parameters
     ----------
-    style: {"rst", "md"}
-      Use ReStructuredText formatting or Markdown. Default: Markdown.
-    file: {os.PathLike, StringIO, TextIO}, optional
-      If provided, prints to the given file-like object. Otherwise, returns a string.
+    style : {"rst", "md"}
+        Use ReStructuredText formatting or Markdown. Default: Markdown.
+    file : {os.PathLike, StringIO, TextIO}, optional
+        If provided, prints to the given file-like object.
+        Otherwise, returns a string.
+
     Returns
     -------
     str, optional
+
     Notes
     -----
     This function is solely for development purposes.
