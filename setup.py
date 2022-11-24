@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import re
 import sys
 
 from packaging import version
@@ -54,6 +55,14 @@ Documentation
 
 The full documentation is at https://miranda.readthedocs.io/en/latest."""
 history = open("HISTORY.rst").read().replace(".. :changelog:", "")
+
+hyperlink_replacements = {
+    r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/miranda/issues/\1>`_",
+    r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/miranda/pull/\1>`_",
+    r":user:`([a-zA-Z0-9_.-]+)`": r"`@\1 <https://github.com/\1>`_",
+}
+for search, replacement in hyperlink_replacements.items():
+    history = re.sub(search, replacement, history)
 
 setup(
     name=NAME,
