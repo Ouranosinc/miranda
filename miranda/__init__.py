@@ -16,7 +16,7 @@ limitations under the License.
 
 __author__ = "Trevor James Smith"
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.3.0-beta"
+__version__ = "0.3.0"
 
 
 from . import (
