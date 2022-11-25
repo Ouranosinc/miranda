@@ -11,7 +11,7 @@ from dask import compute
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar
 
-from miranda.gis.subset import subsetting_domains
+from miranda.gis import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 

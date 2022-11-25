@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Union
 
 import fiona
 import geojson
-from rasterio.crs import CRS
+from pyproj.crs import CRS
 
 from miranda.scripting import LOGGING_CONFIG
 

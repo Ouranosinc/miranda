@@ -39,6 +39,18 @@ frequencies = {
     "z": ("4min", "4 min"),  # 4T
 }
 
+__all__ = [
+    "parse_var_code",
+    "list_tables",
+    "read_table",
+    "read_definitions",
+    "read_stations",
+    "convert_mdb",
+    "convert_snow_table",
+    "concat",
+    "convert_melcc_obs",
+]
+
 
 def parse_var_code(vcode):
     match = re.match(r"([^\d]*)(\d*)([abcfhqz])", vcode)

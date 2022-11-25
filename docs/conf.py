@@ -61,6 +61,12 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None) %}
+.. only:: html
+    `Download this notebook from github. <https://github.com/Ouranosinc/miranda/raw/main/docs/{{ docname }}>`_
+"""
+
 # To avoid having to install these libraries on ReadTheDocs.
 autodoc_mock_imports = [
     "cdsapi",
@@ -74,6 +80,12 @@ autodoc_mock_imports = [
     "s3fs",
     "scp",
 ]
+
+autodoc_default_options = {
+    "show-inheritance": False,
+    "imported-members": True,
+    "private-members": False,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

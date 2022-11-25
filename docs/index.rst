@@ -8,11 +8,24 @@ Contents:
 
    installation
    usage
-   modules
    contributing
    authors
    history
    license
+
+.. toctree::
+   :maxdepth: 2
+   :caption: All Modules
+
+   modules
+
+.. only:: html
+
+    Indices and tables
+    ==================
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`
 
 Feedback
 ========
