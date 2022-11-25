@@ -100,4 +100,9 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
+    project_urls={
+        "About Ouranos": "https://www.ouranos.ca/en/",
+        "Changelog": "https://miranda.readthedocs.io/en/stable/history.html",
+        "Issue tracker": "https://github.com/Ouranosinc/miranda/issues",
+    },
 )
