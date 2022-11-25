@@ -82,9 +82,9 @@ autodoc_mock_imports = [
 ]
 
 autodoc_default_options = {
-    "show-inheritance": False,
     "imported-members": True,
     "private-members": False,
+    "show-inheritance": False,
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -168,10 +168,10 @@ html_theme = "furo"
 
 on_rtd = os.getenv("READTHEDOCS")
 html_theme_options = {
-    "source_repository": "https://github.com/Ouranosinc/miranda/",
-    "source_branch": "main",
-    "top_of_page_button": "edit" if not on_rtd else None,
     "navigation_with_keys": True,
+    "source_branch": "main",
+    "source_repository": "https://github.com/Ouranosinc/miranda/",
+    "top_of_page_button": "edit" if not on_rtd else None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
