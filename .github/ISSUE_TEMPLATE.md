@@ -1,4 +1,4 @@
-* xclim version:
+* miranda version:
 * Python version:
 * Operating System:
 
