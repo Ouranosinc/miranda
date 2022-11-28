@@ -7,6 +7,8 @@ from schema import Literal, Optional, Or, Regex, Schema
 
 from .cv import VALIDATION_ENABLED
 
+__all__ = ["url_validate"]
+
 if VALIDATION_ENABLED:
     from .cv import (
         ACTIVITIES,
@@ -15,6 +17,8 @@ if VALIDATION_ENABLED:
         INSTITUTIONS,
         WCRP_FREQUENCIES,
     )
+
+    __all__ = ["validation_schemas", "url_validate"]
 
     TYPE_NAMES = [
         "simulation",

@@ -21,6 +21,8 @@ dependencies:
   - h5netcdf
   - intake
   - intake-esm
+  - ipython
+  - nbsphinx
   - netCDF4
   - numba >=0.55.2  # There's a problem with numba on conda
   - numcodecs
@@ -28,6 +30,7 @@ dependencies:
   - openpyxl
   - packaging
   - pandas
+  - pandoc
   - paramiko >=2.6.0
   - pint
   - pre-commit

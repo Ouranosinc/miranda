@@ -4,7 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Union
 
-from miranda.archive.groupings import (
+from miranda.archive import (
     group_by_deciphered_date,
     group_by_size,
     group_by_subdirectories,

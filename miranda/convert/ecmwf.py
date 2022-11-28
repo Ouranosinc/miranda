@@ -15,6 +15,8 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+__all__ = ["tigge_convert"]
+
 
 def tigge_convert(
     source: Optional[os.PathLike] = None,

@@ -3,9 +3,15 @@ black
 bump2version
 coverage
 flake8
-pip
+furo
+ipython
+nbsphinx
+pandoc
 pre-commit
 pytest
 pyupgrade
+sphinx
+sphinx_codeautolink
+sphinx_copybutton
 tox
 wheel

@@ -9,6 +9,8 @@ import xarray as xr
 
 from ._data_corrections import variable_conversion
 
+__all__ = ["convert_canswe"]
+
 
 def convert_canswe(file: str | Path, output: str | Path):
     """Convert the CanSWE netCDF files to production-ready CF-compliant netCDFs."""

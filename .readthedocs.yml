@@ -8,7 +8,7 @@ build:
     pre_install:
       - pip install llvmlite~=0.38 --ignore-installed
     post_install:
-      - sphinx-apidoc -o docs/ --module-first miranda
+      - sphinx-apidoc -o docs/ --private --module-first miranda
     pre_build:
       - git clone https://github.com/ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
 
