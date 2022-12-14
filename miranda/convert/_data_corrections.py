@@ -4,9 +4,10 @@ import logging.config
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, Iterator, Optional, Sequence, Union
+from typing import Dict, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from xclim.core import units
 from xclim.core.calendar import parse_offset
@@ -15,6 +16,7 @@ from miranda import __version__ as __miranda_version__
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
+from ..decode import date_parser
 from .utils import delayed_write, find_version_hash
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -65,6 +67,39 @@ def _iter_vars_key(ds, meta, key, project):
     for vv in set(ds.data_vars).intersection(meta["variable_entry"]):
         val = _get_var_entry_key(meta, vv, key, project)
         yield vv, val
+
+
+def correct_time_entries(
+    d: xr.Dataset,
+    split: str = "_",
+    location: int = -1,
+    time_field: str = "Time",
+    freq="D",
+) -> xr.Dataset:
+    filename = d.encoding["source"]
+    date = date_parser(Path(filename).name.split(split)[location])
+    entries = len(d[time_field])
+    date_range = pd.date_range(date, periods=entries, freq=freq)
+
+    d[time_field] = xr.DataArray(
+        time_field,
+        date_range,
+        attrs=dict(units=f"days since {date}", calendar="standard"),
+    )
+    return d
+
+
+def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.Dataset:
+    filename = d.encoding["source"]
+    new_name = Path(filename).name.split(split)[location]
+    old_name = list(d.data_vars.keys())[0]
+    return d.rename({old_name: new_name})
+
+
+def correct_var_name_and_time(d: xr.Dataset) -> xr.Dataset:
+    d = correct_time_entries(d)
+    d = correct_var_names(d)
+    return d
 
 
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
@@ -426,9 +461,12 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d
 
 
-def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
+def variable_conversion(
+    ds: xr.Dataset, project: str, files: Optional[List[str]] = None
+) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
+
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
@@ -452,6 +490,8 @@ def file_conversion(
     chunks: Optional[dict] = None,
     overwrite: bool = False,
     add_version_hashes: bool = True,
+    correct_variable_names: bool = False,
+    correct_timestamps: bool = False,
     compute: bool = True,
     **xr_kwargs,
 ) -> None:
@@ -463,18 +503,22 @@ def file_conversion(
         Files to be converted.
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
     project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}
-
+        Project name for decoding/handling purposes.
     output_path : str or os.PathLike
         Output folder path.
     output_format: {"netcdf", "zarr"}
         Output data container type.
     chunks : dict, optional
         Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
-    overwrite: bool
+    overwrite : bool
         Whether to remove existing files or fail if files already exist.
-    add_version_hashes: bool
+    add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
-    compute: bool
+    correct_variable_names : bool
+        If True, variable will be renamed on dataset open based on information found within filename. Default: False.
+    correct_timestamps : bool
+        if True, variable time dimension will be adjusted based on date found within filename. Default: False.
+    compute : bool
         If True, files will be converted with each call to file conversion.
         If False, will return a dask.Delayed object that can be computed later.
         Default: True.
@@ -510,7 +554,18 @@ def file_conversion(
 
     if len(files) == 1:
         ds = xr.open_dataset(files[0], **xr_kwargs)
+        if correct_variable_names:
+            ds = correct_var_names(ds)
+        if correct_timestamps:
+            ds = correct_time_entries(ds)
     else:
+        if correct_timestamps and correct_variable_names:
+            xr_kwargs.update(dict(preprocess=correct_var_name_and_time))
+        elif correct_timestamps:
+            xr_kwargs.update(dict(preprocess=correct_time_entries))
+        elif correct_variable_names:
+            xr_kwargs.update(dict(preprocess=correct_var_names))
+
         ds = xr.open_mfdataset(files, **xr_kwargs)
 
     if version_hashes:

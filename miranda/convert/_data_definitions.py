@@ -31,6 +31,7 @@ data_folder = Path(__file__).parent / "data"
 era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
     "variable_entry"
 ].keys()
+grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
 nasa_ag_variables = json.load(open(data_folder / "nasa_cf_attrs.json"))[
     "variable_entry"
@@ -177,8 +178,21 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     return dict(cfsr=in_files_agcfsr)
 
 
+def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+    # GRNCH-ETS source data
+    source_grnch = Path(path)
+    logging.info(f"Gathering GRNCH from: {source_grnch.as_posix()}")
+    in_files_grnch = list()
+    for v in grnch_variables:
+        in_files_grnch.extend(list(sorted(source_grnch.rglob(f"{v}_.nc"))))
+    logging.info(
+        f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
+    )
+    return dict(cfsr=in_files_grnch)
+
+
 def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # NRCan Gridded Obs source data
+    # NRCan Gridded Observations source data
     source_nrcan = Path(path)
     logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
     in_files_nrcan = list()
