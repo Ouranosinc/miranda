@@ -22,7 +22,7 @@ import subprocess
 from functools import reduce
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Union
+from typing import Dict, List, Union
 
 from .scripting import LOGGING_CONFIG
 
@@ -240,41 +240,61 @@ def size_division(
 
 
 def file_size(
-    file_path_or_bytes: Union[Path, str, int, List[Union[str, Path]], GeneratorType]
+    file_path_or_bytes_or_dict: Union[
+        Path,
+        str,
+        int,
+        List[Union[str, Path]],
+        GeneratorType,
+        Dict[str, Union[Path, List[Path]]],
+    ]
 ) -> int:
     """
 
     Parameters
     ----------
-    file_path_or_bytes : Union[Path, str, int, List[Union[str, Path]], GeneratorType]
+    file_path_or_bytes_or_dict : Union[Path, str, int, List[Union[str, Path]], GeneratorType, Dict[str, Union[Path, List[Path]]]]
 
     Returns
     -------
     int
     """
     try:
-        if isinstance(file_path_or_bytes, int):
-            total = file_path_or_bytes
-        elif isinstance(file_path_or_bytes, (list, GeneratorType)):
+        if isinstance(file_path_or_bytes_or_dict, int):
+            total = file_path_or_bytes_or_dict
+        elif isinstance(file_path_or_bytes_or_dict, (list, GeneratorType)):
             try:
                 total = reduce(
                     (lambda x, y: x + y),
-                    map(lambda f: Path(f).stat().st_size, file_path_or_bytes),
+                    map(lambda f: Path(f).stat().st_size, file_path_or_bytes_or_dict),
                 )
             except TypeError:
                 total = 0
-        elif Path(file_path_or_bytes).is_file():
-            total = Path(file_path_or_bytes).stat().st_size
-        elif Path(file_path_or_bytes).is_dir():
+        elif isinstance(file_path_or_bytes_or_dict, dict):
+            total: int = 0
+            for key, val in file_path_or_bytes_or_dict.items():
+                if isinstance(val, list):
+                    try:
+                        total += reduce(
+                            (lambda x, y: x + y),
+                            map(lambda f: Path(f).stat().st_size, val),
+                        )
+                    except TypeError:
+                        continue
+                elif Path(val).is_file():
+                    total += Path(val).stat().st_size
+        elif Path(file_path_or_bytes_or_dict).is_file():
+            total = Path(file_path_or_bytes_or_dict).stat().st_size
+        elif Path(file_path_or_bytes_or_dict).is_dir():
             total = reduce(
                 (lambda x, y: x + y),
-                [f.stat().st_size for f in Path(file_path_or_bytes).rglob("*")],
+                [f.stat().st_size for f in Path(file_path_or_bytes_or_dict).rglob("*")],
             )
         else:
             raise FileNotFoundError
     except FileNotFoundError:
         logging.error(
-            f"File Not Found: Unable to parse file size from {file_path_or_bytes}"
+            f"File Not Found: Unable to parse file size from {file_path_or_bytes_or_dict}"
         )
         raise
 
@@ -282,7 +302,9 @@ def file_size(
 
 
 def report_file_size(
-    file_path_or_bytes: Union[Path, str, int, List[Union[str, Path]], GeneratorType],
+    file_path_or_bytes_or_dict: Union[
+        Path, str, int, List[Union[str, Path]], Dict[str, Union[Path, List[Path]]]
+    ],
     use_binary: bool = True,
     significant_digits: int = 2,
 ) -> str:
@@ -306,5 +328,5 @@ def report_file_size(
         suffix = _CONVERSIONS[multiple].format("i" if binary else "")
         return f"{value:.{precision}f} {suffix}"
 
-    total = file_size(file_path_or_bytes)
+    total = file_size(file_path_or_bytes_or_dict)
     return _size_formatter(total, binary=use_binary, precision=significant_digits)
