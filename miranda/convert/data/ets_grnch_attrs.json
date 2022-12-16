@@ -12,7 +12,7 @@
     "processing_level": "raw",
     "project": "Info-CRUE",
     "realm": "atmos",
-    "source": "GRNCH_QC",
+    "source": "GRNCH-QC",
     "table_date": "2022-12-14",
     "table_id": "ets_grnch",
     "title": "Gridded North American Climate from the HC3 Laboratory (Québec Version)",
@@ -48,7 +48,6 @@
     "T": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
-      "_transformation": "amount2rate",
       "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: mean",
       "history": "",
@@ -59,15 +58,12 @@
     "Time": {
       "_cf_variable_name": "time",
       "axis": "T",
-      "calendar": "standard",
       "long_name": "time",
-      "standard_name": "time",
-      "units": "days since 1970-01-01"
+      "standard_name": "time"
     },
     "Tmax": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
-      "_transformation": "amount2rate",
       "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: maximum",
       "history": "",
@@ -78,7 +74,6 @@
     "Tmin": {
       "_cf_variable_name": "tasmin",
       "_corrected_units": "degC",
-      "_transformation": "amount2rate",
       "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: minimum",
       "history": "",

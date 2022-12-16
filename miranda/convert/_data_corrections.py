@@ -9,6 +9,7 @@ from typing import Dict, Iterator, List, Optional, Sequence, Union
 import numpy as np
 import pandas as pd
 import xarray as xr
+from xarray.coding import times
 from xclim.core import units
 from xclim.core.calendar import parse_offset
 
@@ -74,18 +75,13 @@ def correct_time_entries(
     split: str = "_",
     location: int = -1,
     time_field: str = "Time",
-    freq="D",
 ) -> xr.Dataset:
     filename = d.encoding["source"]
     date = date_parser(Path(filename).name.split(split)[location])
-    entries = len(d[time_field])
-    date_range = pd.date_range(date, periods=entries, freq=freq)
-
-    d[time_field] = xr.DataArray(
-        time_field,
-        date_range,
-        attrs=dict(units=f"days since {date}", calendar="standard"),
+    time = xr.coding.times.decode_cf_datetime(
+        d[time_field], units=f"days since {date}", calendar="standard"
     )
+    d = d.assign_coords({time_field: time})
     return d
 
 
@@ -461,9 +457,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d
 
 
-def variable_conversion(
-    ds: xr.Dataset, project: str, files: Optional[List[str]] = None
-) -> xr.Dataset:
+def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
 
