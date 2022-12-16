@@ -20,20 +20,6 @@
     "version": "v1.2"
   },
   "variable_entry": {
-    "Latitude": {
-      "_cf_variable_name": "lat",
-      "axis:": "Y",
-      "long_name": "Latitude",
-      "standard_name": "latitude",
-      "units": "degrees_north"
-    },
-    "Longitude": {
-      "_cf_variable_name": "lon",
-      "axis:": "X",
-      "long_name": "Longitude",
-      "standard_name": "longitude",
-      "units": "degrees_east"
-    },
     "P": {
       "_cf_variable_name": "pr",
       "_corrected_units": "mm d-1",
@@ -76,6 +62,19 @@
       "long_name": "Daily Minimum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
       "units": "K"
+    },
+    "lat": {
+      "_cf_variable_name": "lat",
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "lon": {
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
     }
   }
 }

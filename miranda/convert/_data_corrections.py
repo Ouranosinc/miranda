@@ -359,13 +359,14 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     ).items():
         if orig in d:
             d = d.rename({orig: new})
-            if new == "lon" and np.any(d.lon > 180):
+        if new == "lon" and "lon" in d.dims:
+            if np.any(d.lon > 180):
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
-            sort_dims.append(new)
-            coord_precision = _get_var_entry_key(m, new, "_precision", p)
-            if coord_precision is not None:
-                d[new] = d[new].round(coord_precision)
+        sort_dims.append(new)
+        coord_precision = _get_var_entry_key(m, new, "_precision", p)
+        if coord_precision is not None:
+            d[new] = d[new].round(coord_precision)
     if sort_dims:
         d = d.sortby(sort_dims)
     return d
@@ -438,15 +439,15 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         d["time"].attrs.update(descriptions["time"])
 
     # Add variable metadata and remove nonstandard entries
-    data_vars_correction_fields = [
+    variable_correction_fields = [
         "_corrected_units",
         "_invert_sign",
         "_offset_time",
         "_transformation",
     ]
-    for var in d.data_vars:
+    for var in d.variables:
         if var in descriptions.keys():
-            for field in data_vars_correction_fields:
+            for field in variable_correction_fields:
                 if field in descriptions[var].keys():
                     del descriptions[var][field]
             d[var].attrs.update(descriptions[var])
@@ -565,11 +566,16 @@ def file_conversion(
         ds.attrs.update(dict(original_files=str(version_hashes)))
 
     ds = variable_conversion(ds, project)
-    outfile = f"{Path(files[0].stem)}.{suffix}"
+    if correct_variable_names:
+        var_name = list(ds.data_vars.keys())[0]
+        time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+        outfile = f"{var_name}_{project}_{time_start}-{time_end}.{suffix}"
+    else:
+        outfile = f"{Path(files[0].stem)}.{suffix}"
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():
-        logging.warning(f"Removing existing {output_format} files for {files[0].name}.")
+        logging.warning(f"Removing existing {output_format} files for {outfile}.")
         if outfile_path.is_dir():
             shutil.rmtree(outfile_path)
         if outfile_path.is_file():
