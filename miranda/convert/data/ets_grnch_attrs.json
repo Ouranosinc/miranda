@@ -38,7 +38,6 @@
       "_cf_variable_name": "pr",
       "_corrected_units": "mm d-1",
       "_transformation": "amount2rate",
-      "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: mean",
       "history": "",
       "long_name": "precipitation",
@@ -48,7 +47,6 @@
     "T": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
-      "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: mean",
       "history": "",
       "long_name": "Daily Mean Near-Surface Air Temperature",
@@ -64,7 +62,6 @@
     "Tmax": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
-      "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: maximum",
       "history": "",
       "long_name": "Daily Maximum Near-Surface Air Temperature",
@@ -74,7 +71,6 @@
     "Tmin": {
       "_cf_variable_name": "tasmin",
       "_corrected_units": "degC",
-      "cell_measures": "area: areacella",
       "cell_methods": "area: mean time: minimum",
       "history": "",
       "long_name": "Daily Minimum Near-Surface Air Temperature",
