@@ -4,20 +4,19 @@ import logging.config
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Sequence, Union
+from typing import Dict, Iterator, Optional, Sequence, Union
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 from xarray.coding import times
 from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
+from miranda.decode import date_parser
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
-from ..decode import date_parser
 from .utils import delayed_write, find_version_hash
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -41,6 +40,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
     elif project in ["cordex", "cmip5", "cmip6"]:
         metadata_definition = json.load(open(data_folder / "cmip_ouranos_attrs.json"))
+    elif project == "ets-grnch":
+        metadata_definition = json.load(open(data_folder / "ets_grnch_cf_attrs.json"))
     elif project == "nrcan-gridded-10km":
         raise NotImplementedError()
     elif project == "wfdei-gem-capa":
@@ -77,17 +78,18 @@ def correct_time_entries(
     time_field: str = "Time",
 ) -> xr.Dataset:
     filename = d.encoding["source"]
-    date = date_parser(Path(filename).name.split(split)[location])
+    date = date_parser(Path(filename).stem.split(split)[location])
     time = xr.coding.times.decode_cf_datetime(
         d[time_field], units=f"days since {date}", calendar="standard"
     )
     d = d.assign_coords({time_field: time})
+    d = d.rename({time_field: "time"})
     return d
 
 
 def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.Dataset:
     filename = d.encoding["source"]
-    new_name = Path(filename).name.split(split)[location]
+    new_name = Path(filename).stem.split(split)[location]
     old_name = list(d.data_vars.keys())[0]
     return d.rename({old_name: new_name})
 
@@ -352,16 +354,18 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 # For renaming lat and lon dims
 def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     sort_dims = []
-    for orig, new in dict(longitude="lon", latitude="lat").items():
+    for orig, new in dict(
+        longitude="lon", latitude="lat", Longitude="lon", Latitude="lat"
+    ).items():
         if orig in d:
             d = d.rename({orig: new})
-        if new == "lon" and np.any(d.lon > 180):
-            lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
-            d[new] = lon1
-        sort_dims.append(new)
-        coord_precision = _get_var_entry_key(m, new, "_precision", p)
-        if coord_precision is not None:
-            d[new] = d[new].round(coord_precision)
+            if new == "lon" and np.any(d.lon > 180):
+                lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+                d[new] = lon1
+            sort_dims.append(new)
+            coord_precision = _get_var_entry_key(m, new, "_precision", p)
+            if coord_precision is not None:
+                d[new] = d[new].round(coord_precision)
     if sort_dims:
         d = d.sortby(sort_dims)
     return d
@@ -496,7 +500,7 @@ def file_conversion(
     files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike]
         Files to be converted.
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
-    project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}
+    project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
         Project name for decoding/handling purposes.
     output_path : str or os.PathLike
         Output folder path.
@@ -530,11 +534,6 @@ def file_conversion(
 
     if isinstance(output_path, str):
         output_path = Path(output_path)
-
-    if chunks is None:
-        output_chunks = dict()
-    else:
-        output_chunks = chunks
 
     if isinstance(files, (str, os.PathLike)):
         files = [Path(files)]
@@ -577,7 +576,11 @@ def file_conversion(
             outfile_path.unlink()
 
     write_object = delayed_write(
-        ds, outfile_path, output_chunks, output_format, overwrite
+        ds,
+        outfile_path,
+        output_format,
+        overwrite,
+        target_chunks=chunks,
     )
     if compute:
         return write_object.compute()

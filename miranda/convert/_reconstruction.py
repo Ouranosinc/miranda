@@ -242,9 +242,9 @@ def reanalysis_processing(
                                         delayed_write(
                                             d,
                                             out_filenames[i],
-                                            output_chunks,
                                             output_format,
                                             overwrite,
+                                            target_chunks=output_chunks,
                                         )
                                     )
 

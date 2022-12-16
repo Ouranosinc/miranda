@@ -256,9 +256,9 @@ def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
 def delayed_write(
     ds: xr.Dataset,
     outfile: Union[str, os.PathLike],
-    target_chunks: dict,
     output_format: str,
     overwrite: bool,
+    target_chunks: Optional[dict] = None,
 ) -> delayed:
     """
 
@@ -280,8 +280,9 @@ def delayed_write(
     for name, da in ds.data_vars.items():
         chunks = list()
         for dim in da.dims:
-            if dim in target_chunks.keys():
-                chunks.append(target_chunks[str(dim)])
+            if target_chunks:
+                if dim in target_chunks.keys():
+                    chunks.append(target_chunks[str(dim)])
             else:
                 chunks.append(len(da[dim]))
 
