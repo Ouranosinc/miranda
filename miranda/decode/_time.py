@@ -22,6 +22,8 @@ TIME_UNITS_TO_FREQUENCY = {
     "subhrPt": "sub-hr",
     "hourly": "1hr",
     "hours": "1hr",
+    "hour": "1hr",
+    "hr": "1hr",
     "1hr": "1hr",
     "3-hourly": "3hr",
     "3hr": "3hr",
@@ -34,6 +36,8 @@ TIME_UNITS_TO_FREQUENCY = {
     "weekly": "sem",
     "weeks": "sem",
     "sem": "sem",
+    "byweekly": "2sem",
+    "2sem": "2sem",
     "monthly": "mon",
     "months": "mon",
     "month": "mon",
@@ -67,6 +71,8 @@ for key, value in TIME_UNITS_TO_FREQUENCY.items():
 TIME_UNITS_TO_TIMEDELTA = {
     "hourly": "1h",
     "hours": "1h",
+    "hour": "1h",
+    "hr": "1h",
     "1hr": "1h",
     "1hrCM": "1h",
     "1hrPt": "1h",
@@ -81,6 +87,8 @@ TIME_UNITS_TO_TIMEDELTA = {
     "weekly": "7d",
     "weeks": "7d",
     "sem": "7d",
+    "biweekly": "14d",
+    "2sem": "14d",
     "mon": "30d",
     "monC": "30d",
     "monPt": "30d",
@@ -112,23 +120,23 @@ def date_parser(
     output_type: str = "str",
     strftime_format: str = "%Y-%m-%d",
 ) -> Union[str, pd.Timestamp, NaTType]:
-    """Returns a datetime from a string.
+    """Parses datetime objects from a string representation of a date or both a start and end date.
 
     Parameters
     ----------
     date : str
-      Date to be converted.
+        Date to be converted.
     end_of_period : bool
-      If True, the date will be the end of month or year depending on what's most appropriate.
-    output_type: {"datetime", "str"}
-      Returned object type.
-    strftime_format: str
-      If output_type=='str', this sets the strftime format.
+        If True, the date will be the end of month or year depending on what's most appropriate.
+    output_type : {"datetime", "str"}
+        Desired returned object type.
+    strftime_format : str
+        If output_type=='str', this sets the strftime format.
 
     Returns
     -------
     pd.Timestamp or str or pd.NaT
-      Parsed date.
+        Parsed date.
 
     Notes
     -----

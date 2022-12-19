@@ -1,4 +1,5 @@
 import logging.config
+import warnings
 from getpass import getpass
 from pathlib import Path
 from typing import Union
@@ -10,8 +11,9 @@ try:
     from paramiko import SSHClient  # noqa
     from scp import SCPClient  # noqa
 except ImportError:
-    raise ImportError(
-        f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[full]`."
+    warnings.warn(
+        f"{__name__} functions require additional dependencies."
+        f"Please install them with `pip install miranda[full]`."
     )
 
 

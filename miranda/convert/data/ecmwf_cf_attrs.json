@@ -1,6 +1,6 @@
 {
   "Header": {
-    "Conventions": "CF-1.8",
+    "Conventions": "CF-1.9",
     "_doi": {
       "era5-land": "https://doi.org/10.24381/cds.e2161bac",
       "era5-land-monthly-means": "https://doi.org/10.24381/cds.68d2bb30",
@@ -13,6 +13,7 @@
       "era5-single-levels-monthly-means-preliminary-back-extension": "https://doi.org/10.24381/cds.f17050d7",
       "era5-single-levels-preliminary-back-extension": "https://doi.org/10.24381/cds.adbb2d47"
     },
+    "_miranda_version": true,
     "_source": {
       "era5-land": "ERA5-Land",
       "era5-land-monthly-means": "ERA5-Land",
@@ -25,32 +26,57 @@
       "era5-single-levels-monthly-means-preliminary-back-extension": "ERA5-preliminary",
       "era5-single-levels-preliminary-back-extension": "ERA5-preliminary"
     },
-    "data_specs_version": "00.00.08",
     "institution": "ECMWF",
-    "licence_type": "permissive",
     "license": "https://apps.ecmwf.int/datasets/licences/copernicus/",
+    "license_type": "permissive",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "5 October 2022",
+    "table_date": "2022-11-15",
+    "table_id": "ECMWF",
     "type": "reconstruction"
   },
   "variable_entry": {
     "d2m": {
       "_cf_variable_name": "tdps",
-      "_corrected_units": {},
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "2 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",
       "units": "K"
     },
+    "lat": {
+      "_precision": {
+        "era5-land": 4
+      }
+    },
+    "lon": {
+      "_precision": {
+        "era5-land": 4
+      }
+    },
+    "msl": {
+      "_cf_variable_name": "psl",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "long_name": "Mean sea level pressure",
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa"
+    },
     "pev": {
       "_cf_variable_name": "evspsblpot",
-      "_corrected_units": {},
-      "_invert_sign": {},
+      "_corrected_units": false,
+      "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -75,9 +101,9 @@
         "era5-single-levels": "kg m-3",
         "era5-single-levels-preliminary-back-extension": "kg m-3"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
       "long_name": "Surface snow density",
@@ -92,9 +118,9 @@
         "era5-single-levels": "Mg m-2",
         "era5-single-levels-preliminary-back-extension": "Mg m-2"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "Surface Snow Amount",
       "standard_name": "surface_snow_amount",
@@ -105,9 +131,9 @@
       "_corrected_units": {
         "era5-land": "m"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "Snow depth",
       "standard_name": "surface_snow_thickness",
@@ -120,7 +146,7 @@
         "era5-single-levels": "m",
         "era5-single-levels-preliminary-back-extension": "m"
       },
-      "_invert_sign": {},
+      "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -169,10 +195,10 @@
     },
     "sp": {
       "_cf_variable_name": "ps",
-      "_corrected_units": {},
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "Surface Pressure",
       "standard_name": "surface_air_pressure",
@@ -214,7 +240,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {},
+      "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -239,7 +265,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {},
+      "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -264,7 +290,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {},
+      "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -289,7 +315,7 @@
         "era5-single-levels": "J m-2",
         "era5-single-levels-preliminary-back-extension": "J m-2"
       },
-      "_invert_sign": {},
+      "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -314,9 +340,9 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 1 (0 - 7cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 1 (0 - 7 cm)",
@@ -330,9 +356,9 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 2 (7 - 28cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 2 (7 - 28 cm)",
@@ -346,9 +372,9 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 3 (28 - 100cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 3 (28 - 100 cm)",
@@ -362,9 +388,9 @@
         "era5-single-levels": "1",
         "era5-single-levels-preliminary-back-extension": "1"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "This parameter is the volume of water in soil layer 4 (100 - 289cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 4 (100 - 289 cm)",
@@ -373,19 +399,34 @@
     },
     "t2m": {
       "_cf_variable_name": "tas",
-      "_corrected_units": {},
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "2 metre temperature",
       "standard_name": "air_temperature",
       "units": "K"
     },
+    "time": {
+      "_ensure_correct_time": {
+        "era5-land": "1H",
+        "era5-land-monthly-means": "1M",
+        "era5-pressure-levels": "1H",
+        "era5-pressure-levels-monthly-means": "1M",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension": "1M",
+        "era5-pressure-levels-preliminary-back-extension": "1H",
+        "era5-single-levels": "1H",
+        "era5-single-levels-monthly-means": "1M",
+        "era5-single-levels-monthly-means-preliminary-back-extension": "1M",
+        "era5-single-levels-preliminary-back-extension": "1H"
+      },
+      "_strict_time": false
+    },
     "tp": {
       "_cf_variable_name": "pr",
-      "_corrected_units": {},
-      "_invert_sign": {},
+      "_corrected_units": false,
+      "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -405,10 +446,10 @@
     },
     "u10": {
       "_cf_variable_name": "uas",
-      "_corrected_units": {},
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "Converted from 10 metre U wind component.",
       "long_name": "10 metre eastward wind",
@@ -417,10 +458,10 @@
     },
     "v10": {
       "_cf_variable_name": "vas",
-      "_corrected_units": {},
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "Converted from 10 metre V wind component.",
       "long_name": "10 metre northward wind",
@@ -431,13 +472,17 @@
       "_cf_variable_name": "z",
       "_corrected_units": {
         "era5-pressure-levels": "m2 s-2",
+        "era5-pressure-levels-monthly-means": "m2 s-2",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension": "m2 s-2",
         "era5-pressure-levels-preliminary-back-extension": "m2 s-2",
         "era5-single-levels": "m2 s-2",
+        "era5-single-levels-monthly-means": "m2 s-2",
+        "era5-single-levels-monthly-means-preliminary-back-extension": "m2 s-2",
         "era5-single-levels-preliminary-back-extension": "m2 s-2"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "comments": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
       "long_name": "Geopotential",

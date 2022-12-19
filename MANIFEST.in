@@ -7,8 +7,10 @@ include requirements_full.txt
 recursive-include miranda *.csv
 recursive-include miranda *.json
 recursive-include miranda *.py
+recursive-include miranda *.yml
 
 recursive-exclude docs *
+recursive-exclude templates *
 recursive-exclude tests *
 
 exclude Makefile
@@ -17,4 +19,5 @@ exclude tox.ini
 exclude .editorconfig
 exclude .pre-commit-config.yaml
 exclude .readthedocs.yml
+exclude .secrets.baseline
 exclude .yamllint.yaml

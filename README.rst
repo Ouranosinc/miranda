@@ -1,8 +1,8 @@
-================================
-Miranda
-================================
+==============
+Miranda |logo|
+==============
 
-|build| |coveralls| |codefactor| |black|
+|build| |coveralls| |black|
 
 Python utilities for climate data collection, conversion, and management
 
@@ -20,15 +20,15 @@ Data collection functions for climate and forecast data hosted at:
 Data conversion for `Climate and Forecasting (CF) <https://cfconventions.org/>`_ Variable and Metadata compliance:
     * ECMWF (ERA5, ERA5-Land, TIGGE - In Development)
     * ECCC (Canada) (Flat File Observations, Monthly Climate Summaries, Adjusted and Homogenized Climate Data, ECCC GEOAPI - In Development)
-    * MELCC (Québec) (In Development)
+    * MELCC (Québec)
     * Hydro-Québec (In Development)
 
 Database structuring and facets validation:
     * Simulations:
-       * WCRP (CORDEX, CORDEX-ADJUST, CMIP5, CMIP6, ISIMIP, etc.)
+       * WCRP (CMIP5, CMIP6, CMIP5-CORDEX, CORDEX-ADJUST, ISIMIP, etc.)
     * Station-Observations:
+       * MELCC (Québec) (Needs `mdbtools <https://github.com/mdbtools/mdbtools>`_ installed)
        * ECCC (Canada) (In Development)
-       * MELCC (Québec) (In Development)
        * Hydro-Québec (In Development)
     * Gridded-Observations:
        * NRCAN (Canada) (Future)
@@ -41,26 +41,28 @@ Database structuring and facets validation:
 
 Installation
 ------------
-`miranda` is not yet available on PyPI, so the suggested method to install is as follows::
+`miranda` can be installed from PyPI::
 
-    $ git clone git@github.com:Ouranosinc/miranda.git
-    $ cd miranda
+    $ pip install miranda
 
-    # If using Anaconda:
-    $ conda create -n miranda -f environment.yml
+Some functionalities require complex-to-install dependencies.
+In order to gain access to them, we strongly suggest using `Anaconda <https://www.anaconda.com/products/distribution>`_ to manage your environment::
+
+    $ conda env create -f environment.yml
     $ conda activate miranda
-
     $ pip install miranda[full]
 
-`miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary. This library requires additional installation steps::
+For more information about Anaconda/Miniconda/conda-forge:
+ * Miniconda: https://docs.conda.io/en/latest/miniconda.html
+ * conda-forge: https://conda-forge.org/#about
+
+`miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary.
+This library is optional for users who do not require validation checks,
+but enabling this feature requires additional installation steps::
+
 
     $ mkdir -p ~/.esdoc
     $ git clone git@github.com:ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
-
-*We strongly suggest using Anaconda3/miniconda3 (with the conda-forge repository enabled) to manage your environment and dependencies*
- * Anaconda: https://www.anaconda.com/products/distribution
- * Miniconda: https://docs.conda.io/en/latest/miniconda.html
- * conda-forge: https://conda-forge.org/#about
 
 Contributing
 ------------
@@ -74,10 +76,6 @@ See the contributing documentation: https://miranda.readthedocs.io/en/latest/con
         :target: https://coveralls.io/github/Ouranosinc/miranda
         :alt: Coveralls
 
-.. |codefactor| image:: https://www.codefactor.io/repository/github/Ouranosinc/miranda/badge
-        :target: https://www.codefactor.io/repository/github/Ouranosinc/miranda
-        :alt: CodeFactor
-
 .. |docs| image:: https://readthedocs.org/projects/miranda/badge
         :target: https://miranda.readthedocs.io/en/latest
         :alt: Documentation Status
@@ -89,3 +87,7 @@ See the contributing documentation: https://miranda.readthedocs.io/en/latest/con
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
         :target: https://github.com/psf/black
         :alt: Python Black
+
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/main/docs/_static/images/miranda-logo-small.png
+        :target: https://github.com/Ouranosinc/miranda
+        :alt: Miranda

@@ -1,12 +1,27 @@
 {
   "Header": {
-    "Conventions": "CF-1.8",
-    "data_specs_version": "00.00.01",
-    "institution": "NASA",
-    "product": "reconstruction",
+    "Conventions": "CF-1.9",
+    "_doi": {
+      "daymet-annual": "https://doi.org/10.3334/ORNLDAAC/2130",
+      "daymet-daily": "https://doi.org/10.3334/ORNLDAAC/2129",
+      "daymet-monthly": "https://doi.org/10.3334/ORNLDAAC/2131"
+    },
+    "_institution": {
+      "daymet-annual": "ornl-daac",
+      "daymet-daily": "ornl-daac",
+      "daymet-monthly": "ornl-daac"
+    },
+    "_miranda_version": true,
+    "license": "https://www.earthdata.nasa.gov/learn/use-data/data-use-policy",
+    "license_type": "open",
+    "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "2 February 2022",
-    "table_id": "NASA"
+    "source": "daymet",
+    "table_date": "2022-11-15",
+    "table_id": "NASA",
+    "title": "Long-term, continuous, gridded estimates of daily weather and climatology variables from Oak Ridge National Laboratory",
+    "title_fr": "Estimations à long terme, continues et maillées, des variables météorologiques et climatologiques quotidiennes du Oak Ridge National Laboratory.",
+    "type": "reconstruction"
   },
   "variable_entry": {
     "prate": {
@@ -18,6 +33,9 @@
         "agcfsr": "mm d-1",
         "agmerra2": "mm d-1"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: mean",
       "long_name": "Precipitation rate",
       "standard_name": "precipitation_flux",
@@ -28,6 +46,9 @@
         "agcfsr": "hurs",
         "agmerra2": "hurs"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "Relative Humidity at time of Maximum Temperature",
       "standard_name": "relative_humidity",
@@ -42,6 +63,9 @@
         "agcfsr": "MJ m-2 d-1",
         "agmerra2": "MJ m-2 d-1"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: mean within days",
       "comment": "Combined longwave and shortwave radiation based on NASA/GEWEX SRB",
       "long_name": "Solar radiation flux",
@@ -57,6 +81,9 @@
         "agcfsr": "degC",
         "agmerra2": "degC"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: mean",
       "long_name": "Average temperature",
       "standard_name": "air_temperature",
@@ -77,6 +104,9 @@
         "agcfsr": "degC",
         "agmerra2": "degC"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: maximum",
       "long_name": "Maximum temperature",
       "standard_name": "air_temperature",
@@ -91,6 +121,9 @@
         "agcfsr": "degC",
         "agmerra2": "degC"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: minimum",
       "long_name": "Minimum temperature",
       "standard_name": "air_temperature",
@@ -105,6 +138,9 @@
         "agcfsr": "m s-1",
         "agmerra2": "m s-1"
       },
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "Wind speed",
       "standard_name": "wind_speed",

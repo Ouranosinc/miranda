@@ -1,0 +1,60 @@
+---
+datasets:
+  - option: type
+    value: station-obs
+    structure:
+      - type
+      - institution
+      - source
+      - version
+      - frequency
+      - option: member
+        is_true: member
+      - variable
+  - option: type
+    value: forecast
+    structure:
+      - type
+      - institution
+      - source
+      - domain
+      - frequency
+      - variable
+  - option: type
+    value: gridded-obs
+    structure:
+      - type
+      - institution
+      - source
+      - domain
+      - frequency
+      - variable
+  - option: type
+    value: reconstruction
+    structure:
+      - type
+      - institution
+      - source
+      - domain
+      - frequency
+      - variable
+  - option: type
+    value: simulation
+    structure:
+      - type
+      - processing_level
+      - option: processing_level
+        value: biasadjusted
+        is_true: bias_adjust_project
+      - mip_era
+      - activity
+      - domain
+      - institution
+      - source
+      - option: activity
+        value: CORDEX
+        is_true: driving_model
+      - experiment
+      - member
+      - frequency
+      - variable

@@ -34,19 +34,38 @@ sys.path.insert(0, parent)
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.coverage",
+    "sphinx.ext.extlinks",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx.ext.coverage",
     "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
+
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
+
+extlinks = {
+    "issue": ("https://github.com/Ouranosinc/miranda/issues/%s", "GH/%s"),
+    "pull": ("https://github.com/Ouranosinc/miranda/pull/%s", "PR/%s"),
+    "user": ("https://github.com/%s", "@%s"),
+}
 
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
+
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None) %}
+.. only:: html
+    `Download this notebook from github. <https://github.com/Ouranosinc/miranda/raw/main/docs/{{ docname }}>`_
+"""
 
 # To avoid having to install these libraries on ReadTheDocs.
 autodoc_mock_imports = [
@@ -62,6 +81,12 @@ autodoc_mock_imports = [
     "scp",
 ]
 
+autodoc_default_options = {
+    "imported-members": True,
+    "private-members": False,
+    "show-inheritance": False,
+}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -73,7 +98,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "Miranda"
-copyright = f"2019-{datetime.date.today().year}, Trevor James Smith"
+copyright = f"2019-{datetime.date.today().year}, Trevor James Smith and contributors"
+author = "Miranda project Development Team"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -120,6 +146,7 @@ exclude_patterns = [
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
+pygments_dark_style = "monokai"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -138,9 +165,13 @@ html_theme = "furo"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+
+on_rtd = os.getenv("READTHEDOCS")
 html_theme_options = {
-    # "project_nav_name": "Miranda 0.1.0-beta",
-    # "homepage": "index",
+    "navigation_with_keys": True,
+    "source_branch": "main",
+    "source_repository": "https://github.com/Ouranosinc/miranda/",
+    "top_of_page_button": "edit" if not on_rtd else None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -155,7 +186,7 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = None
+html_logo = "_static/images/miranda-logo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -270,7 +301,7 @@ texinfo_documents = [
         "Miranda Documentation",
         "Trevor James Smith",
         "miranda",
-        "One line description of project.",
+        "Python utilities for climate data collection and management.",
         "Miscellaneous",
     )
 ]

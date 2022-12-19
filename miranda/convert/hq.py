@@ -4,14 +4,15 @@ import json
 import logging.config
 import re
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from xclim.core.units import units as u
+from xclim.core.units import units2pint
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import u, units2pint
 
 logging.config.dictConfig(LOGGING_CONFIG)
 

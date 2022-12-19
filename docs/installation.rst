@@ -29,7 +29,7 @@ You can either clone the public repository::
 
 Or download the `tarball`_::
 
-    $ curl -OL https://github.com/Ouranosinc/miranda/tarball/master
+    $ curl -OL https://github.com/Ouranosinc/miranda/tarball/main
 
 Once you have a copy of the source, you can install it with::
 
@@ -40,7 +40,7 @@ Alternatively, you can also install a local copy via pip::
     $ pip install .
 
 .. _Github repo: https://github.com/Ouranosinc/miranda
-.. _tarball: https://codeload.github.com/Ouranosinc/miranda/legacy.tar.gz/master
+.. _tarball: https://codeload.github.com/Ouranosinc/miranda/legacy.tar.gz/main
 
 Creating a Conda environment
 ----------------------------

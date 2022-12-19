@@ -20,6 +20,11 @@ clean-build:
 	rm -fr dist/
 	rm -fr *.egg-info
 
+clean-docs:
+	rm -f docs/miranda*.rst
+	rm -f docs/modules.rst
+	$(MAKE) -C docs clean
+
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
@@ -45,13 +50,12 @@ coverage:
 	coverage html
 	open htmlcov/index.html
 
-docs:
-	rm -f docs/miranda.rst
-	rm -f docs/modules.rst
+docs: clean-docs
 	sphinx-apidoc -o docs/ --module-first miranda
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
+	$(MAKE) -C docs linkcheck html
+ifndef READTHEDOCS
 	xdg-open docs/_build/html/index.html
+endif
 
 release: clean
 	python setup.py sdist upload

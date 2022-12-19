@@ -7,9 +7,9 @@ from typing import Optional, Tuple, Union
 
 import pandas as pd
 import xarray as xr
+from xclim.core.units import units as u
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import u
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
