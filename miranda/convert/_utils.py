@@ -37,6 +37,8 @@ def load_json_data_mappings(project: str) -> dict:
 
     if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+    elif project in ["rdrs-v2.1"]:
+        metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
     elif project == "nrcan-gridded-10km":
@@ -307,21 +309,22 @@ def variable_conversion(ds: xr.Dataset, project: str, output_format: str) -> xr.
 
     # For renaming lat and lon dims
     def _dims_conversion(d: xr.Dataset):
-        sort_dims = []
-        for orig, new in dict(longitude="lon", latitude="lat").items():
-            try:
+        if ('lon' not in d.coords) or ('lat' not in d.coords):
+            sort_dims = []
+            for orig, new in dict(longitude="lon", latitude="lat").items():
+                try:
 
-                d = d.rename({orig: new})
-                if new == "lon" and np.any(d.lon > 180):
-                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
-                    d[new] = lon1
-                sort_dims.append(new)
-            except KeyError:
-                pass
-            if project in LATLON_COORDINATE_PRECISION.keys():
-                d[new] = d[new].round(LATLON_COORDINATE_PRECISION[project])
-        if sort_dims:
-            d = d.sortby(sort_dims)
+                    d = d.rename({orig: new})
+                    if new == "lon" and np.any(d.lon > 180):
+                        lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+                        d[new] = lon1
+                    sort_dims.append(new)
+                except (KeyError, ValueError) as error:
+                    pass
+                if project in LATLON_COORDINATE_PRECISION.keys():
+                    d[new] = d[new].round(LATLON_COORDINATE_PRECISION[project])
+            if sort_dims:
+                d = d.sortby(sort_dims)
         return d
 
     metadata_definition = load_json_data_mappings(project)
