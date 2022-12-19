@@ -32,7 +32,7 @@
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "2022-11-15",
+    "table_date": "2022-12-19",
     "table_id": "ECMWF",
     "type": "reconstruction"
   },
@@ -64,7 +64,7 @@
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
-      "cell_methods": "time: point",
+      "cell_methods": "time: mean (interval: 1 hour)",
       "long_name": "Mean sea level pressure",
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa"
@@ -88,11 +88,32 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
+      "description": "Total potential evaporation thickness converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Potential evapotranspiration",
-      "original_long_name": "Potential Evaporation",
+      "original_long_name": "Potential evaporation",
       "standard_name": "water_evapotranspiration_flux",
       "units": "kg m-2 s-1"
+    },
+    "q": {
+      "_cf_variable_name": "hus",
+      "_corrected_units": 1,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "long_name": "Specific humidity",
+      "standard_name": "specific_humidity",
+      "units": "%"
+    },
+    "r": {
+      "_cf_variable_name": "hur",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "long_name": "Relative humidity",
+      "standard_name": "relative_humidity",
+      "units": "%"
     },
     "rsn": {
       "_cf_variable_name": "snr",
@@ -122,7 +143,8 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "long_name": "Surface Snow Amount",
+      "description": "Snow thickness in m of liquid water equivalent converted to snow amount using a water density of 1000 kg/m³.",
+      "long_name": "Surface snow amount",
       "standard_name": "surface_snow_amount",
       "units": "kg m-2"
     },
@@ -135,6 +157,7 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
+      "description": "Snow thickness in m of liquid water equivalent converted to snow thickness using a water density of 1000 kg/m³ and a snow density of 300 kg/m³.",
       "long_name": "Snow depth",
       "standard_name": "surface_snow_thickness",
       "units": "m"
@@ -158,7 +181,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
+      "description": "Total solid precipitation thickness of water equivalent converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Snowfall flux",
       "original_long_name": "Snowfall",
       "standard_name": "snowfall_flux",
@@ -200,7 +223,7 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "long_name": "Surface Pressure",
+      "long_name": "Surface air pressure",
       "standard_name": "surface_air_pressure",
       "units": "Pa"
     },
@@ -438,9 +461,9 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "description": "Total precipitation thickness converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Precipitation",
-      "original_long_name": "Total Precipitation",
+      "original_long_name": "Total precipitation",
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
@@ -451,8 +474,7 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "Converted from 10 metre U wind component.",
-      "long_name": "10 metre eastward wind",
+      "long_name": "10 metre eastward wind component",
       "standard_name": "eastward_wind",
       "units": "m s-1"
     },
@@ -463,8 +485,7 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "Converted from 10 metre V wind component.",
-      "long_name": "10 metre northward wind",
+      "long_name": "10 metre northward wind component",
       "standard_name": "northward_wind",
       "units": "m s-1"
     },
@@ -485,7 +506,7 @@
       "_transformation": false,
       "cell_methods": "time: point",
       "comments": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
-      "long_name": "Geopotential",
+      "long_name": "Geopotential height",
       "standard_name": "geopotential",
       "units": "m2 s-2"
     }
