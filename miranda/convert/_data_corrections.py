@@ -3,8 +3,9 @@ import json
 import logging.config
 import os
 import shutil
+from functools import partial
 from pathlib import Path
-from typing import Dict, Iterator, Optional, Sequence, Union
+from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -56,8 +57,8 @@ def load_json_data_mappings(project: str) -> dict:
     return metadata_definition
 
 
-def _get_var_entry_key(meta, var, key, project):
-    var_meta = meta["variable_entry"].get(var, {})
+def _get_section_entry_key(meta, entry, var, key, project):
+    var_meta = meta[entry].get(var, {})
     if key in var_meta:
         if isinstance(var_meta[key], dict):
             return var_meta[key].get(project)
@@ -65,9 +66,9 @@ def _get_var_entry_key(meta, var, key, project):
     return None
 
 
-def _iter_vars_key(ds, meta, key, project):
-    for vv in set(ds.data_vars).intersection(meta["variable_entry"]):
-        val = _get_var_entry_key(meta, vv, key, project)
+def _iter_entry_key(ds, meta, entry, key, project):
+    for vv in set(ds.data_vars).intersection(meta[entry]):
+        val = _get_section_entry_key(meta, entry, vv, key, project)
         yield vv, val
 
 
@@ -75,15 +76,14 @@ def correct_time_entries(
     d: xr.Dataset,
     split: str = "_",
     location: int = -1,
-    time_field: str = "Time",
+    field: str = "time",
 ) -> xr.Dataset:
     filename = d.encoding["source"]
     date = date_parser(Path(filename).stem.split(split)[location])
     time = xr.coding.times.decode_cf_datetime(
-        d[time_field], units=f"days since {date}", calendar="standard"
+        d[field], units=f"days since {date}", calendar="standard"
     )
-    d = d.assign_coords({time_field: time})
-    d = d.rename({time_field: "time"})
+    d = d.assign_coords({field: time})
     return d
 
 
@@ -94,19 +94,36 @@ def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.
     return d.rename({old_name: new_name})
 
 
-def correct_var_name_and_time(d: xr.Dataset) -> xr.Dataset:
-    d = correct_time_entries(d)
-    d = correct_var_names(d)
-    return d
+def preprocess_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
+    def _preprocess_correct(d: xr.Dataset, *, ops: List[partial]) -> xr.Dataset:
+        for correction in ops:
+            d = correction(d)
+        return d
+
+    preprocess_ops = []
+    correction_fields = load_json_data_mappings(project).get("preprocess_corrections")
+    for field in correction_fields:
+        if field == "_variable_name":
+            preprocess_ops.append(
+                partial(correct_var_names, **correction_fields[field])
+            )
+        if field == "_time":
+            preprocess_ops.append(
+                partial(correct_time_entries, **correction_fields[field])
+            )
+    if preprocess_ops:
+        corrector = partial(_preprocess_correct, ops=preprocess_ops)
+        return corrector(ds)
+    return ds
 
 
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
-    for var, val in _iter_vars_key(d, m, key, p):
+    for var, val in _iter_entry_key(d, m, "variable_entry", key, p):
         if val:
             d[var].attrs["units"] = val
 
-    val_time = _get_var_entry_key(m, "time", key, p)
+    val_time = _get_section_entry_key(m, "variable_entry", "time", key, p)
     if val_time:
         d["time"].attrs["units"] = val_time
 
@@ -121,11 +138,13 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_var_entry_key(m, "time", "_ensure_correct_time", p)
+    expected_period = _get_section_entry_key(
+        m, "dimensions_entry", "time", "_ensure_correct_time", p
+    )
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, trans in _iter_vars_key(d, m, key, p):
+    for vv, trans in _iter_entry_key(d, m, "variable_entry", key, p):
         if trans:
             if trans == "deaccumulate":
                 # Time-step accumulated total to time-based flux (de-accumulation)
@@ -206,11 +225,13 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_var_entry_key(m, "time", "_ensure_correct_time", p)
+    expected_period = _get_section_entry_key(
+        m, "dimensions_entry", "time", "_ensure_correct_time", p
+    )
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, offs in _iter_vars_key(d, m, key, p):
+    for vv, offs in _iter_entry_key(d, m, "dimensions_entry", key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
@@ -246,7 +267,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
-    for vv, inv_sign in _iter_vars_key(d, m, key, p):
+    for vv, inv_sign in _iter_entry_key(d, m, "variable_entry", key, p):
         if inv_sign:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
@@ -267,11 +288,11 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 # For converting variable units to standard workflow units
 def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
-    if "time" in m["variable_entry"].keys():
-        if m["variable_entry"]["time"].get("units"):
-            d["time"]["units"] = m["variable_entry"]["time"]["units"]
+    if "time" in m["dimensions_entry"].keys():
+        if m["dimensions_entry"]["time"].get("units"):
+            d["time"]["units"] = m["dimensions_entry"]["time"]["units"]
 
-    for vv, uni in _iter_vars_key(d, m, "units", None):
+    for vv, uni in _iter_entry_key(d, m, "variable_entry", "units", None):
         if uni:
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], uni)
@@ -283,7 +304,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_ensure_correct_time"
     strict_time = "_strict_time"
 
-    if "time" not in m["variable_entry"].keys():
+    if "time" not in m["dimensions_entry"].keys():
         logging.warning(f"No time corrections listed for project `{p}`. Continuing...")
         return d
 
@@ -295,10 +316,10 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         )
         return d
 
-    if key in m["variable_entry"]["time"].keys():
+    if key in m["dimensions_entry"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
 
-        if strict_time in m["variable_entry"]["time"].keys():
+        if strict_time in m["dimensions_entry"]["time"].keys():
             if not freq_found:
                 msg = (
                     "Time frequency could not be found. There may be missing timesteps."
@@ -351,24 +372,41 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d
 
 
-# For renaming lat and lon dims
+# For renaming and reordering lat and lon dims
 def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     sort_dims = []
-    for orig, new in dict(
-        longitude="lon", latitude="lat", Longitude="lon", Latitude="lat"
-    ).items():
-        if orig in d:
-            d = d.rename({orig: new})
+
+    # TODO: Rename dimensions found in dataset
+    rename_dims = dict()
+    for dim in d.dims:
+        original_name = _get_section_entry_key(
+            m, "dimensions_entry", dim, "_original_name", p
+        )
+        if original_name == dim:
+            rename_dims[original_name] = dim
+    d = d.rename(rename_dims)
+
+    for new in ["lon", "lat"]:
         if new == "lon" and "lon" in d.dims:
             if np.any(d.lon > 180):
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
         sort_dims.append(new)
-        coord_precision = _get_var_entry_key(m, new, "_precision", p)
+        coord_precision = _get_section_entry_key(
+            m, "dimensions_entry", new, "_precision", p
+        )
         if coord_precision is not None:
             d[new] = d[new].round(coord_precision)
     if sort_dims:
         d = d.sortby(sort_dims)
+
+    # Ensure that lon and lat are written in proper order for plotting purposes
+    transpose_order = ["lat", "lon"]
+    if "time" in d.dims:
+        transpose_order.insert(0, "time")
+    transpose_order.extend(list(set(d.dims) - set(transpose_order)))
+    d = d.transpose(transpose_order)
+
     return d
 
 
@@ -432,9 +470,9 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     time_correction_fields = ["_corrected_units", "_ensure_correct_time"]
 
-    if "time" in m["variable_entry"].keys():
+    if "time" in m["dimensions_entry"].keys():
         for field in time_correction_fields:
-            if field in m["variable_entry"]["time"].keys():
+            if field in m["dimensions_entry"]["time"].keys():
                 del descriptions["time"][field]
         d["time"].attrs.update(descriptions["time"])
 
@@ -453,7 +491,9 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             d[var].attrs.update(descriptions[var])
 
     # Rename data variables
-    for orig_var_name, cf_name in _iter_vars_key(d, m, "_cf_variable_name", None):
+    for orig_var_name, cf_name in _iter_entry_key(
+        d, m, "variable_entry", "_cf_variable_name", None
+    ):
         if cf_name is not None:
             d = d.rename({orig_var_name: cf_name})
             d[cf_name].attrs.update(dict(original_variable=orig_var_name))
@@ -489,8 +529,7 @@ def file_conversion(
     chunks: Optional[dict] = None,
     overwrite: bool = False,
     add_version_hashes: bool = True,
-    correct_variable_names: bool = False,
-    correct_timestamps: bool = False,
+    preprocess: Optional[Union[Callable, str]] = "auto",
     compute: bool = True,
     **xr_kwargs,
 ) -> None:
@@ -513,10 +552,10 @@ def file_conversion(
         Whether to remove existing files or fail if files already exist.
     add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
-    correct_variable_names : bool
-        If True, variable will be renamed on dataset open based on information found within filename. Default: False.
-    correct_timestamps : bool
-        if True, variable time dimension will be adjusted based on date found within filename. Default: False.
+    preprocess : callable or str, optional
+        Preprocessing functions to perform over each Dataset.
+        Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
+        Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
     compute : bool
         If True, files will be converted with each call to file conversion.
         If False, will return a dask.Delayed object that can be computed later.
@@ -546,32 +585,31 @@ def file_conversion(
         for file in files:
             version_hashes[file.name] = find_version_hash(file)
 
+    preprocess_kwargs = dict()
+    if preprocess:
+        if preprocess == "auto":
+            preprocess_kwargs.update(
+                preprocess=partial(preprocess_corrections, project=project)
+            )
+        elif isinstance(preprocess, Callable):
+            preprocess_kwargs.update(preprocess=preprocess)
+
     if len(files) == 1:
         ds = xr.open_dataset(files[0], **xr_kwargs)
-        if correct_variable_names:
-            ds = correct_var_names(ds)
-        if correct_timestamps:
-            ds = correct_time_entries(ds)
+        for _, process in preprocess_kwargs.items():
+            ds = process(ds)
     else:
-        if correct_timestamps and correct_variable_names:
-            xr_kwargs.update(dict(preprocess=correct_var_name_and_time))
-        elif correct_timestamps:
-            xr_kwargs.update(dict(preprocess=correct_time_entries))
-        elif correct_variable_names:
-            xr_kwargs.update(dict(preprocess=correct_var_names))
-
-        ds = xr.open_mfdataset(files, **xr_kwargs)
+        ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)
 
     if version_hashes:
         ds.attrs.update(dict(original_files=str(version_hashes)))
 
     ds = variable_conversion(ds, project)
-    if correct_variable_names:
-        var_name = list(ds.data_vars.keys())[0]
-        time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
-        outfile = f"{var_name}_{project}_{time_start}-{time_end}.{suffix}"
-    else:
-        outfile = f"{Path(files[0].stem)}.{suffix}"
+    var_name = list(ds.data_vars.keys())[0]
+    time_freq = ds.attrs.get("frequency")
+    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+    outfile = f"{var_name}_{time_freq}_{project}_{time_start}-{time_end}.{suffix}"
+
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():

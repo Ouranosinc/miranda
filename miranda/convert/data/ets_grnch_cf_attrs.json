@@ -4,6 +4,7 @@
     "_miranda_version": true,
     "contact": "Dr. Annie Poulin (annie.poulin@etsmtl.ca)",
     "creation_date": "2022-07-16T11:22:42Z",
+    "frequency": "day",
     "institution": "ETS",
     "institution_name": "École de Technologie Supérieure (ETS), Hydrology, Climate and Climate Change Laboratory (HC3)",
     "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
@@ -18,6 +19,41 @@
     "title": "Gridded North American Climate from the HC3 Laboratory (Québec Version)",
     "type": "reconstruction",
     "version": "v1.2"
+  },
+  "dimensions_entry": {
+    "lat": {
+      "_original_name": "Latitude",
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "lon": {
+      "_original_name": "Longitude",
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "_ensure_correct_time": "1D",
+      "_original_name": "Time",
+      "_strict_time": false,
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "preprocess_corrections": {
+    "_time": {
+      "field": "Time",
+      "location": -1,
+      "split": "_"
+    },
+    "_variable_name": {
+      "location": 0,
+      "split": "_"
+    }
   },
   "variable_entry": {
     "P": {
@@ -39,12 +75,6 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
-    "Time": {
-      "_cf_variable_name": "time",
-      "axis": "T",
-      "long_name": "time",
-      "standard_name": "time"
-    },
     "Tmax": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
@@ -62,19 +92,6 @@
       "long_name": "Daily Minimum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
       "units": "K"
-    },
-    "lat": {
-      "_cf_variable_name": "lat",
-      "axis": "Y",
-      "long_name": "Latitude",
-      "standard_name": "latitude",
-      "units": "degrees_north"
-    },
-    "lon": {
-      "axis": "X",
-      "long_name": "Longitude",
-      "standard_name": "longitude",
-      "units": "degrees_east"
     }
   }
 }
