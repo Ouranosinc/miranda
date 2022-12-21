@@ -80,8 +80,9 @@ def correct_time_entries(
 ) -> xr.Dataset:
     filename = d.encoding["source"]
     date = date_parser(Path(filename).stem.split(split)[location])
+    vals = np.arange(len(d[field]))
     time = xr.coding.times.decode_cf_datetime(
-        d[field], units=f"days since {date}", calendar="standard"
+        vals, units=f"days since {date}", calendar="standard"
     )
     d = d.assign_coords({field: time})
     return d
@@ -376,14 +377,15 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     sort_dims = []
 
-    # TODO: Rename dimensions found in dataset
     rename_dims = dict()
-    for dim in d.dims:
+    for corrected_dim_name in m["dimensions_entry"].keys():
         original_name = _get_section_entry_key(
-            m, "dimensions_entry", dim, "_original_name", p
+            m, "dimensions_entry", corrected_dim_name, "_original_name", p
         )
-        if original_name == dim:
-            rename_dims[original_name] = dim
+        if original_name:
+            for dim in d.dims:
+                if original_name == dim:
+                    rename_dims[original_name] = corrected_dim_name
     d = d.rename(rename_dims)
 
     for new in ["lon", "lat"]:
@@ -405,7 +407,7 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if "time" in d.dims:
         transpose_order.insert(0, "time")
     transpose_order.extend(list(set(d.dims) - set(transpose_order)))
-    d = d.transpose(transpose_order)
+    d = d.transpose(*transpose_order)
 
     return d
 
@@ -468,13 +470,17 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     d.attrs.update(dict(history=history))
     descriptions = m["variable_entry"]
 
-    time_correction_fields = ["_corrected_units", "_ensure_correct_time"]
-
-    if "time" in m["dimensions_entry"].keys():
-        for field in time_correction_fields:
-            if field in m["dimensions_entry"]["time"].keys():
-                del descriptions["time"][field]
-        d["time"].attrs.update(descriptions["time"])
+    dim_correction_fields = [
+        "_corrected_units",
+        "_ensure_correct_time",
+        "_original_name",
+        "_strict_time",
+    ]
+    for dim in m["dimensions_entry"].keys():
+        for field in dim_correction_fields:
+            if field in m["dimensions_entry"][dim].keys():
+                del m["dimensions_entry"][dim][field]
+        d[dim].attrs.update(m["dimensions_entry"][dim])
 
     # Add variable metadata and remove nonstandard entries
     variable_correction_fields = [
