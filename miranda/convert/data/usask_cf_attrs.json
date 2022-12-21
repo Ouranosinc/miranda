@@ -1,13 +1,13 @@
 {
   "Header": {
-    "Conventions": "CF-1.8",
-    "data_specs_version": "00.00.01",
+    "Conventions": "CF-1.9",
+    "_miranda_version": true,
     "product": "reconstruction",
     "realm": "atmos",
     "table_date": "2022-02-02",
     "table_id": "USASK"
   },
-  "variable_entry": {
+  "variables": {
     "d2m": {
       "_cf_variable_name": {
         "wfdei-gem-capa": "tdps"

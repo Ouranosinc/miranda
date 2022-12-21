@@ -23,7 +23,7 @@
     "title_fr": "Estimations à long terme, continues et maillées, des variables météorologiques et climatologiques quotidiennes du Oak Ridge National Laboratory.",
     "type": "reconstruction"
   },
-  "variable_entry": {
+  "variables": {
     "prate": {
       "_cf_variable_name": {
         "agcfsr": "pr",

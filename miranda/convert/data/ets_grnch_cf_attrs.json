@@ -20,7 +20,19 @@
     "type": "reconstruction",
     "version": "v1.2"
   },
-  "dimensions_entry": {
+  "_preprocess": {
+    "_land_sea_mask": true,
+    "_time": {
+      "field": "Time",
+      "location": -1,
+      "split": "_"
+    },
+    "_variable_name": {
+      "location": 0,
+      "split": "_"
+    }
+  },
+  "dimensions": {
     "lat": {
       "_original_name": "Latitude",
       "axis": "Y",
@@ -44,18 +56,7 @@
       "standard_name": "time"
     }
   },
-  "preprocess_corrections": {
-    "_time": {
-      "field": "Time",
-      "location": -1,
-      "split": "_"
-    },
-    "_variable_name": {
-      "location": 0,
-      "split": "_"
-    }
-  },
-  "variable_entry": {
+  "variables": {
     "P": {
       "_cf_variable_name": "pr",
       "_corrected_units": "mm d-1",

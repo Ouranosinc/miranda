@@ -120,11 +120,11 @@ def preprocess_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
 
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
-    for var, val in _iter_entry_key(d, m, "variable_entry", key, p):
+    for var, val in _iter_entry_key(d, m, "variables", key, p):
         if val:
             d[var].attrs["units"] = val
 
-    val_time = _get_section_entry_key(m, "variable_entry", "time", key, p)
+    val_time = _get_section_entry_key(m, "variables", "time", key, p)
     if val_time:
         d["time"].attrs["units"] = val_time
 
@@ -140,12 +140,12 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     time_freq = dict()
     expected_period = _get_section_entry_key(
-        m, "dimensions_entry", "time", "_ensure_correct_time", p
+        m, "dimensions", "time", "_ensure_correct_time", p
     )
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, trans in _iter_entry_key(d, m, "variable_entry", key, p):
+    for vv, trans in _iter_entry_key(d, m, "variables", key, p):
         if trans:
             if trans == "deaccumulate":
                 # Time-step accumulated total to time-based flux (de-accumulation)
@@ -165,9 +165,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                         getattr(d[vv].time.dt, offset_meaning) == offset[0],
                         out.broadcast_like(d[vv]),
                     )
-                    out = units.amount2rate(
-                        out, out_units=m["variable_entry"][vv]["units"]
-                    )
+                    out = units.amount2rate(out, out_units=m["variables"][vv]["units"])
                     d_out[vv] = out
                 converted.append(vv)
             elif trans == "amount2rate":
@@ -178,7 +176,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(
                         d[vv],
-                        out_units=m["variable_entry"][vv]["units"],
+                        out_units=m["variables"][vv]["units"],
                     )
                     d_out[vv] = out
                 converted.append(vv)
@@ -227,12 +225,12 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     time_freq = dict()
     expected_period = _get_section_entry_key(
-        m, "dimensions_entry", "time", "_ensure_correct_time", p
+        m, "dimensions", "time", "_ensure_correct_time", p
     )
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, offs in _iter_entry_key(d, m, "dimensions_entry", key, p):
+    for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
@@ -268,7 +266,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
-    for vv, inv_sign in _iter_entry_key(d, m, "variable_entry", key, p):
+    for vv, inv_sign in _iter_entry_key(d, m, "variables", key, p):
         if inv_sign:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
@@ -289,11 +287,11 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 # For converting variable units to standard workflow units
 def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
-    if "time" in m["dimensions_entry"].keys():
-        if m["dimensions_entry"]["time"].get("units"):
-            d["time"]["units"] = m["dimensions_entry"]["time"]["units"]
+    if "time" in m["dimensions"].keys():
+        if m["dimensions"]["time"].get("units"):
+            d["time"]["units"] = m["dimensions"]["time"]["units"]
 
-    for vv, uni in _iter_entry_key(d, m, "variable_entry", "units", None):
+    for vv, uni in _iter_entry_key(d, m, "variables", "units", None):
         if uni:
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], uni)
@@ -305,7 +303,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_ensure_correct_time"
     strict_time = "_strict_time"
 
-    if "time" not in m["dimensions_entry"].keys():
+    if "time" not in m["dimensions"].keys():
         logging.warning(f"No time corrections listed for project `{p}`. Continuing...")
         return d
 
@@ -317,15 +315,15 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         )
         return d
 
-    if key in m["dimensions_entry"]["time"].keys():
+    if key in m["dimensions"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
 
-        if strict_time in m["dimensions_entry"]["time"].keys():
+        if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
                 msg = (
                     "Time frequency could not be found. There may be missing timesteps."
                 )
-                if m["variable_entry"]["time"].get(strict_time):
+                if m["dimensions"]["time"].get(strict_time):
                     raise ValueError(msg)
                 else:
                     logging.warning(f"{msg} Continuing...")
@@ -334,7 +332,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if freq_found in ["M", "A"]:
             freq_found = f"{freq_found}S"
 
-        correct_time_entry = m["dimensions_entry"]["time"][key]
+        correct_time_entry = m["dimensions"]["time"][key]
         if isinstance(correct_time_entry, str):
             correct_times = [parse_offset(correct_time_entry)[1]]
         elif isinstance(correct_time_entry, dict):
@@ -378,9 +376,9 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     sort_dims = []
 
     rename_dims = dict()
-    for corrected_dim_name in m["dimensions_entry"].keys():
+    for corrected_dim_name in m["dimensions"].keys():
         original_name = _get_section_entry_key(
-            m, "dimensions_entry", corrected_dim_name, "_original_name", p
+            m, "dimensions", corrected_dim_name, "_original_name", p
         )
         if original_name:
             for dim in d.dims:
@@ -394,9 +392,7 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
         sort_dims.append(new)
-        coord_precision = _get_section_entry_key(
-            m, "dimensions_entry", new, "_precision", p
-        )
+        coord_precision = _get_section_entry_key(m, "dimensions", new, "_precision", p)
         if coord_precision is not None:
             d[new] = d[new].round(coord_precision)
     if sort_dims:
@@ -468,7 +464,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         f" {prev_history}".strip()
     )
     d.attrs.update(dict(history=history))
-    descriptions = m["variable_entry"]
+    descriptions = m["variables"]
 
     dim_correction_fields = [
         "_corrected_units",
@@ -476,11 +472,11 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         "_original_name",
         "_strict_time",
     ]
-    for dim in m["dimensions_entry"].keys():
+    for dim in m["dimensions"].keys():
         for field in dim_correction_fields:
-            if field in m["dimensions_entry"][dim].keys():
-                del m["dimensions_entry"][dim][field]
-        d[dim].attrs.update(m["dimensions_entry"][dim])
+            if field in m["dimensions"][dim].keys():
+                del m["dimensions"][dim][field]
+        d[dim].attrs.update(m["dimensions"][dim])
 
     # Add variable metadata and remove nonstandard entries
     variable_correction_fields = [
@@ -498,7 +494,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     # Rename data variables
     for orig_var_name, cf_name in _iter_entry_key(
-        d, m, "variable_entry", "_cf_variable_name", None
+        d, m, "variables", "_cf_variable_name", None
     ):
         if cf_name is not None:
             d = d.rename({orig_var_name: cf_name})
