@@ -184,11 +184,12 @@ def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     logging.info(f"Gathering GRNCH from: {source_grnch.as_posix()}")
     in_files_grnch = list()
     for v in grnch_variables:
-        in_files_grnch.extend(list(sorted(source_grnch.rglob(f"{v}_.nc"))))
+        for yyyy in range(1970, 2020):
+            in_files_grnch.extend(list(source_grnch.rglob(f"{v}_{yyyy}.nc")))
     logging.info(
         f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
     )
-    return dict(cfsr=in_files_grnch)
+    return dict(cfsr=sorted(in_files_grnch))
 
 
 def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
