@@ -3,11 +3,11 @@
     "_miranda_version": true,
     "institution": "CMIP",
     "processing_level": "raw",
-    "table_date": "2022-10-14",
+    "table_date": "2022-12-21",
     "table_id": "CMIP-OURANOS",
     "type": "simulation"
   },
-  "variable_entry": {
+  "dimensions_entry": {
     "time": {
       "_ensure_correct_time": {
         "cmip5": [
