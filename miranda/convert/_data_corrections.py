@@ -334,7 +334,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if freq_found in ["M", "A"]:
             freq_found = f"{freq_found}S"
 
-        correct_time_entry = m["variable_entry"]["time"][key]
+        correct_time_entry = m["dimensions_entry"]["time"][key]
         if isinstance(correct_time_entry, str):
             correct_times = [parse_offset(correct_time_entry)[1]]
         elif isinstance(correct_time_entry, dict):
@@ -514,11 +514,12 @@ def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
 
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
-    ds = _offset_time(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
-    ds = _ensure_correct_time(ds, project, metadata_definition)
+
     ds = _dims_conversion(ds, project, metadata_definition)
+    ds = _ensure_correct_time(ds, project, metadata_definition)
+    ds = _offset_time(ds, project, metadata_definition)
 
     ds = metadata_conversion(ds, project, metadata_definition)
 
