@@ -96,22 +96,26 @@ def threshold_land_sea_mask(
         f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
     )
     if "lon" not in land_sea_mask.dims or "lat" not in land_sea_mask.dims:
-        land_sea_mask = land_sea_mask.rename(
-            {
-                "longitude": "lon",
-                "latitude": "lat",
-                "Longitude": "lon",
-                "Latitude": "lat",
-                "lons": "lon",
-                "lats": "lat",
-            }
+        dim_rename = dict()
+        for dim in land_sea_mask.dims:
+            if str(dim).lower().startswith("lon"):
+                dim_rename[str(dim)] = "lon"
+            if str(dim).lower().startswith("lat"):
+                dim_rename[str(dim)] = "lat"
+        land_sea_mask = land_sea_mask.rename(dim_rename)
+    if np.any(land_sea_mask.lon > 180):
+        lon_wrapped = land_sea_mask.lon.where(
+            land_sea_mask.lon <= 180.0, land_sea_mask.lon - 360.0
         )
+        land_sea_mask["lon"] = lon_wrapped
+        land_sea_mask = land_sea_mask.sortby(["lon"])
+
     if "time" in land_sea_mask.dims:
         land_sea_mask = land_sea_mask.isel(time=0, drop=True)
 
     if isinstance(land_sea_mask, xr.Dataset):
         if len(land_sea_mask.data_vars) == 1:
-            land_sea_mask = ds[list(ds.data_vars)[0]]
+            land_sea_mask = land_sea_mask[list(land_sea_mask.data_vars)[0]]
         else:
             raise ValueError(
                 "More than one data variable found in land-sea mask. Supply a DataArray instead."
@@ -126,7 +130,7 @@ def threshold_land_sea_mask(
         lat_bnds=lat_bounds,
     ).load()
 
-    lsm = lsm.where(land_sea_mask > land_sea_cutoff)
+    lsm = lsm.where(land_sea_mask >= land_sea_cutoff)
     ds = ds.where(lsm.notnull())
 
     if lsm.min() >= 0 and lsm.max() <= 1:
@@ -168,20 +172,21 @@ def preprocess_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
             d = correction(d)
         return d
 
-    preprocess_ops = []
-    correction_fields = load_json_data_mappings(project).get("preprocess_corrections")
-    for field in correction_fields:
-        if field == "_variable_name":
-            preprocess_ops.append(
-                partial(correct_var_names, **correction_fields[field])
-            )
-        if field == "_time":
-            preprocess_ops.append(
-                partial(correct_time_entries, **correction_fields[field])
-            )
-    if preprocess_ops:
-        corrector = partial(_preprocess_correct, ops=preprocess_ops)
-        return corrector(ds)
+    correction_fields = load_json_data_mappings(project).get("_preprocess")
+    if correction_fields:
+        preprocess_ops = []
+        for field in correction_fields:
+            if field == "_variable_name":
+                preprocess_ops.append(
+                    partial(correct_var_names, **correction_fields[field])
+                )
+            if field == "_time":
+                preprocess_ops.append(
+                    partial(correct_time_entries, **correction_fields[field])
+                )
+        if preprocess_ops:
+            corrector = partial(_preprocess_correct, ops=preprocess_ops)
+            return corrector(ds)
     return ds
 
 
@@ -681,12 +686,13 @@ def file_conversion(
     if version_hashes:
         ds.attrs.update(dict(original_files=str(version_hashes)))
 
+    ds = variable_conversion(ds, project)
+
     if isinstance(land_sea_mask, (xr.Dataset, xr.DataArray)):
         ds = threshold_land_sea_mask(
             ds, land_sea_mask=land_sea_mask, land_sea_cutoff=land_sea_cutoff
         )
 
-    ds = variable_conversion(ds, project)
     var_name = list(ds.data_vars.keys())[0]
     time_freq = ds.attrs.get("frequency")
     time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
@@ -701,6 +707,7 @@ def file_conversion(
         if outfile_path.is_file():
             outfile_path.unlink()
 
+    logging.info(f"Writing {outfile}.")
     write_object = delayed_write(
         ds,
         outfile_path,
