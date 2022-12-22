@@ -9,6 +9,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
+from clisops.core import subset
 from xarray.coding import times
 from xclim.core import units
 from xclim.core.calendar import parse_offset
@@ -28,6 +29,7 @@ __all__ = [
     "file_conversion",
     "load_json_data_mappings",
     "metadata_conversion",
+    "threshold_land_sea_mask",
     "variable_conversion",
 ]
 
@@ -70,6 +72,71 @@ def _iter_entry_key(ds, meta, entry, key, project):
     for vv in set(ds.data_vars).intersection(meta[entry]):
         val = _get_section_entry_key(meta, entry, vv, key, project)
         yield vv, val
+
+
+def threshold_land_sea_mask(
+    ds: Union[xr.Dataset, xr.DataArray],
+    *,
+    land_sea_mask: Union[xr.Dataset, xr.DataArray],
+    land_sea_cutoff: float = 0.5,
+) -> Union[xr.Dataset, xr.DataArray]:
+    """Land-Sea mask operations.
+
+    Parameters
+    ----------
+    ds : Union[xr.Dataset, str, os.PathLike]
+    land_sea_mask : Union[xr.Dataset, xr.DataArray]
+    land_sea_cutoff : float
+
+    Returns
+    -------
+    Union[xr.Dataset, xr.DataArray]
+    """
+    logging.info(
+        f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
+    )
+    if "lon" not in land_sea_mask.dims or "lat" not in land_sea_mask.dims:
+        land_sea_mask = land_sea_mask.rename(
+            {
+                "longitude": "lon",
+                "latitude": "lat",
+                "Longitude": "lon",
+                "Latitude": "lat",
+                "lons": "lon",
+                "lats": "lat",
+            }
+        )
+    if "time" in land_sea_mask.dims:
+        land_sea_mask = land_sea_mask.isel(time=0, drop=True)
+
+    if isinstance(land_sea_mask, xr.Dataset):
+        if len(land_sea_mask.data_vars) == 1:
+            land_sea_mask = ds[list(ds.data_vars)[0]]
+        else:
+            raise ValueError(
+                "More than one data variable found in land-sea mask. Supply a DataArray instead."
+            )
+
+    lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
+    lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
+
+    lsm = subset.subset_bbox(
+        land_sea_mask,
+        lon_bnds=lon_bounds,
+        lat_bnds=lat_bounds,
+    ).load()
+
+    lsm = lsm.where(land_sea_mask > land_sea_cutoff)
+    ds = ds.where(lsm.notnull())
+
+    if lsm.min() >= 0 and lsm.max() <= 1:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
+    elif lsm.min() >= 0 and lsm.max() <= 100:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
+    else:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff}"
+
+    return ds
 
 
 def correct_time_entries(
@@ -529,6 +596,9 @@ def file_conversion(
     project: str,
     output_path: Union[str, os.PathLike],
     output_format: str,
+    *,
+    land_sea_mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
+    land_sea_cutoff: float = 0.5,
     chunks: Optional[dict] = None,
     overwrite: bool = False,
     add_version_hashes: bool = True,
@@ -549,6 +619,10 @@ def file_conversion(
         Output folder path.
     output_format: {"netcdf", "zarr"}
         Output data container type.
+    land_sea_mask : Optional[Union[xr.Dataset, xr.DataArray]]
+        DataArray or single data_variable dataset containing land-sea mask.
+    land_sea_cutoff : float
+        If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: 0.5.
     chunks : dict, optional
         Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
     overwrite : bool
@@ -606,6 +680,11 @@ def file_conversion(
 
     if version_hashes:
         ds.attrs.update(dict(original_files=str(version_hashes)))
+
+    if isinstance(land_sea_mask, (xr.Dataset, xr.DataArray)):
+        ds = threshold_land_sea_mask(
+            ds, land_sea_mask=land_sea_mask, land_sea_cutoff=land_sea_cutoff
+        )
 
     ds = variable_conversion(ds, project)
     var_name = list(ds.data_vars.keys())[0]

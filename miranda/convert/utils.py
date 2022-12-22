@@ -3,13 +3,11 @@ import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Callable, Dict, Optional, Union
+from typing import Dict, Optional, Union
 
 import netCDF4
-import numpy as np
 import xarray as xr
 import zarr
-from clisops.core import subset
 from dask.delayed import delayed
 from xclim.indices import tas
 
@@ -142,71 +140,6 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
             continue
 
     return daily_dataset
-
-
-def threshold_land_sea_mask(
-    ds: Union[xr.Dataset, xr.DataArray],
-    *,
-    land_sea_mask: xr.DataArray,
-    land_sea_cutoff: float = 0.5,
-) -> Union[xr.Dataset, xr.DataArray]:
-    """Land-Sea mask operations.
-
-    Parameters
-    ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
-    land_sea_mask : Union[xr.Dataset, xr.DataArray]
-    land_sea_cutoff : int
-
-    Returns
-    -------
-    Union[xr.Dataset, xr.DataArray]
-    """
-    logging.info(
-        f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
-    )
-    if "lon" not in land_sea_mask.dims or "lat" not in land_sea_mask.dims:
-        land_sea_mask = land_sea_mask.rename(
-            {
-                "longitude": "lon",
-                "latitude": "lat",
-                "Longitude": "lon",
-                "Latitude": "lat",
-                "lons": "lon",
-                "lats": "lat",
-            }
-        )
-    if "time" in land_sea_mask.dims:
-        land_sea_mask = land_sea_mask.isel(time=0, drop=True)
-
-    if isinstance(land_sea_mask, xr.Dataset):
-        if len(land_sea_mask.data_vars) == 1:
-            land_sea_mask = ds[list(ds.data_vars)[0]]
-        else:
-            raise ValueError(
-                "More than one data variable found in land-sea mask. Supply a DataArray instead."
-            )
-
-    lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
-    lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
-
-    lsm = subset.subset_bbox(
-        land_sea_mask,
-        lon_bnds=lon_bounds,
-        lat_bnds=lat_bounds,
-    ).load()
-
-    lsm = lsm.where(land_sea_mask > land_sea_cutoff)
-    ds = ds.where(lsm.notnull())
-
-    if lsm.min() >= 0 and lsm.max() <= 1:
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
-    elif lsm.min() >= 0 and lsm.max() <= 100:
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
-    else:
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff}"
-
-    return ds
 
 
 def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
