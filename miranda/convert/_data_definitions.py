@@ -29,16 +29,16 @@ __all__ = [
 
 data_folder = Path(__file__).parent / "data"
 era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
-    "variable_entry"
+    "variables"
 ].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
 nasa_ag_variables = json.load(open(data_folder / "nasa_cf_attrs.json"))[
-    "variable_entry"
+    "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
 wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
-    "variable_entry"
+    "variables"
 ].keys()
 
 reanalysis_project_institutes = {
