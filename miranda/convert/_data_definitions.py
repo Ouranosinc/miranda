@@ -141,15 +141,6 @@ def gather_era5_land(
     )
 
 
-def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict[str, Path]:
-    try:
-        land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*era5*.nc")))
-    except StopIteration:
-        logging.error("No land_sea_mask found for ERA5.")
-        raise FileNotFoundError()
-    return land_sea_mask
-
-
 def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # agMERRA source data
     source_agmerra = Path(path)

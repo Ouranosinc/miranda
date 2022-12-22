@@ -145,79 +145,68 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
 
 
 def threshold_land_sea_mask(
-    ds: Union[xr.Dataset, str, os.PathLike],
+    ds: Union[xr.Dataset, xr.DataArray],
     *,
-    land_sea_mask: Dict[str, Union[os.PathLike, str]],
-    land_sea_percentage: int = 50,
-    output_folder: Optional[Union[str, os.PathLike]] = None,
-) -> Optional[Path]:
+    land_sea_mask: xr.DataArray,
+    land_sea_cutoff: float = 0.5,
+) -> Union[xr.Dataset, xr.DataArray]:
     """Land-Sea mask operations.
 
     Parameters
     ----------
     ds : Union[xr.Dataset, str, os.PathLike]
-    land_sea_mask : dict
-    land_sea_percentage : int
-    output_folder : str or os.PathLike, optional
+    land_sea_mask : Union[xr.Dataset, xr.DataArray]
+    land_sea_cutoff : int
 
     Returns
     -------
-    Path
+    Union[xr.Dataset, xr.DataArray]
     """
-    file_name = ""
-    if isinstance(ds, (str, os.PathLike)):
-        if output_folder is not None:
-            output_folder = Path(output_folder)
-            file_name = f"{Path(ds).stem}_land-sea-masked.nc"
-        ds = xr.open_dataset(ds)
-
-    if output_folder is not None and file_name == "":
-        logging.warning(
-            "Cannot generate filenames from xarray.Dataset objects. Consider writing NetCDF manually."
+    logging.info(
+        f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
+    )
+    if "lon" not in land_sea_mask.dims or "lat" not in land_sea_mask.dims:
+        land_sea_mask = land_sea_mask.rename(
+            {
+                "longitude": "lon",
+                "latitude": "lat",
+                "Longitude": "lon",
+                "Latitude": "lat",
+                "lons": "lon",
+                "lats": "lat",
+            }
         )
+    if "time" in land_sea_mask.dims:
+        land_sea_mask = land_sea_mask.isel(time=0, drop=True)
 
-    try:
-        project = ds.attrs["project"]
-    except KeyError:
-        raise ValueError("No 'project' field found for given dataset.")
+    if isinstance(land_sea_mask, xr.Dataset):
+        if len(land_sea_mask.data_vars) == 1:
+            land_sea_mask = ds[list(ds.data_vars)[0]]
+        else:
+            raise ValueError(
+                "More than one data variable found in land-sea mask. Supply a DataArray instead."
+            )
 
-    if project in land_sea_mask.keys():
-        logging.info(
-            f"Masking variable with land-sea mask at {land_sea_percentage} % cutoff."
-        )
-        land_sea_mask_variable, lsm_file = land_sea_mask[project]
-        lsm_raw = xr.open_dataset(lsm_file)
-        try:
-            lsm_raw = lsm_raw.rename({"longitude": "lon", "latitude": "lat"})
-        except ValueError:
-            raise
+    lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
+    lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
 
-        lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
-        lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
+    lsm = subset.subset_bbox(
+        land_sea_mask,
+        lon_bnds=lon_bounds,
+        lat_bnds=lat_bounds,
+    ).load()
 
-        lsm = subset.subset_bbox(
-            lsm_raw,
-            lon_bnds=lon_bounds,
-            lat_bnds=lat_bounds,
-        ).load()
-        lsm = lsm.where(lsm[land_sea_mask_variable] > float(land_sea_percentage) / 100)
-        if project == "era5":
-            ds = ds.where(lsm[land_sea_mask].isel(time=0, drop=True).notnull())
-            try:
-                ds = ds.rename({"longitude": "lon", "latitude": "lat"})
-            except ValueError:
-                raise
-        elif project in ["merra2", "cfsr"]:
-            ds = ds.where(lsm[land_sea_mask].notnull())
+    lsm = lsm.where(land_sea_mask > land_sea_cutoff)
+    ds = ds.where(lsm.notnull())
 
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_percentage} %"
+    if lsm.min() >= 0 and lsm.max() <= 1:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
+    elif lsm.min() >= 0 and lsm.max() <= 100:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
+    else:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff}"
 
-        if len(file_name) > 0:
-            out = output_folder / file_name
-            ds.to_netcdf(out)
-            return out
-        return ds
-    raise RuntimeError(f"Project `{project}` was not found in land-sea masks.")
+    return ds
 
 
 def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
