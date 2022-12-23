@@ -74,6 +74,56 @@ def _iter_entry_key(ds, meta, entry, key, project):
         yield vv, val
 
 
+def _simple_fix_dims(
+    d: Union[xr.Dataset, xr.DataArray]
+) -> Union[xr.Dataset, xr.DataArray]:
+    """Adjust dimensions found in a file so that it can be used for regridding purposes."""
+    if "lon" not in d.dims or "lat" not in d.dims:
+        dim_rename = dict()
+        for dim in d.dims:
+            if str(dim).lower().startswith("lon"):
+                dim_rename[str(dim)] = "lon"
+            if str(dim).lower().startswith("lat"):
+                dim_rename[str(dim)] = "lat"
+        d = d.rename(dim_rename)
+    if np.any(d.lon > 180):
+        lon_wrapped = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+        d["lon"] = lon_wrapped
+        d = d.sortby(["lon"])
+
+    if "time" in d.dims:
+        d = d.isel(time=0, drop=True)
+
+    return d
+
+
+def conservative_regrid(
+    ds: Union[xr.DataArray, xr.Dataset], ref_grid: Union[xr.DataArray, xr.Dataset]
+) -> Union[xr.DataArray, xr.Dataset]:
+    """Perform a conservative_normed regridding"""
+    try:
+        import xesmf as xe
+    except ModuleNotFoundError:
+        logging.warning(
+            "This function requires the `xesmf` library which is not installed. "
+            "Regridding step will be skipped."
+        )
+        return ds
+
+    ref_grid = _simple_fix_dims(ref_grid)
+    method = "conservative_normed"
+
+    regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
+    ds = regridder(ds)
+
+    ds.attrs["history"] = (
+        f"{datetime.datetime.now()}:"
+        f"Regridded dataset using xesmf with method: {method}. "
+        f"{ds.attrs.get('history')}".strip()
+    )
+    return ds
+
+
 def threshold_land_sea_mask(
     ds: Union[xr.Dataset, xr.DataArray],
     *,
@@ -95,23 +145,8 @@ def threshold_land_sea_mask(
     logging.info(
         f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
     )
-    if "lon" not in land_sea_mask.dims or "lat" not in land_sea_mask.dims:
-        dim_rename = dict()
-        for dim in land_sea_mask.dims:
-            if str(dim).lower().startswith("lon"):
-                dim_rename[str(dim)] = "lon"
-            if str(dim).lower().startswith("lat"):
-                dim_rename[str(dim)] = "lat"
-        land_sea_mask = land_sea_mask.rename(dim_rename)
-    if np.any(land_sea_mask.lon > 180):
-        lon_wrapped = land_sea_mask.lon.where(
-            land_sea_mask.lon <= 180.0, land_sea_mask.lon - 360.0
-        )
-        land_sea_mask["lon"] = lon_wrapped
-        land_sea_mask = land_sea_mask.sortby(["lon"])
 
-    if "time" in land_sea_mask.dims:
-        land_sea_mask = land_sea_mask.isel(time=0, drop=True)
+    land_sea_mask = _simple_fix_dims(land_sea_mask)
 
     if isinstance(land_sea_mask, xr.Dataset):
         if len(land_sea_mask.data_vars) == 1:
@@ -133,10 +168,11 @@ def threshold_land_sea_mask(
     lsm = lsm.where(land_sea_mask >= land_sea_cutoff)
     ds = ds.where(lsm.notnull())
 
-    if lsm.min() >= 0 and lsm.max() <= 1:
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
-    elif lsm.min() >= 0 and lsm.max() <= 100:
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
+    if lsm.min() >= 0:
+        if lsm.max() <= 1.00000001:
+            ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
+        elif lsm.max() <= 100.00000001:
+            ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
     else:
         ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff}"
 
@@ -687,16 +723,26 @@ def file_conversion(
         ds.attrs.update(dict(original_files=str(version_hashes)))
 
     ds = variable_conversion(ds, project)
+    ds.attrs["history"] = (
+        f"{datetime.datetime.now()}: "
+        f"Variables converted from original files using . "
+        f"{ds.attrs.get('history')}".strip()
+    )
 
     if isinstance(land_sea_mask, (xr.Dataset, xr.DataArray)):
+        logging.info(
+            "Land-sea mask supplied. Performing conservative-normed regridding and masking."
+        )
+        land_sea_mask = conservative_regrid(land_sea_mask, ds)
         ds = threshold_land_sea_mask(
             ds, land_sea_mask=land_sea_mask, land_sea_cutoff=land_sea_cutoff
         )
 
     var_name = list(ds.data_vars.keys())[0]
     time_freq = ds.attrs.get("frequency")
+    institution = ds.attrs.get("institution")
     time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
-    outfile = f"{var_name}_{time_freq}_{project}_{time_start}-{time_end}.{suffix}"
+    outfile = f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
 
     outfile_path = output_path.joinpath(outfile)
 

@@ -21,7 +21,6 @@
     "version": "v1.2"
   },
   "_preprocess": {
-    "_land_sea_mask": true,
     "_time": {
       "field": "Time",
       "location": -1,
@@ -62,7 +61,6 @@
       "_corrected_units": "mm d-1",
       "_transformation": "amount2rate",
       "cell_methods": "area: mean time: mean",
-      "history": "",
       "long_name": "precipitation",
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
@@ -71,7 +69,6 @@
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
       "cell_methods": "area: mean time: mean",
-      "history": "",
       "long_name": "Daily Mean Near-Surface Air Temperature",
       "standard_name": "air_temperature",
       "units": "K"
@@ -80,7 +77,6 @@
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
       "cell_methods": "area: mean time: maximum",
-      "history": "",
       "long_name": "Daily Maximum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
       "units": "K"
@@ -89,7 +85,6 @@
       "_cf_variable_name": "tasmin",
       "_corrected_units": "degC",
       "cell_methods": "area: mean time: minimum",
-      "history": "",
       "long_name": "Daily Minimum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
       "units": "K"
