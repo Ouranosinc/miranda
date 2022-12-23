@@ -725,7 +725,7 @@ def file_conversion(
     ds = variable_conversion(ds, project)
     ds.attrs["history"] = (
         f"{datetime.datetime.now()}: "
-        f"Variables converted from original files using . "
+        f"Variables converted from original files using miranda.convert.{file_conversion.__name__}. "
         f"{ds.attrs.get('history')}".strip()
     )
 
