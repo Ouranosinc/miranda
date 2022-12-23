@@ -7,7 +7,7 @@
     "table_id": "CMIP-OURANOS",
     "type": "simulation"
   },
-  "dimensions_entry": {
+  "dimensions": {
     "time": {
       "_ensure_correct_time": {
         "cmip5": [
