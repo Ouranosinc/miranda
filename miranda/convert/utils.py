@@ -124,6 +124,7 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
             "snd",
             "snr",
             "snw",
+            "swe",
         ]:
             ds_out = xr.Dataset()
             ds_out.attrs = ds.attrs.copy()
