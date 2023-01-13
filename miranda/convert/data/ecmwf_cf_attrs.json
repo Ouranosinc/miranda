@@ -147,11 +147,7 @@
     },
     "rsn": {
       "_cf_variable_name": "snr",
-      "_corrected_units": {
-        "era5-land": "kg m-3",
-        "era5-single-levels": "kg m-3",
-        "era5-single-levels-preliminary-back-extension": "kg m-3"
-      },
+      "_corrected_units": "kg m-3",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
@@ -163,20 +159,16 @@
       "units": "kg m-3"
     },
     "sd": {
-      "_cf_variable_name": "snw",
-      "_corrected_units": {
-        "era5-land": "Mg m-2",
-        "era5-single-levels": "Mg m-2",
-        "era5-single-levels-preliminary-back-extension": "Mg m-2"
-      },
+      "_cf_variable_name": "swe",
+      "_corrected_units": "m",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "description": "Snow thickness in m of liquid water equivalent converted to snow amount using a water density of 1000 kg/m³.",
-      "long_name": "Surface snow amount",
-      "standard_name": "surface_snow_amount",
-      "units": "kg m-2"
+      "description": "This parameter is the depth of snow from the snow-covered area of a grid box. Its units are metres of water equivalent, so it is the depth the water would have if the snow melted and was spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
+      "long_name": "Surface snow thickness water equivalent",
+      "standard_name": "lwe_thickness_of_surface_snow_amount",
+      "units": "m"
     },
     "sde": {
       "_cf_variable_name": "snd",
@@ -194,11 +186,7 @@
     },
     "sf": {
       "_cf_variable_name": "prsn",
-      "_corrected_units": {
-        "era5-land": "m",
-        "era5-single-levels": "m",
-        "era5-single-levels-preliminary-back-extension": "m"
-      },
+      "_corrected_units": "m",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -219,11 +207,7 @@
     },
     "slhf": {
       "_cf_variable_name": "hfls",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -260,11 +244,7 @@
     },
     "sshf": {
       "_cf_variable_name": "hfss",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -289,11 +269,7 @@
     },
     "ssr": {
       "_cf_variable_name": "rss",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -314,11 +290,7 @@
     },
     "ssrd": {
       "_cf_variable_name": "rsds",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -339,17 +311,9 @@
     },
     "str": {
       "_cf_variable_name": "rls",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
-      "_offset_time": {
-        "era5-land": true,
-        "era5-single-levels": true,
-        "era5-single-levels-preliminary-back-extension": true
-      },
+      "_offset_time": true,
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -364,11 +328,7 @@
     },
     "strd": {
       "_cf_variable_name": "rlds",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -389,11 +349,7 @@
     },
     "swvl1": {
       "_cf_variable_name": "mrsolv1",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
@@ -405,11 +361,7 @@
     },
     "swvl2": {
       "_cf_variable_name": "mrsolv2",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
@@ -421,11 +373,7 @@
     },
     "swvl3": {
       "_cf_variable_name": "mrsolv3",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
@@ -437,11 +385,7 @@
     },
     "swvl4": {
       "_cf_variable_name": "mrsolv4",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
@@ -467,11 +411,7 @@
       "_cf_variable_name": "pr",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": {
-        "era5-land": true,
-        "era5-single-levels": true,
-        "era5-single-levels-preliminary-back-extension": true
-      },
+      "_offset_time": true,
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -512,16 +452,7 @@
     },
     "z": {
       "_cf_variable_name": "z",
-      "_corrected_units": {
-        "era5-pressure-levels": "m2 s-2",
-        "era5-pressure-levels-monthly-means": "m2 s-2",
-        "era5-pressure-levels-monthly-means-preliminary-back-extension": "m2 s-2",
-        "era5-pressure-levels-preliminary-back-extension": "m2 s-2",
-        "era5-single-levels": "m2 s-2",
-        "era5-single-levels-monthly-means": "m2 s-2",
-        "era5-single-levels-monthly-means-preliminary-back-extension": "m2 s-2",
-        "era5-single-levels-preliminary-back-extension": "m2 s-2"
-      },
+      "_corrected_units": "m2 s-2",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
