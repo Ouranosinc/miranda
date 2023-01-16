@@ -119,6 +119,8 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
             "hus",
             "pr",
             "prsn",
+            "ps",
+            "psl",
             "rsds",
             "rlds",
             "snd",
