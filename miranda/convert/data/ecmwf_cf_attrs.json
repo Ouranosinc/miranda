@@ -166,7 +166,7 @@
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the depth of snow from the snow-covered area of a grid box. Its units are metres of water equivalent, so it is the depth the water would have if the snow melted and was spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
-      "long_name": "Surface snow thickness water equivalent",
+      "long_name": "Surface snow water equivalent",
       "standard_name": "lwe_thickness_of_surface_snow_amount",
       "units": "m"
     },
