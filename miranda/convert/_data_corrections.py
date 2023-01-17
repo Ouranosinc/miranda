@@ -578,6 +578,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         "_corrected_units",
         "_ensure_correct_time",
         "_original_name",
+        "_precision",
         "_strict_time",
     ]
     for dim in m["dimensions"].keys():
