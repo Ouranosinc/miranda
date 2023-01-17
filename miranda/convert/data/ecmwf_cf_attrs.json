@@ -457,8 +457,9 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
+      "comment": "The geopotential height can be calculated by dividing the geopotential by the Earth's gravitational acceleration, g (=9.80665 m s-2).",
       "description": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
-      "long_name": "Geopotential height",
+      "long_name": "Geopotential",
       "standard_name": "geopotential",
       "units": "m2 s-2"
     }
