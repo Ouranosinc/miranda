@@ -46,7 +46,7 @@ repos:
       - id: blackdoc
         additional_dependencies: [ 'black==22.3.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.28.0
+    rev: v1.29.0
     hooks:
       - id: yamllint
         args: ['--config-file=.yamllint.yaml']
