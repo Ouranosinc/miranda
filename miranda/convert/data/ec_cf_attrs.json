@@ -21,7 +21,9 @@
       "ec-canswe": "v4"
     },
     "institution": "GouvCan",
-    "license_type": "open",
+    "license_type": {
+      "ec-canswe": "permissive"
+    },
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
