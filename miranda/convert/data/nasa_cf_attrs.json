@@ -17,11 +17,19 @@
     "processing_level": "raw",
     "realm": "atmos",
     "source": "daymet",
-    "table_date": "2022-11-15",
+    "table_date": "2023-01-17",
     "table_id": "NASA",
     "title": "Long-term, continuous, gridded estimates of daily weather and climatology variables from Oak Ridge National Laboratory",
     "title_fr": "Estimations à long terme, continues et maillées, des variables météorologiques et climatologiques quotidiennes du Oak Ridge National Laboratory.",
     "type": "reconstruction"
+  },
+  "dimensions": {
+    "time": {
+      "_corrected_units": {
+        "agcfsr": "days since 1980-01-01 12:00:00",
+        "agmerra2": "days since 1980-01-01 12:00:00"
+      }
+    }
   },
   "variables": {
     "prate": {
@@ -88,12 +96,6 @@
       "long_name": "Average temperature",
       "standard_name": "air_temperature",
       "units": "K"
-    },
-    "time": {
-      "_corrected_units": {
-        "agcfsr": "days since 1980-01-01 12:00:00",
-        "agmerra2": "days since 1980-01-01 12:00:00"
-      }
     },
     "tmax": {
       "_cf_variable_name": {

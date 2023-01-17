@@ -12,7 +12,7 @@
     "table_id": "HQ",
     "type": "station-obs"
   },
-  "variable_entry": {
+  "variables": {
     "hurs": {
       "cell_methods": "time: point",
       "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
