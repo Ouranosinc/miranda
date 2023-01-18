@@ -20,7 +20,7 @@ dask_dir.mkdir(parents=True, exist_ok=True)
 dask_kwargs = dict(n_workers=10, threads_per_worker=3, memory_limit="3GB", dashboard_address=8999,
                    local_directory=dask_dir, silence_logs=logging.ERROR)
 
-def main(project=None, input_folder=None, output_folder=None, output_format=None, working_folder=None):
+def rdrs_correct_hourly(project=None, input_folder=None, output_folder=None, output_format=None, working_folder=None):
     var_attrs = load_json_data_mappings(project=project)['variable_entry']
     freq_dict= dict(h="hr", d="day")
 
@@ -146,7 +146,8 @@ if __name__ == '__main__':
                   working_folder=Path(home).joinpath('tmpout','rdrs')
                   )
 
-    #main(**kwargs)
+    rdrs_correct_hourly(**kwargs)
+
     rdrs_to_daily(
         input_folder=Path(home).joinpath('RDRS_v2.1', 'converted/ECCC/RDRS_v2.1/NAM/1hr'),
         output_folder=Path(home).joinpath('RDRS_v2.1', 'converted/ECCC/RDRS_v2.1/NAM/day'),
