@@ -159,16 +159,17 @@
       "units": "kg m-3"
     },
     "sd": {
-      "_cf_variable_name": "swe",
-      "_corrected_units": "m",
+      "_cf_variable_name": "snw",
+      "_corrected_units": "Mg m-2",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "description": "This parameter is the average amount of snow of a grid box. Its units are metres of water equivalent, so it is the depth the water would have if the snow melted and was spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
-      "long_name": "Surface snow water equivalent",
-      "standard_name": "lwe_thickness_of_surface_snow_amount",
-      "units": "m"
+      "comment": "Liquid water equivalent of snow converted to snow amount using a water density of 1000 kg/m³.",
+      "description": "This parameter is the average amount of snow of a grid box. Its units are kilograms per square metre, so it is the weight of snow spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
+      "long_name": "Surface snow amount",
+      "standard_name": "surface_snow_amount",
+      "units": "kg m-2"
     },
     "sde": {
       "_cf_variable_name": "snd",
