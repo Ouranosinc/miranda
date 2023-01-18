@@ -13,11 +13,10 @@ from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
+from miranda.convert.utils import delayed_write, find_version_hash
 from miranda.decode import date_parser
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
-
-from miranda.convert.utils import delayed_write, find_version_hash
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -485,9 +484,14 @@ def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
 
     return ds
 
+
 def file_conversion(
     input: Union[
-        str, os.PathLike, Sequence[Union[str, os.PathLike]], Iterator[os.PathLike], xr.Dataset
+        str,
+        os.PathLike,
+        Sequence[Union[str, os.PathLike]],
+        Iterator[os.PathLike],
+        xr.Dataset,
     ],
     project: str,
     output_path: Union[str, os.PathLike],

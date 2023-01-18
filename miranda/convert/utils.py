@@ -82,7 +82,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-def daily_aggregation(ds: xr.Dataset, keys_only: bool=False) -> Dict[str, xr.Dataset]:
+def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.Dataset]:
     logging.info("Creating daily upscaled climate variables.")
 
     daily_dataset = dict()
@@ -99,9 +99,7 @@ def daily_aggregation(ds: xr.Dataset, keys_only: bool=False) -> Dict[str, xr.Dat
                     ds_out.attrs = ds.attrs.copy()
                     ds_out.attrs["frequency"] = "day"
 
-                    method = (
-                        f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
-                    )
+                    method = f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
                     ds_out.attrs["cell_methods"] = method
 
                     if v == "tas" and not hasattr(ds, "tas"):
