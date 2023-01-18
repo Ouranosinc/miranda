@@ -4,14 +4,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 import dask.config
-import numpy as np
 import xarray as xr
 from clisops.core import subset
 from dask import compute
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar
 
-from miranda.gis import subsetting_domains
+from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
@@ -160,14 +159,9 @@ def reanalysis_processing(
                             else:
                                 ds = xr.open_mfdataset(multi_files, **xr_kwargs)
                         else:
-                            region = subsetting_domains(domain)
-                            lon_values = np.array([region[1], region[3]])
-                            lat_values = np.array([region[0], region[2]])
-
-                            ds = subset.subset_bbox(
+                            ds = subset_domain(
                                 xr.open_mfdataset(multi_files, **xr_kwargs),
-                                lon_bnds=lon_values,
-                                lat_bnds=lat_values,
+                                domain,
                                 start_date=start,
                                 end_date=end,
                             )

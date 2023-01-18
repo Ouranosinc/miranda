@@ -21,6 +21,7 @@ __all__ = [
     "delayed_write",
     "find_version_hash",
     "get_chunks_on_disk",
+    "name_output_file",
 ]
 
 
@@ -146,6 +147,17 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
 
 
 def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
+    """
+
+    Parameters
+    ----------
+    file : Path or str
+
+    Returns
+    -------
+    dict
+    """
+
     def _get_hash(f):
         hash_sha256_writer = hashlib.sha256()
         with open(f, "rb") as f_opened:
@@ -178,6 +190,33 @@ def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
             version_info["sha256sum"] = _get_hash(file)
 
     return version_info
+
+
+def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
+    """
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+    project: str
+    output_format : {"netcdf", "zarr"}
+        Suffix to be used for filename
+
+    Returns
+    -------
+    str
+    """
+    if output_format.lower() not in {"netcdf", "zarr"}:
+        raise NotImplementedError(f"Format: {output_format}.")
+    else:
+        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
+
+    var_name = list(ds.data_vars.keys())[0]
+    time_freq = ds.attrs.get("frequency")
+    institution = ds.attrs.get("institution")
+    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+
+    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}{suffix}"
 
 
 def delayed_write(

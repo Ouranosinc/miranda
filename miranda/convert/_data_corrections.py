@@ -9,17 +9,18 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
-from clisops.core import subset
+from clisops.core.subset import subset_bbox
 from xarray.coding import times
 from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
 from miranda.decode import date_parser
+from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
-from .utils import delayed_write, find_version_hash
+from .utils import delayed_write, find_version_hash, name_output_file
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -161,7 +162,7 @@ def threshold_land_sea_mask(
     lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
     lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
 
-    lsm = subset.subset_bbox(
+    lsm = subset_bbox(
         land_sea_mask,
         lon_bnds=lon_bounds,
         lat_bnds=lat_bounds,
@@ -644,6 +645,7 @@ def file_conversion(
     output_path: Union[str, os.PathLike],
     output_format: str,
     *,
+    domain: Optional[str] = None,
     land_sea_mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
     land_sea_cutoff: float = 0.5,
     chunks: Optional[dict] = None,
@@ -666,6 +668,8 @@ def file_conversion(
         Output folder path.
     output_format: {"netcdf", "zarr"}
         Output data container type.
+    domain: {"global", "nam", "can", "qc", "mtl"}, optional
+        Domain to perform subsetting for. Default: None.
     land_sea_mask : Optional[Union[xr.Dataset, xr.DataArray]]
         DataArray or single data_variable dataset containing land-sea mask.
     land_sea_cutoff : float
@@ -691,11 +695,6 @@ def file_conversion(
     -------
     dict
     """
-    if output_format.lower() not in {"netcdf", "zarr"}:
-        raise NotImplementedError(f"Format: {output_format}.")
-    else:
-        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
-
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
@@ -735,6 +734,9 @@ def file_conversion(
         f"{ds.attrs.get('history')}".strip()
     )
 
+    if domain:
+        ds = subset_domain(ds, domain)
+
     if isinstance(land_sea_mask, (xr.Dataset, xr.DataArray)):
         logging.info(
             "Land-sea mask supplied. Performing conservative-normed regridding and masking."
@@ -744,12 +746,7 @@ def file_conversion(
             ds, land_sea_mask=land_sea_mask, land_sea_cutoff=land_sea_cutoff
         )
 
-    var_name = list(ds.data_vars.keys())[0]
-    time_freq = ds.attrs.get("frequency")
-    institution = ds.attrs.get("institution")
-    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
-    outfile = f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
-
+    outfile = name_output_file(ds, project, output_format)
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():
