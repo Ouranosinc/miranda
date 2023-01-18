@@ -17,7 +17,7 @@ from miranda.decode import date_parser
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
-from .utils import delayed_write, find_version_hash
+from miranda.convert.utils import delayed_write, find_version_hash
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -36,6 +36,8 @@ def load_json_data_mappings(project: str) -> dict:
 
     if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+    elif project in ["rdrs-v2.1"]:
+        metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
     elif project in ["cordex", "cmip5", "cmip6"]:
@@ -354,21 +356,22 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 # For renaming lat and lon dims
 def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     sort_dims = []
-    for orig, new in dict(
-        longitude="lon", latitude="lat", Longitude="lon", Latitude="lat"
-    ).items():
-        if orig in d:
-            d = d.rename({orig: new})
-        if new == "lon" and "lon" in d.dims:
-            if np.any(d.lon > 180):
-                lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
-                d[new] = lon1
-        sort_dims.append(new)
-        coord_precision = _get_var_entry_key(m, new, "_precision", p)
-        if coord_precision is not None:
-            d[new] = d[new].round(coord_precision)
-    if sort_dims:
-        d = d.sortby(sort_dims)
+    if "lon" not in d.coords or "lat" not in d.coords:
+        for orig, new in dict(
+            longitude="lon", latitude="lat", Longitude="lon", Latitude="lat"
+        ).items():
+            if orig in d:
+                d = d.rename({orig: new})
+            if new == "lon" and "lon" in d.dims:
+                if np.any(d.lon > 180):
+                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+                    d[new] = lon1
+            sort_dims.append(new)
+            coord_precision = _get_var_entry_key(m, new, "_precision", p)
+            if coord_precision is not None:
+                d[new] = d[new].round(coord_precision)
+        if sort_dims:
+            d = d.sortby(sort_dims)
     return d
 
 
@@ -406,7 +409,11 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     # Conditional handling of global attributes based on project name
     for field in [f for f in m["Header"] if f.startswith("_")]:
         if p in m["Header"][field]:
-            m["Header"][field[1:]] = m["Header"][field][p]
+            if field == "_remove_attrs":
+                for ff in m["Header"][field][p]:
+                    del d.attrs[ff]
+            else:
+                m["Header"][field[1:]] = m["Header"][field][p]
         elif field[1:] in m["Header"]:
             pass
         else:
@@ -478,10 +485,9 @@ def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
 
     return ds
 
-
 def file_conversion(
-    files: Union[
-        str, os.PathLike, Sequence[Union[str, os.PathLike]], Iterator[os.PathLike]
+    input: Union[
+        str, os.PathLike, Sequence[Union[str, os.PathLike]], Iterator[os.PathLike], xr.Dataset
     ],
     project: str,
     output_path: Union[str, os.PathLike],
@@ -532,39 +538,40 @@ def file_conversion(
         raise NotImplementedError(f"Format: {output_format}.")
     else:
         suffix = dict(netcdf="nc", zarr="zarr")[output_format]
+    if not isinstance(input, xr.Dataset):
+        if isinstance(output_path, str):
+            output_path = Path(output_path)
 
-    if isinstance(output_path, str):
-        output_path = Path(output_path)
+        if isinstance(input, (str, os.PathLike)):
+            files = [Path(input)]
+        elif isinstance(input, (Sequence, Iterator)):
+            files = [Path(f) for f in input]
 
-    if isinstance(files, (str, os.PathLike)):
-        files = [Path(files)]
-    elif isinstance(files, (Sequence, Iterator)):
-        files = [Path(f) for f in files]
+        version_hashes = dict()
+        if add_version_hashes:
+            for file in files:
+                version_hashes[file.name] = find_version_hash(file)
 
-    version_hashes = dict()
-    if add_version_hashes:
-        for file in files:
-            version_hashes[file.name] = find_version_hash(file)
+        if len(files) == 1:
+            ds = xr.open_dataset(files[0], **xr_kwargs)
+            if correct_variable_names:
+                ds = correct_var_names(ds)
+            if correct_timestamps:
+                ds = correct_time_entries(ds)
+        else:
+            if correct_timestamps and correct_variable_names:
+                xr_kwargs.update(dict(preprocess=correct_var_name_and_time))
+            elif correct_timestamps:
+                xr_kwargs.update(dict(preprocess=correct_time_entries))
+            elif correct_variable_names:
+                xr_kwargs.update(dict(preprocess=correct_var_names))
 
-    if len(files) == 1:
-        ds = xr.open_dataset(files[0], **xr_kwargs)
-        if correct_variable_names:
-            ds = correct_var_names(ds)
-        if correct_timestamps:
-            ds = correct_time_entries(ds)
+            ds = xr.open_mfdataset(files, **xr_kwargs)
+
+        if version_hashes:
+            ds.attrs.update(dict(original_files=str(version_hashes)))
     else:
-        if correct_timestamps and correct_variable_names:
-            xr_kwargs.update(dict(preprocess=correct_var_name_and_time))
-        elif correct_timestamps:
-            xr_kwargs.update(dict(preprocess=correct_time_entries))
-        elif correct_variable_names:
-            xr_kwargs.update(dict(preprocess=correct_var_names))
-
-        ds = xr.open_mfdataset(files, **xr_kwargs)
-
-    if version_hashes:
-        ds.attrs.update(dict(original_files=str(version_hashes)))
-
+        ds = input
     ds = variable_conversion(ds, project)
     if correct_variable_names:
         var_name = list(ds.data_vars.keys())[0]
