@@ -37,16 +37,16 @@
     "type": "reconstruction"
   },
   "dimensions": {
-    "lat": {
-      "_original_name": "latitude",
+    "latitude": {
+      "_cf_dimension_name": "lat",
       "_precision": {
         "era5-land": 4
       },
       "axis": "Y",
       "standard_name": "latitude"
     },
-    "lon": {
-      "_original_name": "longitude",
+    "longitude": {
+      "_cf_dimension_name": "lon",
       "_precision": {
         "era5-land": 4
       },

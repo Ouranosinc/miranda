@@ -32,26 +32,26 @@
     }
   },
   "dimensions": {
-    "lat": {
-      "_original_name": "Latitude",
+    "Latitude": {
+      "_cf_dimension_name": "lat",
       "axis": "Y",
       "long_name": "Latitude",
       "standard_name": "latitude",
       "units": "degrees_north"
     },
-    "lon": {
-      "_original_name": "Longitude",
+    "Longitude": {
+      "_cf_dimension_name": "lon",
       "axis": "X",
       "long_name": "Longitude",
       "standard_name": "longitude",
       "units": "degrees_east"
     },
-    "time": {
+    "Time": {
+      "_cf_dimension_name": "time",
       "_ensure_correct_time": "1D",
-      "_original_name": "Time",
       "_strict_time": false,
       "axis": "T",
-      "long_name": "time",
+      "long_name": "Time",
       "standard_name": "time"
     }
   },
@@ -59,15 +59,16 @@
     "P": {
       "_cf_variable_name": "pr",
       "_corrected_units": "mm d-1",
-      "_transformation": "amount2rate",
+      "_transformation": false,
       "cell_methods": "area: mean time: mean",
-      "long_name": "precipitation",
+      "long_name": "Precipitation",
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
     "T": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
+      "_transformation": false,
       "cell_methods": "area: mean time: mean",
       "long_name": "Daily Mean Near-Surface Air Temperature",
       "standard_name": "air_temperature",
@@ -76,6 +77,7 @@
     "Tmax": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
+      "_transformation": false,
       "cell_methods": "area: mean time: maximum",
       "long_name": "Daily Maximum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
@@ -84,6 +86,7 @@
     "Tmin": {
       "_cf_variable_name": "tasmin",
       "_corrected_units": "degC",
+      "_transformation": false,
       "cell_methods": "area: mean time: minimum",
       "long_name": "Daily Minimum Near-Surface Air Temperature",
       "standard_name": "air_temperature",

@@ -26,6 +26,8 @@ logging.config.dictConfig(LOGGING_CONFIG)
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 __all__ = [
+    "dataset_corrections",
+    "dims_conversion",
     "file_conversion",
     "load_json_data_mappings",
     "metadata_conversion",
@@ -480,20 +482,20 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 
 # For renaming and reordering lat and lon dims
-def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    sort_dims = []
-
+def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    # Rename dimensions to CF to their equivalents
     rename_dims = dict()
-    for corrected_dim_name in m["dimensions"].keys():
-        original_name = _get_section_entry_key(
-            m, "dimensions", corrected_dim_name, "_original_name", p
-        )
-        if original_name:
-            for dim in d.dims:
-                if original_name == dim:
-                    rename_dims[original_name] = corrected_dim_name
+    for dim in d.dims:
+        if dim in m["dimensions"].keys():
+            cf_name = _get_section_entry_key(
+                m, "dimensions", dim, "_cf_dimension_name", p
+            )
+            if cf_name:
+                rename_dims[dim] = cf_name
     d = d.rename(rename_dims)
 
+    # Perform lon wrapping if needed and sort dimensions
+    sort_dims = []
     for new in ["lon", "lat"]:
         if new == "lon" and "lon" in d.dims:
             if np.any(d.lon > 180):
@@ -512,6 +514,44 @@ def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         transpose_order.insert(0, "time")
     transpose_order.extend(list(set(d.dims) - set(transpose_order)))
     d = d.transpose(*transpose_order)
+
+    # Add dimension original name and update attrs
+    dim_descriptions = m["dimensions"]
+    for dim in m["dimensions"].keys():
+        cf_name = dim_descriptions[dim].get("_cf_dimension_name")
+        if cf_name is not None and cf_name in d.dims:
+            d[cf_name].attrs.update(dict(original_variable=dim))
+            for field in dim_descriptions[dim].keys():
+                if not field.startswith("_"):
+                    d[cf_name].attrs.update({field: dim_descriptions[dim][field]})
+
+    return d
+
+
+def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    # Add variable metadata and remove nonstandard entries
+    var_descriptions = m["variables"]
+    var_correction_fields = [
+        "_corrected_units",
+        "_invert_sign",
+        "_offset_time",
+        "_transformation",
+    ]
+    for var in d.variables:
+        if var in var_descriptions.keys():
+            for field in var_correction_fields:
+                if field in var_descriptions[var].keys():
+                    del var_descriptions[var][field]
+            d[var].attrs.update(var_descriptions[var])
+
+    # Rename data variables
+    for orig_var_name, cf_name in _iter_entry_key(
+        d, m, "variables", "_cf_variable_name", None
+    ):
+        if cf_name is not None:
+            d = d.rename({orig_var_name: cf_name})
+            d[cf_name].attrs.update(dict(original_variable=orig_var_name))
+            del d[cf_name].attrs["_cf_variable_name"]
 
     return d
 
@@ -572,48 +612,11 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         f" {prev_history}".strip()
     )
     d.attrs.update(dict(history=history))
-    descriptions = m["variables"]
-
-    dim_correction_fields = [
-        "_corrected_units",
-        "_ensure_correct_time",
-        "_original_name",
-        "_precision",
-        "_strict_time",
-    ]
-    for dim in m["dimensions"].keys():
-        for field in dim_correction_fields:
-            if field in m["dimensions"][dim].keys():
-                del m["dimensions"][dim][field]
-        d[dim].attrs.update(m["dimensions"][dim])
-
-    # Add variable metadata and remove nonstandard entries
-    variable_correction_fields = [
-        "_corrected_units",
-        "_invert_sign",
-        "_offset_time",
-        "_transformation",
-    ]
-    for var in d.variables:
-        if var in descriptions.keys():
-            for field in variable_correction_fields:
-                if field in descriptions[var].keys():
-                    del descriptions[var][field]
-            d[var].attrs.update(descriptions[var])
-
-    # Rename data variables
-    for orig_var_name, cf_name in _iter_entry_key(
-        d, m, "variables", "_cf_variable_name", None
-    ):
-        if cf_name is not None:
-            d = d.rename({orig_var_name: cf_name})
-            d[cf_name].attrs.update(dict(original_variable=orig_var_name))
-            del d[cf_name].attrs["_cf_variable_name"]
 
     return d
 
 
-def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
+def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
 
@@ -622,9 +625,11 @@ def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
 
-    ds = _dims_conversion(ds, project, metadata_definition)
+    ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
+
+    ds = variable_conversion(ds, project, metadata_definition)
 
     ds = metadata_conversion(ds, project, metadata_definition)
 
@@ -647,7 +652,7 @@ def file_conversion(
     preprocess: Optional[Union[Callable, str]] = "auto",
     compute: bool = True,
     **xr_kwargs,
-) -> None:
+) -> Dict:
     """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
@@ -684,7 +689,7 @@ def file_conversion(
 
     Returns
     -------
-    dask.Delayed or None
+    dict
     """
     if output_format.lower() not in {"netcdf", "zarr"}:
         raise NotImplementedError(f"Format: {output_format}.")
@@ -723,7 +728,7 @@ def file_conversion(
     if version_hashes:
         ds.attrs.update(dict(original_files=str(version_hashes)))
 
-    ds = variable_conversion(ds, project)
+    ds = dataset_corrections(ds, project)
     ds.attrs["history"] = (
         f"{datetime.datetime.now()}: "
         f"Variables converted from original files using miranda.convert.{file_conversion.__name__}. "
@@ -763,5 +768,6 @@ def file_conversion(
         target_chunks=chunks,
     )
     if compute:
-        return write_object.compute()
-    return write_object
+        write_object.compute()
+        return dict(path=outfile_path)
+    return dict(path=outfile_path, object=write_object)
