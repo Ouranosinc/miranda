@@ -15,7 +15,6 @@ from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
-from miranda.convert.utils import delayed_write, find_version_hash
 from miranda.decode import date_parser
 from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
@@ -670,8 +669,8 @@ def file_conversion(
 
     Parameters
     ----------
-    files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike]
-        Files to be converted.
+    input : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike] or xr.Dataset
+        Files or objects to be converted.
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
     project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
         Project name for decoding/handling purposes.
@@ -710,10 +709,12 @@ def file_conversion(
         if isinstance(output_path, str):
             output_path = Path(output_path)
 
-        if isinstance(files, (str, os.PathLike)):
-            files = [Path(files)]
-        elif isinstance(files, (Sequence, Iterator)):
-            files = [Path(f) for f in files]
+        if isinstance(input, (str, os.PathLike)):
+            files = [Path(input)]
+        elif isinstance(input, (Sequence, Iterator)):
+            files = [Path(f) for f in input]
+        else:
+            files = input
 
         version_hashes = dict()
         if add_version_hashes:
