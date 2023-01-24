@@ -13,7 +13,7 @@ if __name__ == "__main__":
     structure_datasets(
         input_path,
         output_path,
-        project="reanalysis",
+        project="converted",
         guess=False,
         method="copy",
         make_dirs=True,

@@ -5,6 +5,9 @@ from typing import List, Optional, Tuple, Union
 
 import fiona
 import geojson
+import numpy as np
+import xarray as xr
+from clisops.core.subset import subset_bbox
 from pyproj.crs import CRS
 
 from miranda.scripting import LOGGING_CONFIG
@@ -12,14 +15,28 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["subsetting_domains"]
+__all__ = ["subset_domain", "subsetting_domains"]
+
+
+def subset_domain(
+    ds: Union[xr.Dataset, xr.DataArray], domain: str, **kwargs
+) -> Union[xr.Dataset, xr.DataArray]:
+    region = subsetting_domains(domain)
+    lon_values = np.array([region[1], region[3]])
+    lat_values = np.array([region[0], region[2]])
+
+    ds = subset_bbox(ds, lon_bnds=lon_values, lat_bnds=lat_values, **kwargs)
+
+    return ds
 
 
 def subsetting_domains(domain: str) -> List:
     """Provides the bounding box coordinates for specific domains.
+
     Parameters
     ----------
-    domain: {"global", "nam", "can", "qc", "mtl"}
+    domain : {"global", "nam", "can", "qc", "mtl"}
+
     Returns
     -------
     np.array

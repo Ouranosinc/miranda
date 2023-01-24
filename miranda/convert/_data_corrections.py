@@ -3,11 +3,13 @@ import json
 import logging.config
 import os
 import shutil
+from functools import partial
 from pathlib import Path
-from typing import Dict, Iterator, Optional, Sequence, Union
+from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
+from clisops.core.subset import subset_bbox
 from xarray.coding import times
 from xclim.core import units
 from xclim.core.calendar import parse_offset
@@ -15,17 +17,23 @@ from xclim.core.calendar import parse_offset
 from miranda import __version__ as __miranda_version__
 from miranda.convert.utils import delayed_write, find_version_hash
 from miranda.decode import date_parser
+from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
+
+from .utils import delayed_write, find_version_hash, name_output_file
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 __all__ = [
+    "dataset_corrections",
+    "dims_conversion",
     "file_conversion",
     "load_json_data_mappings",
     "metadata_conversion",
+    "threshold_land_sea_mask",
     "variable_conversion",
 ]
 
@@ -57,8 +65,8 @@ def load_json_data_mappings(project: str) -> dict:
     return metadata_definition
 
 
-def _get_var_entry_key(meta, var, key, project):
-    var_meta = meta["variable_entry"].get(var, {})
+def _get_section_entry_key(meta, entry, var, key, project):
+    var_meta = meta[entry].get(var, {})
     if key in var_meta:
         if isinstance(var_meta[key], dict):
             return var_meta[key].get(project)
@@ -66,25 +74,130 @@ def _get_var_entry_key(meta, var, key, project):
     return None
 
 
-def _iter_vars_key(ds, meta, key, project):
-    for vv in set(ds.data_vars).intersection(meta["variable_entry"]):
-        val = _get_var_entry_key(meta, vv, key, project)
+def _iter_entry_key(ds, meta, entry, key, project):
+    for vv in set(ds.data_vars).intersection(meta[entry]):
+        val = _get_section_entry_key(meta, entry, vv, key, project)
         yield vv, val
+
+
+def _simple_fix_dims(
+    d: Union[xr.Dataset, xr.DataArray]
+) -> Union[xr.Dataset, xr.DataArray]:
+    """Adjust dimensions found in a file so that it can be used for regridding purposes."""
+    if "lon" not in d.dims or "lat" not in d.dims:
+        dim_rename = dict()
+        for dim in d.dims:
+            if str(dim).lower().startswith("lon"):
+                dim_rename[str(dim)] = "lon"
+            if str(dim).lower().startswith("lat"):
+                dim_rename[str(dim)] = "lat"
+        d = d.rename(dim_rename)
+    if np.any(d.lon > 180):
+        lon_wrapped = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+        d["lon"] = lon_wrapped
+        d = d.sortby(["lon"])
+
+    if "time" in d.dims:
+        d = d.isel(time=0, drop=True)
+
+    return d
+
+
+def conservative_regrid(
+    ds: Union[xr.DataArray, xr.Dataset], ref_grid: Union[xr.DataArray, xr.Dataset]
+) -> Union[xr.DataArray, xr.Dataset]:
+    """Perform a conservative_normed regridding"""
+    try:
+        import xesmf as xe
+    except ModuleNotFoundError:
+        logging.warning(
+            "This function requires the `xesmf` library which is not installed. "
+            "Regridding step will be skipped."
+        )
+        return ds
+
+    ref_grid = _simple_fix_dims(ref_grid)
+    method = "conservative_normed"
+
+    regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
+    ds = regridder(ds)
+
+    ds.attrs["history"] = (
+        f"{datetime.datetime.now()}:"
+        f"Regridded dataset using xesmf with method: {method}. "
+        f"{ds.attrs.get('history')}".strip()
+    )
+    return ds
+
+
+def threshold_land_sea_mask(
+    ds: Union[xr.Dataset, xr.DataArray],
+    *,
+    land_sea_mask: Union[xr.Dataset, xr.DataArray],
+    land_sea_cutoff: float = 0.5,
+) -> Union[xr.Dataset, xr.DataArray]:
+    """Land-Sea mask operations.
+
+    Parameters
+    ----------
+    ds : Union[xr.Dataset, str, os.PathLike]
+    land_sea_mask : Union[xr.Dataset, xr.DataArray]
+    land_sea_cutoff : float
+
+    Returns
+    -------
+    Union[xr.Dataset, xr.DataArray]
+    """
+    logging.info(
+        f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
+    )
+
+    land_sea_mask = _simple_fix_dims(land_sea_mask)
+
+    if isinstance(land_sea_mask, xr.Dataset):
+        if len(land_sea_mask.data_vars) == 1:
+            land_sea_mask = land_sea_mask[list(land_sea_mask.data_vars)[0]]
+        else:
+            raise ValueError(
+                "More than one data variable found in land-sea mask. Supply a DataArray instead."
+            )
+
+    lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
+    lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
+
+    lsm = subset_bbox(
+        land_sea_mask,
+        lon_bnds=lon_bounds,
+        lat_bnds=lat_bounds,
+    ).load()
+
+    lsm = lsm.where(land_sea_mask >= land_sea_cutoff)
+    ds = ds.where(lsm.notnull())
+
+    if lsm.min() >= 0:
+        if lsm.max() <= 1.00000001:
+            ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
+        elif lsm.max() <= 100.00000001:
+            ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
+    else:
+        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff}"
+
+    return ds
 
 
 def correct_time_entries(
     d: xr.Dataset,
     split: str = "_",
     location: int = -1,
-    time_field: str = "Time",
+    field: str = "time",
 ) -> xr.Dataset:
     filename = d.encoding["source"]
     date = date_parser(Path(filename).stem.split(split)[location])
+    vals = np.arange(len(d[field]))
     time = xr.coding.times.decode_cf_datetime(
-        d[time_field], units=f"days since {date}", calendar="standard"
+        vals, units=f"days since {date}", calendar="standard"
     )
-    d = d.assign_coords({time_field: time})
-    d = d.rename({time_field: "time"})
+    d = d.assign_coords({field: time})
     return d
 
 
@@ -95,19 +208,37 @@ def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.
     return d.rename({old_name: new_name})
 
 
-def correct_var_name_and_time(d: xr.Dataset) -> xr.Dataset:
-    d = correct_time_entries(d)
-    d = correct_var_names(d)
-    return d
+def preprocess_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
+    def _preprocess_correct(d: xr.Dataset, *, ops: List[partial]) -> xr.Dataset:
+        for correction in ops:
+            d = correction(d)
+        return d
+
+    correction_fields = load_json_data_mappings(project).get("_preprocess")
+    if correction_fields:
+        preprocess_ops = []
+        for field in correction_fields:
+            if field == "_variable_name":
+                preprocess_ops.append(
+                    partial(correct_var_names, **correction_fields[field])
+                )
+            if field == "_time":
+                preprocess_ops.append(
+                    partial(correct_time_entries, **correction_fields[field])
+                )
+        if preprocess_ops:
+            corrector = partial(_preprocess_correct, ops=preprocess_ops)
+            return corrector(ds)
+    return ds
 
 
 def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_corrected_units"
-    for var, val in _iter_vars_key(d, m, key, p):
+    for var, val in _iter_entry_key(d, m, "variables", key, p):
         if val:
             d[var].attrs["units"] = val
 
-    val_time = _get_var_entry_key(m, "time", key, p)
+    val_time = _get_section_entry_key(m, "variables", "time", key, p)
     if val_time:
         d["time"].attrs["units"] = val_time
 
@@ -122,11 +253,13 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_var_entry_key(m, "time", "_ensure_correct_time", p)
+    expected_period = _get_section_entry_key(
+        m, "dimensions", "time", "_ensure_correct_time", p
+    )
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, trans in _iter_vars_key(d, m, key, p):
+    for vv, trans in _iter_entry_key(d, m, "variables", key, p):
         if trans:
             if trans == "deaccumulate":
                 # Time-step accumulated total to time-based flux (de-accumulation)
@@ -146,9 +279,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                         getattr(d[vv].time.dt, offset_meaning) == offset[0],
                         out.broadcast_like(d[vv]),
                     )
-                    out = units.amount2rate(
-                        out, out_units=m["variable_entry"][vv]["units"]
-                    )
+                    out = units.amount2rate(out, out_units=m["variables"][vv]["units"])
                     d_out[vv] = out
                 converted.append(vv)
             elif trans == "amount2rate":
@@ -159,7 +290,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(
                         d[vv],
-                        out_units=m["variable_entry"][vv]["units"],
+                        out_units=m["variables"][vv]["units"],
                     )
                     d_out[vv] = out
                 converted.append(vv)
@@ -207,11 +338,13 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_var_entry_key(m, "time", "_ensure_correct_time", p)
+    expected_period = _get_section_entry_key(
+        m, "dimensions", "time", "_ensure_correct_time", p
+    )
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, offs in _iter_vars_key(d, m, key, p):
+    for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
@@ -247,7 +380,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
-    for vv, inv_sign in _iter_vars_key(d, m, key, p):
+    for vv, inv_sign in _iter_entry_key(d, m, "variables", key, p):
         if inv_sign:
             logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
             with xr.set_options(keep_attrs=True):
@@ -268,11 +401,11 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 # For converting variable units to standard workflow units
 def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
-    if "time" in m["variable_entry"].keys():
-        if m["variable_entry"]["time"].get("units"):
-            d["time"]["units"] = m["variable_entry"]["time"]["units"]
+    if "time" in m["dimensions"].keys():
+        if m["dimensions"]["time"].get("units"):
+            d["time"]["units"] = m["dimensions"]["time"]["units"]
 
-    for vv, uni in _iter_vars_key(d, m, "units", None):
+    for vv, uni in _iter_entry_key(d, m, "variables", "units", None):
         if uni:
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], uni)
@@ -284,7 +417,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_ensure_correct_time"
     strict_time = "_strict_time"
 
-    if "time" not in m["variable_entry"].keys():
+    if "time" not in m["dimensions"].keys():
         logging.warning(f"No time corrections listed for project `{p}`. Continuing...")
         return d
 
@@ -296,15 +429,15 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         )
         return d
 
-    if key in m["variable_entry"]["time"].keys():
+    if key in m["dimensions"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
 
-        if strict_time in m["variable_entry"]["time"].keys():
+        if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
                 msg = (
                     "Time frequency could not be found. There may be missing timesteps."
                 )
-                if m["variable_entry"]["time"].get(strict_time):
+                if m["dimensions"]["time"].get(strict_time):
                     raise ValueError(msg)
                 else:
                     logging.warning(f"{msg} Continuing...")
@@ -313,7 +446,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if freq_found in ["M", "A"]:
             freq_found = f"{freq_found}S"
 
-        correct_time_entry = m["variable_entry"]["time"][key]
+        correct_time_entry = m["dimensions"]["time"][key]
         if isinstance(correct_time_entry, str):
             correct_times = [parse_offset(correct_time_entry)[1]]
         elif isinstance(correct_time_entry, dict):
@@ -352,25 +485,78 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d
 
 
-# For renaming lat and lon dims
-def _dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+# For renaming and reordering lat and lon dims
+def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    # Rename dimensions to CF to their equivalents
+    rename_dims = dict()
+    for dim in d.dims:
+        if dim in m["dimensions"].keys():
+            cf_name = _get_section_entry_key(
+                m, "dimensions", dim, "_cf_dimension_name", p
+            )
+            if cf_name:
+                rename_dims[dim] = cf_name
+    d = d.rename(rename_dims)
+
+    # Perform lon wrapping if needed and sort dimensions
     sort_dims = []
-    if "lon" not in d.coords or "lat" not in d.coords:
-        for orig, new in dict(
-            longitude="lon", latitude="lat", Longitude="lon", Latitude="lat"
-        ).items():
-            if orig in d:
-                d = d.rename({orig: new})
-            if new == "lon" and "lon" in d.dims:
-                if np.any(d.lon > 180):
-                    lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
-                    d[new] = lon1
-            sort_dims.append(new)
-            coord_precision = _get_var_entry_key(m, new, "_precision", p)
-            if coord_precision is not None:
-                d[new] = d[new].round(coord_precision)
-        if sort_dims:
-            d = d.sortby(sort_dims)
+    for new in ["lon", "lat"]:
+        if new == "lon" and "lon" in d.dims:
+            if np.any(d.lon > 180):
+                lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
+                d[new] = lon1
+        sort_dims.append(new)
+        coord_precision = _get_section_entry_key(m, "dimensions", new, "_precision", p)
+        if coord_precision is not None:
+            d[new] = d[new].round(coord_precision)
+    if sort_dims:
+        d = d.sortby(sort_dims)
+
+    # Ensure that lon and lat are written in proper order for plotting purposes
+    transpose_order = ["lat", "lon"]
+    if "time" in d.dims:
+        transpose_order.insert(0, "time")
+    transpose_order.extend(list(set(d.dims) - set(transpose_order)))
+    d = d.transpose(*transpose_order)
+
+    # Add dimension original name and update attrs
+    dim_descriptions = m["dimensions"]
+    for dim in m["dimensions"].keys():
+        cf_name = dim_descriptions[dim].get("_cf_dimension_name")
+        if cf_name is not None and cf_name in d.dims:
+            d[cf_name].attrs.update(dict(original_variable=dim))
+            for field in dim_descriptions[dim].keys():
+                if not field.startswith("_"):
+                    d[cf_name].attrs.update({field: dim_descriptions[dim][field]})
+
+    return d
+
+
+def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    # Add variable metadata and remove nonstandard entries
+    var_descriptions = m["variables"]
+    var_correction_fields = [
+        "_corrected_units",
+        "_invert_sign",
+        "_offset_time",
+        "_transformation",
+    ]
+    for var in d.variables:
+        if var in var_descriptions.keys():
+            for field in var_correction_fields:
+                if field in var_descriptions[var].keys():
+                    del var_descriptions[var][field]
+            d[var].attrs.update(var_descriptions[var])
+
+    # Rename data variables
+    for orig_var_name, cf_name in _iter_entry_key(
+        d, m, "variables", "_cf_variable_name", None
+    ):
+        if cf_name is not None:
+            d = d.rename({orig_var_name: cf_name})
+            d[cf_name].attrs.update(dict(original_variable=orig_var_name))
+            del d[cf_name].attrs["_cf_variable_name"]
+
     return d
 
 
@@ -434,51 +620,24 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         f" {prev_history}".strip()
     )
     d.attrs.update(dict(history=history))
-    descriptions = m["variable_entry"]
-
-    time_correction_fields = ["_corrected_units", "_ensure_correct_time"]
-
-    if "time" in m["variable_entry"].keys():
-        for field in time_correction_fields:
-            if field in m["variable_entry"]["time"].keys():
-                del descriptions["time"][field]
-        d["time"].attrs.update(descriptions["time"])
-
-    # Add variable metadata and remove nonstandard entries
-    variable_correction_fields = [
-        "_corrected_units",
-        "_invert_sign",
-        "_offset_time",
-        "_transformation",
-    ]
-    for var in d.variables:
-        if var in descriptions.keys():
-            for field in variable_correction_fields:
-                if field in descriptions[var].keys():
-                    del descriptions[var][field]
-            d[var].attrs.update(descriptions[var])
-
-    # Rename data variables
-    for orig_var_name, cf_name in _iter_vars_key(d, m, "_cf_variable_name", None):
-        if cf_name is not None:
-            d = d.rename({orig_var_name: cf_name})
-            d[cf_name].attrs.update(dict(original_variable=orig_var_name))
-            del d[cf_name].attrs["_cf_variable_name"]
 
     return d
 
 
-def variable_conversion(ds: xr.Dataset, project: str) -> xr.Dataset:
+def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
 
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
-    ds = _offset_time(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
+
+    ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
-    ds = _dims_conversion(ds, project, metadata_definition)
+    ds = _offset_time(ds, project, metadata_definition)
+
+    ds = variable_conversion(ds, project, metadata_definition)
 
     ds = metadata_conversion(ds, project, metadata_definition)
 
@@ -496,14 +655,17 @@ def file_conversion(
     project: str,
     output_path: Union[str, os.PathLike],
     output_format: str,
+    *,
+    domain: Optional[str] = None,
+    land_sea_mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
+    land_sea_cutoff: float = 0.5,
     chunks: Optional[dict] = None,
     overwrite: bool = False,
     add_version_hashes: bool = True,
-    correct_variable_names: bool = False,
-    correct_timestamps: bool = False,
+    preprocess: Optional[Union[Callable, str]] = "auto",
     compute: bool = True,
     **xr_kwargs,
-) -> None:
+) -> Dict:
     """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
@@ -517,16 +679,22 @@ def file_conversion(
         Output folder path.
     output_format: {"netcdf", "zarr"}
         Output data container type.
+    domain: {"global", "nam", "can", "qc", "mtl"}, optional
+        Domain to perform subsetting for. Default: None.
+    land_sea_mask : Optional[Union[xr.Dataset, xr.DataArray]]
+        DataArray or single data_variable dataset containing land-sea mask.
+    land_sea_cutoff : float
+        If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: 0.5.
     chunks : dict, optional
         Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
     overwrite : bool
         Whether to remove existing files or fail if files already exist.
     add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
-    correct_variable_names : bool
-        If True, variable will be renamed on dataset open based on information found within filename. Default: False.
-    correct_timestamps : bool
-        if True, variable time dimension will be adjusted based on date found within filename. Default: False.
+    preprocess : callable or str, optional
+        Preprocessing functions to perform over each Dataset.
+        Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
+        Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
     compute : bool
         If True, files will be converted with each call to file conversion.
         If False, will return a dask.Delayed object that can be computed later.
@@ -536,53 +704,63 @@ def file_conversion(
 
     Returns
     -------
-    dask.Delayed or None
+    dict
     """
-    if output_format.lower() not in {"netcdf", "zarr"}:
-        raise NotImplementedError(f"Format: {output_format}.")
-    else:
-        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
     if not isinstance(input, xr.Dataset):
         if isinstance(output_path, str):
             output_path = Path(output_path)
 
-        if isinstance(input, (str, os.PathLike)):
-            files = [Path(input)]
-        elif isinstance(input, (Sequence, Iterator)):
-            files = [Path(f) for f in input]
+        if isinstance(files, (str, os.PathLike)):
+            files = [Path(files)]
+        elif isinstance(files, (Sequence, Iterator)):
+            files = [Path(f) for f in files]
 
         version_hashes = dict()
         if add_version_hashes:
             for file in files:
                 version_hashes[file.name] = find_version_hash(file)
 
+        preprocess_kwargs = dict()
+        if preprocess:
+            if preprocess == "auto":
+                preprocess_kwargs.update(
+                    preprocess=partial(preprocess_corrections, project=project)
+                )
+            elif isinstance(preprocess, Callable):
+                preprocess_kwargs.update(preprocess=preprocess)
+
         if len(files) == 1:
             ds = xr.open_dataset(files[0], **xr_kwargs)
-            if correct_variable_names:
-                ds = correct_var_names(ds)
-            if correct_timestamps:
-                ds = correct_time_entries(ds)
+            for _, process in preprocess_kwargs.items():
+                ds = process(ds)
         else:
-            if correct_timestamps and correct_variable_names:
-                xr_kwargs.update(dict(preprocess=correct_var_name_and_time))
-            elif correct_timestamps:
-                xr_kwargs.update(dict(preprocess=correct_time_entries))
-            elif correct_variable_names:
-                xr_kwargs.update(dict(preprocess=correct_var_names))
-
-            ds = xr.open_mfdataset(files, **xr_kwargs)
+            ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)
 
         if version_hashes:
             ds.attrs.update(dict(original_files=str(version_hashes)))
     else:
         ds = input
-    ds = variable_conversion(ds, project)
-    if correct_variable_names:
-        var_name = list(ds.data_vars.keys())[0]
-        time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
-        outfile = f"{var_name}_{project}_{time_start}-{time_end}.{suffix}"
-    else:
-        outfile = f"{Path(files[0].stem)}.{suffix}"
+
+    ds = dataset_corrections(ds, project)
+    ds.attrs["history"] = (
+        f"{datetime.datetime.now()}: "
+        f"Variables converted from original files using miranda.convert.{file_conversion.__name__}. "
+        f"{ds.attrs.get('history')}".strip()
+    )
+
+    if domain:
+        ds = subset_domain(ds, domain)
+
+    if isinstance(land_sea_mask, (xr.Dataset, xr.DataArray)):
+        logging.info(
+            "Land-sea mask supplied. Performing conservative-normed regridding and masking."
+        )
+        land_sea_mask = conservative_regrid(land_sea_mask, ds)
+        ds = threshold_land_sea_mask(
+            ds, land_sea_mask=land_sea_mask, land_sea_cutoff=land_sea_cutoff
+        )
+
+    outfile = name_output_file(ds, project, output_format)
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():
@@ -592,6 +770,7 @@ def file_conversion(
         if outfile_path.is_file():
             outfile_path.unlink()
 
+    logging.info(f"Writing {outfile}.")
     write_object = delayed_write(
         ds,
         outfile_path,
@@ -600,5 +779,6 @@ def file_conversion(
         target_chunks=chunks,
     )
     if compute:
-        return write_object.compute()
-    return write_object
+        write_object.compute()
+        return dict(path=outfile_path)
+    return dict(path=outfile_path, object=write_object)
