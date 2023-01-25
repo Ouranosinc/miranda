@@ -81,7 +81,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
+def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.Dataset]:
     logging.info("Creating daily upscaled climate variables.")
 
     daily_dataset = dict()
@@ -93,24 +93,25 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
                 f"{variable}min": "min",
                 f"{variable}": "mean",
             }.items():
-                ds_out = xr.Dataset()
-                ds_out.attrs = ds.attrs.copy()
-                ds_out.attrs["frequency"] = "day"
+                if not keys_only:
+                    ds_out = xr.Dataset()
+                    ds_out.attrs = ds.attrs.copy()
+                    ds_out.attrs["frequency"] = "day"
 
-                method = (
-                    f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
-                )
-                ds_out.attrs["cell_methods"] = method
+                    method = f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
+                    ds_out.attrs["cell_methods"] = method
 
-                if v == "tas" and not hasattr(ds, "tas"):
-                    ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
+                    if v == "tas" and not hasattr(ds, "tas"):
+                        ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
+                    else:
+                        # Thanks for the help, xclim contributors
+                        r = ds[variable].resample(time="D")
+                        ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
+
+                    daily_dataset[v] = ds_out
+                    del ds_out
                 else:
-                    # Thanks for the help, xclim contributors
-                    r = ds[variable].resample(time="D")
-                    ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
-
-                daily_dataset[v] = ds_out
-                del ds_out
+                    daily_dataset[v] = []
 
         elif variable in [
             "evspsblpot",
@@ -129,17 +130,20 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
             "snw",
             "swe",
         ]:
-            ds_out = xr.Dataset()
-            ds_out.attrs = ds.attrs.copy()
-            ds_out.attrs["frequency"] = "day"
-            ds_out.attrs["cell_methods"] = "time: mean (interval: 1 day)"
-            logging.info(f"Converting {variable} to daily time step (daily mean).")
-            ds_out[variable] = (
-                ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
-            )
+            if not keys_only:
+                ds_out = xr.Dataset()
+                ds_out.attrs = ds.attrs.copy()
+                ds_out.attrs["frequency"] = "day"
+                ds_out.attrs["cell_methods"] = "time: mean (interval: 1 day)"
+                logging.info(f"Converting {variable} to daily time step (daily mean).")
+                ds_out[variable] = (
+                    ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
+                )
 
-            daily_dataset[variable] = ds_out
-            del ds_out
+                daily_dataset[variable] = ds_out
+                del ds_out
+            else:
+                daily_dataset[variable] = []
         else:
             continue
 

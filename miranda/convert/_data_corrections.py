@@ -42,6 +42,8 @@ def load_json_data_mappings(project: str) -> dict:
 
     if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+    elif project in ["rdrs-v2.1"]:
+        metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
     elif project in ["cordex", "cmip5", "cmip6"]:
@@ -591,7 +593,11 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     # Conditional handling of global attributes based on project name
     for field in [f for f in m["Header"] if f.startswith("_")]:
         if p in m["Header"][field]:
-            m["Header"][field[1:]] = m["Header"][field][p]
+            if field == "_remove_attrs":
+                for ff in m["Header"][field][p]:
+                    del d.attrs[ff]
+            else:
+                m["Header"][field[1:]] = m["Header"][field][p]
         elif field[1:] in m["Header"]:
             pass
         else:
@@ -638,8 +644,12 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 
 
 def file_conversion(
-    files: Union[
-        str, os.PathLike, Sequence[Union[str, os.PathLike]], Iterator[os.PathLike]
+    input: Union[
+        str,
+        os.PathLike,
+        Sequence[Union[str, os.PathLike]],
+        Iterator[os.PathLike],
+        xr.Dataset,
     ],
     project: str,
     output_path: Union[str, os.PathLike],
@@ -659,8 +669,8 @@ def file_conversion(
 
     Parameters
     ----------
-    files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike]
-        Files to be converted.
+    input : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike] or xr.Dataset
+        Files or objects to be converted.
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
     project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
         Project name for decoding/handling purposes.
@@ -695,37 +705,42 @@ def file_conversion(
     -------
     dict
     """
-    if isinstance(output_path, str):
-        output_path = Path(output_path)
+    if not isinstance(input, xr.Dataset):
+        if isinstance(output_path, str):
+            output_path = Path(output_path)
 
-    if isinstance(files, (str, os.PathLike)):
-        files = [Path(files)]
-    elif isinstance(files, (Sequence, Iterator)):
-        files = [Path(f) for f in files]
+        if isinstance(input, (str, os.PathLike)):
+            files = [Path(input)]
+        elif isinstance(input, (Sequence, Iterator)):
+            files = [Path(f) for f in input]
+        else:
+            files = input
 
-    version_hashes = dict()
-    if add_version_hashes:
-        for file in files:
-            version_hashes[file.name] = find_version_hash(file)
+        version_hashes = dict()
+        if add_version_hashes:
+            for file in files:
+                version_hashes[file.name] = find_version_hash(file)
 
-    preprocess_kwargs = dict()
-    if preprocess:
-        if preprocess == "auto":
-            preprocess_kwargs.update(
-                preprocess=partial(preprocess_corrections, project=project)
-            )
-        elif isinstance(preprocess, Callable):
-            preprocess_kwargs.update(preprocess=preprocess)
+        preprocess_kwargs = dict()
+        if preprocess:
+            if preprocess == "auto":
+                preprocess_kwargs.update(
+                    preprocess=partial(preprocess_corrections, project=project)
+                )
+            elif isinstance(preprocess, Callable):
+                preprocess_kwargs.update(preprocess=preprocess)
 
-    if len(files) == 1:
-        ds = xr.open_dataset(files[0], **xr_kwargs)
-        for _, process in preprocess_kwargs.items():
-            ds = process(ds)
+        if len(files) == 1:
+            ds = xr.open_dataset(files[0], **xr_kwargs)
+            for _, process in preprocess_kwargs.items():
+                ds = process(ds)
+        else:
+            ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)
+
+        if version_hashes:
+            ds.attrs.update(dict(original_files=str(version_hashes)))
     else:
-        ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)
-
-    if version_hashes:
-        ds.attrs.update(dict(original_files=str(version_hashes)))
+        ds = input
 
     ds = dataset_corrections(ds, project)
     ds.attrs["history"] = (
