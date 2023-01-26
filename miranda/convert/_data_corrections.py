@@ -179,11 +179,20 @@ def threshold_land_sea_mask(
 
     if lsm.min() >= 0:
         if lsm.max() <= 1.00000001:
-            ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff * 100} %"
+            cutoff_info = f"{land_sea_cutoff * 100} %"
         elif lsm.max() <= 100.00000001:
-            ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff} %"
+            cutoff_info = f"{land_sea_cutoff} %"
+        else:
+            cutoff_info = f"{land_sea_cutoff}"
     else:
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_cutoff}"
+        cutoff_info = f"{land_sea_cutoff}"
+    ds.attrs["land_sea_cutoff"] = cutoff_info
+
+    prev_history = ds.attrs.get("history", "")
+    history = (
+        f"Land sea mask calculated with value `{cutoff_info}`. {prev_history}".strip()
+    )
+    ds.attrs.update(dict(history=history))
 
     return ds
 
@@ -197,10 +206,18 @@ def correct_time_entries(
     filename = d.encoding["source"]
     date = date_parser(Path(filename).stem.split(split)[location])
     vals = np.arange(len(d[field]))
+    days_since = f"days since {date}"
     time = xr.coding.times.decode_cf_datetime(
-        vals, units=f"days since {date}", calendar="standard"
+        vals, units=days_since, calendar="standard"
     )
     d = d.assign_coords({field: time})
+
+    prev_history = d.attrs.get("history", "")
+    history = (
+        f"Time index recalculated in preprocessing step ({days_since}). {prev_history}"
+    )
+    d.attrs.update(dict(history=history))
+
     return d
 
 
@@ -208,6 +225,11 @@ def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.
     filename = d.encoding["source"]
     new_name = Path(filename).stem.split(split)[location]
     old_name = list(d.data_vars.keys())[0]
+
+    prev_history = d.attrs.get("history", "")
+    history = f"Variable renamed in preprocessing step ({old_name}: {new_name}). {prev_history}"
+    d.attrs.update(dict(history=history))
+
     return d.rename({old_name: new_name})
 
 
@@ -241,6 +263,7 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if val:
             d[var].attrs["units"] = val
 
+    # FIXME: This is no longer relevant. Performed under dimension conversion step.
     val_time = _get_section_entry_key(m, "variables", "time", key, p)
     if val_time:
         d["time"].attrs["units"] = val_time
@@ -327,6 +350,14 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             logging.info(
                 f"No transformations needed for `{vv}` (Explicitly set to False)."
             )
+            continue
+
+        prev_history = d.attrs.get("history", "")
+        history = (
+            f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
+        )
+        d_out.attrs.update(dict(history=history))
+
     # Copy unconverted variables
     for vv in d.data_vars:
         if vv not in converted:
@@ -371,6 +402,10 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
+            continue
+        prev_history = d.attrs.get("history", "")
+        history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
+        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -394,6 +429,10 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
+            continue
+        prev_history = d.attrs.get("history", "")
+        history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
+        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -408,10 +447,13 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
         if m["dimensions"]["time"].get("units"):
             d["time"]["units"] = m["dimensions"]["time"]["units"]
 
-    for vv, uni in _iter_entry_key(d, m, "variables", "units", None):
-        if uni:
+    for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
+        if unit:
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], uni)
+                d[vv] = units.convert_units_to(d[vv], unit)
+            prev_history = d.attrs.get("history", "")
+            history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
+            d.attrs.update(dict(history=history))
 
     return d
 
@@ -454,10 +496,7 @@ def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 continue
 
             prev_history = d.attrs.get("history", "")
-            history = (
-                f"[{datetime.datetime.now()}] "
-                f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
-            )
+            history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
             d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
@@ -486,6 +525,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     if key in m["dimensions"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
+        if freq_found in ["M", "A"]:
+            freq_found = f"{freq_found}S"
 
         if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
@@ -497,9 +538,6 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 else:
                     logging.warning(f"{msg} Continuing...")
                     return d
-
-        if freq_found in ["M", "A"]:
-            freq_found = f"{freq_found}S"
 
         correct_time_entry = m["dimensions"]["time"][key]
         if isinstance(correct_time_entry, str):
@@ -533,9 +571,9 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         )
 
         prev_history = d.attrs.get("history", "")
-        history = f"[{datetime.datetime.now()}] Resampled time with `freq={freq_found}`.{prev_history}"
-        d.attrs.update(dict(history=history))
-        d = d_out
+        history = f"Resampled time with `freq={freq_found}`. {prev_history}"
+        d_out.attrs.update(dict(history=history))
+        return d_out
 
     return d
 
@@ -583,6 +621,10 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             for field in dim_descriptions[dim].keys():
                 if not field.startswith("_"):
                     d[cf_name].attrs.update({field: dim_descriptions[dim][field]})
+
+    prev_history = d.attrs.get("history", "")
+    history = f"Transposed and renamed dimensions. {prev_history}"
+    d.attrs.update(dict(history=history))
 
     return d
 
@@ -672,8 +714,8 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     prev_history = d.attrs.get("history", "")
     history = (
         f"[{datetime.datetime.now()}] "
-        "Converted variables and modified metadata for CF-like compliance."
-        f" {prev_history}".strip()
+        "Converted variables and modified metadata for CF-like compliance: "
+        f"{prev_history}".strip()
     )
     d.attrs.update(dict(history=history))
 
