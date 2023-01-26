@@ -291,6 +291,12 @@
     },
     "ssrd": {
       "_cf_variable_name": "rsds",
+      "_clip_values": {
+        "all": {
+          "context": false,
+          "min": "0 W m-2"
+        }
+      },
       "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {

@@ -9,6 +9,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
+import xclim.core.units
 from clisops.core.subset import subset_bbox
 from xarray.coding import times
 from xclim.core import units
@@ -68,7 +69,10 @@ def _get_section_entry_key(meta, entry, var, key, project):
     var_meta = meta[entry].get(var, {})
     if key in var_meta:
         if isinstance(var_meta[key], dict):
-            return var_meta[key].get(project)
+            config = var_meta[key].get(project)
+            if config is None and "all" in var_meta[key].keys():
+                config = var_meta[key].get("all")
+            return config
         return var_meta[key]
     return None
 
@@ -412,6 +416,36 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
     return d
 
 
+# For clipping variable values to an established maximum/minimum
+def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+    key = "_clip_values"
+    for vv in d.data_vars:
+        if vv in m["variables"].keys():
+            clip_values = _get_section_entry_key(m, "variables", vv, key, p)
+            if clip_values:
+                logging.info(f"Clipping min/max values for `{vv}`.")
+                min_value, max_value = None, None
+                # Gather unit conversion context, if applicable
+                context = clip_values.get("context", None)
+                for op, value in clip_values.items():
+                    if op == "min":
+                        min_value = xclim.core.units.convert_units_to(
+                            value, d[vv], context
+                        )
+                    if op == "max":
+                        max_value = xclim.core.units.convert_units_to(
+                            value, d[vv], context
+                        )
+                d[vv] = d[vv].clip(min_value, max_value, keep_attrs=True)
+            elif clip_values is False:
+                logging.info(
+                    f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
+                )
+            else:
+                logging.info(f"No clipping of values needed for `{vv}` in `{p}`.")
+    return d
+
+
 def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_ensure_correct_time"
     strict_time = "_strict_time"
@@ -631,6 +665,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = _transform(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
+    ds = _clip_values(ds, project, metadata_definition)
 
     ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
