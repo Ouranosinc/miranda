@@ -419,11 +419,12 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
 # For clipping variable values to an established maximum/minimum
 def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     key = "_clip_values"
+    d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+    converted = []
     for vv in d.data_vars:
         if vv in m["variables"].keys():
             clip_values = _get_section_entry_key(m, "variables", vv, key, p)
             if clip_values:
-                logging.info(f"Clipping min/max values for `{vv}`.")
                 min_value, max_value = None, None
                 # Gather unit conversion context, if applicable
                 context = clip_values.get("context", None)
@@ -436,14 +437,35 @@ def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                         max_value = xclim.core.units.convert_units_to(
                             value, d[vv], context
                         )
-                d[vv] = d[vv].clip(min_value, max_value, keep_attrs=True)
+                logging.info(
+                    f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
+                )
+                with xr.set_options(keep_attrs=True):
+                    out = d[vv]
+                    d_out[out.name] = out.clip(min_value, max_value)
+                converted.append(vv)
             elif clip_values is False:
                 logging.info(
                     f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
                 )
+                continue
             else:
                 logging.info(f"No clipping of values needed for `{vv}` in `{p}`.")
-    return d
+                continue
+
+            prev_history = d.attrs.get("history", "")
+            history = (
+                f"[{datetime.datetime.now()}] "
+                f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
+            )
+            d_out.attrs.update(dict(history=history))
+
+    # Copy unconverted variables
+    for vv in d.data_vars:
+        if vv not in converted:
+            d_out[vv] = d[vv]
+
+    return d_out
 
 
 def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
