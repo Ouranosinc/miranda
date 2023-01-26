@@ -591,8 +591,8 @@ def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     # Add variable metadata and remove nonstandard entries
     var_descriptions = m["variables"]
     var_correction_fields = [
-        "_corrected_units",
         "_clip_values",
+        "_corrected_units",
         "_invert_sign",
         "_offset_time",
         "_transformation",
