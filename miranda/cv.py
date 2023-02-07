@@ -14,7 +14,6 @@ with HiddenPrints():
         VALIDATION_ENABLED = False
 
 if VALIDATION_ENABLED:
-
     from miranda.ecmwf._era5 import ERA5_PROJECT_NAMES  # noqa
 
     __all__ = [

@@ -18,7 +18,6 @@ def gather_eccc_stations(
     end_date: Optional[Union[datetime.datetime, str]] = None,
     climate_id: Optional[str] = None,
 ) -> pd.DataFrame:
-
     if timestep.lower() in ["hourly", "daily"]:
         base_url = f"https://api.weather.gc.ca/collections/climate-{timestep}/"
     else:
