@@ -12,7 +12,6 @@ logger = logging.getLogger(__file__)
 dask.config.set(**{"array.slicing.split_large_chunks": True})
 
 if __name__ == "__main__":
-
     out_files = getenv("out")
     target_folder = Path(out_files).expanduser()
     domain = None  # "AMNO"

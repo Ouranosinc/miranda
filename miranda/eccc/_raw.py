@@ -558,7 +558,6 @@ def aggregate_stations(
             with tempfile.TemporaryDirectory(
                 prefix="eccc", dir=temp_directory
             ) as temp_dir:
-
                 combinations = sorted(
                     (ii, nc, temp_dir, len(nc_lists)) for ii, nc in enumerate(nc_lists)
                 )
@@ -703,7 +702,6 @@ def _tmp_zarr(
     tempdir: Union[str, os.PathLike],
     group: Optional[int] = None,
 ) -> None:
-
     logging.info(
         f"Processing batch of files {iterable + 1}"
         f"{' of ' + str(group) if group is not None else ''}."
@@ -744,7 +742,6 @@ def _combine_years(
     rejected: List[str],
     _verbose: bool = False,
 ) -> None:
-
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
     if len(nc_files):
         logging.info(
