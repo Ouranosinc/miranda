@@ -216,7 +216,6 @@ def parse_schema(
         raise ValueError("Couldn\nt parse top level.")
 
     def _parse_structure(branch_dict: dict, facet_dict: dict) -> list:
-
         structure = branch_dict.get("structure")
         folder_tree = list()
 

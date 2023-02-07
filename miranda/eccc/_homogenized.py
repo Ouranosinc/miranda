@@ -143,7 +143,6 @@ def convert_ahccd_fwf_files(
     cols_specs: Optional[List[Tuple[int, int]]] = None,
     attrs: Optional[dict] = None,
 ) -> xr.Dataset:
-
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )
