@@ -67,7 +67,6 @@ def guess_project(file: Union[os.PathLike, str]) -> str:
 
 
 class Decoder:
-
     project = None
     guess = False
     _file_facets = dict()
@@ -227,7 +226,6 @@ class Decoder:
             "time",
         )
         try:
-
             if file.is_file() and file.suffix in [".nc", ".nc4"]:
                 with nc.Dataset(file, mode="r") as ds:
                     for var_name, var_attrs in ds.variables.items():

@@ -8,7 +8,6 @@ from miranda.eccc import (
 )
 
 if __name__ == "__main__":
-
     time_step = "hourly"
     n_workers = 3
     var_codes = [

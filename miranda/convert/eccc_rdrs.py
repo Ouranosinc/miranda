@@ -153,7 +153,6 @@ def rdrs_to_daily(
         year1 = xr.open_zarr(zarrs[0]).time.dt.year.min().values
         year2 = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
         for year in range(year1, year2 + 1):
-
             infiles = sorted(list(var_folder.glob(f"*_{year}*.zarr")))
 
             if len(infiles) > 12 or len(infiles) == 0:
