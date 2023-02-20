@@ -258,7 +258,7 @@ if __name__ == "__main__":
         working_folder=Path(home).joinpath("tmpout", "rdrs"),
     )
 
-    # main(**kwargs)
+    main(**kwargs)
 
     kwargs = dict(
         input_folder=Path(home).joinpath(
