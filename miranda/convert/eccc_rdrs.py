@@ -8,8 +8,9 @@ from pathlib import Path
 
 import xarray as xr
 from _data_corrections import file_conversion, load_json_data_mappings
-from dask.distributed import Client
 from dask import compute
+from dask.distributed import Client
+
 from miranda.convert.utils import daily_aggregation, delayed_write
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
@@ -77,7 +78,9 @@ def main(
             for month in range(1, 13):
                 ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
                 for vv in var_attrs.keys():
-                    drop_vars = _get_drop_vars(ncfile=ncfiles[0], keep_vars=[vv, 'rotated_pole'])
+                    drop_vars = _get_drop_vars(
+                        ncfile=ncfiles[0], keep_vars=[vv, "rotated_pole"]
+                    )
 
                     # outfile_root = ncfiles[0].stem.split()
                     ds_out = ds_month.drop_vars(drop_vars)
@@ -192,55 +195,75 @@ def rdrs_to_daily(
                 else:
                     print(outzarr.as_posix(), "exists. Continuing..")
 
-def concat_zarr(infolder=None, outfolder=None, overwrite=False):
 
+def concat_zarr(infolder=None, outfolder=None, overwrite=False):
     list_zarr = sorted(list(infolder.glob("*.zarr")))
-    outzarr = "_".join(list_zarr[0].stem.split('_')[0:-1])
-    st_yr = list_zarr[0].stem.split('_')[-1].split('-')[0][0:4]
-    end_yr = list_zarr[-1].stem.split('_')[-1].split('-')[0][0:4]
+    outzarr = "_".join(list_zarr[0].stem.split("_")[0:-1])
+    st_yr = list_zarr[0].stem.split("_")[-1].split("-")[0][0:4]
+    end_yr = list_zarr[-1].stem.split("_")[-1].split("-")[0][0:4]
     outzarr = f"{outzarr}_{st_yr}_{end_yr}.zarr"
     outzarr = outfolder.joinpath(outzarr)
     print(outzarr)
 
     if not outzarr.exists() or overwrite:
-
-        if 'day' in infolder.as_posix():
-            chunks = dict(time=(365*4)+1, rlon=50, rlat=50)
+        if "day" in infolder.as_posix():
+            chunks = dict(time=(365 * 4) + 1, rlon=50, rlat=50)
             chunk_factor = 1
         else:
-            chunks = dict(time=(24*30*2), rlon=50, rlat=50)
+            chunks = dict(time=(24 * 30 * 2), rlon=50, rlat=50)
             chunk_factor = 1
 
-        #maketemp files 1 zarr per 4 years
-        years = [y for y in range(int(st_yr), int(end_yr)+1)]
-        years = [years[x:x + 4] for x in range(0, len(years), 4)]
+        # maketemp files 1 zarr per 4 years
+        years = [y for y in range(int(st_yr), int(end_yr) + 1)]
+        years = [years[x : x + 4] for x in range(0, len(years), 4)]
         for year in years:
             print(year)
-            list_zarr1 = sorted([l for l in list_zarr if int(l.stem.split('_')[-1].split('-')[0][0:4]) in year])
+            list_zarr1 = sorted(
+                [
+                    l
+                    for l in list_zarr
+                    if int(l.stem.split("_")[-1].split("-")[0][0:4]) in year
+                ]
+            )
             assert len(list_zarr1) / len(year) == 12
-            ds = xr.open_mfdataset(list_zarr1, parallel=True, engine='zarr')
+            ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
 
             with Client(**dask_kwargs) as client:
                 # if outzarr.exists():
                 #     zarr_kwargs = {"append_dim": "time", "consolidated": True}
                 # else:
                 #     zarr_kwargs = {"consolidated": True}
-                tmpzarr = outzarr.parent.joinpath("tmp",f"{outzarr.stem.split(f'_{st_yr}_')[0]}_{year[0]}-{year[-1]}.zarr")
+                tmpzarr = outzarr.parent.joinpath(
+                    "tmp",
+                    f"{outzarr.stem.split(f'_{st_yr}_')[0]}_{year[0]}-{year[-1]}.zarr",
+                )
                 tmpzarr.parent.mkdir(exist_ok=True, parents=True)
-                print(f'{year} writing to {tmpzarr.as_posix()}')
+                print(f"{year} writing to {tmpzarr.as_posix()}")
 
-                job = delayed_write(ds=ds, outfile=tmpzarr, output_format="zarr", target_chunks=chunks, overwrite=overwrite)# kwargs=zarr_kwargs)
+                job = delayed_write(
+                    ds=ds,
+                    outfile=tmpzarr,
+                    output_format="zarr",
+                    target_chunks=chunks,
+                    overwrite=overwrite,
+                )  # kwargs=zarr_kwargs)
                 compute(job)
 
         # get tmp zarrs
-        list_zarr = sorted(list(tmpzarr.parent.glob('*zarr')))
+        list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
         ds = xr.open_mfdataset(list_zarr, engine="zarr")
         with Client(**dask_kwargs) as client:
-            job = delayed_write(ds=ds, outfile=outzarr, output_format="zarr", target_chunks=chunks,
-                                overwrite=overwrite)  # kwargs=zarr_kwargs)
+            job = delayed_write(
+                ds=ds,
+                outfile=outzarr,
+                output_format="zarr",
+                target_chunks=chunks,
+                overwrite=overwrite,
+            )  # kwargs=zarr_kwargs)
             compute(job)
 
         shutil.rmtree(tmpzarr.parent)
+
 
 def _get_drop_vars(ncfile=None, keep_vars=None):
     drop_vars = list(xr.open_dataset(ncfile).data_vars)
@@ -263,18 +286,22 @@ if __name__ == "__main__":
         input_folder=Path(home).joinpath(
             "RDRS_v2.1", "converted/ECCC/RDRS_v2.1/NAM/1hr"
         ),
-        output_folder=Path(home).joinpath(
-            "RDRS_v2.1", "tmp/ECCC/RDRS_v2.1/NAM/day"
-        ),
+        output_folder=Path(home).joinpath("RDRS_v2.1", "tmp/ECCC/RDRS_v2.1/NAM/day"),
         working_folder=Path(home).joinpath("tmpout", "rdrs"),
         overwrite=False,
-
     )
     rdrs_to_daily(**kwargs)
 
-    for freq in [ '1hr','day',]:
+    for freq in [
+        "1hr",
+        "day",
+    ]:
         infolder = Path(home).joinpath("RDRS_v2.1", f"tmp/ECCC/RDRS_v2.1/NAM/{freq}")
-        for vv in [i for i in infolder.glob('*') if i.is_dir()]:
-            concat_zarr(infolder=vv,
-                        outfolder=Path(home).joinpath("RDRS_v2.1", f"converted/ECCC/RDRS_v2.1/NAM/{freq}/{vv.name}"),
-                        overwrite=False)
+        for vv in [i for i in infolder.glob("*") if i.is_dir()]:
+            concat_zarr(
+                infolder=vv,
+                outfolder=Path(home).joinpath(
+                    "RDRS_v2.1", f"converted/ECCC/RDRS_v2.1/NAM/{freq}/{vv.name}"
+                ),
+                overwrite=False,
+            )
