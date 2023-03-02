@@ -36,15 +36,17 @@ datasets:
       - institution
       - source
       - domain
-      - frequency
+      - option: processing_level
+        value: indicators
+        is_true: xrfreq
+        else: frequency
       - variable
   - option: type
     value: simulation
     structure:
       - type
       - processing_level
-      - option: processing_level
-        value: biasadjusted
+      - option: bias_adjust_project
         is_true: bias_adjust_project
       - mip_era
       - activity
@@ -56,5 +58,8 @@ datasets:
         is_true: driving_model
       - experiment
       - member
-      - frequency
+      - option: processing_level
+        value: indicators
+        is_true: xrfreq
+        else: frequency
       - variable
