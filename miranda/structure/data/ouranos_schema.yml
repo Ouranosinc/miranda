@@ -21,15 +21,6 @@ datasets:
       - frequency
       - variable
   - option: type
-    value: gridded-obs
-    structure:
-      - type
-      - institution
-      - source
-      - domain
-      - frequency
-      - variable
-  - option: type
     value: reconstruction
     structure:
       - type
@@ -43,8 +34,7 @@ datasets:
     structure:
       - type
       - processing_level
-      - option: processing_level
-        value: biasadjusted
+      - option: bias_adjust_project
         is_true: bias_adjust_project
       - mip_era
       - activity
