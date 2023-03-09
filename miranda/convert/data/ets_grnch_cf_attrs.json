@@ -37,14 +37,16 @@
       "axis": "Y",
       "long_name": "Latitude",
       "standard_name": "latitude",
-      "units": "degrees_north"
+      "units": "degrees_north",
+      "_precision": 4
     },
     "Longitude": {
       "_cf_dimension_name": "lon",
       "axis": "X",
       "long_name": "Longitude",
       "standard_name": "longitude",
-      "units": "degrees_east"
+      "units": "degrees_east",
+        "_precision": 4
     },
     "Time": {
       "_cf_dimension_name": "time",
