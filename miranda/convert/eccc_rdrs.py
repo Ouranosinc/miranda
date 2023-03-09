@@ -1,5 +1,4 @@
 import datetime
-import logging
 import logging.config
 import os
 import shutil
@@ -208,10 +207,8 @@ def concat_zarr(infolder=None, outfolder=None, overwrite=False):
     if not outzarr.exists() or overwrite:
         if "day" in infolder.as_posix():
             chunks = dict(time=(365 * 4) + 1, rlon=50, rlat=50)
-            chunk_factor = 1
         else:
             chunks = dict(time=(24 * 30 * 2), rlon=50, rlat=50)
-            chunk_factor = 1
 
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(st_yr), int(end_yr) + 1)]
@@ -220,15 +217,15 @@ def concat_zarr(infolder=None, outfolder=None, overwrite=False):
             print(year)
             list_zarr1 = sorted(
                 [
-                    l
-                    for l in list_zarr
-                    if int(l.stem.split("_")[-1].split("-")[0][0:4]) in year
+                    zarrfile
+                    for zarrfile in list_zarr
+                    if int(zarrfile.stem.split("_")[-1].split("-")[0][0:4]) in year
                 ]
             )
             assert len(list_zarr1) / len(year) == 12
             ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
 
-            with Client(**dask_kwargs) as client:
+            with Client(**dask_kwargs):
                 # if outzarr.exists():
                 #     zarr_kwargs = {"append_dim": "time", "consolidated": True}
                 # else:
@@ -252,7 +249,7 @@ def concat_zarr(infolder=None, outfolder=None, overwrite=False):
         # get tmp zarrs
         list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
         ds = xr.open_mfdataset(list_zarr, engine="zarr")
-        with Client(**dask_kwargs) as client:
+        with Client(**dask_kwargs):
             job = delayed_write(
                 ds=ds,
                 outfile=outzarr,
