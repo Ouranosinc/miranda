@@ -34,19 +34,19 @@
   "dimensions": {
     "Latitude": {
       "_cf_dimension_name": "lat",
+      "_precision": 4,
       "axis": "Y",
       "long_name": "Latitude",
       "standard_name": "latitude",
-      "units": "degrees_north",
-      "_precision": 4
+      "units": "degrees_north"
     },
     "Longitude": {
       "_cf_dimension_name": "lon",
+      "_precision": 4,
       "axis": "X",
       "long_name": "Longitude",
       "standard_name": "longitude",
-      "units": "degrees_east",
-        "_precision": 4
+      "units": "degrees_east"
     },
     "Time": {
       "_cf_dimension_name": "time",
