@@ -3,6 +3,7 @@ import json
 import logging.config
 import os
 import shutil
+import warnings
 from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
@@ -32,7 +33,7 @@ __all__ = [
     "file_conversion",
     "load_json_data_mappings",
     "metadata_conversion",
-    "threshold_land_sea_mask",
+    "threshold_mask",
     "variable_conversion",
 ]
 
@@ -132,65 +133,75 @@ def conservative_regrid(
     return ds
 
 
-def threshold_land_sea_mask(
+def threshold_mask(
     ds: Union[xr.Dataset, xr.DataArray],
     *,
-    land_sea_mask: Union[xr.Dataset, xr.DataArray],
-    land_sea_cutoff: float = 0.5,
+    mask: Union[xr.Dataset, xr.DataArray],
+    mask_cutoff: Union[float, bool] = False,
 ) -> Union[xr.Dataset, xr.DataArray]:
     """Land-Sea mask operations.
 
     Parameters
     ----------
     ds : Union[xr.Dataset, str, os.PathLike]
-    land_sea_mask : Union[xr.Dataset, xr.DataArray]
-    land_sea_cutoff : float
+    mask : Union[xr.Dataset, xr.DataArray]
+    mask_cutoff : float or bool
 
     Returns
     -------
     Union[xr.Dataset, xr.DataArray]
     """
-    logging.info(
-        f"Masking variable with land-sea mask at `{land_sea_cutoff}` cutoff value."
-    )
+    mask = _simple_fix_dims(mask)
 
-    land_sea_mask = _simple_fix_dims(land_sea_mask)
-
-    if isinstance(land_sea_mask, xr.Dataset):
-        if len(land_sea_mask.data_vars) == 1:
-            land_sea_mask = land_sea_mask[list(land_sea_mask.data_vars)[0]]
+    if isinstance(mask, xr.Dataset):
+        if len(mask.data_vars) == 1:
+            mask_variable = list(mask.data_vars)[0].name
+            mask = mask[mask_variable]
         else:
             raise ValueError(
                 "More than one data variable found in land-sea mask. Supply a DataArray instead."
             )
+    else:
+        mask_variable = mask.name
+
+    log_msg = f"Masking dataset with {mask_variable}."
+    if mask_cutoff:
+        log_msg = f"{log_msg.strip('.')} at `{mask_cutoff}` cutoff value."
+    logging.info(log_msg)
 
     lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
     lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
 
-    lsm = subset_bbox(
-        land_sea_mask,
+    mask_subset = subset_bbox(
+        mask,
         lon_bnds=lon_bounds,
         lat_bnds=lat_bounds,
     ).load()
 
-    lsm = lsm.where(land_sea_mask >= land_sea_cutoff)
-    ds = ds.where(lsm.notnull())
-
-    if lsm.min() >= 0:
-        if lsm.max() <= 1.00000001:
-            cutoff_info = f"{land_sea_cutoff * 100} %"
-        elif lsm.max() <= 100.00000001:
-            cutoff_info = f"{land_sea_cutoff} %"
-        else:
-            cutoff_info = f"{land_sea_cutoff}"
+    if mask_subset.dtype == bool:
+        if mask_cutoff:
+            logging.warning("Mask value cutoff set for boolean mask. Ignoring.")
+        mask_subset = mask_subset.where(mask)
     else:
-        cutoff_info = f"{land_sea_cutoff}"
-    ds.attrs["land_sea_cutoff"] = cutoff_info
+        mask_subset = mask_subset.where(mask >= mask_cutoff)
+    ds = ds.where(mask_subset.notnull())
+
+    if mask_subset.min() >= 0:
+        if mask_subset.max() <= 1.00000001:
+            cutoff_info = f"{mask_cutoff * 100} %"
+        elif mask_subset.max() <= 100.00000001:
+            cutoff_info = f"{mask_cutoff} %"
+        else:
+            cutoff_info = f"{mask_cutoff}"
+    else:
+        cutoff_info = f"{mask_cutoff}"
+    ds.attrs["mask_cutoff"] = cutoff_info
 
     prev_history = ds.attrs.get("history", "")
-    history = (
-        f"Land sea mask calculated with value `{cutoff_info}`. {prev_history}".strip()
-    )
+    history_msg = f"Mask calculated using `{mask_variable}`."
+    if mask_cutoff:
+        history_msg = f"{history_msg.strip('.')} with cutoff value `{cutoff_info}`."
+    history = f"{history_msg} {prev_history}".strip()
     ds.attrs.update(dict(history=history))
 
     return ds
@@ -755,8 +766,8 @@ def file_conversion(
     output_format: str,
     *,
     domain: Optional[str] = None,
-    land_sea_mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
-    land_sea_cutoff: float = 0.5,
+    mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
+    mask_cutoff: float = 0.5,
     chunks: Optional[dict] = None,
     overwrite: bool = False,
     add_version_hashes: bool = True,
@@ -779,9 +790,9 @@ def file_conversion(
         Output data container type.
     domain: {"global", "nam", "can", "qc", "mtl"}, optional
         Domain to perform subsetting for. Default: None.
-    land_sea_mask : Optional[Union[xr.Dataset, xr.DataArray]]
-        DataArray or single data_variable dataset containing land-sea mask.
-    land_sea_cutoff : float
+    mask : Optional[Union[xr.Dataset, xr.DataArray]]
+        DataArray or single data_variable dataset containing mask.
+    mask_cutoff : float
         If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: 0.5.
     chunks : dict, optional
         Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
@@ -856,14 +867,15 @@ def file_conversion(
     if domain:
         ds = subset_domain(ds, domain)
 
-    if isinstance(land_sea_mask, (xr.Dataset, xr.DataArray)):
-        logging.info(
-            "Land-sea mask supplied. Performing conservative-normed regridding and masking."
-        )
-        land_sea_mask = conservative_regrid(land_sea_mask, ds)
-        ds = threshold_land_sea_mask(
-            ds, land_sea_mask=land_sea_mask, land_sea_cutoff=land_sea_cutoff
-        )
+    if isinstance(mask, (str, Path)):
+        mask = xr.open_dataset(mask)
+    if isinstance(mask, (xr.Dataset, xr.DataArray)):
+        # TODO: This should only be triggered by differences in lat, lon grid.
+        # logging.info(
+        #     "Mask supplied. Performing conservative-normed regridding and masking."
+        # )
+        # mask = conservative_regrid(mask, ds)
+        ds = threshold_mask(ds, mask=mask, mask_cutoff=mask_cutoff)
 
     outfile = name_output_file(ds, project, output_format)
     outfile_path = output_path.joinpath(outfile)
