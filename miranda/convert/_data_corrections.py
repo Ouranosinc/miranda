@@ -809,7 +809,12 @@ def file_conversion(
             output_path = Path(output_path)
 
         if isinstance(input, (str, os.PathLike)):
-            files = [Path(input)]
+            if Path(input).is_dir():
+                files = []
+                files.extend([f for f in Path(input).glob("*.nc")])
+                files.extend([f for f in Path(input).glob("*.zarr")])
+            else:
+                files = [Path(input)]
         elif isinstance(input, (Sequence, Iterator)):
             files = [Path(f) for f in input]
         else:

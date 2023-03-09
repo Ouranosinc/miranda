@@ -222,7 +222,7 @@ def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
     institution = ds.attrs.get("institution")
     time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
 
-    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}{suffix}"
+    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
 
 
 def delayed_write(
@@ -264,7 +264,7 @@ def delayed_write(
                 "zlib": True,
             }
             kwargs["compute"] = False
-            if not overwrite:
+            if Path(outfile).exists() and not overwrite:
                 kwargs["mode"] = "a"
         elif output_format == "zarr":
             ds = ds.chunk(target_chunks)
