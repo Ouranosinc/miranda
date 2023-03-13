@@ -3,7 +3,6 @@ import json
 import logging.config
 import os
 import shutil
-import warnings
 from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union

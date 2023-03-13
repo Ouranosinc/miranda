@@ -27,6 +27,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
 
 
+__all__ = ["reanalysis_processing"]
+
+
 # Needed pre-processing function
 def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
     if "time_bnds" in dataset.variables:
