@@ -18,6 +18,7 @@ Internal changes
 * Schema and folder structure updates:
     - `gridded-obs` -> `reconstruction`
     - `bias-adjust-project` is used when present and not just when `level=="biasadjusted"`
+* CI now using `tox>=4.0` and `ubuntu-latest` virtual machine images.
 
 v0.3.0 (2022-11-24)
 -------------------
