@@ -113,11 +113,10 @@ def conservative_regrid(
     try:
         import xesmf as xe
     except ModuleNotFoundError:
-        logging.warning(
+        raise ModuleNotFoundError(
             "This function requires the `xesmf` library which is not installed. "
             "Regridding step will be skipped."
         )
-        return ds
 
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"

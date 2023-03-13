@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import netCDF4
+import regionmask
 import xarray as xr
 import zarr
 from dask.delayed import delayed
@@ -68,13 +69,6 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     -------
     xarray.Dataset
     """
-    try:
-        import regionmask  # noqa
-    except ImportError:
-        raise ImportError(
-            f"{add_ar6_regions.__name__} functions require additional dependencies. "
-            "Please install them with `pip install miranda[full]`."
-        )
 
     mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
     ds = ds.assign_coords(region=mask)

@@ -14,6 +14,7 @@ pyessv
 pyproj
 pyyaml
 rasterio
+regionmask
 schema
 shapely
 xarray
