@@ -4,17 +4,29 @@
 History
 =======
 
-v0.4.0 (2023-03-14)
+v0.4.0 (2023-03-13)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 New features
 ^^^^^^^^^^^^
-* Improvements have been made to the development documentation; Project URLs, ReadTheDocs theming, and other quality of life changes.
+* New datasets with CF-like attributes conversion supported:
+    - RDRS (ECCC)
+    - GRNCH (ETS)
+* new ``mirands.convert.utils.name_output_file`` for generating names from Dataset facets.
+* new ``mirands.gis.subset_domain`` for clipping dataset to a preconfigured region.
+
+Bug fixes
+^^^^^^^^^
+* Many data-related utilities now have more accurate static typing.
+* Converted dataset global attributes are now synchronized for consistency.
+* ECMWF-based datasets now implement more consistent conversion factors and metadata.
+* ``miranda.storage.file_size`` now handles dictionaries of Pathlib objects.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Pre-commit version updates.
+* Improvements have been made to the development documentation; Project URLs, ReadTheDocs theming, installation methods, and other quality of life changes.
 * Schema and folder structure updates:
     - `gridded-obs` -> `reconstruction`
     - `bias-adjust-project` is used when present and not just when `level=="biasadjusted"`
