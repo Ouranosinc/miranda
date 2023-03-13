@@ -3,7 +3,7 @@ import logging.config
 import os
 import shutil
 from pathlib import Path
-from typing import List, Set, Union
+from typing import List, Optional, Set, Union
 
 import xarray as xr
 from dask import compute
@@ -11,6 +11,7 @@ from dask.distributed import Client
 
 from miranda.convert import file_conversion, load_json_data_mappings
 from miranda.convert.utils import daily_aggregation, delayed_write
+from miranda.decode import date_parser
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
@@ -36,15 +37,45 @@ def _get_drop_vars(
     return list(set(drop_vars) - set(keep_vars))
 
 
+def gather_rdrs_year(input_folder: Path, year: Union[int, str]):
+    if not list(input_folder.glob(f"{year}*.nc")):
+        logging.warning(f"No files found for year {year}. Continuing...")
+        return
+
+    # Time stamps starts at noon and flow into subsequent months
+    # Need full year plus previous december in order to easily produce complete hourly frequency monthly files
+    files = sorted(list(input_folder.glob(f"{year - 1}12*.nc")))
+    if files:
+        files = [files[-1]]
+    files.extend(sorted(list(input_folder.glob(f"{year}*.nc"))))
+    return files
+
+
 def convert_rdrs(
     project: str,
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
     output_format: str = "zarr",
-    working_folder: Union[str, os.PathLike] = None,
+    working_folder: Optional[Union[str, os.PathLike]] = None,
     overwrite: bool = False,
     **dask_kwargs,
 ):
+    """
+
+    Parameters
+    ----------
+    project
+    input_folder
+    output_folder
+    output_format
+    working_folder
+    overwrite
+    dask_kwargs
+
+    Returns
+    -------
+
+    """
     var_attrs = load_json_data_mappings(project=project)["variable_entry"]
     freq_dict = dict(h="hr", d="day")
 
@@ -64,18 +95,14 @@ def convert_rdrs(
                     "`working_folder` is not empty. Use `overwrite=True`."
                 )
         working_folder.mkdir(parents=True)
+        write_folder = working_folder
+    else:
+        write_folder = output_folder
 
     year = datetime.date.today().year
     for year in range(1950, year):
-        if not list(input_folder.glob(f"{year}*.nc")):
-            logging.warning(f"no files found for year {year}. Continuing...")
-            continue
-        # Time stamps starts at noon and flow into subsequent months!!
-        # Need full year plus previous december in order to easily produce complete hourly frequency monthly files
-        ncfiles = sorted(list(input_folder.glob(f"{year - 1}12*.nc")))
-        if ncfiles:
-            ncfiles = [ncfiles[-1]]
-        ncfiles.extend(sorted(list(input_folder.glob(f"{year}*.nc"))))
+        ncfiles = gather_rdrs_year(input_folder, year)
+
         ds_allvars = None
         if ncfiles:
             for nc in ncfiles:
@@ -100,14 +127,7 @@ def convert_rdrs(
                     drop_vars = _get_drop_vars(
                         ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
                     )
-
-                    # outfile_root = ncfiles[0].stem.split()
                     ds_out = ds_month.drop_vars(drop_vars)
-
-                    overwrite_flag = False
-                    write_folder = (
-                        working_folder if working_folder is not None else output_folder
-                    )
 
                     job = file_conversion(
                         input=ds_out,
@@ -120,7 +140,7 @@ def convert_rdrs(
                         chunks=dict(time=len(ds_out.time), rlon=50, rlat=50),
                         compute=False,
                         correct_variable_names=True,
-                        overwrite=True,
+                        overwrite=overwrite,
                     )
 
                     if working_folder:
@@ -136,7 +156,7 @@ def convert_rdrs(
                                 new_zarr = f"{new_zarr[0]}_{outfreq}_eccc_{new_zarr[1]}_NAM_{new_zarr[2]}"
 
                                 if (
-                                    overwrite_flag
+                                    overwrite
                                     or not output_folder.joinpath(
                                         outfreq, subdir.name, new_zarr
                                     ).exists()
@@ -163,15 +183,41 @@ def convert_rdrs(
 def rdrs_to_daily(
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
-    working_folder: Union[str, os.PathLike] = None,
+    working_folder: Optional[Union[str, os.PathLike]] = None,
     overwrite: bool = False,
     **dask_kwargs,
 ):
+    """
+
+    Parameters
+    ----------
+    input_folder
+    output_folder
+    working_folder
+    overwrite
+    dask_kwargs
+
+    Returns
+    -------
+
+    """
     freq = "day"
     if isinstance(input_folder, str):
         input_folder = Path(input_folder)
     if isinstance(output_folder, str):
         output_folder = Path(output_folder)
+    if isinstance(working_folder, str):
+        working_folder = Path(working_folder)
+
+    if working_folder:
+        if working_folder.exists():
+            if overwrite:
+                shutil.rmtree(working_folder)
+            else:
+                raise FileExistsError(
+                    "`working_folder` is not empty. Use `overwrite=True`."
+                )
+        working_folder.mkdir(parents=True)
 
     for var_folder in [v for v in input_folder.glob("*") if v.is_dir()]:
         zarrs = sorted(list(var_folder.glob("*.zarr")))
@@ -179,18 +225,18 @@ def rdrs_to_daily(
         year2 = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
         for year in range(year1, year2 + 1):
             infiles = sorted(list(var_folder.glob(f"*_{year}*.zarr")))
-
             if len(infiles) > 12 or len(infiles) == 0:
                 raise ValueError(
-                    f"found {len(infiles)} input files ... expected 12 or less"
+                    f"Found {len(infiles)} input files. Expected between 1 and 12."
                 )
+
             outvars = daily_aggregation(xr.open_zarr(infiles[0]), keys_only=True)
-            for vv in outvars:
+            for variable in outvars:
                 ds = None
                 outzarr = _rename_output_file(
-                    infiles[0].stem, var_folder.name, vv, freq, year
+                    infiles[0].stem, var_folder.name, variable, freq, year
                 )
-                outzarr = output_folder.joinpath(vv, outzarr)
+                outzarr = output_folder.joinpath(variable, outzarr)
                 if not outzarr.exists() or overwrite:
                     if ds is None:
                         ds = xr.open_mfdataset(infiles, engine="zarr")
@@ -201,10 +247,8 @@ def rdrs_to_daily(
 
                     if working_folder:
                         tmp_zarr = working_folder.joinpath(outzarr.name)
-                        if tmp_zarr.exists():
-                            shutil.rmtree(tmp_zarr)
                         with Client(**dask_kwargs):
-                            ds[vv].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(
+                            ds[variable].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(
                                 tmp_zarr
                             )
                         shutil.copytree(tmp_zarr, outzarr, dirs_exist_ok=True)
@@ -224,16 +268,35 @@ def concat_zarr(
     overwrite: bool = False,
     **dask_kwargs,
 ):
+    """
+
+    Parameters
+    ----------
+    input_folder
+    output_folder
+    overwrite
+    dask_kwargs
+
+    Returns
+    -------
+
+    """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder)
     if isinstance(output_folder, str):
         output_folder = Path(output_folder)
 
     list_zarr = sorted(list(input_folder.glob("*.zarr")))
-    outzarr = "_".join(list_zarr[0].stem.split("_")[0:-1])
-    st_yr = list_zarr[0].stem.split("_")[-1].split("-")[0][0:4]
-    end_yr = list_zarr[-1].stem.split("_")[-1].split("-")[0][0:4]
-    outzarr = f"{outzarr}_{st_yr}_{end_yr}.zarr"
+
+    out_stem = "_".join(list_zarr[0].stem.split("_")[0:-1])
+    start_year = date_parser(
+        list_zarr[0].stem.split("_")[-1], output_type="datetime"
+    ).year
+    end_year = date_parser(
+        list_zarr[-1].stem.split("_")[-1], output_type="datetime"
+    ).year
+
+    outzarr = f"{out_stem}_{start_year}_{end_year}.zarr"
     outzarr = output_folder.joinpath(outzarr)
 
     if not outzarr.exists() or overwrite:
@@ -243,7 +306,7 @@ def concat_zarr(
             chunks = dict(time=(24 * 30 * 2), rlon=50, rlat=50)
 
         # maketemp files 1 zarr per 4 years
-        years = [y for y in range(int(st_yr), int(end_yr) + 1)]
+        years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]
         for year in years:
             list_zarr1 = sorted(
@@ -263,7 +326,7 @@ def concat_zarr(
                 #     zarr_kwargs = {"consolidated": True}
                 tmpzarr = outzarr.parent.joinpath(
                     "tmp",
-                    f"{outzarr.stem.split(f'_{st_yr}_')[0]}_{year[0]}-{year[-1]}.zarr",
+                    f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
                 )
                 tmpzarr.parent.mkdir(exist_ok=True, parents=True)
                 logging.info(f"{year} writing to {tmpzarr.as_posix()}")
