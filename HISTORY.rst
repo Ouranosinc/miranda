@@ -4,8 +4,23 @@
 History
 =======
 
-0.3.0 (2022-11-24)
-------------------
+v0.4.0 (2023-03-14)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+
+New features
+^^^^^^^^^^^^
+* Improvements have been made to the development documentation; Project URLs, ReadTheDocs theming, and other quality of life changes.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Pre-commit version updates.
+* Schema and folder structure updates:
+    - `gridded-obs` -> `reconstruction`
+    - `bias-adjust-project` is used when present and not just when `level=="biasadjusted"`
+
+v0.3.0 (2022-11-24)
+-------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Travis Logan (:user:`tlogan2000`), Gabriel Rondeau-Genesse (:user:`RondeauG`), and Sébastien Biner (:user:`sbiner`).
 
 Announcements
