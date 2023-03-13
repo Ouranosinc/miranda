@@ -21,6 +21,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["convert_rdrs", "concat_zarr", "rdrs_to_daily"]
 
 
+# FIXME: Can we use `name_output_file` instead? We already have a better version of this function.
 def _rename_output_file(
     fname: str, old_variable: str, new_variable: str, freq: str, date: Union[str, int]
 ):
@@ -37,6 +38,7 @@ def _get_drop_vars(
     return list(set(drop_vars) - set(keep_vars))
 
 
+# TODO: Once finalized/standardized, this should be moved to _data_definitions
 def gather_rdrs_year(input_folder: Path, year: Union[int, str]):
     if not list(input_folder.glob(f"{year}*.nc")):
         logging.warning(f"No files found for year {year}. Continuing...")
@@ -76,6 +78,7 @@ def convert_rdrs(
     -------
 
     """
+    # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project=project)["variable_entry"]
     freq_dict = dict(h="hr", d="day")
 
@@ -99,87 +102,95 @@ def convert_rdrs(
     else:
         write_folder = output_folder
 
+    # FIXME: Do we want to collect everything? Maybe return a dictionary with years and associated files?
     year = datetime.date.today().year
     for year in range(1950, year):
         ncfiles = gather_rdrs_year(input_folder, year)
 
         ds_allvars = None
-        if ncfiles:
-            for nc in ncfiles:
-                ds1 = xr.open_dataset(nc, chunks="auto")
-                if ds_allvars is None:
-                    ds_allvars = ds1
-                    outfreq, meaning = get_time_frequency(ds1)
-                    outfreq = (
-                        f"{outfreq[0]}{freq_dict[outfreq[1]]}"
-                        if meaning == "hour"
-                        else freq_dict[outfreq[1]]
-                    )
+        for nc in ncfiles:
+            ds1 = xr.open_dataset(nc, chunks="auto")
+            if ds_allvars is None:
+                ds_allvars = ds1
+                outfreq, meaning = get_time_frequency(ds1)
+                outfreq = (
+                    f"{outfreq[0]}{freq_dict[outfreq[1]]}"
+                    if meaning == "hour"
+                    else freq_dict[outfreq[1]]
+                )
 
-                else:
-                    ds_allvars = xr.concat([ds_allvars, ds1], dim="time")
-            ds_allvars.attrs["Remarks"] = ds_allvars.attrs["Remarks"].replace(
-                "Variable names", "Original variable names"
-            )
-            for month in range(1, 13):
-                ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
-                for var_attr in var_attrs.keys():
-                    drop_vars = _get_drop_vars(
-                        ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
-                    )
-                    ds_out = ds_month.drop_vars(drop_vars)
+            else:
+                ds_allvars = xr.concat([ds_allvars, ds1], dim="time")
 
-                    job = file_conversion(
-                        input=ds_out,
-                        project=project,
-                        output_path=write_folder.joinpath(
-                            var_attrs[var_attr]["_cf_variable_name"]
-                        ),
-                        output_format=output_format,
-                        add_version_hashes=False,
-                        chunks=dict(time=len(ds_out.time), rlon=50, rlat=50),
-                        compute=False,
-                        correct_variable_names=True,
-                        overwrite=overwrite,
-                    )
+        # FIXME: This correction should be handled in the JSON configuration
+        ds_allvars.attrs["Remarks"] = ds_allvars.attrs["Remarks"].replace(
+            "Variable names", "Original variable names"
+        )
 
-                    if working_folder:
-                        for subdir in [
-                            f for f in working_folder.glob("*") if f.is_dir()
-                        ]:
-                            output_folder.joinpath(outfreq, subdir.name).mkdir(
-                                exist_ok=True
-                            )
-                            for zarr in subdir.glob("*.zarr"):
-                                new_zarr = zarr.name.split("_")
-                                ## TODO manage output file name
-                                new_zarr = f"{new_zarr[0]}_{outfreq}_eccc_{new_zarr[1]}_NAM_{new_zarr[2]}"
+        # This is the heart of the conversion utility; We could apply this to multiple projects.
+        for month in range(1, 13):
+            ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
+            for var_attr in var_attrs.keys():
+                # FIXME: This correction should be handled in the JSON configuration
+                drop_vars = _get_drop_vars(
+                    ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
+                )
+                ds_out = ds_month.drop_vars(drop_vars)
 
-                                if (
-                                    overwrite
-                                    or not output_folder.joinpath(
+                # FIXME: We should be either returning a list of jobs to run or iterating through them.
+                # We do not need to hardcode compute=False
+                job = file_conversion(
+                    input=ds_out,
+                    project=project,
+                    output_path=write_folder.joinpath(
+                        var_attrs[var_attr]["_cf_variable_name"]
+                    ),
+                    output_format=output_format,
+                    add_version_hashes=False,
+                    chunks=dict(time=len(ds_out.time), rlon=50, rlat=50),
+                    compute=False,
+                    correct_variable_names=True,
+                    overwrite=overwrite,
+                )
+
+                # FIXME: This is generalized IO code - should be factored out.
+                if working_folder:
+                    for subdir in [f for f in working_folder.glob("*") if f.is_dir()]:
+                        output_folder.joinpath(outfreq, subdir.name).mkdir(
+                            exist_ok=True
+                        )
+                        for zarr in subdir.glob("*.zarr"):
+                            new_zarr = zarr.name.split("_")
+                            ## TODO manage output file name
+                            new_zarr = f"{new_zarr[0]}_{outfreq}_eccc_{new_zarr[1]}_NAM_{new_zarr[2]}"
+
+                            if (
+                                overwrite
+                                or not output_folder.joinpath(
+                                    outfreq, subdir.name, new_zarr
+                                ).exists()
+                            ):
+                                # FIXME: Client is only needed for computation. Should be elsewhere.
+                                with Client(**dask_kwargs):
+                                    job.compute()
+                                shutil.copytree(
+                                    zarr,
+                                    output_folder.joinpath(
+                                        outfreq, subdir.name, new_zarr.name
+                                    ),
+                                    dirs_exist_ok=True,
+                                )
+                            else:
+                                logging.warning(
+                                    output_folder.joinpath(
                                         outfreq, subdir.name, new_zarr
-                                    ).exists()
-                                ):
-                                    with Client(**dask_kwargs):
-                                        job.compute()
-                                    shutil.copytree(
-                                        zarr,
-                                        output_folder.joinpath(
-                                            outfreq, subdir.name, new_zarr.name
-                                        ),
-                                        dirs_exist_ok=True,
-                                    )
-                                else:
-                                    logging.warning(
-                                        output_folder.joinpath(
-                                            outfreq, subdir.name, new_zarr
-                                        ),
-                                        " exists. Continuing...",
-                                    )
-                            shutil.rmtree(subdir)
+                                    ),
+                                    " exists. Continuing...",
+                                )
+                        shutil.rmtree(subdir)
 
 
+# FIXME: This looks mostly like code to stage writing out files. Should it be moved to an IO module?
 def rdrs_to_daily(
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
@@ -201,7 +212,6 @@ def rdrs_to_daily(
     -------
 
     """
-    freq = "day"
     if isinstance(input_folder, str):
         input_folder = Path(input_folder)
     if isinstance(output_folder, str):
@@ -230,11 +240,11 @@ def rdrs_to_daily(
                     f"Found {len(infiles)} input files. Expected between 1 and 12."
                 )
 
-            outvars = daily_aggregation(xr.open_zarr(infiles[0]), keys_only=True)
-            for variable in outvars:
+            out_variables = daily_aggregation(xr.open_zarr(infiles[0]), keys_only=True)
+            for variable in out_variables:
                 ds = None
                 outzarr = _rename_output_file(
-                    infiles[0].stem, var_folder.name, variable, freq, year
+                    infiles[0].stem, var_folder.name, variable, "day", year
                 )
                 outzarr = output_folder.joinpath(variable, outzarr)
                 if not outzarr.exists() or overwrite:
@@ -247,6 +257,7 @@ def rdrs_to_daily(
 
                     if working_folder:
                         tmp_zarr = working_folder.joinpath(outzarr.name)
+                        # FIXME: Client is only needed for computation. Should be elsewhere.
                         with Client(**dask_kwargs):
                             ds[variable].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(
                                 tmp_zarr
@@ -259,7 +270,7 @@ def rdrs_to_daily(
                                 dict(time=-1, rlon=50, rlat=50)
                             ).to_zarr(outzarr)
                 else:
-                    print(outzarr.as_posix(), "exists. Continuing..")
+                    logging.warning(outzarr.as_posix(), "exists. Continuing..")
 
 
 def concat_zarr(
@@ -319,6 +330,7 @@ def concat_zarr(
             assert len(list_zarr1) / len(year) == 12
             ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
 
+            # FIXME: Client is only needed for computation. Should be elsewhere.
             with Client(**dask_kwargs):
                 # if outzarr.exists():
                 #     zarr_kwargs = {"append_dim": "time", "consolidated": True}
@@ -329,7 +341,7 @@ def concat_zarr(
                     f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
                 )
                 tmpzarr.parent.mkdir(exist_ok=True, parents=True)
-                logging.info(f"{year} writing to {tmpzarr.as_posix()}")
+                logging.info(f"Writing year {year} to {tmpzarr.as_posix()}.")
 
                 job = delayed_write(
                     ds=ds,
@@ -343,6 +355,7 @@ def concat_zarr(
         # get tmp zarrs
         list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
         ds = xr.open_mfdataset(list_zarr, engine="zarr")
+        # FIXME: Client is only needed for computation. Should be elsewhere.
         with Client(**dask_kwargs):
             job = delayed_write(
                 ds=ds,

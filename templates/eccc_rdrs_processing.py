@@ -1,11 +1,10 @@
 import logging
-import os
 from pathlib import Path
 
 from miranda.convert.eccc_rdrs import concat_zarr, convert_rdrs, rdrs_to_daily
 
-home = os.path.expanduser("~")
-dask_dir = Path(home).joinpath("tmpout", "dask")
+home = Path("~").expanduser()
+dask_dir = home.joinpath("tmpout", "dask")
 dask_dir.mkdir(parents=True, exist_ok=True)
 dask_kwargs = dict(
     n_workers=5,
@@ -31,16 +30,17 @@ rdrs_to_daily(
     output_folder=Path(home).joinpath("RDRS_v2.1", "tmp/ECCC/RDRS_v2.1/NAM/day"),
     working_folder=Path(home).joinpath("tmpout", "rdrs"),
     overwrite=False,
+    **dask_kwargs,
 )
 
 
 for freq in ["1hr", "day"]:
     infolder = Path(home).joinpath("RDRS_v2.1", f"tmp/ECCC/RDRS_v2.1/NAM/{freq}")
-    for vv in [i for i in infolder.glob("*") if i.is_dir()]:
+    for variable in [v for v in infolder.glob("*") if v.is_dir()]:
         concat_zarr(
-            input_folder=vv,
+            input_folder=variable,
             output_folder=Path(home).joinpath(
-                "RDRS_v2.1", f"converted/ECCC/RDRS_v2.1/NAM/{freq}/{vv.name}"
+                "RDRS_v2.1", f"converted/ECCC/RDRS_v2.1/NAM/{freq}/{variable.name}"
             ),
             overwrite=False,
         )
