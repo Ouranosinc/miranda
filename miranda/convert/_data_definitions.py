@@ -29,15 +29,16 @@ __all__ = [
 
 data_folder = Path(__file__).parent / "data"
 era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
-    "variable_entry"
+    "variables"
 ].keys()
+grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
 nasa_ag_variables = json.load(open(data_folder / "nasa_cf_attrs.json"))[
-    "variable_entry"
+    "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
 wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
-    "variable_entry"
+    "variables"
 ].keys()
 
 reanalysis_project_institutes = {
@@ -140,15 +141,6 @@ def gather_era5_land(
     )
 
 
-def gather_era5_land_sea_mask(path: Union[str, os.PathLike]) -> Dict[str, Path]:
-    try:
-        land_sea_mask = dict(lsm=next(Path(path).glob("sftlf*era5*.nc")))
-    except StopIteration:
-        logging.error("No land_sea_mask found for ERA5.")
-        raise FileNotFoundError()
-    return land_sea_mask
-
-
 def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     # agMERRA source data
     source_agmerra = Path(path)
@@ -177,8 +169,22 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     return dict(cfsr=in_files_agcfsr)
 
 
+def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+    # GRNCH-ETS source data
+    source_grnch = Path(path)
+    logging.info(f"Gathering GRNCH from: {source_grnch.as_posix()}")
+    in_files_grnch = list()
+    for v in grnch_variables:
+        for yyyy in range(1970, 2020):
+            in_files_grnch.extend(list(source_grnch.rglob(f"{v}_{yyyy}.nc")))
+    logging.info(
+        f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
+    )
+    return dict(cfsr=sorted(in_files_grnch))
+
+
 def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # NRCan Gridded Obs source data
+    # NRCan Gridded Observations source data
     source_nrcan = Path(path)
     logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
     in_files_nrcan = list()

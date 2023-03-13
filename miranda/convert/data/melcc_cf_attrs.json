@@ -18,7 +18,7 @@
     "type": "station-obs",
     "version": "v2021"
   },
-  "variable_entry": {
+  "variables": {
     "GI": {
       "_cf_variable_name": "sleet_mask",
       "long_name": "Sleet",

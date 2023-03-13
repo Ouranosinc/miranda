@@ -19,9 +19,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["open_csv"]
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "data" / "hq_cf_attrs.json"))[
-    "variable_entry"
-]
+cmor = json.load(open(Path(__file__).parent / "data" / "hq_cf_attrs.json"))["variables"]
 
 fp = r"[-+]?\d*,\d+|\d+"
 

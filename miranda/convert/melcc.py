@@ -20,9 +20,9 @@ from miranda import __version__
 from miranda.scripting import LOGGING_CONFIG
 
 from ._data_corrections import (
+    dataset_corrections,
     load_json_data_mappings,
     metadata_conversion,
-    variable_conversion,
 )
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -244,7 +244,7 @@ def convert_mdb(
         else:
             raw = raw.assign_coords(station=stat)
 
-        ds = variable_conversion(raw, "melcc-obs")
+        ds = dataset_corrections(raw, "melcc-obs")
         new_var_name = list(
             filter(lambda k: not k.endswith("_flag"), ds.data_vars.keys())
         )[0]

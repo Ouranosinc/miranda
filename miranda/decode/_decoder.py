@@ -213,16 +213,17 @@ class Decoder:
         """
         dimsvar_dict = dict()
         coords = (
-            "time",
+            "height",
             "lat",
             "latitude",
+            "lev",
+            "level",
             "lon",
             "longitude",
             "rlat",
             "rlon",
-            "height",
-            "lev",
             "rotated_pole",
+            "time",
         )
         try:
             if file.is_file() and file.suffix in [".nc", ".nc4"]:
@@ -323,8 +324,8 @@ class Decoder:
             return pd.to_timedelta(time_dictionary[term])
 
         if data and not file:
-            potential_time = data.get("frequency", "")
-            if potential_time == "":
+            potential_time = data.get("frequency")
+            if not potential_time:
                 if hasattr(data, "time"):
                     time_units = data["time"].units
                     potential_time = time_units.split()[0]

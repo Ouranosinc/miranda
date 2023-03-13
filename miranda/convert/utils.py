@@ -3,13 +3,12 @@ import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Callable, Dict, Optional, Union
+from typing import Dict, Optional, Union
 
 import netCDF4
-import numpy as np
+import regionmask
 import xarray as xr
 import zarr
-from clisops.core import subset
 from dask.delayed import delayed
 from xclim.indices import tas
 
@@ -23,6 +22,7 @@ __all__ = [
     "delayed_write",
     "find_version_hash",
     "get_chunks_on_disk",
+    "name_output_file",
 ]
 
 
@@ -69,20 +69,13 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     -------
     xarray.Dataset
     """
-    try:
-        import regionmask  # noqa
-    except ImportError:
-        raise ImportError(
-            f"{add_ar6_regions.__name__} functions require additional dependencies. "
-            "Please install them with `pip install miranda[full]`."
-        )
 
     mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
     ds = ds.assign_coords(region=mask)
     return ds
 
 
-def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
+def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.Dataset]:
     logging.info("Creating daily upscaled climate variables.")
 
     daily_dataset = dict()
@@ -94,131 +87,77 @@ def daily_aggregation(ds: xr.Dataset) -> Dict[str, xr.Dataset]:
                 f"{variable}min": "min",
                 f"{variable}": "mean",
             }.items():
-                ds_out = xr.Dataset()
-                ds_out.attrs = ds.attrs.copy()
-                ds_out.attrs["frequency"] = "day"
+                if not keys_only:
+                    ds_out = xr.Dataset()
+                    ds_out.attrs = ds.attrs.copy()
+                    ds_out.attrs["frequency"] = "day"
 
-                method = (
-                    f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
-                )
-                ds_out.attrs["cell_methods"] = method
+                    method = f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
+                    ds_out.attrs["cell_methods"] = method
 
-                if v == "tas" and not hasattr(ds, "tas"):
-                    ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
+                    if v == "tas" and not hasattr(ds, "tas"):
+                        ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
+                    else:
+                        # Thanks for the help, xclim contributors
+                        r = ds[variable].resample(time="D")
+                        ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
+
+                    daily_dataset[v] = ds_out
+                    del ds_out
                 else:
-                    # Thanks for the help, xclim contributors
-                    r = ds[variable].resample(time="D")
-                    ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
-
-                daily_dataset[v] = ds_out
-                del ds_out
+                    daily_dataset[v] = []
 
         elif variable in [
             "evspsblpot",
             "hfls",
             "hfss",
+            "hur",
+            "hus",
             "pr",
             "prsn",
+            "ps",
+            "psl",
             "rsds",
+            "rss",
             "rlds",
+            "rls",
             "snd",
             "snr",
             "snw",
+            "swe",
         ]:
-            ds_out = xr.Dataset()
-            ds_out.attrs = ds.attrs.copy()
-            ds_out.attrs["frequency"] = "day"
-            ds_out.attrs["cell_methods"] = "time: mean (interval: 1 day)"
-            logging.info(f"Converting {variable} to daily time step (daily mean).")
-            ds_out[variable] = (
-                ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
-            )
+            if not keys_only:
+                ds_out = xr.Dataset()
+                ds_out.attrs = ds.attrs.copy()
+                ds_out.attrs["frequency"] = "day"
+                ds_out.attrs["cell_methods"] = "time: mean (interval: 1 day)"
+                logging.info(f"Converting {variable} to daily time step (daily mean).")
+                ds_out[variable] = (
+                    ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
+                )
 
-            daily_dataset[variable] = ds_out
-            del ds_out
+                daily_dataset[variable] = ds_out
+                del ds_out
+            else:
+                daily_dataset[variable] = []
         else:
             continue
 
     return daily_dataset
 
 
-def threshold_land_sea_mask(
-    ds: Union[xr.Dataset, str, os.PathLike],
-    *,
-    land_sea_mask: Dict[str, Union[os.PathLike, str]],
-    land_sea_percentage: int = 50,
-    output_folder: Optional[Union[str, os.PathLike]] = None,
-) -> Optional[Path]:
-    """Land-Sea mask operations.
+def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
+    """
 
     Parameters
     ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
-    land_sea_mask : dict
-    land_sea_percentage : int
-    output_folder : str or os.PathLike, optional
+    file : Path or str
 
     Returns
     -------
-    Path
+    dict
     """
-    file_name = ""
-    if isinstance(ds, (str, os.PathLike)):
-        if output_folder is not None:
-            output_folder = Path(output_folder)
-            file_name = f"{Path(ds).stem}_land-sea-masked.nc"
-        ds = xr.open_dataset(ds)
 
-    if output_folder is not None and file_name == "":
-        logging.warning(
-            "Cannot generate filenames from xarray.Dataset objects. Consider writing NetCDF manually."
-        )
-
-    try:
-        project = ds.attrs["project"]
-    except KeyError:
-        raise ValueError("No 'project' field found for given dataset.")
-
-    if project in land_sea_mask.keys():
-        logging.info(
-            f"Masking variable with land-sea mask at {land_sea_percentage} % cutoff."
-        )
-        land_sea_mask_variable, lsm_file = land_sea_mask[project]
-        lsm_raw = xr.open_dataset(lsm_file)
-        try:
-            lsm_raw = lsm_raw.rename({"longitude": "lon", "latitude": "lat"})
-        except ValueError:
-            raise
-
-        lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
-        lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
-
-        lsm = subset.subset_bbox(
-            lsm_raw,
-            lon_bnds=lon_bounds,
-            lat_bnds=lat_bounds,
-        ).load()
-        lsm = lsm.where(lsm[land_sea_mask_variable] > float(land_sea_percentage) / 100)
-        if project == "era5":
-            ds = ds.where(lsm[land_sea_mask].isel(time=0, drop=True).notnull())
-            try:
-                ds = ds.rename({"longitude": "lon", "latitude": "lat"})
-            except ValueError:
-                raise
-        elif project in ["merra2", "cfsr"]:
-            ds = ds.where(lsm[land_sea_mask].notnull())
-
-        ds.attrs["land_sea_cutoff"] = f"{land_sea_percentage} %"
-
-        if len(file_name) > 0:
-            out = output_folder / file_name
-            ds.to_netcdf(out)
-            return out
-        return ds
-    raise RuntimeError(f"Project `{project}` was not found in land-sea masks.")
-
-
-def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
     def _get_hash(f):
         hash_sha256_writer = hashlib.sha256()
         with open(f, "rb") as f_opened:
@@ -253,12 +192,39 @@ def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
     return version_info
 
 
+def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
+    """
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+    project: str
+    output_format : {"netcdf", "zarr"}
+        Suffix to be used for filename
+
+    Returns
+    -------
+    str
+    """
+    if output_format.lower() not in {"netcdf", "zarr"}:
+        raise NotImplementedError(f"Format: {output_format}.")
+    else:
+        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
+
+    var_name = list(ds.data_vars.keys())[0]
+    time_freq = ds.attrs.get("frequency")
+    institution = ds.attrs.get("institution")
+    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+
+    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
+
+
 def delayed_write(
     ds: xr.Dataset,
     outfile: Union[str, os.PathLike],
-    target_chunks: dict,
     output_format: str,
     overwrite: bool,
+    target_chunks: Optional[dict] = None,
 ) -> delayed:
     """
 
@@ -280,8 +246,9 @@ def delayed_write(
     for name, da in ds.data_vars.items():
         chunks = list()
         for dim in da.dims:
-            if dim in target_chunks.keys():
-                chunks.append(target_chunks[str(dim)])
+            if target_chunks:
+                if dim in target_chunks.keys():
+                    chunks.append(target_chunks[str(dim)])
             else:
                 chunks.append(len(da[dim]))
 
@@ -291,7 +258,7 @@ def delayed_write(
                 "zlib": True,
             }
             kwargs["compute"] = False
-            if not overwrite:
+            if Path(outfile).exists() and not overwrite:
                 kwargs["mode"] = "a"
         elif output_format == "zarr":
             ds = ds.chunk(target_chunks)

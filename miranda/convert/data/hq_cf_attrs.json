@@ -4,7 +4,7 @@
     "_miranda_version": true,
     "cmor_version": "3.5",
     "int_missing_value": "-999",
-    "license_type": "private",
+    "license_type": "restricted",
     "missing_value": "1e20",
     "processing_level": "raw",
     "realm": "atmos",
@@ -12,7 +12,7 @@
     "table_id": "HQ",
     "type": "station-obs"
   },
-  "variable_entry": {
+  "variables": {
     "hurs": {
       "cell_methods": "time: point",
       "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",

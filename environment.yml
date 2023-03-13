@@ -52,4 +52,5 @@ dependencies:
   - tox
   - xarray
   - xclim >=0.33.0
+  - xesmf
   - zarr

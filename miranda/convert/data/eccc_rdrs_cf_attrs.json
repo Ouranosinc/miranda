@@ -1,0 +1,60 @@
+{
+  "Header": {
+    "Conventions": "CF-1.8",
+    "_doi": {
+      "rdrs-v2.1": "https://doi.org/10.5194/hess-25-4917-2021"
+    },
+    "_remove_attrs": {
+      "rdrs-v2.1": [
+        "License",
+        "product"
+      ]
+    },
+    "_source": {
+      "rdrs-v2.1": "RDRS v2.1"
+    },
+    "_version": {
+      "rdrs-v2.1": "v2.1"
+    },
+    "data_specs_version": "00.00.08",
+    "institution": "GouvCan",
+    "licence_type": "open",
+    "license": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+    "organisation": "ECCC",
+    "processing_level": "raw",
+    "realm": "atmos",
+    "table_date": "12 December 2022",
+    "table_id": "EC",
+    "type": "reconstruction"
+  },
+  "variable_entry": {
+    "RDRS_v2.1_A_PR0_SFC": {
+      "_cf_variable_name": "pr",
+      "_corrected_units": false,
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {
+        "rdrs-v2.1": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "original_long_name": "Total Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "RDRS_v2.1_P_TT_1.5m": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": {
+        "rdrs-v2.1": "degC"
+      },
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "long_name": "1.5 metre temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    }
+  }
+}
