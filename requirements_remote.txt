@@ -6,6 +6,6 @@ intake
 intake-esm
 numcodecs
 paramiko>=2.6.0
-regionmask
 s3fs
 scp
+# xesmf - not presently installable from PyPI and requires esmpy

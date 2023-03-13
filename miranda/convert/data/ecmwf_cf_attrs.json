@@ -32,11 +32,47 @@
     "processing_level": "raw",
     "realm": "atmos",
     "source": "ERA5",
-    "table_date": "2022-11-15",
+    "table_date": "2023-01-13",
     "table_id": "ECMWF",
     "type": "reconstruction"
   },
-  "variable_entry": {
+  "dimensions": {
+    "latitude": {
+      "_cf_dimension_name": "lat",
+      "_precision": {
+        "era5-land": 4
+      },
+      "axis": "Y",
+      "standard_name": "latitude"
+    },
+    "longitude": {
+      "_cf_dimension_name": "lon",
+      "_precision": {
+        "era5-land": 4
+      },
+      "axis": "X",
+      "standard_name": "longitude"
+    },
+    "time": {
+      "_ensure_correct_time": {
+        "era5-land": "1H",
+        "era5-land-monthly-means": "1M",
+        "era5-pressure-levels": "1H",
+        "era5-pressure-levels-monthly-means": "1M",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension": "1M",
+        "era5-pressure-levels-preliminary-back-extension": "1H",
+        "era5-single-levels": "1H",
+        "era5-single-levels-monthly-means": "1M",
+        "era5-single-levels-monthly-means-preliminary-back-extension": "1M",
+        "era5-single-levels-preliminary-back-extension": "1H"
+      },
+      "_strict_time": false,
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
     "d2m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": false,
@@ -44,19 +80,10 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
+      "description": "This parameter is the temperature to which the air, at 2 metres above the surface of the Earth, would have to be cooled for saturation to occur. It is a measure of the humidity of the air. Combined with temperature and pressure, it can be used to calculate the relative humidity. 2m dew point temperature is calculated by interpolating between the lowest model level and the Earth's surface, taking account of the atmospheric conditions.",
       "long_name": "2 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",
       "units": "K"
-    },
-    "lat": {
-      "_precision": {
-        "era5-land": 4
-      }
-    },
-    "lon": {
-      "_precision": {
-        "era5-land": 4
-      }
     },
     "msl": {
       "_cf_variable_name": "psl",
@@ -64,7 +91,8 @@
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
-      "cell_methods": "time: point",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "This parameter is the pressure (force per unit area) of the atmosphere adjusted to the height of mean sea level. It is a measure of the weight that all the air in a column vertically above the area of Earth's surface would have at that point, if the point were located at the mean sea level. It is calculated over all surfaces - land, sea and in-land water.",
       "long_name": "Mean sea level pressure",
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa"
@@ -88,24 +116,43 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
+      "description": "Total potential evaporation thickness converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Potential evapotranspiration",
-      "original_long_name": "Potential Evaporation",
+      "original_long_name": "Potential evaporation",
       "standard_name": "water_evapotranspiration_flux",
       "units": "kg m-2 s-1"
     },
-    "rsn": {
-      "_cf_variable_name": "snr",
-      "_corrected_units": {
-        "era5-land": "kg m-3",
-        "era5-single-levels": "kg m-3",
-        "era5-single-levels-preliminary-back-extension": "kg m-3"
-      },
+    "q": {
+      "_cf_variable_name": "hus",
+      "_corrected_units": 1,
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
+      "description": "The total mass of moist air is the sum of the dry air, water vapour, cloud liquid, cloud ice, rain and falling snow.",
+      "long_name": "Specific humidity",
+      "standard_name": "specific_humidity",
+      "units": "%"
+    },
+    "r": {
+      "_cf_variable_name": "hur",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter is the water vapour pressure as a percentage of the value at which the air becomes saturated (the point at which water vapour begins to condense into liquid water or deposition into ice). For temperatures over 0°C (273.15 K) it is calculated for saturation over water. At temperatures below -23°C it is calculated for saturation over ice. Between -23°C and 0°C this parameter is calculated by interpolating between the ice and water values using a quadratic function.",
+      "long_name": "Relative humidity",
+      "standard_name": "relative_humidity",
+      "units": "%"
+    },
+    "rsn": {
+      "_cf_variable_name": "snr",
+      "_corrected_units": "kg m-3",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
       "long_name": "Surface snow density",
       "original_long_name": "Snow density",
       "standard_name": "surface_snow_density",
@@ -113,16 +160,14 @@
     },
     "sd": {
       "_cf_variable_name": "snw",
-      "_corrected_units": {
-        "era5-land": "Mg m-2",
-        "era5-single-levels": "Mg m-2",
-        "era5-single-levels-preliminary-back-extension": "Mg m-2"
-      },
+      "_corrected_units": "Mg m-2",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "long_name": "Surface Snow Amount",
+      "comment": "Liquid water equivalent of snow converted to snow amount using a water density of 1000 kg/m³.",
+      "description": "This parameter is the average amount of snow of a grid box. Its units are kilograms per square metre, so it is the weight of snow spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
+      "long_name": "Surface snow amount",
       "standard_name": "surface_snow_amount",
       "units": "kg m-2"
     },
@@ -135,17 +180,14 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
+      "description": "Snow thickness in m of liquid water equivalent converted to snow thickness using a water density of 1000 kg/m³ and a snow density of 300 kg/m³.",
       "long_name": "Snow depth",
       "standard_name": "surface_snow_thickness",
       "units": "m"
     },
     "sf": {
       "_cf_variable_name": "prsn",
-      "_corrected_units": {
-        "era5-land": "m",
-        "era5-single-levels": "m",
-        "era5-single-levels-preliminary-back-extension": "m"
-      },
+      "_corrected_units": "m",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -158,7 +200,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
+      "description": "Total solid precipitation thickness of water equivalent converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Snowfall flux",
       "original_long_name": "Snowfall",
       "standard_name": "snowfall_flux",
@@ -166,11 +208,7 @@
     },
     "slhf": {
       "_cf_variable_name": "hfls",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -187,7 +225,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "This parameter is the transfer of latent heat (resulting from water phase changes, such as evaporation or condensation) between the Earth's surface and the atmosphere through the effects of turbulent air motion. Evaporation from the Earth's surface represents a transfer of energy from the surface to the atmosphere.",
+      "description": "This parameter is the transfer of latent heat (resulting from water phase changes, such as evaporation or condensation) between the Earth's surface and the atmosphere through the effects of turbulent air motion. Evaporation from the Earth's surface represents a transfer of energy from the surface to the atmosphere.",
       "long_name": "Surface upward latent heat flux",
       "original_long_name": "Surface latent heat flux",
       "standard_name": "surface_upward_latent_heat_flux",
@@ -200,17 +238,14 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "long_name": "Surface Pressure",
+      "description": "This parameter is the pressure (force per unit area) of the atmosphere on the surface of land, sea and in-land water. It is a measure of the weight of all the air in a column vertically above the area of the Earth's surface represented at a fixed point.",
+      "long_name": "Surface air pressure",
       "standard_name": "surface_air_pressure",
       "units": "Pa"
     },
     "sshf": {
       "_cf_variable_name": "hfss",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": {
         "era5-land": true,
         "era5-single-levels": true,
@@ -227,7 +262,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "This parameter is the transfer of heat between the Earth's surface and the atmosphere through the effects of turbulent air motion (but excluding any heat transfer resulting from condensation or evaporation)",
+      "description": "This parameter is the transfer of heat between the Earth's surface and the atmosphere through the effects of turbulent air motion (but excluding any heat transfer resulting from condensation or evaporation)",
       "long_name": "Surface upward sensible heat flux",
       "original_long_name": "Surface sensible heat flux",
       "standard_name": "surface_upward_sensible_heat_flux",
@@ -235,11 +270,7 @@
     },
     "ssr": {
       "_cf_variable_name": "rss",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -252,7 +283,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "This parameter is the amount of solar radiation (also known as shortwave radiation) that reaches a horizontal plane at the surface of the Earth (both direct and diffuse) minus the amount reflected by the Earth's surface (which is governed by the albedo)",
+      "description": "This parameter is the amount of solar radiation (also known as shortwave radiation) that reaches a horizontal plane at the surface of the Earth (both direct and diffuse) minus the amount reflected by the Earth's surface (which is governed by the albedo)",
       "long_name": "Surface net downward shortwave flux",
       "original_long_name": "Surface net solar radiation",
       "standard_name": "surface_net_downward_shortwave_flux",
@@ -260,11 +291,13 @@
     },
     "ssrd": {
       "_cf_variable_name": "rsds",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
+      "_clip_values": {
+        "all": {
+          "context": false,
+          "min": "0 W m-2"
+        }
       },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -277,7 +310,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "This parameter is the amount of solar radiation (also known as shortwave radiation) that reaches a horizontal plane at the surface of the Earth. This parameter comprises both direct and diffuse solar radiation",
+      "description": "This parameter is the amount of solar radiation (also known as shortwave radiation) that reaches a horizontal plane at the surface of the Earth. This parameter comprises both direct and diffuse solar radiation",
       "long_name": "Surface downwelling shortwave flux",
       "original_long_name": "Surface solar radiation downwards",
       "standard_name": "surface_downwelling_shortwave_flux",
@@ -285,24 +318,16 @@
     },
     "str": {
       "_cf_variable_name": "rls",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
-      },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
-      "_offset_time": {
-        "era5-land": true,
-        "era5-single-levels": true,
-        "era5-single-levels-preliminary-back-extension": true
-      },
+      "_offset_time": true,
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Thermal radiation (also known as longwave or terrestrial radiation) refers to radiation emitted by the atmosphere, clouds and the surface of the Earth. This parameter is the difference between downward and upward thermal radiation at the surface of the Earth. It the amount passing through a horizontal plane.",
+      "description": "Thermal radiation (also known as longwave or terrestrial radiation) refers to radiation emitted by the atmosphere, clouds and the surface of the Earth. This parameter is the difference between downward and upward thermal radiation at the surface of the Earth. It the amount passing through a horizontal plane.",
       "long_name": "Surface net downward longwave flux",
       "original_long_name": "Surface net thermal radiation",
       "standard_name": "surface_net_downward_longwave_flux",
@@ -310,11 +335,13 @@
     },
     "strd": {
       "_cf_variable_name": "rlds",
-      "_corrected_units": {
-        "era5-land": "J m-2",
-        "era5-single-levels": "J m-2",
-        "era5-single-levels-preliminary-back-extension": "J m-2"
+      "_clip_values": {
+        "all": {
+          "context": false,
+          "min": "0 W m-2"
+        }
       },
+      "_corrected_units": "J m-2",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -327,7 +354,7 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "This parameter is the amount of thermal (also known as longwave or terrestrial) radiation emitted by the atmosphere and clouds that reaches a horizontal plane at the surface of the Earth. ",
+      "description": "This parameter is the amount of thermal (also known as longwave or terrestrial) radiation emitted by the atmosphere and clouds that reaches a horizontal plane at the surface of the Earth. ",
       "long_name": "Surface downwelling longwave flux",
       "original_long_name": "Surface thermal radiation downwards",
       "standard_name": "surface_downwelling_longwave_flux",
@@ -335,64 +362,48 @@
     },
     "swvl1": {
       "_cf_variable_name": "mrsolv1",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "This parameter is the volume of water in soil layer 1 (0 - 7cm, the surface is at 0cm).",
+      "description": "This parameter is the volume of water in soil layer 1 (0 - 7cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 1 (0 - 7 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
     "swvl2": {
       "_cf_variable_name": "mrsolv2",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "This parameter is the volume of water in soil layer 2 (7 - 28cm, the surface is at 0cm).",
+      "description": "This parameter is the volume of water in soil layer 2 (7 - 28cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 2 (7 - 28 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
     "swvl3": {
       "_cf_variable_name": "mrsolv3",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "This parameter is the volume of water in soil layer 3 (28 - 100cm, the surface is at 0cm).",
+      "description": "This parameter is the volume of water in soil layer 3 (28 - 100cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 3 (28 - 100 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
     },
     "swvl4": {
       "_cf_variable_name": "mrsolv4",
-      "_corrected_units": {
-        "era5-land": "1",
-        "era5-single-levels": "1",
-        "era5-single-levels-preliminary-back-extension": "1"
-      },
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "This parameter is the volume of water in soil layer 4 (100 - 289cm, the surface is at 0cm).",
+      "description": "This parameter is the volume of water in soil layer 4 (100 - 289cm, the surface is at 0cm).",
       "long_name": "Volumetric soil water layer 4 (100 - 289 cm)",
       "standard_name": "volume_fraction_of_water_in_soil",
       "units": "1"
@@ -404,43 +415,25 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
+      "description": "This parameter is the temperature of air at 2m above the surface of land, sea or in-land waters. 2m temperature is calculated by interpolating between the lowest model level and the Earth's surface, taking account of the atmospheric conditions.",
       "long_name": "2 metre temperature",
       "standard_name": "air_temperature",
       "units": "K"
-    },
-    "time": {
-      "_ensure_correct_time": {
-        "era5-land": "1H",
-        "era5-land-monthly-means": "1M",
-        "era5-pressure-levels": "1H",
-        "era5-pressure-levels-monthly-means": "1M",
-        "era5-pressure-levels-monthly-means-preliminary-back-extension": "1M",
-        "era5-pressure-levels-preliminary-back-extension": "1H",
-        "era5-single-levels": "1H",
-        "era5-single-levels-monthly-means": "1M",
-        "era5-single-levels-monthly-means-preliminary-back-extension": "1M",
-        "era5-single-levels-preliminary-back-extension": "1H"
-      },
-      "_strict_time": false
     },
     "tp": {
       "_cf_variable_name": "pr",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": {
-        "era5-land": true,
-        "era5-single-levels": true,
-        "era5-single-levels-preliminary-back-extension": true
-      },
+      "_offset_time": true,
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "description": "Total precipitation thickness converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Precipitation",
-      "original_long_name": "Total Precipitation",
+      "original_long_name": "Total precipitation",
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
@@ -451,8 +444,9 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "Converted from 10 metre U wind component.",
-      "long_name": "10 metre eastward wind",
+      "comments": "Care should be taken when comparing this parameter with observations, because wind observations vary on small space and time scales and are affected by the local terrain, vegetation and buildings that are represented only on average in the ECMWF Integrated Forecasting System.",
+      "description": "This parameter is the eastward component of the 10m wind. It is the horizontal speed of air moving towards the east, at a height of ten metres above the surface of the Earth, in metres per second.",
+      "long_name": "10 metre eastward wind component",
       "standard_name": "eastward_wind",
       "units": "m s-1"
     },
@@ -463,28 +457,21 @@
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "Converted from 10 metre V wind component.",
-      "long_name": "10 metre northward wind",
+      "comments": "Care should be taken when comparing this parameter with observations, because wind observations vary on small space and time scales and are affected by the local terrain, vegetation and buildings that are represented only on average in the ECMWF Integrated Forecasting System.",
+      "description": "This parameter is the northward component of the 10m wind. It is the horizontal speed of air moving towards the north, at a height of ten metres above the surface of the Earth, in metres per second.",
+      "long_name": "10 metre northward wind component",
       "standard_name": "northward_wind",
       "units": "m s-1"
     },
     "z": {
       "_cf_variable_name": "z",
-      "_corrected_units": {
-        "era5-pressure-levels": "m2 s-2",
-        "era5-pressure-levels-monthly-means": "m2 s-2",
-        "era5-pressure-levels-monthly-means-preliminary-back-extension": "m2 s-2",
-        "era5-pressure-levels-preliminary-back-extension": "m2 s-2",
-        "era5-single-levels": "m2 s-2",
-        "era5-single-levels-monthly-means": "m2 s-2",
-        "era5-single-levels-monthly-means-preliminary-back-extension": "m2 s-2",
-        "era5-single-levels-preliminary-back-extension": "m2 s-2"
-      },
+      "_corrected_units": "m2 s-2",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
+      "comment": "The geopotential height can be calculated by dividing the geopotential by the Earth's gravitational acceleration, g (=9.80665 m s-2).",
+      "description": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
       "long_name": "Geopotential",
       "standard_name": "geopotential",
       "units": "m2 s-2"

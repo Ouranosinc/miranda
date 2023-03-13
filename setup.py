@@ -27,16 +27,16 @@ with open("requirements.txt") as req:
             dependency = "pint<0.20"
         requirements.append(dependency)
 
-full_requirements = list()
-with open("requirements_full.txt") as dev:
+remote_requirements = list()
+with open("requirements_remote.txt") as dev:
     for dependency in dev.readlines():
-        full_requirements.append(dependency)
+        remote_requirements.append(dependency)
 
 dev_requirements = list()
 with open("requirements_dev.txt") as dev:
     for dependency in dev.readlines():
         dev_requirements.append(dependency)
-dev_requirements.extend(full_requirements)
+dev_requirements.extend(remote_requirements)
 
 docs_requirements = [
     "furo",
@@ -79,7 +79,7 @@ setup(
     install_requires=requirements,
     extras_require={
         "docs": docs_requirements,
-        "full": full_requirements,
+        "remote": remote_requirements,
         "dev": dev_requirements,
     },
     license=LICENSE,

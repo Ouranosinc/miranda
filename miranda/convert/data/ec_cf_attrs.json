@@ -20,13 +20,14 @@
     "_version": {
       "ec-canswe": "v4"
     },
-    "data_specs_version": "00.00.01",
     "institution": "GouvCan",
-    "license_type": "open",
+    "license_type": {
+      "ec-canswe": "permissive"
+    },
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "28 October 2022",
+    "table_date": "2022-12-21",
     "table_id": "EC",
     "type": "station-obs"
   },
