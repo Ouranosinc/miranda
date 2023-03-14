@@ -17,21 +17,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["config_chunks", "rechunk_files"]
 
-_chunk_presets = dict()
-_chunk_presets[
-    "era5-single-levels",
-    "era5-single-levels-preliminary-back-extension",
-    "era5-land",
-    "era5-pressure-levels",
-    "era5-pressure-levels-preliminary-back-extension",
-] = {
-    "1hr": {
-        "time": 24 * 7,
-        "latitude": 225,
-        "longitude": 252,
-    },
-}
-
 
 def config_chunks(project, time_step: str, levels: int = None):
     # ~35 Mo chunks

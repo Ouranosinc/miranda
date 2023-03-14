@@ -15,7 +15,7 @@ except ImportError:
     Client = None
     has_dask = False
 
-from miranda.io._rechunk import rechunk_files
+from miranda.io import rechunk_files
 
 if __name__ == "__main__":
     step = "hourly"  # "daily

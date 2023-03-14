@@ -35,9 +35,8 @@ def main():
     projects = [
         "era5-single-levels",
         "era5-single-levels-preliminary-back-extension",
+        "era5-single-levels-monthly-means",
     ]
-
-    projects = ["era5-single-levels-monthly-means"]
 
     request_era5(
         projects,

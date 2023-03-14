@@ -765,7 +765,6 @@ def dataset_conversion(
         xr.Dataset,
     ],
     project: str,
-    *,
     domain: Optional[str] = None,
     mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
     mask_cutoff: float = 0.5,
@@ -794,7 +793,6 @@ def dataset_conversion(
         Preprocessing functions to perform over each Dataset.
         Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
         Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
-
     **xr_kwargs
         Arguments passed directly to xarray.
 

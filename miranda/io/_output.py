@@ -2,11 +2,11 @@ import logging.config
 import os
 import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
+import dask
 import xarray as xr
 import zarr
-from dask import compute, delayed
 from dask.distributed import Client
 
 from miranda.decode import date_parser
@@ -51,7 +51,7 @@ def delayed_write(
     output_format: str,
     overwrite: bool,
     target_chunks: Optional[dict] = None,
-) -> delayed:
+) -> dask.delayed:
     """
 
     Parameters
@@ -167,6 +167,46 @@ def write_dataset(
     return dict(path=outfile_path, object=write_object)
 
 
+def write_variables(
+    dataset_dict: Dict[str, xr.Dataset],
+    output_folder: Union[str, os.PathLike],
+    working_folder: Union[str, os.PathLike],
+    output_format: str = "zarr",
+    overwrite: bool = False,
+    **dask_kwargs,
+):
+    if isinstance(output_folder, str):
+        output_folder = Path(output_folder)
+    if isinstance(working_folder, str):
+        working_folder = Path(working_folder)
+
+    for variable, ds in dataset_dict.items():
+        if ds is None:
+            continue
+
+        outfile = name_output_file(ds, ds.attrs["project"], output_format)
+        outfile = output_folder.joinpath(variable, outfile)
+        if not outfile.exists() or overwrite:
+            outfile.parent.mkdir(parents=True, exist_ok=True)
+            if outfile.exists():
+                shutil.rmtree(outfile)
+
+            if working_folder:
+                tmp_zarr = working_folder.joinpath(outfile.name)
+                # FIXME: Client is only needed for computation. Should be elsewhere.
+                with Client(**dask_kwargs):
+                    ds[variable].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(
+                        tmp_zarr
+                    )
+                shutil.copytree(tmp_zarr, outfile, dirs_exist_ok=True)
+                shutil.rmtree(tmp_zarr)
+            else:
+                with Client(**dask_kwargs):
+                    ds[variable].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(outfile)
+        else:
+            logging.warning(outfile.as_posix(), "exists. Continuing..")
+
+
 def concat_zarr(
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
@@ -244,7 +284,7 @@ def concat_zarr(
                     target_chunks=chunks,
                     overwrite=overwrite,
                 )  # kwargs=zarr_kwargs)
-                compute(job)
+                dask.compute(job)
 
         # get tmp zarrs
         list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
@@ -258,6 +298,6 @@ def concat_zarr(
                 target_chunks=chunks,
                 overwrite=overwrite,
             )  # kwargs=zarr_kwargs)
-            compute(job)
+            dask.compute(job)
 
         shutil.rmtree(tmpzarr.parent)

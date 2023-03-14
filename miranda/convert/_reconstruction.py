@@ -11,11 +11,10 @@ from dask.diagnostics import ProgressBar
 from xclim.core import calendar
 
 from miranda.gis import subset_domain
-from miranda.io import delayed_write
+from miranda.io import delayed_write, get_chunks_on_disk
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
-from ..io._input import get_chunks_on_disk
 from ._data_corrections import dataset_corrections
 from ._data_definitions import project_institutes, xarray_frequencies_to_cmip6like
 from .utils import daily_aggregation

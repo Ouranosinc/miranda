@@ -1,0 +1,39 @@
+{
+  "ECCC": {
+    "rdrs-v2.1": {
+      "chunks": {
+        "1hr": {
+          "latitude": 50,
+          "longitude": 50,
+          "time": 1440
+        },
+        "day": {
+          "latitude": 50,
+          "longitude": 50,
+          "time": 1461
+        }
+      }
+    }
+  },
+  "ECMWF": {
+    "_projects": [
+      "era5-single-levels",
+      "era5-single-levels-preliminary-back-extension",
+      "era5-land",
+      "era5-pressure-levels",
+      "era5-pressure-levels-preliminary-back-extension"
+    ],
+    "chunks": {
+      "1hr": {
+        "latitude": 50,
+        "longitude": 50,
+        "time": 1440
+      },
+      "day": {
+        "latitude": 50,
+        "longitude": 50,
+        "time": 1461
+      }
+    }
+  }
+}

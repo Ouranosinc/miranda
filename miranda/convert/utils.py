@@ -3,7 +3,7 @@ import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import xarray as xr
 from xclim.indices import tas
@@ -18,7 +18,9 @@ __all__ = [
 ]
 
 
-def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.Dataset]:
+def daily_aggregation(
+    ds: xr.Dataset, keys_only: bool = False
+) -> Dict[str, Optional[xr.Dataset]]:
     logging.info("Creating daily upscaled climate variables.")
 
     daily_dataset = dict()
@@ -48,7 +50,7 @@ def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.D
                     daily_dataset[v] = ds_out
                     del ds_out
                 else:
-                    daily_dataset[v] = []
+                    daily_dataset[v] = None
 
         elif variable in [
             "evspsblpot",
@@ -82,7 +84,7 @@ def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.D
                 daily_dataset[variable] = ds_out
                 del ds_out
             else:
-                daily_dataset[variable] = []
+                daily_dataset[variable] = None
         else:
             continue
 

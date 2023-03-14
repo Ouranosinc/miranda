@@ -1,8 +1,9 @@
+import datetime
 import json
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, List, Mapping, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -13,9 +14,7 @@ __all__ = [
     "era5_variables",
     "gather_agcfsr",
     "gather_agmerra",
-    "gather_era5_land",
-    "gather_era5_pressure_levels",
-    "gather_era5_single_levels",
+    "gather_ecmwf",
     "gather_nrcan_gridded_obs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
@@ -28,6 +27,9 @@ __all__ = [
 ]
 
 data_folder = Path(__file__).parent / "data"
+eccc_rdrs_variables = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))[
+    "variables"
+].keys()
 era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
     "variables"
 ].keys()
@@ -75,98 +77,193 @@ xarray_frequencies_to_cmip6like = {
 
 def _gather(
     name: str,
-    variables: Mapping[str, List[str]],
+    variables: List[str],
     source: Union[str, os.PathLike],
-    back_extension: bool,
-    monthly_means: bool,
+    glob_pattern: str,
+    suffix: Optional[str] = None,
 ) -> Dict[str, List[Path]]:
     source = Path(source).expanduser()
-    name = (
-        f"{name}"
-        f"{'-monthly-means' if monthly_means else ''}"
-        f"{'-preliminary-back-extension' if back_extension else ''}"
-    )
     logging.info(f"Gathering {name} files from: {source.as_posix()}")
     in_files = list()
-    for v in variables:
-        in_files.extend(list(sorted(source.rglob(f"{v}_*_{name}_*.nc"))))
+    for variable in variables:
+        if suffix:
+            pattern = glob_pattern.format(variable, suffix)
+            if suffix == "zarr":
+                in_files.extend(list(sorted(source.glob(pattern))))
+                continue
+        else:
+            pattern = glob_pattern.format(variable)
+        in_files.extend(list(sorted(source.rglob(pattern))))
     logging.info(
         f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
     )
     return {name: in_files}
 
 
-def gather_era5_single_levels(
+def gather_ecmwf(
+    project: str,
     path: Union[str, os.PathLike],
     back_extension: bool = False,
     monthly_means: bool = False,
 ) -> Dict[str, List[Path]]:
+    """
+
+    Parameters
+    ----------
+    project : {"era5-single-levels", "era5-pressure-levels", "era5-land"}
+    path : str or os.PathLike
+    back_extension : bool
+    monthly_means : bool
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
     # ERA5-Single-Levels source data
-    return _gather(
-        "era5-single-levels",
-        era5_variables,
-        source=path,
-        back_extension=back_extension,
-        monthly_means=monthly_means,
+    name = (
+        f"{project}"
+        f"{'-monthly-means' if monthly_means else ''}"
+        f"{'-preliminary-back-extension' if back_extension else ''}"
     )
+    glob_pattern = "".join(["{variable}", f"_*_{name}_*.nc"])
 
-
-def gather_era5_pressure_levels(
-    path: Union[str, os.PathLike],
-    back_extension: bool = False,
-    monthly_means: bool = False,
-) -> Dict[str, List[Path]]:
-    # ERA5-Pressure-Levels source data
-    return _gather(
-        "era5-pressure-levels",
-        era5_variables,
-        source=path,
-        back_extension=back_extension,
-        monthly_means=monthly_means,
-    )
-
-
-def gather_era5_land(
-    path: Union[str, os.PathLike],
-    back_extension: bool = False,
-    monthly_means: bool = False,
-) -> Dict[str, List[Path]]:
-    # ERA5-Land source data
-    return _gather(
-        "era5-land",
-        era5_variables,
-        source=path,
-        back_extension=back_extension,
-        monthly_means=monthly_means,
-    )
+    return _gather(name, era5_variables, source=path, glob_pattern=glob_pattern)
 
 
 def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # agMERRA source data
-    source_agmerra = Path(path)
-    logging.info(f"Gathering agMERRA from: {source_agmerra.as_posix()}")
-    in_files_agmerra = list()
-    for v in nasa_ag_variables:
-        in_files_agmerra.extend(
-            list(sorted(source_agmerra.rglob(f"AgMERRA_*_{v}.nc4")))
-        )
-    logging.info(
-        f"Found {len(in_files_agmerra)} files, totalling {report_file_size(in_files_agmerra)}."
+    """Gather agMERRA source data.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+    return _gather(
+        "merra", nasa_ag_variables, source=path, glob_pattern="AgMERRA_*_{variable}.nc4"
     )
-    return dict(cfsr=in_files_agmerra)
 
 
 def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # agCFSR source data
-    source_agcfsr = Path(path)
-    logging.info(f"Gathering CFSR from: {source_agcfsr.as_posix()}")
-    in_files_agcfsr = list()
-    for v in nasa_ag_variables:
-        in_files_agcfsr.extend(list(sorted(source_agcfsr.rglob(f"AgCFSR_*_{v}.nc4"))))
-    logging.info(
-        f"Found {len(in_files_agcfsr)} files, totalling {report_file_size(in_files_agcfsr)}."
+    """Gather agCFSR source data.
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+    return _gather(
+        "cfsr", nasa_ag_variables, source=path, glob_pattern="AgCFSR_*_{variable}.nc4"
     )
-    return dict(cfsr=in_files_agcfsr)
+
+
+def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+    """Gather NRCan Gridded Observations source data.
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+    return _gather(
+        "nrcan", nrcan_variables, source=path, glob_pattern="*{variable}_*.nc"
+    )
+
+
+def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+    """Gather WFDEI-GEM-CaPa source data.
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+    return _gather(
+        "wfdei-gem-capa",
+        wfdei_gem_capa_variables,
+        source=path,
+        glob_pattern="{variable}_*.nc",
+    )
+
+
+def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+    """Gather SC-Earth source data
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+    return _gather(
+        "sc-earth",
+        sc_earth_variables,
+        source=path,
+        glob_pattern="SC-Earth_{variable}_*.nc",
+    )
+
+
+def gather_rdrs(path: Union[str, os.PathLike], suffix: str) -> Dict[str, List[Path]]:
+    """Gather RDRS processed source data.
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+    suffix : str
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+    return _gather(
+        "rdrs-v21",
+        eccc_rdrs_variables,
+        source=path,
+        glob_pattern="{variable}_*_rdrs_*.{suffix}",
+        suffix=suffix,
+    )
+
+
+def gather_raw_rdrs_by_years(
+    path: Union[str, os.PathLike]
+) -> Optional[Dict[str, Dict[str, List[Path]]]]:
+    """Gather raw RDRS files for preprocessing.
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+
+    Returns
+    -------
+    dict(str, dict(str, list[Path])) or None
+    """
+    # Time stamps starts at noon and flow into subsequent months
+    # Need full year plus previous december in order to easily produce complete hourly frequency monthly files
+    path = Path(path)
+    year_sets = dict()
+    for year in range(1950, datetime.datetime.now().year + 1):
+        files = sorted(list(path.glob(f"*_{year - 1}12*.nc")))
+        if files:
+            files = [files[-1]]
+        files.extend(sorted(list(path.glob(f"*_{year}*.nc"))))
+        year_sets[str(year)] = files
+
+    if not year_sets:
+        return
+    return {"rdrs-v21": year_sets}
 
 
 def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
@@ -181,44 +278,3 @@ def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
         f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
     )
     return dict(cfsr=sorted(in_files_grnch))
-
-
-def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # NRCan Gridded Observations source data
-    source_nrcan = Path(path)
-    logging.info(f"Gathering NRCAN Gridded Obs from {source_nrcan.as_posix()}")
-    in_files_nrcan = list()
-    for v in nrcan_variables:
-        in_files_nrcan.extend(list(sorted(source_nrcan.joinpath(v).glob(f"*{v}_*.nc"))))
-    logging.info(
-        f"Found {len(in_files_nrcan)} files, totalling {report_file_size(in_files_nrcan)}."
-    )
-    return dict(nrcan=in_files_nrcan)
-
-
-def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # WFDEI-GEM-CaPa source data
-    source_wfdei = Path(path)
-    logging.info(f"Gathering WFDEI-GEM_CaPa from: {source_wfdei.as_posix()}")
-    in_files_wfdei = list()
-    for v in wfdei_gem_capa_variables:
-        in_files_wfdei.extend(list(sorted(source_wfdei.rglob(f"{v}_*.nc"))))
-    logging.info(
-        f"Found {len(in_files_wfdei)} files, totalling {report_file_size(in_files_wfdei)}."
-    )
-    return {"wfdei-gem-capa": in_files_wfdei}
-
-
-def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
-    # SC-Earth source data
-    source_sc_earth = Path(path)
-    logging.info(f"Gathering SC-Earth from: {source_sc_earth.as_posix()}")
-    in_files_sc_earth = list()
-    for v in sc_earth_variables:
-        in_files_sc_earth.extend(
-            list(sorted(source_sc_earth.rglob(f"SC-Earth_{v}_*.nc")))
-        )
-    logging.info(
-        f"Found {len(in_files_sc_earth)} files, totalling {report_file_size(in_files_sc_earth)}."
-    )
-    return {"wfdei-gem-capa": in_files_sc_earth}
