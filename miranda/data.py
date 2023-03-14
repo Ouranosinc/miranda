@@ -4,9 +4,9 @@ from pathlib import Path
 from types import GeneratorType
 from typing import List, Optional, Tuple, Union
 
+from .io._input import find_filepaths
 from .scripting import LOGGING_CONFIG
 from .units import GiB
-from .utils import find_filepaths
 from .validators import url_validate
 
 logging.config.dictConfig(LOGGING_CONFIG)

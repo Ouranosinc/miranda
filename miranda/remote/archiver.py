@@ -11,8 +11,9 @@ from miranda.archive import (
 )
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
-from miranda.utils import find_filepaths, single_item_list, working_directory
+from miranda.utils import single_item_list, working_directory
 
+from ..io._input import find_filepaths
 from .connect import Connection
 from .ops import create_archive, create_remote_directory, transfer_file
 

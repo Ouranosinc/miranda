@@ -21,7 +21,7 @@ __all__ = [
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
     "nrcan_variables",
-    "reanalysis_project_institutes",
+    "project_institutes",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
     "xarray_frequencies_to_cmip6like",
@@ -41,7 +41,7 @@ wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
     "variables"
 ].keys()
 
-reanalysis_project_institutes = {
+project_institutes = {
     "cfsr": "ncar",
     "era5": "ecmwf",
     "era5-land": "ecmwf",

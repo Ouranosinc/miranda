@@ -1,7 +1,8 @@
 import logging
 from pathlib import Path
 
-from miranda.convert.eccc_rdrs import concat_zarr, convert_rdrs, rdrs_to_daily
+from miranda.convert.eccc_rdrs import convert_rdrs, rdrs_to_daily
+from miranda.io import concat_zarr
 
 home = Path("~").expanduser()
 dask_dir = home.joinpath("tmpout", "dask")

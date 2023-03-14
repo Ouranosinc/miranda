@@ -3,13 +3,9 @@ import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
-import netCDF4
-import regionmask
 import xarray as xr
-import zarr
-from dask.delayed import delayed
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
@@ -17,62 +13,9 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "add_ar6_regions",
     "daily_aggregation",
-    "delayed_write",
     "find_version_hash",
-    "get_chunks_on_disk",
-    "name_output_file",
 ]
-
-
-def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
-    """
-
-    Parameters
-    ----------
-    file : str or os.PathLike
-        File to be examined. Supports NetCDF and Zarr.
-
-    Returns
-    -------
-    dict
-    """
-    chunks = dict()
-    file = Path(file)
-
-    if file.suffix.lower() in [".nc", ".nc4"]:
-        with netCDF4.Dataset(file) as ds:
-            for v in ds.variables:
-                chunks[v] = dict()
-                for ii, dim in enumerate(ds[v].dimensions):
-                    chunks[v][dim] = ds[v].chunking()[ii]
-    elif file.suffix.lower() == "zarr" and file.is_dir():
-        with zarr.open(file, "r") as ds:  # noqa
-            for v in ds.arrays():
-                # Check if variable is chunked
-                if v[1]:
-                    chunks[v[0]] = v[1]
-    else:
-        raise NotImplementedError(f"File type: {file.suffix}.")
-    return chunks
-
-
-def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
-    """Add the IPCC AR6 Regions to dataset.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-
-    Returns
-    -------
-    xarray.Dataset
-    """
-
-    mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
-    ds = ds.assign_coords(region=mask)
-    return ds
 
 
 def daily_aggregation(ds: xr.Dataset, keys_only: bool = False) -> Dict[str, xr.Dataset]:
@@ -190,86 +133,3 @@ def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
             version_info["sha256sum"] = _get_hash(file)
 
     return version_info
-
-
-def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
-    """
-
-    Parameters
-    ----------
-    ds : xr.Dataset
-    project: str
-    output_format : {"netcdf", "zarr"}
-        Suffix to be used for filename
-
-    Returns
-    -------
-    str
-    """
-    if output_format.lower() not in {"netcdf", "zarr"}:
-        raise NotImplementedError(f"Format: {output_format}.")
-    else:
-        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
-
-    var_name = list(ds.data_vars.keys())[0]
-    time_freq = ds.attrs.get("frequency")
-    institution = ds.attrs.get("institution")
-    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
-
-    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
-
-
-def delayed_write(
-    ds: xr.Dataset,
-    outfile: Union[str, os.PathLike],
-    output_format: str,
-    overwrite: bool,
-    target_chunks: Optional[dict] = None,
-) -> delayed:
-    """
-
-    Parameters
-    ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
-    outfile : str or os.PathLike
-    target_chunks : dict
-    output_format : {"netcdf", "zarr"}
-    overwrite : bool
-
-    Returns
-    -------
-    dask.delayed.delayed
-    """
-    # Set correct chunks in encoding options
-    kwargs = dict()
-    kwargs["encoding"] = dict()
-    for name, da in ds.data_vars.items():
-        chunks = list()
-        for dim in da.dims:
-            if target_chunks:
-                if dim in target_chunks.keys():
-                    chunks.append(target_chunks[str(dim)])
-            else:
-                chunks.append(len(da[dim]))
-
-        if output_format == "netcdf":
-            kwargs["encoding"][name] = {
-                "chunksizes": chunks,
-                "zlib": True,
-            }
-            kwargs["compute"] = False
-            if Path(outfile).exists() and not overwrite:
-                kwargs["mode"] = "a"
-        elif output_format == "zarr":
-            ds = ds.chunk(target_chunks)
-            kwargs["encoding"][name] = {
-                "chunks": chunks,
-                "compressor": zarr.Blosc(),
-            }
-            kwargs["compute"] = False
-            if overwrite:
-                kwargs["mode"] = "w"
-    if kwargs["encoding"]:
-        kwargs["encoding"]["time"] = {"dtype": "int32"}
-
-    return getattr(ds, f"to_{output_format}")(outfile, **kwargs)

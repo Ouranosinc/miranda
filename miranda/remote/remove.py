@@ -6,9 +6,9 @@ from pathlib import Path
 from types import GeneratorType
 from typing import List, Optional, Union
 
+from miranda.io._input import creation_date
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
-from miranda.utils import creation_date
 
 logging.config.dictConfig(LOGGING_CONFIG)
 

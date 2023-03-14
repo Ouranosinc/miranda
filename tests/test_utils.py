@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest  # noqa
 
 import miranda.eccc._utils as eccc_utils  # noqa
+import miranda.io._input
 from miranda import utils
 
 
@@ -83,27 +84,27 @@ class TestCreationDate:
         with open(testfile.name, "w") as f:
             f.write(filename)
 
-        assert utils.creation_date(testfile) == date.today()
+        assert miranda.io._input.creation_date(testfile) == date.today()
         testfile.unlink()
 
 
 class TestReadPrivileges:
     def test_allowed_folder(self):
         here = Path.cwd()
-        allowed = utils.read_privileges(here)
+        allowed = miranda.io._input.read_privileges(here)
         assert allowed
 
     def test_nonexistent_folder_strict(self):
         mythical_folder = Path("/here/there/everywhere")
         with pytest.raises(OSError):
-            utils.read_privileges(mythical_folder, strict=True)
+            miranda.io._input.read_privileges(mythical_folder, strict=True)
 
     @pytest.mark.skipif(os.name != "posix", reason="not Windows")
     def test_forbidden_folder_lax(self):
         root_folder = Path.cwd().root
         if os.getenv("CI"):
             root_folder = Path(Path.cwd().root) / "root"
-        allowed = utils.read_privileges(root_folder, strict=False)
+        allowed = miranda.io._input.read_privileges(root_folder, strict=False)
         if os.getenv("CI"):
             assert not allowed
         else:

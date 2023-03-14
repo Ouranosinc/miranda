@@ -6,26 +6,28 @@ from pathlib import Path
 from typing import List, Optional, Set, Union
 
 import xarray as xr
-from dask import compute
 from dask.distributed import Client
 
-from miranda.convert import file_conversion, load_json_data_mappings
-from miranda.convert.utils import daily_aggregation, delayed_write
-from miranda.decode import date_parser
+from miranda.convert import dataset_conversion, load_json_data_mappings
+from miranda.convert.utils import daily_aggregation
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["convert_rdrs", "concat_zarr", "rdrs_to_daily"]
+__all__ = ["convert_rdrs", "rdrs_to_daily"]
 
 
 # FIXME: Can we use `name_output_file` instead? We already have a better version of this function.
 def _rename_output_file(
-    fname: str, old_variable: str, new_variable: str, freq: str, date: Union[str, int]
+    filename: str,
+    old_variable: str,
+    new_variable: str,
+    freq: str,
+    date: Union[str, int],
 ):
-    parts = fname.replace(old_variable, new_variable).split("_")
+    parts = filename.replace(old_variable, new_variable).split("_")
     parts[-1] = f"{date}"
     parts[1] = freq
     return f"{'_'.join(parts)}.zarr"
@@ -139,8 +141,8 @@ def convert_rdrs(
 
                 # FIXME: We should be either returning a list of jobs to run or iterating through them.
                 # We do not need to hardcode compute=False
-                job = file_conversion(
-                    input=ds_out,
+                job = dataset_conversion(
+                    input_files=ds_out,
                     project=project,
                     output_path=write_folder.joinpath(
                         var_attrs[var_attr]["_cf_variable_name"]
@@ -271,99 +273,3 @@ def rdrs_to_daily(
                             ).to_zarr(outzarr)
                 else:
                     logging.warning(outzarr.as_posix(), "exists. Continuing..")
-
-
-def concat_zarr(
-    input_folder: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
-    overwrite: bool = False,
-    **dask_kwargs,
-):
-    """
-
-    Parameters
-    ----------
-    input_folder
-    output_folder
-    overwrite
-    dask_kwargs
-
-    Returns
-    -------
-
-    """
-    if isinstance(input_folder, str):
-        input_folder = Path(input_folder)
-    if isinstance(output_folder, str):
-        output_folder = Path(output_folder)
-
-    list_zarr = sorted(list(input_folder.glob("*.zarr")))
-
-    out_stem = "_".join(list_zarr[0].stem.split("_")[0:-1])
-    start_year = date_parser(
-        list_zarr[0].stem.split("_")[-1], output_type="datetime"
-    ).year
-    end_year = date_parser(
-        list_zarr[-1].stem.split("_")[-1], output_type="datetime"
-    ).year
-
-    outzarr = f"{out_stem}_{start_year}_{end_year}.zarr"
-    outzarr = output_folder.joinpath(outzarr)
-
-    if not outzarr.exists() or overwrite:
-        if "day" in input_folder.as_posix():
-            chunks = dict(time=(365 * 4) + 1, rlon=50, rlat=50)
-        else:
-            chunks = dict(time=(24 * 30 * 2), rlon=50, rlat=50)
-
-        # maketemp files 1 zarr per 4 years
-        years = [y for y in range(int(start_year), int(end_year) + 1)]
-        years = [years[x : x + 4] for x in range(0, len(years), 4)]
-        for year in years:
-            list_zarr1 = sorted(
-                [
-                    zarrfile
-                    for zarrfile in list_zarr
-                    if int(zarrfile.stem.split("_")[-1].split("-")[0][0:4]) in year
-                ]
-            )
-            assert len(list_zarr1) / len(year) == 12
-            ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
-
-            # FIXME: Client is only needed for computation. Should be elsewhere.
-            with Client(**dask_kwargs):
-                # if outzarr.exists():
-                #     zarr_kwargs = {"append_dim": "time", "consolidated": True}
-                # else:
-                #     zarr_kwargs = {"consolidated": True}
-                tmpzarr = outzarr.parent.joinpath(
-                    "tmp",
-                    f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
-                )
-                tmpzarr.parent.mkdir(exist_ok=True, parents=True)
-                logging.info(f"Writing year {year} to {tmpzarr.as_posix()}.")
-
-                job = delayed_write(
-                    ds=ds,
-                    outfile=tmpzarr,
-                    output_format="zarr",
-                    target_chunks=chunks,
-                    overwrite=overwrite,
-                )  # kwargs=zarr_kwargs)
-                compute(job)
-
-        # get tmp zarrs
-        list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
-        ds = xr.open_mfdataset(list_zarr, engine="zarr")
-        # FIXME: Client is only needed for computation. Should be elsewhere.
-        with Client(**dask_kwargs):
-            job = delayed_write(
-                ds=ds,
-                outfile=outzarr,
-                output_format="zarr",
-                target_chunks=chunks,
-                overwrite=overwrite,
-            )  # kwargs=zarr_kwargs)
-            compute(job)
-
-        shutil.rmtree(tmpzarr.parent)

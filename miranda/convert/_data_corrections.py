@@ -2,7 +2,6 @@ import datetime
 import json
 import logging.config
 import os
-import shutil
 from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
@@ -16,7 +15,7 @@ from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
-from miranda.convert.utils import delayed_write, find_version_hash, name_output_file
+from miranda.convert.utils import find_version_hash
 from miranda.decode import date_parser
 from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
@@ -29,7 +28,7 @@ VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 __all__ = [
     "dataset_corrections",
     "dims_conversion",
-    "file_conversion",
+    "dataset_conversion",
     "load_json_data_mappings",
     "metadata_conversion",
     "threshold_mask",
@@ -241,7 +240,7 @@ def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.
     return d.rename({old_name: new_name})
 
 
-def preprocess_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
+def preprocessing_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
     def _preprocess_correct(d: xr.Dataset, *, ops: List[partial]) -> xr.Dataset:
         for correction in ops:
             d = correction(d)
@@ -748,11 +747,17 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 
     ds = metadata_conversion(ds, project, metadata_definition)
 
+    ds.attrs["history"] = (
+        f"{datetime.datetime.now()}: "
+        f"Variables converted from original files using miranda.convert.{dataset_corrections.__name__}. "
+        f"{ds.attrs.get('history')}".strip()
+    )
+
     return ds
 
 
-def file_conversion(
-    input: Union[
+def dataset_conversion(
+    input_files: Union[
         str,
         os.PathLike,
         Sequence[Union[str, os.PathLike]],
@@ -760,74 +765,55 @@ def file_conversion(
         xr.Dataset,
     ],
     project: str,
-    output_path: Union[str, os.PathLike],
-    output_format: str,
     *,
     domain: Optional[str] = None,
     mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
     mask_cutoff: float = 0.5,
-    chunks: Optional[dict] = None,
-    overwrite: bool = False,
     add_version_hashes: bool = True,
     preprocess: Optional[Union[Callable, str]] = "auto",
-    compute: bool = True,
     **xr_kwargs,
-) -> Dict:
+) -> Union[xr.Dataset, xr.DataArray]:
     """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
     ----------
-    input : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike] or xr.Dataset
+    input_files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike] or xr.Dataset
         Files or objects to be converted.
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
     project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
         Project name for decoding/handling purposes.
-    output_path : str or os.PathLike
-        Output folder path.
-    output_format: {"netcdf", "zarr"}
-        Output data container type.
     domain: {"global", "nam", "can", "qc", "mtl"}, optional
         Domain to perform subsetting for. Default: None.
     mask : Optional[Union[xr.Dataset, xr.DataArray]]
         DataArray or single data_variable dataset containing mask.
     mask_cutoff : float
         If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: 0.5.
-    chunks : dict, optional
-        Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
-    overwrite : bool
-        Whether to remove existing files or fail if files already exist.
     add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
     preprocess : callable or str, optional
         Preprocessing functions to perform over each Dataset.
         Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
         Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
-    compute : bool
-        If True, files will be converted with each call to file conversion.
-        If False, will return a dask.Delayed object that can be computed later.
-        Default: True.
+
     **xr_kwargs
         Arguments passed directly to xarray.
 
     Returns
     -------
-    dict
+    xr.Dataset or xr.DataArray
     """
-    if not isinstance(input, xr.Dataset):
-        if isinstance(output_path, str):
-            output_path = Path(output_path)
-
-        if isinstance(input, (str, os.PathLike)):
-            if Path(input).is_dir():
+    if not isinstance(input_files, xr.Dataset):
+        if isinstance(input_files, (str, os.PathLike)):
+            if Path(input_files).is_dir():
                 files = []
-                files.extend([f for f in Path(input).glob("*.nc")])
-                files.extend([f for f in Path(input).glob("*.zarr")])
+                files.extend([f for f in Path(input_files).glob("*.nc")])
+                files.extend([f for f in Path(input_files).glob("*.zarr")])
             else:
-                files = [Path(input)]
-        elif isinstance(input, (Sequence, Iterator)):
-            files = [Path(f) for f in input]
+                files = [Path(input_files)]
+        elif isinstance(input_files, (Sequence, Iterator)):
+            files = [Path(f) for f in input_files]
         else:
-            files = input
+            files = input_files
 
         version_hashes = dict()
         if add_version_hashes:
@@ -838,7 +824,7 @@ def file_conversion(
         if preprocess:
             if preprocess == "auto":
                 preprocess_kwargs.update(
-                    preprocess=partial(preprocess_corrections, project=project)
+                    preprocess=partial(preprocessing_corrections, project=project)
                 )
             elif isinstance(preprocess, Callable):
                 preprocess_kwargs.update(preprocess=preprocess)
@@ -853,14 +839,9 @@ def file_conversion(
         if version_hashes:
             ds.attrs.update(dict(original_files=str(version_hashes)))
     else:
-        ds = input
+        ds = input_files
 
     ds = dataset_corrections(ds, project)
-    ds.attrs["history"] = (
-        f"{datetime.datetime.now()}: "
-        f"Variables converted from original files using miranda.convert.{file_conversion.__name__}. "
-        f"{ds.attrs.get('history')}".strip()
-    )
 
     if domain:
         ds = subset_domain(ds, domain)
@@ -875,25 +856,4 @@ def file_conversion(
         # mask = conservative_regrid(mask, ds)
         ds = threshold_mask(ds, mask=mask, mask_cutoff=mask_cutoff)
 
-    outfile = name_output_file(ds, project, output_format)
-    outfile_path = output_path.joinpath(outfile)
-
-    if overwrite and outfile_path.exists():
-        logging.warning(f"Removing existing {output_format} files for {outfile}.")
-        if outfile_path.is_dir():
-            shutil.rmtree(outfile_path)
-        if outfile_path.is_file():
-            outfile_path.unlink()
-
-    logging.info(f"Writing {outfile}.")
-    write_object = delayed_write(
-        ds,
-        outfile_path,
-        output_format,
-        overwrite,
-        target_chunks=chunks,
-    )
-    if compute:
-        write_object.compute()
-        return dict(path=outfile_path)
-    return dict(path=outfile_path, object=write_object)
+    return ds

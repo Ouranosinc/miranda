@@ -8,27 +8,38 @@ from typing import Dict, Optional, Sequence, Union
 import xarray as xr
 import zarr
 
+from miranda.convert import project_institutes
+from miranda.io import delayed_write
 from miranda.scripting import LOGGING_CONFIG
-
-from ._data_definitions import era5_variables, reanalysis_project_institutes
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["rechunk_reanalysis"]
+__all__ = ["config_chunks", "rechunk_files"]
+
+_chunk_presets = dict()
+_chunk_presets[
+    "era5-single-levels",
+    "era5-single-levels-preliminary-back-extension",
+    "era5-land",
+    "era5-pressure-levels",
+    "era5-pressure-levels-preliminary-back-extension",
+] = {
+    "1hr": {
+        "time": 24 * 7,
+        "latitude": 225,
+        "longitude": 252,
+    },
+}
 
 
-def _rechunk_configurator(project, time_step, levels: int = None):
+def config_chunks(project, time_step: str, levels: int = None):
     # ~35 Mo chunks
     if project.lower() in [
         "era5-single-levels",
         "era5-single-levels-preliminary-back-extension",
         "era5-land",
-    ] or (
-        project.lower()
-        in ["era5-pressure-levels", "era5-pressure-levels-preliminary-back-extension"]
-        and levels == 1
-    ):
+    ] or (project.lower() in [] and levels == 1):
         if time_step == "1hr":
             # Chunks for monthly files, optimized for Zarr
             target_chunks = {
@@ -46,10 +57,10 @@ def _rechunk_configurator(project, time_step, levels: int = None):
     return target_chunks
 
 
-def rechunk_reanalysis(
-    project: str,
+def rechunk_files(
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
+    project: str,
     time_step: Optional[str] = None,
     target_chunks: Optional[Dict[str, int]] = None,
     variables: Optional[Sequence[str]] = None,
@@ -65,12 +76,12 @@ def rechunk_reanalysis(
 
     Parameters
     ----------
-    project : {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-single-levels", "era5-pressure-levels-preliminary-back-extension"}
-      Supported reanalysis projects.
     input_folder : str or os.PathLike
       Folder to be examined. Performs globbing.
     output_folder : str or os.PathLike
       Target folder.
+    project : {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-single-levels", "era5-pressure-levels-preliminary-back-extension"}
+      Supported projects.
     time_step : {"1hr", "day"}, optional
       Time step of the input data. Parsed from filename if not set.
     target_chunks : dict
@@ -94,28 +105,33 @@ def rechunk_reanalysis(
         file_parts = str(test_file.name).split("_")
         time_step = file_parts[1]
         if time_step not in ["1hr", "day"]:
-            raise NotImplementedError()
-
-    if project.startswith("era5") and variables is None:
-        variables = list(era5_variables)
+            raise NotImplementedError(f"Time step: `{time_step}`.")
 
     errored = list()
     start_all = time.perf_counter()
-    for variable in variables:
-        try:
-            next(input_folder.glob(f"{variable}*"))
-        except StopIteration:
-            logging.warning(f"No files found for {variable}. Continuing...")
-            continue
+
+    glob_patterns = []
+    if variables:
+        for variable in variables:
+            try:
+                next(input_folder.glob(f"{variable}*"))
+            except StopIteration:
+                logging.warning(f"No files found for {variable}. Continuing...")
+                continue
+            glob_patterns.append(
+                f"{variable}_{time_step}_{project_institutes[project]}_{project}_*.nc"
+            )
+    else:
+        glob_patterns.append(
+            f"*_{time_step}_{project_institutes[project]}_{project}_*.nc"
+        )
+
+    for pattern in glob_patterns:
+        start_var = time.perf_counter()
+        variable = pattern.split("_")[0]
 
         # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along the time dimension.
-        start_var = time.perf_counter()
-
-        for file in sorted(
-            input_folder.glob(
-                f"{variable}_{time_step}_{reanalysis_project_institutes[project]}_{project}_reanalysis_*.nc"
-            )
-        ):
+        for file in sorted(input_folder.glob(pattern)):
             start = time.perf_counter()
 
             if output_format == "netcdf":
@@ -143,36 +159,24 @@ def rechunk_reanalysis(
                 levels = None
 
             if target_chunks is None:
-                target_chunks = _rechunk_configurator(project, time_step, levels)
+                target_chunks = config_chunks(project, time_step, levels)
 
-            # Set correct chunks in encoding options
-            encoding = dict()
             try:
-                for name, da in ds.data_vars.items():
-                    chunks = list()
-                    for dim in da.dims:
-                        if dim in target_chunks.keys():
-                            chunks.append(target_chunks[str(dim)])
-                        else:
-                            chunks.append(len(da[dim]))
+                job = delayed_write(
+                    ds,
+                    out,
+                    output_format=output_format,
+                    overwrite=overwrite,
+                    target_chunks=target_chunks,
+                )
 
-                    if output_format == "netcdf":
-                        encoding[name] = {
-                            "chunksizes": chunks,
-                            "zlib": True,
-                        }
-                    elif output_format == "zarr":
-                        encoding[name] = {
-                            "chunks": chunks,
-                            "compressor": zarr.Blosc(),
-                        }
             except KeyError:
                 logging.warning(f"{file} has chunking errors. Verify data manually.")
                 errored.append(file)
                 continue
 
             # Write out rechunked files at the same output frequencies as they were read.
-            getattr(ds, f"to_{output_format}")(out, encoding=encoding)
+            job.compute()
             logging.info(f"Done for {file.stem} in {time.perf_counter() - start:.2f} s")
 
         if output_format == "netcdf":
@@ -190,7 +194,7 @@ def rechunk_reanalysis(
 
         files = sorted(
             (output_folder / "temp").glob(
-                f"{variable}_{time_step}_{reanalysis_project_institutes[project]}_{project}_reanalysis_*.zarr"
+                f"{variable}_{time_step}_{project_institutes[project]}_{project}_*.zarr"
             )
         )
 
@@ -210,18 +214,18 @@ def rechunk_reanalysis(
 
         merged_zarr = Path(
             output_folder
-            / f"{variable}_{time_step}_{reanalysis_project_institutes[project]}_{project}_reanalysis.zarr"
+            / f"{variable}_{time_step}_{project_institutes[project]}_{project}.zarr"
         )
         try:
             ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
         except zarr.errors.ContainsGroupError:
             logging.error(
-                f"Files exist for variable {variable}. Consider using `overwrite=True`"
+                f"Files exist for pattern {pattern.split('_')[0]}. Consider using `overwrite=True`"
             )
             raise
 
         logging.info(
-            f"Second step done for {variable} in {time.perf_counter() - start:.2f} s"
+            f"Second step done for {pattern.split('_')[0]} in {time.perf_counter() - start:.2f} s"
         )
         logging.info(
             f"Both steps done for {variable} in {time.perf_counter() - start_var:.2f} s"
