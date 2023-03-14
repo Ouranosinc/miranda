@@ -23,16 +23,18 @@
       "era5-pressure-levels",
       "era5-pressure-levels-preliminary-back-extension"
     ],
-    "chunks": {
-      "1hr": {
-        "latitude": 50,
-        "longitude": 50,
-        "time": 1440
-      },
-      "day": {
-        "latitude": 50,
-        "longitude": 50,
-        "time": 1461
+    "projects": {
+      "chunks": {
+        "1hr": {
+          "latitude": 50,
+          "longitude": 50,
+          "time": 1440
+        },
+        "day": {
+          "latitude": 50,
+          "longitude": 50,
+          "time": 1461
+        }
       }
     }
   }

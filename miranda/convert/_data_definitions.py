@@ -15,7 +15,10 @@ __all__ = [
     "gather_agcfsr",
     "gather_agmerra",
     "gather_ecmwf",
+    "gather_grnch",
     "gather_nrcan_gridded_obs",
+    "gather_raw_rdrs_by_years",
+    "gather_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
@@ -26,20 +29,20 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-data_folder = Path(__file__).parent / "data"
-eccc_rdrs_variables = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))[
+_data_folder = Path(__file__).parent / "data"
+eccc_rdrs_variables = json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
     "variables"
 ].keys()
-era5_variables = json.load(open(data_folder / "ecmwf_cf_attrs.json"))[
+era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
     "variables"
 ].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(open(data_folder / "nasa_cf_attrs.json"))[
+nasa_ag_variables = json.load(open(_data_folder / "nasa_cf_attrs.json"))[
     "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
-wfdei_gem_capa_variables = json.load(open(data_folder / "usask_cf_attrs.json"))[
+wfdei_gem_capa_variables = json.load(open(_data_folder / "usask_cf_attrs.json"))[
     "variables"
 ].keys()
 

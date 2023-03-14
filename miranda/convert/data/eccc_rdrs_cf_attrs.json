@@ -27,7 +27,7 @@
     "table_id": "EC",
     "type": "reconstruction"
   },
-  "variable_entry": {
+  "variables": {
     "RDRS_v2.1_A_PR0_SFC": {
       "_cf_variable_name": "pr",
       "_corrected_units": false,

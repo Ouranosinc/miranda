@@ -1,3 +1,4 @@
+import json
 import logging.config
 import os
 import shutil
@@ -16,6 +17,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 
 __all__ = ["config_chunks", "rechunk_files"]
+
+_data_folder = Path(__file__).parent / "data"
+chunks_configurations = json.load(open(_data_folder / "chunks.json"))
 
 
 def config_chunks(project, time_step: str, levels: int = None):

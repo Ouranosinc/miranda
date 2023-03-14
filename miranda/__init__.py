@@ -19,9 +19,8 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.3.5-beta"
 
 
-from . import (
+from . import (  # convert,
     archive,
-    convert,
     cv,
     decode,
     eccc,
