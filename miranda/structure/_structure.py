@@ -341,7 +341,7 @@ def structure_datasets(
     make_dirs: bool = False,
     set_version_hashes: bool = False,
     verify_hashes: bool = False,
-    filename_pattern: str = "*.nc",
+    suffix: str = "nc",
 ) -> Dict[Path, Path]:
     """
 
@@ -366,15 +366,15 @@ def structure_datasets(
         Make an accompanying file with version in filename and sha256sum in contents. Default: False.
     verify_hashes : bool
         Ensure that any existing she256sum files correspond with companion file. Raise on error. Default: False.
-    filename_pattern : str
-        If pattern ends with "zarr", will 'glob' with provided pattern.
+    suffix : {"nc", "zarr"}
+        If "zarr", will perform a 'glob' with provided pattern.
         Otherwise, will perform an 'rglob' (recursive) operation.
 
     Returns
     -------
     Dict[Path, Path]
     """
-    input_files = discover_data(input_files, filename_pattern)
+    input_files = discover_data(input_files, suffix)
     if guess and project is None:
         # Examine the first file from a list or generator
         for f in input_files:

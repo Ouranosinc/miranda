@@ -1,109 +1,28 @@
 import logging.config
 import os
 import shutil
+import time
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Sequence, Union
 
 import dask
 import xarray as xr
-import zarr
 from dask.distributed import Client
 
 from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
 
+from ._input import discover_data
+from .utils import delayed_write, get_attributes, name_output_file, sort_variables
+
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["name_output_file", "delayed_write", "write_dataset", "concat_zarr"]
-
-
-def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
-    """
-
-    Parameters
-    ----------
-    ds : xr.Dataset
-    project: str
-    output_format : {"netcdf", "zarr"}
-        Suffix to be used for filename
-
-    Returns
-    -------
-    str
-    """
-    if output_format.lower() not in {"netcdf", "zarr"}:
-        raise NotImplementedError(f"Format: {output_format}.")
-    else:
-        suffix = dict(netcdf="nc", zarr="zarr")[output_format]
-
-    var_name = list(ds.data_vars.keys())[0]
-    time_freq = ds.attrs.get("frequency")
-    institution = ds.attrs.get("institution")
-    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
-
-    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
-
-
-def delayed_write(
-    ds: xr.Dataset,
-    outfile: Union[str, os.PathLike],
-    output_format: str,
-    overwrite: bool,
-    target_chunks: Optional[dict] = None,
-) -> dask.delayed:
-    """
-
-    Parameters
-    ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
-    outfile : str or os.PathLike
-    target_chunks : dict
-    output_format : {"netcdf", "zarr"}
-    overwrite : bool
-
-    Returns
-    -------
-    dask.delayed.delayed
-    """
-    # Set correct chunks in encoding options
-    kwargs = dict()
-    kwargs["encoding"] = dict()
-    try:
-        for name, da in ds.data_vars.items():
-            chunks = list()
-            for dim in da.dims:
-                if target_chunks:
-                    if dim in target_chunks.keys():
-                        chunks.append(target_chunks[str(dim)])
-                else:
-                    chunks.append(len(da[dim]))
-
-            if output_format == "netcdf":
-                kwargs["encoding"][name] = {
-                    "chunksizes": chunks,
-                    "zlib": True,
-                }
-                kwargs["compute"] = False
-                if Path(outfile).exists() and not overwrite:
-                    kwargs["mode"] = "a"
-            elif output_format == "zarr":
-                ds = ds.chunk(target_chunks)
-                kwargs["encoding"][name] = {
-                    "chunks": chunks,
-                    "compressor": zarr.Blosc(),
-                }
-                kwargs["compute"] = False
-                if overwrite:
-                    kwargs["mode"] = "w"
-        if kwargs["encoding"]:
-            kwargs["encoding"]["time"] = {"dtype": "int32"}
-
-    except KeyError:
-        logging.error("Unable to encode chunks. Verify dataset.")
-        raise
-
-    return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
+__all__ = [
+    "write_dataset",
+    "concat_rechunk_zarr",
+    "merge_rechunk_zarrs",
+]
 
 
 def write_dataset(
@@ -207,7 +126,8 @@ def write_variables(
             logging.warning(outfile.as_posix(), "exists. Continuing..")
 
 
-def concat_zarr(
+# FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
+def concat_rechunk_zarr(
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
     overwrite: bool = False,
@@ -227,9 +147,9 @@ def concat_zarr(
 
     """
     if isinstance(input_folder, str):
-        input_folder = Path(input_folder)
+        input_folder = Path(input_folder).expanduser()
     if isinstance(output_folder, str):
-        output_folder = Path(output_folder)
+        output_folder = Path(output_folder).expanduser()
 
     list_zarr = sorted(list(input_folder.glob("*.zarr")))
 
@@ -301,3 +221,95 @@ def concat_zarr(
             dask.compute(job)
 
         shutil.rmtree(tmpzarr.parent)
+
+
+def merge_rechunk_zarrs(
+    input_folder: Union[str, os.PathLike],
+    output_folder: Union[str, os.PathLike],
+    project: Optional[str] = None,
+    target_chunks: Optional[Dict[str, int]] = None,
+    variables: Optional[Sequence[str]] = None,
+    freq: Optional[str] = None,
+    suffix: str = "zarr",
+    overwrite: bool = False,
+):
+    """
+
+    Parameters
+    ----------
+    input_folder
+    output_folder
+    project
+    target_chunks
+    variables
+    freq
+    suffix
+    overwrite
+
+    Returns
+    -------
+
+    """
+    chunk_defaults = {
+        # Four months of hours
+        "1hr": {"time": 2922},
+        # Four years of days
+        "day": {"time": 365 * 4 + 1},
+    }
+
+    if isinstance(input_folder, str):
+        input_folder = Path(input_folder).expanduser()
+    if isinstance(output_folder, str):
+        output_folder = Path(output_folder).expanduser()
+    output_folder.mkdir(exist_ok=True)
+
+    files_found = discover_data(input_folder, suffix=suffix)
+    variable_sorted = sort_variables(files_found, variables)
+
+    if project is None and target_chunks is None:
+        logging.warning(
+            "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
+        )
+        project = get_attributes(next(input_folder.glob(f"*.{suffix}"))).get("project")
+        if not project:
+            raise ValueError(
+                "`project` not found. Must pass either `project` or `target_chunks`."
+            )
+
+    if not freq:
+        freq = get_attributes(files_found[0]).get("frequency")
+        if not freq:
+            raise ValueError("Frequency not found in file attributes.")
+    if not target_chunks:
+        try:
+            target_chunks = chunk_defaults[freq]
+        except KeyError:
+            raise NotImplementedError(f"Frequency not supported: `{freq}`.")
+
+    start = time.perf_counter()
+
+    for variable, files in variable_sorted.items():
+        start_var = time.perf_counter()
+
+        ds = xr.open_mfdataset(files_found, parallel=True, engine="zarr")
+
+        merged_zarr = name_output_file(ds, project, output_format="zarr")
+        out_zarr = output_folder.joinpath(merged_zarr)
+
+        if overwrite:
+            if out_zarr.is_dir():
+                logging.warning(f"Removing existing zarr files for {out_zarr.name}.")
+                shutil.rmtree(out_zarr)
+        else:
+            logging.info(f"Files exist: {out_zarr.name}")
+            continue
+
+        ds = ds.chunk(target_chunks)
+        for var in ds.data_vars.values():
+            del var.encoding["chunks"]
+        ds.to_zarr(out_zarr, mode="w")
+
+        logging.info(
+            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h"
+        )
+    logging.info(f"All variables rechunked in {time.perf_counter() - start:.2f} s")

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-import logging
+import logging.config
 import re
 import warnings
 from argparse import ArgumentParser

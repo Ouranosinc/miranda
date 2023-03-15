@@ -327,3 +327,35 @@ def publish_release_notes(
     if isinstance(file, (Path, os.PathLike)):
         file = Path(file).open("w")
     print(history, file=file)
+
+
+def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
+    """Determine whether a user has read privileges to a specific file.
+
+    Parameters
+    ----------
+    location: Union[Path, str]
+    strict: bool
+
+    Returns
+    -------
+    bool
+      Whether the current user shell has read privileges
+    """
+    msg = ""
+    try:
+        if Path(location).exists():
+            if os.access(location, os.R_OK):
+                msg = f"{location} is read OK!"
+                logging.info(msg)
+                return True
+            msg = f"Ensure read privileges for `{location}`."
+        else:
+            msg = f"`{location}` is an invalid path."
+        raise OSError()
+
+    except OSError:
+        logging.exception(msg)
+        if strict:
+            raise
+        return False

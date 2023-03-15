@@ -11,7 +11,7 @@ from dask.diagnostics import ProgressBar
 from xclim.core import calendar
 
 from miranda.gis import subset_domain
-from miranda.io import delayed_write, get_chunks_on_disk
+from miranda.io.utils import delayed_write, get_chunks_on_disk
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 

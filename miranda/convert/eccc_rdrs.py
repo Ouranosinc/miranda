@@ -8,10 +8,11 @@ from typing import List, Optional, Set, Union
 import xarray as xr
 from dask.distributed import Client
 
-from miranda.convert import dataset_conversion, load_json_data_mappings
-from miranda.convert._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
+
+from ._data_corrections import dataset_conversion, load_json_data_mappings
+from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -59,11 +60,11 @@ def convert_rdrs(
     freq_dict = dict(h="hr", d="day")
 
     if isinstance(input_folder, str):
-        input_folder = Path(input_folder)
+        input_folder = Path(input_folder).expanduser()
     if isinstance(output_folder, str):
-        output_folder = Path(output_folder)
+        output_folder = Path(output_folder).expanduser()
     if isinstance(working_folder, str):
-        working_folder = Path(working_folder)
+        working_folder = Path(working_folder).expanduser()
 
     if working_folder:
         if working_folder.exists():
@@ -188,11 +189,11 @@ def rdrs_to_daily(
 
     """
     if isinstance(input_folder, str):
-        input_folder = Path(input_folder)
+        input_folder = Path(input_folder).expanduser()
     if isinstance(output_folder, str):
-        output_folder = Path(output_folder)
+        output_folder = Path(output_folder).expanduser()  # noqa
     if isinstance(working_folder, str):
-        working_folder = Path(working_folder)
+        working_folder = Path(working_folder).expanduser()
 
     if working_folder:
         if working_folder.exists():

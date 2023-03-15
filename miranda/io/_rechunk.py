@@ -6,222 +6,166 @@ import time
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Union
 
+import netCDF4 as nc  # noqa
 import xarray as xr
-import zarr
 
 from miranda.convert import project_institutes
-from miranda.io import delayed_write
 from miranda.scripting import LOGGING_CONFIG
+
+from ._input import discover_data
+from .utils import delayed_write, get_attributes, sort_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["config_chunks", "rechunk_files"]
+__all__ = ["fetch_chunks", "rechunk_files"]
 
 _data_folder = Path(__file__).parent / "data"
 chunks_configurations = json.load(open(_data_folder / "chunks.json"))
 
 
-def config_chunks(project, time_step: str, levels: int = None):
-    # ~35 Mo chunks
-    if project.lower() in [
-        "era5-single-levels",
-        "era5-single-levels-preliminary-back-extension",
-        "era5-land",
-    ] or (project.lower() in [] and levels == 1):
-        if time_step == "1hr":
-            # Chunks for monthly files, optimized for Zarr
-            target_chunks = {
-                "time": 24 * 7,
-                "latitude": 225,
-                "longitude": 252,
-            }
-        elif time_step == "day":
-            # Chunks for annual files, optimized for Zarr
-            target_chunks = {"time": 365, "latitude": 125, "longitude": 125}
-        else:
-            raise NotImplementedError()
-    else:
-        raise NotImplementedError()
-    return target_chunks
+def fetch_chunks(project: str, freq: str) -> Dict[str, Dict[str, int]]:
+    institute = project_institutes[project]
+    entry = chunks_configurations[institute.upper()]
+
+    # TODO: Currently no explicit handling for multi-level data
+    if project in entry["projects"]:
+        if freq in entry["chunks"]:
+            return entry["chunks"][freq]
+        raise KeyError(
+            f"Chunks at frequency `{freq}` not found for project `{project}`."
+        )
+    raise KeyError(f"Project `{project}` not found.")
 
 
 def rechunk_files(
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
-    project: str,
+    project: Optional[str] = None,
     time_step: Optional[str] = None,
     target_chunks: Optional[Dict[str, int]] = None,
     variables: Optional[Sequence[str]] = None,
+    suffix: str = "nc",
     output_format: str = "zarr",
     overwrite: bool = False,
 ) -> None:
-    """Rechunks ERA5 dataset for better loading/reading performance.
+    """Rechunks dataset for better loading/reading performance.
 
     Warnings
     --------
     Globbing assumes that target datasets to be rechunked have been saved in NetCDF format.
     File naming requires the following order of facets: `{variable}_{time_step}_{institute}_{project}_reanalysis_*.nc`.
+    Chunking dimensions are assumed to be CF-Compliant (`lat`, `lon`, `rlat`, `rlon`, `time`).
 
     Parameters
     ----------
     input_folder : str or os.PathLike
-      Folder to be examined. Performs globbing.
+        Folder to be examined. Performs globbing.
     output_folder : str or os.PathLike
-      Target folder.
-    project : {"era5-land", "era5-single-levels", "era5-single-levels-preliminary-back-extension", "era5-single-levels", "era5-pressure-levels-preliminary-back-extension"}
-      Supported projects.
+        Target folder.
+    project : str, optional
+        Supported projects. Used for determining chunk dictionary. Superseded if `target_chunks` is set.
     time_step : {"1hr", "day"}, optional
-      Time step of the input data. Parsed from filename if not set.
-    target_chunks : dict
-      Must include "time", optionally "latitude" and "longitude"
+        Time step of the input data. Parsed from dataset attrs if not set. Superseded if `target_chunks` is set.
+    target_chunks : dict, optional
+        Must include "time", optionally "lat" and "lon", depending on dataset structure.
     variables : Sequence[str], optional
-      If no variables set, will attempt to process all variables supported based on project name.
+        If no variables set, will attempt to process all variables supported based on project name.
+    suffix : {"nc", "zarr"}
+        Suffix used to identify data files. Default: "nc".
     output_format : {"netcdf", "zarr"}
-      Default: "zarr".
+        Default: "zarr".
     overwrite : bool
-      Will overwrite files. For zarr, existing folders will be removed before writing.
+        Will overwrite files. For zarr, existing folders will be removed before writing.
 
     Returns
     -------
     None
     """
-    input_folder = Path(input_folder)
-    output_folder = Path(output_folder)
+    if isinstance(input_folder, str):
+        input_folder = Path(input_folder).expanduser()
+    if isinstance(output_folder, str):
+        output_folder = Path(output_folder).expanduser()
+    output_folder.mkdir(exist_ok=True)
 
-    if time_step is None:
-        test_file = next(input_folder.glob("*"))
-        file_parts = str(test_file.name).split("_")
-        time_step = file_parts[1]
-        if time_step not in ["1hr", "day"]:
-            raise NotImplementedError(f"Time step: `{time_step}`.")
+    if project is None and target_chunks is None:
+        logging.warning(
+            "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
+        )
+        project = get_attributes(next(input_folder.glob(f"*.{suffix}"))).get("project")
+        if not project:
+            raise ValueError(
+                "`project` not found. Must pass either `project` or `target_chunks`."
+            )
+
+    if target_chunks is None:
+        if time_step is None:
+            time_step = get_attributes(next(input_folder.glob(f"*.{suffix}"))).get(
+                "frequency"
+            )
+            if not time_step:
+                raise ValueError("Frequency not found in file attributes.")
+        target_chunks = fetch_chunks(project, time_step)
+
+    if output_format == "netcdf":
+        output_suffix = "nc"
+    elif output_format == "zarr":
+        output_suffix = "zarr"
+    else:
+        raise NotImplementedError(f"Output format: `{output_format}`.")
+
+    files_found = discover_data(input_folder, suffix=suffix)
+    variable_sorted = sort_variables(files_found, variables)
 
     errored = list()
     start_all = time.perf_counter()
-
-    glob_patterns = []
-    if variables:
-        for variable in variables:
-            try:
-                next(input_folder.glob(f"{variable}*"))
-            except StopIteration:
-                logging.warning(f"No files found for {variable}. Continuing...")
-                continue
-            glob_patterns.append(
-                f"{variable}_{time_step}_{project_institutes[project]}_{project}_*.nc"
-            )
-    else:
-        glob_patterns.append(
-            f"*_{time_step}_{project_institutes[project]}_{project}_*.nc"
-        )
-
-    for pattern in glob_patterns:
+    for variable, files in variable_sorted.items():
         start_var = time.perf_counter()
-        variable = pattern.split("_")[0]
 
-        # STEP 1 : Rewrite all years chunked on spatial dimensions, but not along the time dimension.
-        for file in sorted(input_folder.glob(pattern)):
+        for file in files:
             start = time.perf_counter()
 
-            if output_format == "netcdf":
-                output_folder.mkdir(exist_ok=True)
-                out = output_folder / f"{file.stem}.nc"
-            elif output_format == "zarr":
-                output_path = output_folder / "temp"
-                output_path.mkdir(exist_ok=True, parents=True)
-                out = output_path / f"{file.stem}.zarr"
-            else:
-                raise NotImplementedError()
+            output_path = output_folder / "temp"
+            output_path.mkdir(exist_ok=True)
+            out = output_path / f"{file.stem}.{output_suffix}"
 
-            if (out.is_dir() or out.is_file()) and not overwrite:
-                logging.info(f"Already completed: {file.name}")
-                continue
-            if out.is_dir() and output_format == "zarr":
-                logging.warning(f"Removing existing zarr files for {out.name}.")
-                shutil.rmtree(out)
+            if out.is_dir() or out.is_file():
+                if overwrite:
+                    if out.is_dir() and output_format == "zarr":
+                        logging.warning(f"Removing existing zarr files for {out.name}.")
+                        shutil.rmtree(out)
+                else:
+                    logging.info(f"Files exist: {file.name}")
+                    continue
 
             ds = xr.open_dataset(file, chunks={"time": -1})
 
             try:
-                levels = len(ds.level)
-            except AttributeError:
-                levels = None
-
-            if target_chunks is None:
-                target_chunks = config_chunks(project, time_step, levels)
-
-            try:
-                job = delayed_write(
+                delayed_write(
                     ds,
                     out,
                     output_format=output_format,
                     overwrite=overwrite,
                     target_chunks=target_chunks,
-                )
+                ).compute()
 
             except KeyError:
                 logging.warning(f"{file} has chunking errors. Verify data manually.")
                 errored.append(file)
                 continue
 
-            # Write out rechunked files at the same output frequencies as they were read.
-            job.compute()
             logging.info(f"Done for {file.stem} in {time.perf_counter() - start:.2f} s")
 
-        if output_format == "netcdf":
-            logging.info(
-                f"{variable} rechunked in {(time.perf_counter() - start_all) / 3600:.2f} h"
-            )
-            continue
+            logging.info(f"Moving {file.name} to {output_folder}.")
+            shutil.move(out, output_folder)
 
         logging.info(
-            f"First step done for {variable} in {(time.perf_counter() - start_all) / 3600:.2f} h"
+            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h"
         )
-
-        # STEP 2 : Merge all years, chunking along the time dimension.
-        start = time.perf_counter()
-
-        files = sorted(
-            (output_folder / "temp").glob(
-                f"{variable}_{time_step}_{project_institutes[project]}_{project}_*.zarr"
-            )
-        )
-
-        ds = xr.open_mfdataset(files, parallel=True, engine="zarr")
-
-        if time_step == "1hr":
-            # Four months of hours
-            ds = ds.chunk(dict(time=2922))
-        elif time_step == "day":
-            # Five years of days
-            ds = ds.chunk(dict(time=1825))
-        else:
-            raise NotImplementedError()
-
-        for var in ds.data_vars.values():
-            del var.encoding["chunks"]
-
-        merged_zarr = Path(
-            output_folder
-            / f"{variable}_{time_step}_{project_institutes[project]}_{project}.zarr"
-        )
-        try:
-            ds.to_zarr(merged_zarr, mode="w" if overwrite else "w-")
-        except zarr.errors.ContainsGroupError:
-            logging.error(
-                f"Files exist for pattern {pattern.split('_')[0]}. Consider using `overwrite=True`"
-            )
-            raise
-
-        logging.info(
-            f"Second step done for {pattern.split('_')[0]} in {time.perf_counter() - start:.2f} s"
-        )
-        logging.info(
-            f"Both steps done for {variable} in {time.perf_counter() - start_var:.2f} s"
-        )
+        continue
 
     logging.info(
-        f"All variables in {input_folder} done in {time.perf_counter() - start_all}"
+        f"All variables in {input_folder} rechunked in {time.perf_counter() - start_all}"
     )
     if errored:
         errored_filenames = "\n".join(map(str, errored))
