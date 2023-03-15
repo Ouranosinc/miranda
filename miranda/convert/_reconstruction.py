@@ -15,9 +15,9 @@ from miranda.io import delayed_write, get_chunks_on_disk
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
+from ._aggregation import aggregate as aggregate_func
 from ._data_corrections import dataset_corrections
 from ._data_definitions import project_institutes, xarray_frequencies_to_cmip6like
-from .utils import daily_aggregation
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -171,7 +171,7 @@ def reanalysis_processing(
                         ds = dataset_corrections(ds, project=project)
 
                         if time_freq.lower() == "day":
-                            dataset = daily_aggregation(ds)
+                            dataset = aggregate_func(ds, freq="day")
                             freq = "YS"
                         else:
                             out_variable = (

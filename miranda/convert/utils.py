@@ -3,95 +3,17 @@ import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 import cftime
 import pandas as pd
-import xarray as xr
-from pandas._libs import NaTType
-from xclim.indices import tas
+from pandas import NaTType
 
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = [
-    "daily_aggregation",
-    "find_version_hash",
-]
-
-
-def daily_aggregation(
-    ds: xr.Dataset, keys_only: bool = False
-) -> Dict[str, Optional[xr.Dataset]]:
-    logging.info("Creating daily upscaled climate variables.")
-
-    daily_dataset = dict()
-    for variable in ds.data_vars:
-        if variable in ["tas", "tdps"]:
-            # Some looping to deal with memory consumption issues
-            for v, func in {
-                f"{variable}max": "max",
-                f"{variable}min": "min",
-                f"{variable}": "mean",
-            }.items():
-                if not keys_only:
-                    ds_out = xr.Dataset()
-                    ds_out.attrs = ds.attrs.copy()
-                    ds_out.attrs["frequency"] = "day"
-
-                    method = f"time: {func}{'imum' if func != 'mean' else ''} (interval: 1 day)"
-                    ds_out.attrs["cell_methods"] = method
-
-                    if v == "tas" and not hasattr(ds, "tas"):
-                        ds_out[v] = tas(tasmax=ds.tasmax, tasmin=ds.tasmin)
-                    else:
-                        # Thanks for the help, xclim contributors
-                        r = ds[variable].resample(time="D")
-                        ds_out[v] = getattr(r, func)(dim="time", keep_attrs=True)
-
-                    daily_dataset[v] = ds_out
-                    del ds_out
-                else:
-                    daily_dataset[v] = None
-
-        elif variable in [
-            "evspsblpot",
-            "hfls",
-            "hfss",
-            "hur",
-            "hus",
-            "pr",
-            "prsn",
-            "ps",
-            "psl",
-            "rsds",
-            "rss",
-            "rlds",
-            "rls",
-            "snd",
-            "snr",
-            "snw",
-            "swe",
-        ]:
-            if not keys_only:
-                ds_out = xr.Dataset()
-                ds_out.attrs = ds.attrs.copy()
-                ds_out.attrs["frequency"] = "day"
-                ds_out.attrs["cell_methods"] = "time: mean (interval: 1 day)"
-                logging.info(f"Converting {variable} to daily time step (daily mean).")
-                ds_out[variable] = (
-                    ds[variable].resample(time="D").mean(dim="time", keep_attrs=True)
-                )
-
-                daily_dataset[variable] = ds_out
-                del ds_out
-            else:
-                daily_dataset[variable] = None
-        else:
-            continue
-
-    return daily_dataset
+__all__ = ["find_version_hash", "date_parser"]
 
 
 def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
