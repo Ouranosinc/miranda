@@ -15,8 +15,7 @@ from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
-from miranda.convert.utils import find_version_hash
-from miranda.decode import date_parser
+from miranda.convert.utils import date_parser, find_version_hash
 from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency

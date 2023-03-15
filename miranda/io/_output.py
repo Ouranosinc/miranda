@@ -9,7 +9,7 @@ import xarray as xr
 import zarr
 from dask.distributed import Client
 
-from miranda.decode import date_parser
+from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
