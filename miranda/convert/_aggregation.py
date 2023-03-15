@@ -6,6 +6,7 @@ import xclim.core.options
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
+from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -19,13 +20,18 @@ _resampling_keys["month"] = "M"
 _resampling_keys["year"] = "A"
 
 
-def aggregations_possible(ds: xr.Dataset) -> Dict[str, Set[str]]:
+def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[str]]:
     logging.info("Determining potential upscaled climate variables.")
+
+    offset, meaning = get_time_frequency(ds, minimum_continuous_period="1h")
 
     aggregation_legend = dict()
     for v in ["tas", "tdps"]:
-        if not hasattr(ds, v) and (hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")):
-            aggregation_legend[f"_{v}"] = {"mean"}
+        if freq == meaning:
+            if not hasattr(ds, v) and (
+                hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")
+            ):
+                aggregation_legend[f"_{v}"] = {"mean"}
     for variable in ds.data_vars:
         if variable in ["tas", "tdps"]:
             aggregation_legend[variable] = {"max", "mean", "min"}
@@ -63,35 +69,37 @@ def aggregate(ds, freq: str = "day") -> Dict[str, xr.Dataset]:
 
     aggregated = dict()
     for variable, transformations in mappings.items():
-        ds_out = xr.Dataset()
-        ds_out.attrs = ds.attrs.copy()
-        ds_out.attrs["frequency"] = freq
+        for op in transformations:
+            ds_out = xr.Dataset()
+            ds_out.attrs = ds.attrs.copy()
+            ds_out.attrs["frequency"] = freq
 
-        with xclim.core.options.set_options(keep_attrs=True):
-            if variable.startswith("_"):
-                if "mean" in transformations:
-                    var = variable.strip("_")
-                    min_var = "".join([var, "min"])
-                    max_var = "".join([var, "max"])
+            with xclim.core.options.set_options(keep_attrs=True):
+                if variable.startswith("_"):
+                    if op == "mean":
+                        var = variable.strip("_")
+                        min_var = "".join([var, "min"])
+                        max_var = "".join([var, "max"])
 
-                    mean_variable = tas(
-                        tasmin=ds[min_var], tasmax=ds[max_var]
-                    ).resample(time=xarray_agg)
-                    ds_out[var] = mean_variable.mean(dim="time", keep_attrs=True)
-                    method = f"time: mean (interval: 1 {freq})"
-                    ds_out[var].attrs["cell_methods"] = method
+                        mean_variable = tas(
+                            tasmin=ds[min_var], tasmax=ds[max_var]
+                        ).resample(time=xarray_agg)
+                        ds_out[var] = mean_variable.mean(dim="time", keep_attrs=True)
+                        method = f"time: mean (interval: 1 {freq})"
+                        ds_out[var].attrs["cell_methods"] = method
+                        aggregated[var] = ds_out
+                    continue
 
-                    aggregated[var] = ds_out
+                else:
+                    if op in {"max", "min"}:
+                        transformed = f"{variable}{op}"
+                    else:
+                        transformed = variable
 
-                continue
-
-            else:
-                for op in transformations:
                     r = ds[variable].resample(time=xarray_agg)
-                    ds_out[variable] = getattr(r, op)(dim="time", keep_attrs=True)
+                    ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
                     method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
-                    ds_out[variable].attrs["cell_methods"] = method
-
-                    aggregated[variable] = ds_out
+                    ds_out[transformed].attrs["cell_methods"] = method
+                    aggregated[transformed] = ds_out
 
     return aggregated

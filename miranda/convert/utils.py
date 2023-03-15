@@ -7,7 +7,7 @@ from typing import Dict, Union
 
 import cftime
 import pandas as pd
-from pandas import NaTType
+from pandas._libs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
 
