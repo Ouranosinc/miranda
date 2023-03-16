@@ -20,6 +20,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "write_dataset",
+    "write_dataset_dict",
     "concat_rechunk_zarr",
     "merge_rechunk_zarrs",
 ]
@@ -115,29 +116,23 @@ def write_dataset_dict(
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if outpath.exists():
                 shutil.rmtree(outfile)
+
+            tmp_path = None
             if temp_folder:
                 tmp_path = temp_folder.joinpath(outfile)
-                job = delayed_write(
-                    ds,
-                    tmp_path,
-                    output_format=output_format,
-                    target_chunks=chunks,
-                    overwrite=True,
-                )
-                with Client(**dask_kwargs):
-                    dask.compute(job)
+            job = delayed_write(
+                ds,
+                tmp_path if tmp_path else outpath,
+                output_format=output_format,
+                target_chunks=chunks,
+                overwrite=True,
+            )
+            with Client(**dask_kwargs):
+                dask.compute(job)
+            if temp_folder:
                 shutil.copytree(tmp_path, outpath, dirs_exist_ok=True)
                 shutil.rmtree(tmp_path)
-            else:
-                job = delayed_write(
-                    ds,
-                    outpath,
-                    output_format=output_format,
-                    target_chunks=chunks,
-                    overwrite=True,
-                )
-                with Client(**dask_kwargs):
-                    dask.compute(job)
+
         else:
             logging.warning(
                 f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
