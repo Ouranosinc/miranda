@@ -9,7 +9,12 @@
       "day": {
         "lat": 50,
         "lon": 50,
-        "time": 1461
+        "time": "4 years"
+      },
+      "month": {
+        "lat": 175,
+        "lon": 175,
+        "time": 120
       }
     },
     "projects": [
@@ -26,7 +31,12 @@
       "day": {
         "lat": 50,
         "lon": 50,
-        "time": 1461
+        "time": "4 years"
+      },
+      "month": {
+        "lat": 175,
+        "lon": 175,
+        "time": 120
       }
     },
     "projects": [

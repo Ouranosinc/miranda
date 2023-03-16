@@ -11,7 +11,7 @@ from dask.distributed import Client
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
-from ..io import fetch_chunks, write_dataset
+from ..io import fetch_chunk_config, write_dataset
 from ..io._output import write_dataset_dict
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
@@ -102,7 +102,7 @@ def convert_rdrs(
                     add_version_hashes=False,
                     overwrite=overwrite,
                 )
-                chunks = fetch_chunks(project=project, freq="1hr")
+                chunks = fetch_chunk_config(project=project, freq="1hr")
                 chunks["time"] = len(ds_corr.time)
                 write_dataset_dict(
                     {var_attr: ds_corr},

@@ -13,7 +13,7 @@ from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
 
 from ._input import discover_data
-from .utils import delayed_write, get_attributes, name_output_file, sort_variables
+from .utils import delayed_write, get_global_attrs, name_output_file, sort_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -283,14 +283,16 @@ def merge_rechunk_zarrs(
         logging.warning(
             "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
         )
-        project = get_attributes(next(input_folder.glob(f"*.{suffix}"))).get("project")
+        project = get_global_attrs(next(input_folder.glob(f"*.{suffix}"))).get(
+            "project"
+        )
         if not project:
             raise ValueError(
                 "`project` not found. Must pass either `project` or `target_chunks`."
             )
 
     if not freq:
-        freq = get_attributes(files_found[0]).get("frequency")
+        freq = get_global_attrs(files_found[0]).get("frequency")
         if not freq:
             raise ValueError("Frequency not found in file attributes.")
     if not target_chunks:

@@ -6,25 +6,48 @@ import time
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Union
 
-import netCDF4 as nc  # noqa
 import xarray as xr
 
 from miranda.convert import project_institutes
 from miranda.scripting import LOGGING_CONFIG
 
 from ._input import discover_data
-from .utils import delayed_write, get_attributes, sort_variables
+from .utils import delayed_write, get_global_attrs, get_time_attrs, sort_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["fetch_chunks", "rechunk_files"]
+__all__ = ["fetch_chunk_config", "rechunk_files", "translate_time_chunk"]
 
 _data_folder = Path(__file__).parent / "data"
 chunks_configurations = json.load(open(_data_folder / "chunks.json"))
 
 
-def fetch_chunks(project: str, freq: str) -> Dict[str, int]:
+# Shamelessly stolen and modified from xscen
+def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
+    """Translate chunk specification for time into a number.
+
+    Notes
+    -----
+    -1 translates to `timesize`
+    'Nyear' translates to N times the number of days in a year of calendar `calendar`.
+    """
+    for k, v in chunks.items():
+        if isinstance(v, dict):
+            chunks[k] = translate_time_chunk(v.copy(), calendar, timesize)
+        elif k == "time" and v is not None:
+            if isinstance(v, str) and v.endswith("years"):
+                n = int(str(chunks["time"]).strip("years").strip())
+                Nt = n * {"noleap": 365, "360_day": 360, "all_leap": 366}.get(
+                    calendar, 365.25
+                )
+                chunks[k] = int(Nt)
+            elif v == -1:
+                chunks[k] = timesize
+    return chunks
+
+
+def fetch_chunk_config(project: str, freq: str) -> Dict[str, int]:
     institute = project_institutes[project]
     entry = chunks_configurations[institute.upper()]
 
@@ -92,20 +115,20 @@ def rechunk_files(
         logging.warning(
             "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
         )
-        project = get_attributes(next(input_folder.glob(f"*.{suffix}"))).get("project")
+        project = get_global_attrs(next(input_folder.glob(f"*.{suffix}"))).get(
+            "project"
+        )
         if not project:
             raise ValueError(
                 "`project` not found. Must pass either `project` or `target_chunks`."
             )
 
     if target_chunks is None:
+        test_file = next(input_folder.glob(f"*.{suffix}"))
         if time_step is None:
-            time_step = get_attributes(next(input_folder.glob(f"*.{suffix}"))).get(
-                "frequency"
-            )
+            time_step = get_global_attrs(test_file).get("frequency")
             if not time_step:
                 raise ValueError("Frequency not found in file attributes.")
-        target_chunks = fetch_chunks(project, time_step)
 
     if output_format == "netcdf":
         output_suffix = "nc"
@@ -139,6 +162,11 @@ def rechunk_files(
                     continue
 
             ds = xr.open_dataset(file, chunks={"time": -1})
+
+            if target_chunks is None:
+                chunk_config = fetch_chunk_config(project, time_step)
+                calendar, size = get_time_attrs(ds)
+                target_chunks = translate_time_chunk(chunk_config, calendar, size)
 
             try:
                 delayed_write(

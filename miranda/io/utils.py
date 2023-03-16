@@ -17,8 +17,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = [
     "creation_date",
     "delayed_write",
-    "get_attributes",
     "get_chunks_on_disk",
+    "get_global_attrs",
+    "get_time_attrs",
     "name_output_file",
     "sort_variables",
 ]
@@ -112,18 +113,39 @@ def delayed_write(
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
 
 
-def get_attributes(file: Union[str, os.PathLike]):
-    if isinstance(file, str):
-        file = Path(file).expanduser()
+def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str, int):
+    if isinstance(file_or_dataset, (str, Path)):
+        ds = xr.open_dataset(Path(file_or_dataset).expanduser())
+    else:
+        ds = file_or_dataset
 
-    if file.is_file() and file.suffix in [".nc", ".nc4"]:
-        with nc.Dataset(file, mode="r") as ds:
-            data = dict()
-            for k in ds.ncattrs():
-                data[k] = getattr(ds, k)
-    elif file.is_dir() and file.suffix == ".zarr":
-        with zarr.open(file, mode="r") as ds:  # noqa
-            data = ds.attrs.asdict()
+    calendar = ds.time.dt.calendar
+    time = len(ds.time)
+
+    return calendar, time
+
+
+def get_global_attrs(
+    file_or_dataset: Union[str, os.PathLike, xr.Dataset]
+) -> Dict[str, Union[str, int]]:
+    if isinstance(file_or_dataset, (str, Path)):
+        file = Path(file_or_dataset).expanduser()
+    elif isinstance(file_or_dataset, xr.Dataset):
+        file = file_or_dataset
+    else:
+        raise NotImplementedError(f"Type: `{type(file_or_dataset)}`.")
+
+    if isinstance(file, Path):
+        if file.is_file() and file.suffix in [".nc", ".nc4"]:
+            with nc.Dataset(file, mode="r") as ds:
+                data = dict()
+                for k in ds.ncattrs():
+                    data[k] = getattr(ds, k)
+        elif file.is_dir() and file.suffix == ".zarr":
+            with zarr.open(file, mode="r") as ds:  # noqa
+                data = ds.attrs.asdict()
+    else:
+        data = file.attrs
 
     return data
 
