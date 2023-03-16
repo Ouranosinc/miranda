@@ -13,6 +13,8 @@ from miranda.units import get_time_frequency
 
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
+from ..io import write_dataset, fetch_chunks
+from ..io._output import write_dataset_dict
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -66,23 +68,12 @@ def convert_rdrs(
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
 
-    if working_folder:
-        if working_folder.exists():
-            if overwrite:
-                shutil.rmtree(working_folder)
-            else:
-                raise FileExistsError(
-                    "`working_folder` is not empty. Use `overwrite=True`."
-                )
-        working_folder.mkdir(parents=True)
-        write_folder = working_folder
-    else:
-        write_folder = output_folder
+
 
     # FIXME: Do we want to collect everything? Maybe return a dictionary with years and associated files?
 
     gathered = gather_raw_rdrs_by_years(input_folder)
-    for year, ncfiles in gathered["rdrs-v21"].items():
+    for year, ncfiles in gathered[project].items():
         ds_allvars = None
         for nc in ncfiles:
             ds1 = xr.open_dataset(nc, chunks="auto")
@@ -102,63 +93,74 @@ def convert_rdrs(
         for month in range(1, 13):
             ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
             for var_attr in var_attrs.keys():
-                # FIXME: This correction should be handled in the JSON configuration
                 drop_vars = _get_drop_vars(
                     ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
                 )
                 ds_out = ds_month.drop_vars(drop_vars)
 
-                # FIXME: We should be either returning a list of jobs to run or iterating through them.
-                # We do not need to hardcode compute=False
-                job = dataset_conversion(
-                    input_files=ds_out,
+
+                ds_corr = dataset_conversion(
+                    ds_out,
                     project=project,
-                    output_path=write_folder.joinpath(
-                        var_attrs[var_attr]["_cf_variable_name"]
-                    ),
-                    output_format=output_format,
                     add_version_hashes=False,
-                    chunks=dict(time=len(ds_out.time), rlon=50, rlat=50),
-                    compute=False,
-                    correct_variable_names=True,
                     overwrite=overwrite,
                 )
+                chunks = fetch_chunks(project=project, freq="1hr")
+                chunks["time"] = len(ds_corr.time)
+                write_dataset_dict(
+                    {var_attr:ds_corr},
+                    output_folder=output_folder,
+                    temp_folder=working_folder,
+                    output_format=output_format,
+                    overwrite=False,
+                    chunks=chunks,
+                    **dask_kwargs
+                )
 
-                # FIXME: This is generalized IO code - should be factored out.
-                if working_folder:
-                    for subdir in [f for f in working_folder.glob("*") if f.is_dir()]:
-                        output_folder.joinpath(outfreq, subdir.name).mkdir(
-                            exist_ok=True
-                        )
-                        for zarr in subdir.glob("*.zarr"):
-                            new_zarr = zarr.name.split("_")
-                            # TODO: manage output file name
-                            new_zarr = f"{new_zarr[0]}_{outfreq}_eccc_{new_zarr[1]}_NAM_{new_zarr[2]}"
+                # write_dataset(
+                #     ds_corr,
+                #     project=project,
+                #     output_path=write_folder,
+                #     output_format=output_format,
+                # )
 
-                            if (
-                                overwrite
-                                or not output_folder.joinpath(
-                                    outfreq, subdir.name, new_zarr
-                                ).exists()
-                            ):
-                                # FIXME: Client is only needed for computation. Should be elsewhere.
-                                with Client(**dask_kwargs):
-                                    job.compute()
-                                shutil.copytree(
-                                    zarr,
-                                    output_folder.joinpath(
-                                        outfreq, subdir.name, new_zarr.name
-                                    ),
-                                    dirs_exist_ok=True,
-                                )
-                            else:
-                                logging.warning(
-                                    output_folder.joinpath(
-                                        outfreq, subdir.name, new_zarr
-                                    ),
-                                    " exists. Continuing...",
-                                )
-                        shutil.rmtree(subdir)
+                #
+                #
+                # # FIXME: This is generalized IO code - should be factored out.
+                # if working_folder:
+                #     for subdir in [f for f in working_folder.glob("*") if f.is_dir()]:
+                #         output_folder.joinpath(outfreq, subdir.name).mkdir(
+                #             exist_ok=True
+                #         )
+                #         for zarr in subdir.glob("*.zarr"):
+                #             new_zarr = zarr.name.split("_")
+                #             # TODO: manage output file name
+                #             new_zarr = f"{new_zarr[0]}_{outfreq}_eccc_{new_zarr[1]}_NAM_{new_zarr[2]}"
+                #
+                #             if (
+                #                 overwrite
+                #                 or not output_folder.joinpath(
+                #                     outfreq, subdir.name, new_zarr
+                #                 ).exists()
+                #             ):
+                #                 # FIXME: Client is only needed for computation. Should be elsewhere.
+                #                 with Client(**dask_kwargs):
+                #                     job.compute()
+                #                 shutil.copytree(
+                #                     zarr,
+                #                     output_folder.joinpath(
+                #                         outfreq, subdir.name, new_zarr.name
+                #                     ),
+                #                     dirs_exist_ok=True,
+                #                 )
+                #             else:
+                #                 logging.warning(
+                #                     output_folder.joinpath(
+                #                         outfreq, subdir.name, new_zarr
+                #                     ),
+                #                     " exists. Continuing...",
+                #                 )
+                #         shutil.rmtree(subdir)
 
 
 # FIXME: This looks mostly like code to stage writing out files. Should it be moved to an IO module?
@@ -196,7 +198,7 @@ def rdrs_to_daily(
                 shutil.rmtree(working_folder)
             else:
                 raise FileExistsError(
-                    "`working_folder` is not empty. Use `overwrite=True`."
+                    "`temp_folder` is not empty. Use `overwrite=True`."
                 )
         working_folder.mkdir(parents=True)
 
@@ -230,8 +232,8 @@ def rdrs_to_daily(
     #                 if outzarr.exists():
     #                     shutil.rmtree(outzarr)
     #
-    #                 if working_folder:
-    #                     tmp_zarr = working_folder.joinpath(outzarr.name)
+    #                 if temp_folder:
+    #                     tmp_zarr = temp_folder.joinpath(outzarr.name)
     #                     # FIXME: Client is only needed for computation. Should be elsewhere.
     #                     with Client(**dask_kwargs):
     #                         ds[variable].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(

@@ -24,7 +24,7 @@ _data_folder = Path(__file__).parent / "data"
 chunks_configurations = json.load(open(_data_folder / "chunks.json"))
 
 
-def fetch_chunks(project: str, freq: str) -> Dict[str, Dict[str, int]]:
+def fetch_chunks(project: str, freq: str) -> Dict[str, int]:
     institute = project_institutes[project]
     entry = chunks_configurations[institute.upper()]
 

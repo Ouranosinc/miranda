@@ -242,7 +242,7 @@ def gather_rdrs(path: Union[str, os.PathLike], suffix: str) -> Dict[str, List[Pa
 
 def gather_raw_rdrs_by_years(
     path: Union[str, os.PathLike]
-) -> Optional[Dict[str, Dict[str, List[Path]]]]:
+) -> Dict[str, Dict[str, List[Path]]]:
     """Gather raw RDRS files for preprocessing.
 
     Parameters
@@ -263,9 +263,6 @@ def gather_raw_rdrs_by_years(
             files = [files[-1]]
         files.extend(sorted(list(path.glob(f"*_{year}*.nc"))))
         year_sets[str(year)] = files
-
-    if not year_sets:
-        return
     return {"rdrs-v21": year_sets}
 
 
