@@ -98,11 +98,6 @@ def convert_rdrs(
             else:
                 ds_allvars = xr.concat([ds_allvars, ds1], dim="time")
 
-        # FIXME: This correction should be handled in the JSON configuration
-        ds_allvars.attrs["Remarks"] = ds_allvars.attrs["Remarks"].replace(
-            "Variable names", "Original variable names"
-        )
-
         # This is the heart of the conversion utility; We could apply this to multiple projects.
         for month in range(1, 13):
             ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
