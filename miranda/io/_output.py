@@ -92,7 +92,7 @@ def write_dataset_dict(
     temp_folder: Union[str, os.PathLike],
     output_format: str = "zarr",
     overwrite: bool = False,
-    chunks: Dict[str, int]= None,
+    chunks: Dict[str, int] = None,
     **dask_kwargs,
 ):
     if isinstance(output_folder, str):
@@ -117,17 +117,31 @@ def write_dataset_dict(
                 shutil.rmtree(outfile)
             if temp_folder:
                 tmp_path = temp_folder.joinpath(outfile)
-                job = delayed_write(ds, tmp_path, output_format=output_format, target_chunks=chunks, overwrite=True)
+                job = delayed_write(
+                    ds,
+                    tmp_path,
+                    output_format=output_format,
+                    target_chunks=chunks,
+                    overwrite=True,
+                )
                 with Client(**dask_kwargs):
                     dask.compute(job)
                 shutil.copytree(tmp_path, outpath, dirs_exist_ok=True)
                 shutil.rmtree(tmp_path)
             else:
-                job = delayed_write(ds, outpath, output_format=output_format, target_chunks=chunks, overwrite=True)
+                job = delayed_write(
+                    ds,
+                    outpath,
+                    output_format=output_format,
+                    target_chunks=chunks,
+                    overwrite=True,
+                )
                 with Client(**dask_kwargs):
                     dask.compute(job)
         else:
-            logging.warning(f"{outpath.as_posix()} exists and overwrite is False. Continuing...")
+            logging.warning(
+                f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
+            )
 
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other

@@ -11,10 +11,10 @@ from dask.distributed import Client
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
+from ..io import fetch_chunks, write_dataset
+from ..io._output import write_dataset_dict
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
-from ..io import write_dataset, fetch_chunks
-from ..io._output import write_dataset_dict
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -68,8 +68,6 @@ def convert_rdrs(
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
 
-
-
     # FIXME: Do we want to collect everything? Maybe return a dictionary with years and associated files?
 
     gathered = gather_raw_rdrs_by_years(input_folder)
@@ -98,7 +96,6 @@ def convert_rdrs(
                 )
                 ds_out = ds_month.drop_vars(drop_vars)
 
-
                 ds_corr = dataset_conversion(
                     ds_out,
                     project=project,
@@ -108,13 +105,13 @@ def convert_rdrs(
                 chunks = fetch_chunks(project=project, freq="1hr")
                 chunks["time"] = len(ds_corr.time)
                 write_dataset_dict(
-                    {var_attr:ds_corr},
+                    {var_attr: ds_corr},
                     output_folder=output_folder,
                     temp_folder=working_folder,
                     output_format=output_format,
                     overwrite=False,
                     chunks=chunks,
-                    **dask_kwargs
+                    **dask_kwargs,
                 )
 
                 # write_dataset(
