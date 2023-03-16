@@ -16,6 +16,7 @@
     "_version": {
       "rdrs-v2.1": "v2.1"
     },
+    "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product RDRS_v2 contains two variables for precipitation: 'RDRS_v2_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'RDRS_v2_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
     "data_specs_version": "00.00.08",
     "institution": "GouvCan",
     "licence_type": "open",
