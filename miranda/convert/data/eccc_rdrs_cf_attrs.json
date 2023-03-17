@@ -28,6 +28,17 @@
     "table_id": "EC",
     "type": "reconstruction"
   },
+  "dimensions": {
+      "time": {
+          "_ensure_correct_time": {
+              "rdrs-v2.1": "1H"
+          },
+          "_strict_time": false,
+          "axis": "T",
+          "long_name": "time",
+          "standard_name": "time"
+      }
+  },
   "variables": {
     "RDRS_v2.1_A_PR0_SFC": {
       "_cf_variable_name": "pr",
