@@ -4,6 +4,7 @@ from pathlib import Path
 from miranda.convert.eccc_rdrs import convert_rdrs, rdrs_to_daily
 from miranda.io import concat_rechunk_zarr
 
+
 def main():
     home = Path("~").expanduser()
     dask_dir = home.joinpath("tmpout", "dask")
@@ -28,13 +29,14 @@ def main():
     )
 
     rdrs_to_daily(
-        input_folder=Path(home).joinpath("RDRS_v2.1", "converted/ECCC/RDRS_v2.1/NAM/1hr"),
+        input_folder=Path(home).joinpath(
+            "RDRS_v2.1", "converted/ECCC/RDRS_v2.1/NAM/1hr"
+        ),
         output_folder=Path(home).joinpath("RDRS_v2.1", "tmp/ECCC/RDRS_v2.1/NAM/day"),
         working_folder=Path(home).joinpath("tmpout", "rdrs"),
         overwrite=False,
         **dask_kwargs,
     )
-
 
     for freq in ["1hr", "day"]:
         infolder = Path(home).joinpath("RDRS_v2.1", f"tmp/ECCC/RDRS_v2.1/NAM/{freq}")
@@ -46,5 +48,7 @@ def main():
                 ),
                 overwrite=False,
             )
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     main()
