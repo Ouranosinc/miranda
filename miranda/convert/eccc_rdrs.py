@@ -7,12 +7,12 @@ from typing import List, Optional, Set, Union
 
 import xarray as xr
 from dask.distributed import Client
+from numpy import unique
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
-from numpy import unique
 
-from ..io import fetch_chunks, write_dataset
+from ..io import fetch_chunk_config, write_dataset
 from ..io._output import write_dataset_dict
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
@@ -74,7 +74,7 @@ def convert_rdrs(
     gathered = gather_raw_rdrs_by_years(input_folder)
     for year, ncfiles in gathered[project].items():
         ds_allvars = None
-        if len(ncfiles)>=28:
+        if len(ncfiles) >= 28:
             for nc in ncfiles:
                 ds1 = xr.open_dataset(nc, chunks="auto")
                 if ds_allvars is None:
@@ -85,9 +85,11 @@ def convert_rdrs(
                         if meaning == "hour"
                         else freq_dict[outfreq[1]]
                     )
-                    ds_allvars.attrs['frequency'] = outfreq
+                    ds_allvars.attrs["frequency"] = outfreq
                 else:
-                    ds_allvars = xr.concat([ds_allvars, ds1], data_vars='minimal', dim="time")
+                    ds_allvars = xr.concat(
+                        [ds_allvars, ds1], data_vars="minimal", dim="time"
+                    )
             ds_allvars = ds_allvars.sel(time=f"{year}")
             # This is the heart of the conversion utility; We could apply this to multiple projects.
             for month in unique(ds_allvars.time.dt.month):
@@ -104,10 +106,10 @@ def convert_rdrs(
                         add_version_hashes=False,
                         overwrite=overwrite,
                     )
-                    chunks = fetch_chunks(project=project, freq=outfreq)
+                    chunks = fetch_chunk_config(project=project, freq=outfreq)
                     chunks["time"] = len(ds_corr.time)
                     write_dataset_dict(
-                        {var_attrs[var_attr]['_cf_variable_name']: ds_corr},
+                        {var_attrs[var_attr]["_cf_variable_name"]: ds_corr},
                         output_folder=output_folder.joinpath(outfreq),
                         temp_folder=working_folder,
                         output_format=output_format,
