@@ -48,7 +48,12 @@
       "day": {
         "latitude": 125,
         "longitude": 125,
-        "time": 365
+        "time": "1 year"
+      },
+      "month": {
+        "rlat": 500,
+        "rlon": 500,
+        "time": 120
       }
     },
     "projects": [
