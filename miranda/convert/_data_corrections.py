@@ -597,27 +597,27 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if cf_name:
                 rename_dims[dim] = cf_name
     d = d.rename(rename_dims)
-
-    # Perform lon wrapping if needed and sort dimensions
-    sort_dims = []
     for new in ["lon", "lat"]:
-        if new == "lon" and "lon" in d.dims:
+        if new == "lon" and "lon" in d.coords:
             if np.any(d.lon > 180):
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
-        sort_dims.append(new)
+
         coord_precision = _get_section_entry_key(m, "dimensions", new, "_precision", p)
         if coord_precision is not None:
             d[new] = d[new].round(coord_precision)
-    if sort_dims:
-        d = d.sortby(sort_dims)
 
     # Ensure that lon and lat are written in proper order for plotting purposes
-    transpose_order = ["lat", "lon"]
-    if "time" in d.dims:
+    transpose_order = []
+    if "lat" in d.dims and "lon" in d.dims:
+        transpose_order = ["lat", "lon"]
+    elif "rlat" in d.dims and "rlon" in d.dims:
+        transpose_order = ["rlat", "rlon"]
+    if "time" in d.dims and transpose_order:
         transpose_order.insert(0, "time")
-    transpose_order.extend(list(set(d.dims) - set(transpose_order)))
+        transpose_order.extend(list(set(d.dims) - set(transpose_order)))
     d = d.transpose(*transpose_order)
+    d = d.sortby(transpose_order)
 
     # Add dimension original name and update attrs
     dim_descriptions = m["dimensions"]
