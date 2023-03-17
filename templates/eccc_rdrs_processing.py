@@ -41,7 +41,7 @@ def main():
     for freq in ["1hr", "day"]:
         infolder = Path(home).joinpath("RDRS_v2.1", f"tmp/ECCC/RDRS_v2.1/NAM/{freq}")
         for variable in [v for v in infolder.glob("*") if v.is_dir()]:
-            concat_zarr(
+            concat_rechunk_zarr(
                 input_folder=variable,
                 output_folder=Path(home).joinpath(
                     "RDRS_v2.1", f"converted/ECCC/RDRS_v2.1/NAM/{freq}/{variable.name}"
