@@ -12,6 +12,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "era5_variables",
+    "eccc_rdrs_variables",
     "gather_agcfsr",
     "gather_agmerra",
     "gather_ecmwf",
@@ -62,6 +63,7 @@ project_institutes = {
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
+    "rdrs-v2.1": "eccc",
 }
 
 
@@ -258,12 +260,12 @@ def gather_raw_rdrs_by_years(
     path = Path(path)
     year_sets = dict()
     for year in range(1950, datetime.datetime.now().year + 1):
-        files = sorted(list(path.glob(f"*_{year - 1}12*.nc")))
+        files = sorted(list(path.glob(f"{year - 1}12*.nc")))
         if files:
             files = [files[-1]]
-        files.extend(sorted(list(path.glob(f"*_{year}*.nc"))))
+        files.extend(sorted(list(path.glob(f"{year}*.nc"))))
         year_sets[str(year)] = files
-    return {"rdrs-v21": year_sets}
+    return {"rdrs-v2.1": year_sets}
 
 
 def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
