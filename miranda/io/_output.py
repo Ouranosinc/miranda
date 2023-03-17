@@ -283,9 +283,7 @@ def merge_rechunk_zarrs(
         logging.warning(
             "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
         )
-        project = get_global_attrs(next(input_folder.glob(f"*.{suffix}"))).get(
-            "project"
-        )
+        project = get_global_attrs(files_found[0]).get("project")
         if not project:
             raise ValueError(
                 "`project` not found. Must pass either `project` or `target_chunks`."

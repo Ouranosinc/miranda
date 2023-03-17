@@ -20,7 +20,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["fetch_chunk_config", "rechunk_files", "translate_time_chunk"]
 
 _data_folder = Path(__file__).parent / "data"
-chunks_configurations = json.load(open(_data_folder / "chunks.json"))
+chunk_configurations = json.load(open(_data_folder / "chunk_configurations.json"))
 
 
 # Shamelessly stolen and modified from xscen
@@ -47,17 +47,38 @@ def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
     return chunks
 
 
-def fetch_chunk_config(project: str, freq: str) -> Dict[str, int]:
+def fetch_chunk_config(
+    project: str, freq: str, priority: str = "files"
+) -> Dict[str, int]:
+    """
+
+    Parameters
+    ----------
+    project : str, optional
+        Supported projects. Used for determining chunk dictionary.
+    freq: {"1hr", "day", "month"}
+        The chunking regime for
+    priority : {"time", "files"}
+        Specifies whether the chunking regime should prioritize file granularity ("files") or time series ("time").
+
+    Returns
+    -------
+
+    """
     institute = project_institutes[project]
-    entry = chunks_configurations[institute.upper()]
+    entry = chunk_configurations[institute.upper()]
 
     # TODO: Currently no explicit handling for multi-level data
     if project in entry["projects"]:
-        if freq in entry["chunks"]:
-            return entry["chunks"][freq]
-        raise KeyError(
-            f"Chunks at frequency `{freq}` not found for project `{project}`."
-        )
+        if priority in entry[project]:
+            if freq in entry[priority]:
+                try:
+                    return entry[priority][freq]
+                except KeyError:
+                    raise KeyError(
+                        f"Chunks at frequency `{freq}` not found for project `{project}`."
+                    )
+        raise KeyError(f"Priority regime `{priority}` not found.")
     raise KeyError(f"Project `{project}` not found.")
 
 
@@ -66,10 +87,11 @@ def rechunk_files(
     output_folder: Union[str, os.PathLike],
     project: Optional[str] = None,
     time_step: Optional[str] = None,
+    chunking_priority: str = "auto",
     target_chunks: Optional[Dict[str, int]] = None,
     variables: Optional[Sequence[str]] = None,
     suffix: str = "nc",
-    output_format: str = "zarr",
+    output_format: str = "netcdf",
     overwrite: bool = False,
 ) -> None:
     """Rechunks dataset for better loading/reading performance.
@@ -90,6 +112,8 @@ def rechunk_files(
         Supported projects. Used for determining chunk dictionary. Superseded if `target_chunks` is set.
     time_step : {"1hr", "day"}, optional
         Time step of the input data. Parsed from dataset attrs if not set. Superseded if `target_chunks` is set.
+    chunking_priority: {"time", "files", "auto"}
+        The chunking regime to use. Default: "auto".
     target_chunks : dict, optional
         Must include "time", optionally "lat" and "lon", depending on dataset structure.
     variables : Sequence[str], optional
@@ -111,20 +135,18 @@ def rechunk_files(
         output_folder = Path(output_folder).expanduser()
     output_folder.mkdir(exist_ok=True)
 
-    if project is None and target_chunks is None:
-        logging.warning(
-            "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
-        )
-        project = get_global_attrs(next(input_folder.glob(f"*.{suffix}"))).get(
-            "project"
-        )
-        if not project:
-            raise ValueError(
-                "`project` not found. Must pass either `project` or `target_chunks`."
-            )
-
-    if target_chunks is None:
+    if target_chunks is None or time_step is None:
         test_file = next(input_folder.glob(f"*.{suffix}"))
+        if project is None:
+            logging.warning(
+                "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
+            )
+            project = get_global_attrs(test_file).get("project")
+            if not project:
+                raise ValueError(
+                    "`project` not found. Must pass either `project` or `target_chunks`."
+                )
+
         if time_step is None:
             time_step = get_global_attrs(test_file).get("frequency")
             if not time_step:
@@ -132,8 +154,12 @@ def rechunk_files(
 
     if output_format == "netcdf":
         output_suffix = "nc"
+        if chunking_priority == "auto":
+            chunking_priority = "files"
     elif output_format == "zarr":
         output_suffix = "zarr"
+        if chunking_priority == "auto":
+            chunking_priority = "time"
     else:
         raise NotImplementedError(f"Output format: `{output_format}`.")
 
@@ -164,7 +190,7 @@ def rechunk_files(
             ds = xr.open_dataset(file, chunks={"time": -1})
 
             if target_chunks is None:
-                chunk_config = fetch_chunk_config(project, time_step)
+                chunk_config = fetch_chunk_config(project, time_step, chunking_priority)
                 calendar, size = get_time_attrs(ds)
                 target_chunks = translate_time_chunk(chunk_config, calendar, size)
 
