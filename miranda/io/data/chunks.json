@@ -2,13 +2,13 @@
   "ECCC": {
     "chunks": {
       "1hr": {
-        "lat": 50,
-        "lon": 50,
+        "rlat": 50,
+        "rlon": 50,
         "time": 1440
       },
       "day": {
-        "lat": 50,
-        "lon": 50,
+        "rlat": 50,
+        "rlon": 50,
         "time": 1461
       }
     },

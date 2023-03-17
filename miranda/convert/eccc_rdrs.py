@@ -10,6 +10,7 @@ from dask.distributed import Client
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
+from numpy import unique
 
 from ..io import fetch_chunks, write_dataset
 from ..io._output import write_dataset_dict
@@ -58,7 +59,7 @@ def convert_rdrs(
 
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
-    var_attrs = load_json_data_mappings(project=project)["variable_entry"]
+    var_attrs = load_json_data_mappings(project=project)["variables"]
     freq_dict = dict(h="hr", d="day")
 
     if isinstance(input_folder, str):
@@ -73,91 +74,47 @@ def convert_rdrs(
     gathered = gather_raw_rdrs_by_years(input_folder)
     for year, ncfiles in gathered[project].items():
         ds_allvars = None
-        for nc in ncfiles:
-            ds1 = xr.open_dataset(nc, chunks="auto")
-            if ds_allvars is None:
-                ds_allvars = ds1
-                outfreq, meaning = get_time_frequency(ds1)
-                outfreq = (
-                    f"{outfreq[0]}{freq_dict[outfreq[1]]}"
-                    if meaning == "hour"
-                    else freq_dict[outfreq[1]]
-                )
+        if len(ncfiles)>=28:
+            for nc in ncfiles:
+                ds1 = xr.open_dataset(nc, chunks="auto")
+                if ds_allvars is None:
+                    ds_allvars = ds1
+                    outfreq, meaning = get_time_frequency(ds1)
+                    outfreq = (
+                        f"{outfreq[0]}{freq_dict[outfreq[1]]}"
+                        if meaning == "hour"
+                        else freq_dict[outfreq[1]]
+                    )
+                    ds_allvars.attrs['frequency'] = outfreq
+                else:
+                    ds_allvars = xr.concat([ds_allvars, ds1], data_vars='minimal', dim="time")
+            ds_allvars = ds_allvars.sel(time=f"{year}")
+            # This is the heart of the conversion utility; We could apply this to multiple projects.
+            for month in unique(ds_allvars.time.dt.month):
+                ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
+                for var_attr in var_attrs.keys():
+                    drop_vars = _get_drop_vars(
+                        ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
+                    )
+                    ds_out = ds_month.drop_vars(drop_vars)
 
-            else:
-                ds_allvars = xr.concat([ds_allvars, ds1], dim="time")
-
-        # This is the heart of the conversion utility; We could apply this to multiple projects.
-        for month in range(1, 13):
-            ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
-            for var_attr in var_attrs.keys():
-                drop_vars = _get_drop_vars(
-                    ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
-                )
-                ds_out = ds_month.drop_vars(drop_vars)
-
-                ds_corr = dataset_conversion(
-                    ds_out,
-                    project=project,
-                    add_version_hashes=False,
-                    overwrite=overwrite,
-                )
-                chunks = fetch_chunks(project=project, freq="1hr")
-                chunks["time"] = len(ds_corr.time)
-                write_dataset_dict(
-                    {var_attr: ds_corr},
-                    output_folder=output_folder,
-                    temp_folder=working_folder,
-                    output_format=output_format,
-                    overwrite=False,
-                    chunks=chunks,
-                    **dask_kwargs,
-                )
-
-                # write_dataset(
-                #     ds_corr,
-                #     project=project,
-                #     output_path=write_folder,
-                #     output_format=output_format,
-                # )
-
-                #
-                #
-                # # FIXME: This is generalized IO code - should be factored out.
-                # if working_folder:
-                #     for subdir in [f for f in working_folder.glob("*") if f.is_dir()]:
-                #         output_folder.joinpath(outfreq, subdir.name).mkdir(
-                #             exist_ok=True
-                #         )
-                #         for zarr in subdir.glob("*.zarr"):
-                #             new_zarr = zarr.name.split("_")
-                #             # TODO: manage output file name
-                #             new_zarr = f"{new_zarr[0]}_{outfreq}_eccc_{new_zarr[1]}_NAM_{new_zarr[2]}"
-                #
-                #             if (
-                #                 overwrite
-                #                 or not output_folder.joinpath(
-                #                     outfreq, subdir.name, new_zarr
-                #                 ).exists()
-                #             ):
-                #                 # FIXME: Client is only needed for computation. Should be elsewhere.
-                #                 with Client(**dask_kwargs):
-                #                     job.compute()
-                #                 shutil.copytree(
-                #                     zarr,
-                #                     output_folder.joinpath(
-                #                         outfreq, subdir.name, new_zarr.name
-                #                     ),
-                #                     dirs_exist_ok=True,
-                #                 )
-                #             else:
-                #                 logging.warning(
-                #                     output_folder.joinpath(
-                #                         outfreq, subdir.name, new_zarr
-                #                     ),
-                #                     " exists. Continuing...",
-                #                 )
-                #         shutil.rmtree(subdir)
+                    ds_corr = dataset_conversion(
+                        ds_out,
+                        project=project,
+                        add_version_hashes=False,
+                        overwrite=overwrite,
+                    )
+                    chunks = fetch_chunks(project=project, freq=outfreq)
+                    chunks["time"] = len(ds_corr.time)
+                    write_dataset_dict(
+                        {var_attrs[var_attr]['_cf_variable_name']: ds_corr},
+                        output_folder=output_folder.joinpath(outfreq),
+                        temp_folder=working_folder,
+                        output_format=output_format,
+                        overwrite=False,
+                        chunks=chunks,
+                        **dask_kwargs,
+                    )
 
 
 # FIXME: This looks mostly like code to stage writing out files. Should it be moved to an IO module?
