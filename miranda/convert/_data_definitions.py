@@ -63,7 +63,7 @@ project_institutes = {
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
-    "rdrs-v2.1": "eccc",
+    "rdrs-v21": "eccc",
 }
 
 
@@ -265,7 +265,7 @@ def gather_raw_rdrs_by_years(
             files = [files[-1]]
         files.extend(sorted(list(path.glob(f"{year}*.nc"))))
         year_sets[str(year)] = files
-    return {"rdrs-v2.1": year_sets}
+    return {"rdrs-v21": year_sets}
 
 
 def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:

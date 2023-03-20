@@ -157,7 +157,7 @@ def rdrs_to_daily(
 
     # GATHER ALL RDRS FILES
     gathered = gather_rdrs(input_folder, "zarr")
-    files = gathered["rdrs-v2.1"]  # noqa
+    files = gathered["rdrs-v21"]  # noqa
 
     # for var_folder in [v for v in input_folder.glob("*") if v.is_dir()]:
     #     zarrs = sorted(list(var_folder.glob("*.zarr")))

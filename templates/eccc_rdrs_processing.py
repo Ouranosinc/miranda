@@ -18,9 +18,8 @@ def main():
         silence_logs=logging.ERROR,
     )
 
-    project = "rdrs-v2.1"
     convert_rdrs(
-        project=project,
+        project="rdrs-v21",
         input_folder=Path(home).joinpath("RDRS_v2.1", "caspar"),
         output_folder=Path(home).joinpath("RDRS_v2.1", "tmp/ECCC/RDRS_v2.1/NAM"),
         output_format="zarr",

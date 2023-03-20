@@ -41,7 +41,7 @@ def load_json_data_mappings(project: str) -> dict:
 
     if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
-    elif project in ["rdrs-v2.1"]:
+    elif project in ["rdrs-v21"]:
         metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))

@@ -3,19 +3,19 @@
     "Conventions": "CF-1.8",
     "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product RDRS_v2 contains two variables for precipitation: 'RDRS_v2_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'RDRS_v2_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
     "_doi": {
-      "rdrs-v2.1": "https://doi.org/10.5194/hess-25-4917-2021"
+      "rdrs-v21": "https://doi.org/10.5194/hess-25-4917-2021"
     },
     "_remove_attrs": {
-      "rdrs-v2.1": [
+      "rdrs-v21": [
         "License",
         "product"
       ]
     },
     "_source": {
-      "rdrs-v2.1": "RDRS v2.1"
+      "rdrs-v21": "RDRS v2.1"
     },
     "_version": {
-      "rdrs-v2.1": "v2.1"
+      "rdrs-v21": "v2.1"
     },
     "data_specs_version": "00.00.08",
     "institution": "GouvCan",
@@ -31,7 +31,7 @@
   "dimensions": {
     "time": {
       "_ensure_correct_time": {
-        "rdrs-v2.1": "1H"
+        "rdrs-v21": "1H"
       },
       "_strict_time": false,
       "axis": "T",
@@ -46,7 +46,7 @@
       "_invert_sign": {},
       "_offset_time": {},
       "_transformation": {
-        "rdrs-v2.1": "amount2rate"
+        "rdrs-v21": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
@@ -58,7 +58,7 @@
     "RDRS_v2.1_P_TT_1.5m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {
-        "rdrs-v2.1": "degC"
+        "rdrs-v21": "degC"
       },
       "_invert_sign": {},
       "_offset_time": {},
