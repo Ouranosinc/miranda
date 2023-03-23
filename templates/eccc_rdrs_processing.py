@@ -18,14 +18,14 @@ def main():
         silence_logs=logging.ERROR,
     )
 
-    # convert_rdrs(
-    #     project="rdrs-v21",
-    #     input_folder=Path(home).joinpath("RDRS_v21", "caspar"),
-    #     output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
-    #     output_format="zarr",
-    #     working_folder=Path(home).joinpath("tmpout", "rdrs"),
-    #     **dask_kwargs,
-    # )
+    convert_rdrs(
+        project="rdrs-v21",
+        input_folder=Path(home).joinpath("RDRS_v21", "caspar"),
+        output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
+        output_format="zarr",
+        working_folder=Path(home).joinpath("tmpout", "rdrs"),
+        **dask_kwargs,
+    )
 
     rdrs_to_daily(
         project="rdrs-v21",
@@ -35,9 +35,9 @@ def main():
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
         working_folder=Path(home).joinpath("tmpout", "rdrs1"),
         overwrite=False,
-        year_start=1979,
-        year_end=2003,
-        process_variables=['tas'],
+        year_start=None,
+        year_end=None,
+        process_variables=None,
         **dask_kwargs,
     )
 
