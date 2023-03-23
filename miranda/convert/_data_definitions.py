@@ -36,6 +36,7 @@ eccc_rdrs_variables = dict(raw=json.load(open(_data_folder / "eccc_rdrs_cf_attrs
 ].keys())
 eccc_rdrs_variables['cf'] = [vv['_cf_variable_name'] for v, vv
                              in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))["variables"].items()]
+
 era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
     "variables"
 ].keys()

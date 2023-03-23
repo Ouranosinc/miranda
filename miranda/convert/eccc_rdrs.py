@@ -126,6 +126,7 @@ def rdrs_to_daily(
     output_format: str = "zarr",
     year_start: Optional[int]= None,
     year_end: Optional[int]= None,
+    process_variables: Optional[list]= None,
     **dask_kwargs,
 ):
     """
@@ -140,6 +141,7 @@ def rdrs_to_daily(
     output_format
     year_start
     year_end
+    process_variables
     dask_kwargs
 
     Returns
@@ -156,6 +158,9 @@ def rdrs_to_daily(
     # GATHER ALL RDRS FILES
     gathered = gather_rdrs(project, input_folder, "zarr", "cf")
     files = gathered["rdrs-v21"]  # noqa
+    if process_variables:
+        for vv in [f for f in files.keys() if f not in process_variables]:
+            files.pop(vv)
     for vv, zarrs in files.items():
         zarrs = sorted(zarrs)
         if not year_start:
