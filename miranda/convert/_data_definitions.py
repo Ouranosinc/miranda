@@ -31,11 +31,15 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-eccc_rdrs_variables = dict(raw=json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
-    "variables"
-].keys())
-eccc_rdrs_variables['cf'] = [vv['_cf_variable_name'] for v, vv
-                             in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))["variables"].items()]
+eccc_rdrs_variables = dict(
+    raw=json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))["variables"].keys()
+)
+eccc_rdrs_variables["cf"] = [
+    vv["_cf_variable_name"]
+    for v, vv in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+        "variables"
+    ].items()
+]
 
 era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
     "variables"
@@ -89,7 +93,7 @@ def _gather(
     source: Union[str, os.PathLike],
     glob_pattern: str,
     suffix: Optional[str] = None,
-    recursive: Optional[bool] = False
+    recursive: Optional[bool] = False,
 ) -> Dict[str, List[Path]]:
     source = Path(source).expanduser()
     logging.info(f"Gathering {name} files from: {source.as_posix()}")
@@ -228,7 +232,9 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     )
 
 
-def gather_rdrs(name:str, path: Union[str, os.PathLike], suffix: str, key: str) -> Dict[str, List[Path]]:
+def gather_rdrs(
+    name: str, path: Union[str, os.PathLike], suffix: str, key: str
+) -> Dict[str, List[Path]]:
     """Gather RDRS processed source data.
 
     Parameters
@@ -244,7 +250,7 @@ def gather_rdrs(name:str, path: Union[str, os.PathLike], suffix: str, key: str) 
     if isinstance(path, str):
         path = Path(path).expanduser()
 
-    files = dict({name:dict()})
+    files = dict({name: dict()})
     for vv in eccc_rdrs_variables[key]:
         tmp = _gather(
             name,
@@ -252,7 +258,7 @@ def gather_rdrs(name:str, path: Union[str, os.PathLike], suffix: str, key: str) 
             source=path.joinpath(vv),
             glob_pattern="{variable}_*_{name}_*.{suffix}",
             suffix=suffix,
-            recursive=True
+            recursive=True,
         )
         files[name][vv] = tmp[name]
     return files

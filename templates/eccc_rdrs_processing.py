@@ -29,15 +29,13 @@ def main():
 
     rdrs_to_daily(
         project="rdrs-v21",
-        input_folder=Path(home).joinpath(
-            "RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"
-        ),
+        input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
         working_folder=Path(home).joinpath("tmpout", "rdrs1"),
         overwrite=False,
         year_start=1979,
         year_end=2003,
-        process_variables=['tas'],
+        process_variables=["tas"],
         **dask_kwargs,
     )
 
