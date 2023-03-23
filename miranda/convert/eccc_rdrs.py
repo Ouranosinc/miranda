@@ -13,7 +13,7 @@ from miranda.units import get_time_frequency
 
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
-
+from ._aggregation import aggregate, aggregations_possible
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
@@ -118,20 +118,28 @@ def convert_rdrs(
 
 # FIXME: This looks mostly like code to stage writing out files. Should it be moved to an IO module?
 def rdrs_to_daily(
+    project: str,
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
     working_folder: Optional[Union[str, os.PathLike]] = None,
     overwrite: bool = False,
+    output_format: str = "zarr",
+    year_start: Optional[int]= None,
+    year_end: Optional[int]= None,
     **dask_kwargs,
 ):
     """
 
     Parameters
     ----------
+    project
     input_folder
     output_folder
     working_folder
     overwrite
+    output_format
+    year_start
+    year_end
     dask_kwargs
 
     Returns
@@ -145,59 +153,31 @@ def rdrs_to_daily(
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
 
-    if working_folder:
-        if working_folder.exists():
-            if overwrite:
-                shutil.rmtree(working_folder)
-            else:
-                raise FileExistsError(
-                    "`temp_folder` is not empty. Use `overwrite=True`."
-                )
-        working_folder.mkdir(parents=True)
-
     # GATHER ALL RDRS FILES
-    gathered = gather_rdrs(input_folder, "zarr")
+    gathered = gather_rdrs(project, input_folder, "zarr", "cf")
     files = gathered["rdrs-v21"]  # noqa
-
-    # for var_folder in [v for v in input_folder.glob("*") if v.is_dir()]:
-    #     zarrs = sorted(list(var_folder.glob("*.zarr")))
-    #     year1 = xr.open_zarr(zarrs[0]).time.dt.year.min().values
-    #     year2 = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
-    #     for year in range(year1, year2 + 1):
-    #         infiles = sorted(list(var_folder.glob(f"*_{year}*.zarr")))
-    #         if len(infiles) > 12 or len(infiles) == 0:
-    #             raise ValueError(
-    #                 f"Found {len(infiles)} input files. Expected between 1 and 12."
-    #             )
+    for vv, zarrs in files.items():
+        zarrs = sorted(zarrs)
+        if not year_start:
+            year_start = xr.open_zarr(zarrs[0]).time.dt.year.min().values
+        if not year_end:
+            year_end = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
+        for year in range(year_start, year_end + 1):
+            infiles = [z for z in zarrs if f'_{year}' in z.name]
+            if len(infiles) != 12 :
+                raise ValueError(
+                    f"Found {len(infiles)} input files. Expected 12."
+                )
     #
-    #         out_variables = daily_aggregation(xr.open_zarr(infiles[0]), keys_only=True)
-    #         for variable in out_variables:
-    #             ds = None
-    #             outzarr = _rename_output_file(
-    #                 infiles[0].stem, var_folder.name, variable, "day", year
-    #             )
-    #             outzarr = output_folder.joinpath(variable, outzarr)
-    #             if not outzarr.exists() or overwrite:
-    #                 if ds is None:
-    #                     ds = xr.open_mfdataset(infiles, engine="zarr")
-    #                     ds = daily_aggregation(ds=ds)
-    #                 outzarr.parent.mkdir(parents=True, exist_ok=True)
-    #                 if outzarr.exists():
-    #                     shutil.rmtree(outzarr)
-    #
-    #                 if temp_folder:
-    #                     tmp_zarr = temp_folder.joinpath(outzarr.name)
-    #                     # FIXME: Client is only needed for computation. Should be elsewhere.
-    #                     with Client(**dask_kwargs):
-    #                         ds[variable].chunk(dict(time=-1, rlon=50, rlat=50)).to_zarr(
-    #                             tmp_zarr
-    #                         )
-    #                     shutil.copytree(tmp_zarr, outzarr, dirs_exist_ok=True)
-    #                     shutil.rmtree(tmp_zarr)
-    #                 else:
-    #                     with Client(**dask_kwargs):
-    #                         ds[var_folder.name].chunk(
-    #                             dict(time=-1, rlon=50, rlat=50)
-    #                         ).to_zarr(outzarr)
-    #             else:
-    #                 logging.warning(outzarr.as_posix(), "exists. Continuing..")
+            out_variables = aggregate(xr.open_mfdataset(infiles, engine="zarr"), freq="day")
+            chunks = fetch_chunk_config(project=project, freq="day")
+            chunks["time"] = len(out_variables[list(out_variables.keys())[0]].time)
+            write_dataset_dict(
+                out_variables,
+                output_folder=output_folder,
+                temp_folder=working_folder,
+                output_format=output_format,
+                overwrite=overwrite,
+                chunks=chunks,
+                **dask_kwargs,
+            )

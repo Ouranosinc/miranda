@@ -70,15 +70,16 @@ def fetch_chunk_config(
 
     # TODO: Currently no explicit handling for multi-level data
     if project in entry["projects"]:
-        if priority in entry[project]:
-            if freq in entry[priority]:
-                try:
-                    return entry[priority][freq]
-                except KeyError:
-                    raise KeyError(
-                        f"Chunks at frequency `{freq}` not found for project `{project}`."
-                    )
-        raise KeyError(f"Priority regime `{priority}` not found.")
+        return entry["time"][freq]
+        # if priority in entry[project]:
+        #     if freq in entry[priority]:
+        #         try:
+        #             return entry[priority][freq]
+        #         except KeyError:
+        #             raise KeyError(
+        #                 f"Chunks at frequency `{freq}` not found for project `{project}`."
+        #             )
+        # raise KeyError(f"Priority regime `{priority}` not found.")
     raise KeyError(f"Project `{project}` not found.")
 
 
