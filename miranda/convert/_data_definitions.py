@@ -31,14 +31,19 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-eccc_rdrs_variables = dict(
-    raw=json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))["variables"].keys()
-)
-eccc_rdrs_variables["cf"] = [
-    vv["_cf_variable_name"]
-    for v, vv in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+
+eccc_rdrs_variables = dict()
+eccc_rdrs_variables["raw"] = [
+    v
+    for v in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
         "variables"
-    ].items()
+    ].keys()
+]
+eccc_rdrs_variables["cf"] = [
+    attrs["_cf_variable_name"]
+    for attrs in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+        "variables"
+    ].values()
 ]
 
 era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
@@ -101,15 +106,12 @@ def _gather(
     for variable in variables:
         if suffix:
             pattern = glob_pattern.format(variable=variable, name=name, suffix=suffix)
-            if suffix == "zarr":
-                if recursive:
-                    in_files.extend(list(sorted(source.rglob(pattern))))
-                else:
-                    in_files.extend(list(sorted(source.glob(pattern))))
-                continue
         else:
             pattern = glob_pattern.format(variable)
-        in_files.extend(list(sorted(source.rglob(pattern))))
+        if recursive:
+            in_files.extend(list(sorted(source.rglob(pattern))))
+        else:
+            in_files.extend(list(sorted(source.glob(pattern))))
     logging.info(
         f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
     )
