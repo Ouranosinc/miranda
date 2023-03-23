@@ -1,21 +1,25 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
+    "_product": {
+      "gen2": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 2",
+      "gen3": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 3"
+    },
     "citation": {
       "gen2": "Mekis, É and L.A. Vincent, 2011: An overview of the second generation adjusted daily precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), 163-177 doi:10.1080/07055900.2011.583910",
       "gen3": "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"
     },
     "contact": "info.cccs-ccsc@canada.ca",
-    "data_specs_version": "00.00.02",
     "documentation": "https://www.canada.ca/en/environment-climate-change/services/climate-change/canadian-centre-climate-services/display-download/technical-documentation-adjusted-climate-data.html",
     "float_missing_value": "1e20",
     "frequency": "day",
+    "institution": "GovCan",
     "int_missing_value": "-999",
     "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
     "license_type": "permissive",
-    "product": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 2/3",
+    "organization": "ECCC",
     "realm": "atmos",
-    "table_date": "5 October 2022",
+    "table_date": "2023-03-23",
     "table_id": "ECCC"
   },
   "variable_entry": {

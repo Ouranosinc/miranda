@@ -20,15 +20,15 @@
     "_version": {
       "ec-canswe": "v4"
     },
-    "institution": "GouvCan",
+    "institution": "GovCan",
     "license_type": {
       "ec-canswe": "permissive"
     },
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "2022-12-21",
-    "table_id": "EC",
+    "table_date": "2023-03-23",
+    "table_id": "eccc",
     "type": "station-obs"
   },
   "variable_entry": {
