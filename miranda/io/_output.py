@@ -11,7 +11,7 @@ from dask.distributed import Client
 
 from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
-
+from ._rechunk import fetch_chunk_config, translate_time_chunk
 from ._input import discover_data
 from .utils import delayed_write, get_global_attrs, name_output_file, sort_variables
 
@@ -141,6 +141,8 @@ def write_dataset_dict(
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
 def concat_rechunk_zarr(
+    project: str,
+    freq:str,
     input_folder: Union[str, os.PathLike],
     output_folder: Union[str, os.PathLike],
     overwrite: bool = False,
@@ -150,6 +152,8 @@ def concat_rechunk_zarr(
 
     Parameters
     ----------
+    project
+    freq
     input_folder
     output_folder
     overwrite
@@ -178,11 +182,7 @@ def concat_rechunk_zarr(
     outzarr = output_folder.joinpath(outzarr)
 
     if not outzarr.exists() or overwrite:
-        if "day" in input_folder.as_posix():
-            chunks = dict(time=(365 * 4) + 1, rlon=50, rlat=50)
-        else:
-            chunks = dict(time=(24 * 30 * 2), rlon=50, rlat=50)
-
+        chunks = fetch_chunk_config(project=project, freq=freq, priority='time')
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]
@@ -194,45 +194,40 @@ def concat_rechunk_zarr(
                     if int(zarrfile.stem.split("_")[-1].split("-")[0][0:4]) in year
                 ]
             )
-            assert len(list_zarr1) / len(year) == 12
+            #assert len(list_zarr1) / len(year) == 12
             ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
+            chunks = translate_time_chunk(chunks=chunks, calendar=ds.time.dt.calendar, timesize=len(ds.time) )
+            tmpzarr = outzarr.parent.joinpath(
+                "tmp",
+                f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
+            )
+            tmpzarr.parent.mkdir(exist_ok=True, parents=True)
+            logging.info(f"Writing year {year} to {tmpzarr.as_posix()}.")
 
+            job = delayed_write(
+                ds=ds,
+                outfile=tmpzarr,
+                output_format="zarr",
+                target_chunks=chunks,
+                overwrite=True,
+            )  # kwargs=zarr_kwargs)
             # FIXME: Client is only needed for computation. Should be elsewhere.
             with Client(**dask_kwargs):
-                # if outzarr.exists():
-                #     zarr_kwargs = {"append_dim": "time", "consolidated": True}
-                # else:
-                #     zarr_kwargs = {"consolidated": True}
-                tmpzarr = outzarr.parent.joinpath(
-                    "tmp",
-                    f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
-                )
-                tmpzarr.parent.mkdir(exist_ok=True, parents=True)
-                logging.info(f"Writing year {year} to {tmpzarr.as_posix()}.")
-
-                job = delayed_write(
-                    ds=ds,
-                    outfile=tmpzarr,
-                    output_format="zarr",
-                    target_chunks=chunks,
-                    overwrite=overwrite,
-                )  # kwargs=zarr_kwargs)
                 dask.compute(job)
 
         # get tmp zarrs
         list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
         ds = xr.open_mfdataset(list_zarr, engine="zarr")
         # FIXME: Client is only needed for computation. Should be elsewhere.
+        job = delayed_write(
+            ds=ds,
+            outfile=outzarr,
+            output_format="zarr",
+            target_chunks=chunks,
+            overwrite=overwrite,
+        )  # kwargs=zarr_kwargs)
         with Client(**dask_kwargs):
-            job = delayed_write(
-                ds=ds,
-                outfile=outzarr,
-                output_format="zarr",
-                target_chunks=chunks,
-                overwrite=overwrite,
-            )  # kwargs=zarr_kwargs)
             dask.compute(job)
-
         shutil.rmtree(tmpzarr.parent)
 
 
