@@ -11,9 +11,10 @@ from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
+from ._aggregation import aggregate, aggregations_possible
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
-from ._aggregation import aggregate, aggregations_possible
+
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
@@ -124,9 +125,9 @@ def rdrs_to_daily(
     working_folder: Optional[Union[str, os.PathLike]] = None,
     overwrite: bool = False,
     output_format: str = "zarr",
-    year_start: Optional[int]= None,
-    year_end: Optional[int]= None,
-    process_variables: Optional[list]= None,
+    year_start: Optional[int] = None,
+    year_end: Optional[int] = None,
+    process_variables: Optional[list] = None,
     **dask_kwargs,
 ):
     """
@@ -168,13 +169,13 @@ def rdrs_to_daily(
         if not year_end:
             year_end = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
         for year in range(year_start, year_end + 1):
-            infiles = [z for z in zarrs if f'_{year}' in z.name]
-            if len(infiles) != 12 :
-                raise ValueError(
-                    f"Found {len(infiles)} input files. Expected 12."
-                )
-    #
-            out_variables = aggregate(xr.open_mfdataset(infiles, engine="zarr"), freq="day")
+            infiles = [z for z in zarrs if f"_{year}" in z.name]
+            if len(infiles) != 12:
+                raise ValueError(f"Found {len(infiles)} input files. Expected 12.")
+            #
+            out_variables = aggregate(
+                xr.open_mfdataset(infiles, engine="zarr"), freq="day"
+            )
             chunks = fetch_chunk_config(project=project, freq="day")
             chunks["time"] = len(out_variables[list(out_variables.keys())[0]].time)
             write_dataset_dict(

@@ -30,9 +30,7 @@ def main():
 
     rdrs_to_daily(
         project=project,
-        input_folder=Path(home).joinpath(
-            "RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"
-        ),
+        input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
         working_folder=Path(home).joinpath("tmpout", "rdrs1"),
         overwrite=False,
@@ -54,7 +52,6 @@ def main():
                 ),
                 overwrite=False,
             )
-
 
 
 if __name__ == "__main__":
