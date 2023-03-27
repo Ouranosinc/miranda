@@ -97,7 +97,7 @@ def convert_rdrs(
                         ncfiles[0], keep_vars=[var_attr, "rotated_pole"]
                     )
                     ds_out = ds_month.drop_vars(drop_vars)
-
+                    ds_out = ds_out.assign_coords(rotated_pole=ds_out["rotated_pole"])
                     ds_corr = dataset_conversion(
                         ds_out,
                         project=project,
