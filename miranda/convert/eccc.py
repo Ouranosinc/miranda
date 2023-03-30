@@ -30,11 +30,11 @@ def convert_canswe(file: str | Path, output: str | Path):
         ]
     )
 
-    def clean_flags(var):
-        values = list(map(bytes.decode, np.sort(pd.unique(var.values.flatten()))))
+    def clean_flags(variable):
+        values = list(map(bytes.decode, np.sort(pd.unique(variable.values.flatten()))))
         values[0] = "n"
-        meandict = parse_desc(var.description)
-        meanings = " ".join(np.array([meandict[v] for v in values]))
+        mean_dict = parse_desc(variable.description)
+        meanings = " ".join(np.array([mean_dict[v] for v in values]))
         return dict(flag_values=values, flag_meanings=meanings)
 
     def parse_desc(desc):

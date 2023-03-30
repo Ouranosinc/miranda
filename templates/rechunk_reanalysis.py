@@ -15,7 +15,7 @@ except ImportError:
     Client = None
     has_dask = False
 
-from miranda.convert import rechunk_reanalysis
+from miranda.io import rechunk_files
 
 if __name__ == "__main__":
     step = "hourly"  # "daily
@@ -44,6 +44,6 @@ if __name__ == "__main__":
             memory_limit="4GB",
             local_directory=Path(tempfile.TemporaryDirectory().name),
         ):
-            rechunk_reanalysis(**parameters)
+            rechunk_files(**parameters)
     else:
-        rechunk_reanalysis(**parameters)
+        rechunk_files(**parameters)

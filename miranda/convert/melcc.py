@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-import logging
+import logging.config
 import re
 import warnings
 from argparse import ArgumentParser
@@ -348,7 +348,7 @@ def concat(
 
 
 def convert_snow_table(file: str | Path, output: str | Path):
-    """Convert snow data given through an excel file.
+    """Convert snow data given through an Excel file.
 
     This private data is not included in the MDB files.
 

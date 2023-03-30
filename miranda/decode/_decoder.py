@@ -17,17 +17,12 @@ import xarray as xr
 import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
-from miranda.convert.utils import find_version_hash  # noqa
+from miranda.convert.utils import date_parser, find_version_hash  # noqa
 from miranda.cv import VALIDATION_ENABLED
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
-from ._time import (
-    TIME_UNITS_TO_FREQUENCY,
-    TIME_UNITS_TO_TIMEDELTA,
-    DecoderError,
-    date_parser,
-)
+from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderError
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS

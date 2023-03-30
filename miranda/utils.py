@@ -8,10 +8,8 @@ import tempfile
 import warnings
 import zipfile
 from contextlib import contextmanager
-from datetime import date
 from io import StringIO
 from pathlib import Path
-from types import GeneratorType
 from typing import Dict, Iterable, List, Optional, Sequence, TextIO, Union
 
 from .scripting import LOGGING_CONFIG
@@ -21,16 +19,11 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = [
     "HiddenPrints",
     "chunk_iterables",
-    "creation_date",
-    "discover_data",
-    "find_filepaths",
     "generic_extract_archive",
     "list_paths_with_elements",
     "publish_release_notes",
-    "read_privileges",
     "single_item_list",
     "working_directory",
-    "yesno_prompt",
 ]
 
 # For datetime validation
@@ -54,47 +47,6 @@ class HiddenPrints:
         sys.stdout = self._original_stdout
 
 
-def discover_data(
-    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
-    suffix: str = ".nc",
-    recurse: bool = True,
-) -> Union[List[os.PathLike], GeneratorType]:
-    """Discover data.
-
-    Parameters
-    ----------
-    input_files: str or Path or List[Union[str, Path]] or GeneratorType
-      Path or string to a file, a folder, or a generator of paths.
-    suffix: str
-      File-ending suffix to search for. Default: ".nc".
-    recurse: bool
-      Whether to recurse through folders or not. Default: True.
-
-    Returns
-    -------
-    list or generator of Path
-
-    Warnings
-    --------
-    Recursion through ".zarr" files is explicitly disabled. Recursive globs and generators will not be expanded/sorted.
-
-    """
-    if isinstance(input_files, (Path, str)):
-        input_files = Path(input_files)
-        if input_files.is_dir():
-            if suffix.endswith("zarr") or not recurse:
-                input_files = sorted(list(input_files.glob(suffix)))
-            else:
-                input_files = input_files.rglob(suffix)
-    elif isinstance(input_files, list):
-        input_files = sorted(Path(p) for p in input_files)
-    elif isinstance(input_files, GeneratorType):
-        pass
-    else:
-        raise NotImplementedError(f"input_files: {type(input_files)}")
-    return input_files
-
-
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
     """Generate lists of `chunk_size` elements from `iterable`.
 
@@ -113,66 +65,6 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
             if chunk:
                 yield chunk
             break
-
-
-def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
-    """Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
-
-    See https://stackoverflow.com/a/39501288/1709587 for explanation.
-
-    Parameters
-    ----------
-    path_to_file: Union[Path, str]
-
-    Returns
-    -------
-    Union[float, date]
-    """
-    if os.name == "nt":
-        return Path(path_to_file).stat().st_ctime
-
-    stat = Path(path_to_file).stat()
-    try:
-        return date.fromtimestamp(stat.st_ctime)
-    except AttributeError:
-        # We're probably on Linux. No easy way to get creation dates here,
-        # so we'll settle for when its content was last modified.
-        return date.fromtimestamp(stat.st_mtime)
-
-
-def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
-    """Determine whether a user has read privileges to a specific file.
-
-    Parameters
-    ----------
-    location: Union[Path, str]
-    strict: bool
-
-    Returns
-    -------
-    bool
-      Whether the current user shell has read privileges
-    """
-    if (2, 7) < sys.version_info < (3, 6):
-        location = str(location)
-
-    msg = ""
-    try:
-        if Path(location).exists():
-            if os.access(location, os.R_OK):
-                msg = f"{location} is read OK!"
-                logging.info(msg)
-                return True
-            msg = f"Ensure read privileges for `{location}`."
-        else:
-            msg = f"`{location}` is an invalid path."
-        raise OSError()
-
-    except OSError:
-        logging.exception(msg)
-        if strict:
-            raise
-        return False
 
 
 @contextmanager
@@ -201,51 +93,6 @@ def working_directory(directory: Union[str, Path]) -> None:
         yield directory
     finally:
         os.chdir(owd)
-
-
-def find_filepaths(
-    source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
-    recursive: bool = True,
-    file_suffixes: Optional[Union[str, List[str]]] = None,
-    **_,
-) -> List[Path]:
-    """Find all available filepaths at a given source.
-
-    Parameters
-    ----------
-    source : Union[Path, str, GeneratorType, List[Union[Path, str]]]
-    recursive : bool
-    file_suffixes: List[str]
-
-    Returns
-    -------
-    List[Path]
-    """
-
-    if file_suffixes is None:
-        file_suffixes = ["*", ".*"]
-    elif isinstance(file_suffixes, str):
-        file_suffixes = [file_suffixes]
-
-    found = list()
-    if isinstance(source, (Path, str)):
-        source = [source]
-
-    for location in source:
-        for pattern in file_suffixes:
-            if "*" not in pattern:
-                pattern = f"*{pattern}*"
-            if recursive:
-                found.extend([f for f in Path(location).expanduser().rglob(pattern)])
-            elif not recursive:
-                found.extend([f for f in Path(location).expanduser().glob(pattern)])
-            else:
-                raise ValueError(f"Recursive: {recursive}")
-
-    if (2, 7) < sys.version_info < (3, 6):
-        found = [str(f) for f in found]
-
-    return found
 
 
 def single_item_list(iterable: Iterable) -> bool:
@@ -342,28 +189,6 @@ def generic_extract_archive(
 
 
 ########################################################################################
-
-
-def yesno_prompt(query: str) -> bool:
-    """Prompt user for a yes/no answer.
-
-    Parameters
-    ----------
-    query : str
-        The yes/no question to ask the user.
-
-    Returns
-    -------
-    bool
-        True (yes) or False (otherwise).
-    """
-
-    user_input = input(f"{query} (y/n) ")
-    if user_input.lower() == "y":
-        return True
-    if user_input.lower() == "n":
-        return False
-    raise ValueError(f"{user_input} not in (y, n)")
 
 
 def list_paths_with_elements(
@@ -502,3 +327,35 @@ def publish_release_notes(
     if isinstance(file, (Path, os.PathLike)):
         file = Path(file).open("w")
     print(history, file=file)
+
+
+def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
+    """Determine whether a user has read privileges to a specific file.
+
+    Parameters
+    ----------
+    location: Union[Path, str]
+    strict: bool
+
+    Returns
+    -------
+    bool
+      Whether the current user shell has read privileges
+    """
+    msg = ""
+    try:
+        if Path(location).exists():
+            if os.access(location, os.R_OK):
+                msg = f"{location} is read OK!"
+                logging.info(msg)
+                return True
+            msg = f"Ensure read privileges for `{location}`."
+        else:
+            msg = f"`{location}` is an invalid path."
+        raise OSError()
+
+    except OSError:
+        logging.exception(msg)
+        if strict:
+            raise
+        return False
