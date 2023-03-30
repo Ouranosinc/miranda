@@ -2,17 +2,17 @@
   "Header": {
     "Conventions": "CF-1.8",
     "contact": "climatcentre-climatecentral@ec.gc.ca",
-    "data_specs_version": "00.00.02",
-    "institution": "ECCC",
+    "institution": "GovCan",
     "int_missing_value": "-999",
     "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
     "license_preamble": "The data is owned by the Government of Canada (Environment and Climate Change Canada), and fall under the licence agreement for use of Environment and Climate Change Canada data.",
     "license_type": "permissive",
     "missing_value": "1e20",
+    "organization": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
     "source": "msc",
-    "table_date": "4 October 2022",
+    "table_date": "2023-03-23",
     "type": "station-obs"
   },
   "variable_entry": {

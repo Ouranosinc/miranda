@@ -11,20 +11,21 @@ from dask.diagnostics import ProgressBar
 from xclim.core import calendar
 
 from miranda.gis import subset_domain
+from miranda.io.utils import delayed_write, get_chunks_on_disk
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
+from ._aggregation import aggregate as aggregate_func
 from ._data_corrections import dataset_corrections
-from ._data_definitions import (
-    reanalysis_project_institutes,
-    xarray_frequencies_to_cmip6like,
-)
-from .utils import daily_aggregation, delayed_write, get_chunks_on_disk
+from ._data_definitions import project_institutes, xarray_frequencies_to_cmip6like
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
+
+
+__all__ = ["reanalysis_processing"]
 
 
 # Needed pre-processing function
@@ -136,7 +137,7 @@ def reanalysis_processing(
                             )
                             time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6like[parse_freq[1]]}"
 
-                        institute = reanalysis_project_institutes[project]
+                        institute = project_institutes[project]
                         file_name = "_".join([var, time_freq, institute, project])
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
@@ -170,7 +171,7 @@ def reanalysis_processing(
                         ds = dataset_corrections(ds, project=project)
 
                         if time_freq.lower() == "day":
-                            dataset = daily_aggregation(ds)
+                            dataset = aggregate_func(ds, freq="day")
                             freq = "YS"
                         else:
                             out_variable = (

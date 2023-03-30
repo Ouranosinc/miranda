@@ -20,7 +20,7 @@ except ModuleNotFoundError:
         "Please install them with `pip install miranda[full]`."
     )
 
-from miranda.gis._domains import subsetting_domains
+from miranda.gis import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 

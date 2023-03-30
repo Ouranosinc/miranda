@@ -28,7 +28,6 @@ dependencies:
   - numcodecs
   - numpy
   - openpyxl
-  - packaging
   - pandas
   - pandoc
   - paramiko >=2.6.0
@@ -49,7 +48,7 @@ dependencies:
   - sphinx
   - sphinx-codeautolink
   - sphinx-copybutton
-  - tox
+  - tox >=4.0
   - xarray
   - xclim >=0.33.0
   - xesmf

@@ -10,9 +10,8 @@ import warnings
 from pathlib import Path
 from typing import List, Union
 
+import miranda.remote
 from miranda.scripting import LOGGING_CONFIG
-
-from .connect import Connection
 
 try:
     import fabric  # noqa
@@ -30,7 +29,7 @@ __all__ = ["create_archive", "create_remote_directory", "transfer_file"]
 
 def create_remote_directory(
     directory: str | os.PathLike,
-    transport: SSHClient | fabric.Connection | Connection,
+    transport: SSHClient | fabric.Connection | miranda.remote.Connection,
 ) -> None:
     """
     This calls a "mkdir -p" function to create a folder structure over SFTP/SSH and waits
@@ -52,7 +51,7 @@ def create_remote_directory(
 
     ownership = "0775"
     command = f"mkdir -p -m {ownership} '{directory.as_posix()}'"
-    if isinstance(transport, (fabric.Connection, Connection)):
+    if isinstance(transport, (fabric.Connection, miranda.remote.Connection)):
         with transport:
             transport.run(command)
     elif isinstance(transport, (SSHClient, SCPClient)):
@@ -70,7 +69,10 @@ def create_remote_directory(
 def create_archive(
     source_files: list[str | os.PathLike],
     destination: str | os.PathLike,
-    transport: SCPClient | SFTPClient | fabric.Connection | Connection = None,
+    transport: SCPClient
+    | SFTPClient
+    | fabric.Connection
+    | miranda.remote.Connection = None,
     delete: bool = True,
     compression: bool = False,
     recursive: bool = True,
@@ -116,7 +118,10 @@ def create_archive(
 def transfer_file(
     source_file: str | os.PathLike,
     destination_file: str | os.PathLike,
-    transport: SCPClient | SFTPClient | fabric.Connection | Connection = None,
+    transport: SCPClient
+    | SFTPClient
+    | fabric.Connection
+    | miranda.remote.Connection = None,
 ) -> bool:
     """
 

@@ -2,8 +2,8 @@ from pathlib import Path
 
 from miranda import convert
 
-era5_land_files = convert.gather_era5_land("~/Desktop/example_data/")
 path_era5_land_out = Path("~/Desktop").expanduser()
+era5_land_files = convert.gather_ecmwf("era5-land", path_era5_land_out)
 
 ERA5_VARIABLES = [
     "d2m",

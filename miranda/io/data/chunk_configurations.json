@@ -1,0 +1,84 @@
+{
+  "ECCC": {
+    "files": {
+      "1hr": {
+        "rlat": 250,
+        "rlon": 250,
+        "time": 168
+      },
+      "day": {
+        "rlat": 125,
+        "rlon": 125,
+        "time": "1 year"
+      },
+      "month": {
+        "rlat": 500,
+        "rlon": 500,
+        "time": 120
+      }
+    },
+    "projects": [
+      "rdrs-v21"
+    ],
+    "time": {
+      "1hr": {
+        "rlat": 50,
+        "rlon": 50,
+        "time": 1440
+      },
+      "day": {
+        "rlat": 50,
+        "rlon": 50,
+        "time": "4 years"
+      },
+      "month": {
+        "rlat": 250,
+        "rlon": 250,
+        "time": 240
+      }
+    }
+  },
+  "ECMWF": {
+    "files": {
+      "1hr": {
+        "lat": 250,
+        "lon": 250,
+        "time": 168
+      },
+      "day": {
+        "latitude": 125,
+        "longitude": 125,
+        "time": "1 year"
+      },
+      "month": {
+        "rlat": 500,
+        "rlon": 500,
+        "time": 120
+      }
+    },
+    "projects": [
+      "era5-single-levels",
+      "era5-single-levels-preliminary-back-extension",
+      "era5-land",
+      "era5-pressure-levels",
+      "era5-pressure-levels-preliminary-back-extension"
+    ],
+    "time": {
+      "1hr": {
+        "lat": 50,
+        "lon": 50,
+        "time": 1440
+      },
+      "day": {
+        "lat": 50,
+        "lon": 50,
+        "time": "4 years"
+      },
+      "month": {
+        "lat": 250,
+        "lon": 250,
+        "time": 240
+      }
+    }
+  }
+}

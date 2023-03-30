@@ -4,8 +4,9 @@ from logging import config
 from pathlib import Path
 from typing import List, Union
 
+from miranda.io import find_filepaths
+from miranda.io.utils import creation_date
 from miranda.scripting import LOGGING_CONFIG
-from miranda.utils import creation_date, find_filepaths
 
 __all__ = ["select_by_date_modified"]
 

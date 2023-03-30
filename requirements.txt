@@ -8,7 +8,6 @@ netCDF4
 numpy
 geopandas
 pandas
-packaging
 pint
 pyessv
 pyproj
