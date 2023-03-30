@@ -3,7 +3,7 @@ import json
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -169,7 +169,7 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -185,7 +185,7 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Pa
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -201,7 +201,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -220,7 +220,7 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -236,12 +236,13 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
 def gather_rdrs(
     name: str, path: Union[str, os.PathLike], suffix: str, key: str
-) -> Dict[str, List[Path]]:
+) -> Dict[str, Dict[str, List[Path]]]:
     """Gather RDRS processed source data.
 
     Parameters
     ----------
-    path: str or os.PathLike
+    name : str
+    path : str or os.PathLike
     suffix : str
     key : str  one of 'raw' or 'cf' indicating which variable name dictionary to search for
 

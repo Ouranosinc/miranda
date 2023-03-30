@@ -1,6 +1,5 @@
 import logging.config
 import os
-import shutil
 from pathlib import Path
 from typing import List, Optional, Set, Union
 
@@ -11,7 +10,7 @@ from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
-from ._aggregation import aggregate, aggregations_possible
+from ._aggregation import aggregate
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
 
