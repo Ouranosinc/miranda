@@ -4,13 +4,18 @@
 History
 =======
 
-v0.4.0 (2023-03-14)
+v0.4.0 (2023-03-30)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`),  Travis Logan (:user:`tlogan2000`).
 
 New features
 ^^^^^^^^^^^^
 * Improvements have been made to the development documentation; Project URLs, ReadTheDocs theming, and other quality of life changes.
+* Conversion JSON definitions now support pre-processing to render dimensions and variable names consistent before running corrections/conversions.
+* Dataset conversions now support ETS-GRNCH and ECCC RDRS projects.
+* Preliminary ``miranda.io`` module for organizing output-writing functionality.
+* New ``fetch_chunk_config`` function for "rechunking" datasets according to project presets.
+* The ``name_output_file`` function now accepts a dictionary of facets for constructing filenames.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
