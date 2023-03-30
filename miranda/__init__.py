@@ -1,5 +1,5 @@
 """
-Copyright 2019-2022 Trevor James Smith and Ouranos Inc.
+Copyright 2019-2023 Trevor James Smith and Ouranos Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

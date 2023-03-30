@@ -3,7 +3,7 @@ import json
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -12,6 +12,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "era5_variables",
+    "eccc_rdrs_variables",
     "gather_agcfsr",
     "gather_agmerra",
     "gather_ecmwf",
@@ -30,9 +31,21 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-eccc_rdrs_variables = json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
-    "variables"
-].keys()
+
+eccc_rdrs_variables = dict()
+eccc_rdrs_variables["raw"] = [
+    v
+    for v in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+        "variables"
+    ].keys()
+]
+eccc_rdrs_variables["cf"] = [
+    attrs["_cf_variable_name"]
+    for attrs in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+        "variables"
+    ].values()
+]
+
 era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
     "variables"
 ].keys()
@@ -62,6 +75,7 @@ project_institutes = {
     "merra2": "nasa",
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
+    "rdrs-v21": "eccc",
 }
 
 
@@ -84,19 +98,20 @@ def _gather(
     source: Union[str, os.PathLike],
     glob_pattern: str,
     suffix: Optional[str] = None,
+    recursive: Optional[bool] = False,
 ) -> Dict[str, List[Path]]:
     source = Path(source).expanduser()
     logging.info(f"Gathering {name} files from: {source.as_posix()}")
     in_files = list()
     for variable in variables:
         if suffix:
-            pattern = glob_pattern.format(variable, suffix)
-            if suffix == "zarr":
-                in_files.extend(list(sorted(source.glob(pattern))))
-                continue
+            pattern = glob_pattern.format(variable=variable, name=name, suffix=suffix)
         else:
             pattern = glob_pattern.format(variable)
-        in_files.extend(list(sorted(source.rglob(pattern))))
+        if recursive:
+            in_files.extend(list(sorted(source.rglob(pattern))))
+        else:
+            in_files.extend(list(sorted(source.glob(pattern))))
     logging.info(
         f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
     )
@@ -154,7 +169,7 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -170,7 +185,7 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Pa
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -186,7 +201,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -205,7 +220,7 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Parameters
     ----------
-    path: str or os.PathLike
+    path : str or os.PathLike
 
     Returns
     -------
@@ -219,25 +234,37 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
     )
 
 
-def gather_rdrs(path: Union[str, os.PathLike], suffix: str) -> Dict[str, List[Path]]:
+def gather_rdrs(
+    name: str, path: Union[str, os.PathLike], suffix: str, key: str
+) -> Dict[str, Dict[str, List[Path]]]:
     """Gather RDRS processed source data.
 
     Parameters
     ----------
-    path: str or os.PathLike
+    name : str
+    path : str or os.PathLike
     suffix : str
+    key : str  one of 'raw' or 'cf' indicating which variable name dictionary to search for
 
     Returns
     -------
     dict(str, list[pathlib.Path])
     """
-    return _gather(
-        "rdrs-v21",
-        eccc_rdrs_variables,
-        source=path,
-        glob_pattern="{variable}_*_rdrs_*.{suffix}",
-        suffix=suffix,
-    )
+    if isinstance(path, str):
+        path = Path(path).expanduser()
+
+    files = dict({name: dict()})
+    for vv in eccc_rdrs_variables[key]:
+        tmp = _gather(
+            name,
+            [vv],
+            source=path.joinpath(vv),
+            glob_pattern="{variable}_*_{name}_*.{suffix}",
+            suffix=suffix,
+            recursive=True,
+        )
+        files[name][vv] = tmp[name]
+    return files
 
 
 def gather_raw_rdrs_by_years(
@@ -258,10 +285,10 @@ def gather_raw_rdrs_by_years(
     path = Path(path)
     year_sets = dict()
     for year in range(1950, datetime.datetime.now().year + 1):
-        files = sorted(list(path.glob(f"*_{year - 1}12*.nc")))
+        files = sorted(list(path.glob(f"{year - 1}12*.nc")))
         if files:
             files = [files[-1]]
-        files.extend(sorted(list(path.glob(f"*_{year}*.nc"))))
+        files.extend(sorted(list(path.glob(f"{year}*.nc"))))
         year_sets[str(year)] = files
     return {"rdrs-v21": year_sets}
 

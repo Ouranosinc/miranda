@@ -55,10 +55,10 @@ repos:
     hooks:
       - id: detect-secrets
         args: [ '--baseline=.secrets.baseline' ]
-  - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.49"
-    hooks:
-      - id: check-manifest
+  #- repo: https://github.com/mgedmin/check-manifest
+    #rev: "0.49"
+    #hooks:
+    #  - id: check-manifest
   - repo: meta
     hooks:
       - id: check-hooks-apply

@@ -9,11 +9,11 @@ from miranda.archive import (
     group_by_size,
     group_by_subdirectories,
 )
+from miranda.io import find_filepaths
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 from miranda.utils import single_item_list, working_directory
 
-from ..io._input import find_filepaths
 from .connect import Connection
 from .ops import create_archive, create_remote_directory, transfer_file
 

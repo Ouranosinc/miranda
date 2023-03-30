@@ -2,7 +2,8 @@ name: "Bump Patch Version"
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
     paths-ignore:
       - HISTORY.rst
       - setup.cfg
@@ -15,8 +16,9 @@ on:
 jobs:
   bump_patch_version:
     runs-on: ubuntu-latest
+    name: Bump patch version
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
       - uses: actions/setup-python@v4

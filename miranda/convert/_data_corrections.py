@@ -41,7 +41,7 @@ def load_json_data_mappings(project: str) -> dict:
 
     if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
-    elif project in ["rdrs-v2.1"]:
+    elif project in ["rdrs-v21"]:
         metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
@@ -56,7 +56,7 @@ def load_json_data_mappings(project: str) -> dict:
     elif project.startswith("melcc"):
         metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
     elif project.startswith("ec"):
-        metadata_definition = json.load(open(data_folder / "ec_cf_attrs.json"))
+        metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -597,27 +597,27 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if cf_name:
                 rename_dims[dim] = cf_name
     d = d.rename(rename_dims)
-
-    # Perform lon wrapping if needed and sort dimensions
-    sort_dims = []
     for new in ["lon", "lat"]:
-        if new == "lon" and "lon" in d.dims:
+        if new == "lon" and "lon" in d.coords:
             if np.any(d.lon > 180):
                 lon1 = d.lon.where(d.lon <= 180.0, d.lon - 360.0)
                 d[new] = lon1
-        sort_dims.append(new)
+
         coord_precision = _get_section_entry_key(m, "dimensions", new, "_precision", p)
         if coord_precision is not None:
             d[new] = d[new].round(coord_precision)
-    if sort_dims:
-        d = d.sortby(sort_dims)
 
     # Ensure that lon and lat are written in proper order for plotting purposes
-    transpose_order = ["lat", "lon"]
-    if "time" in d.dims:
+    transpose_order = []
+    if "lat" in d.dims and "lon" in d.dims:
+        transpose_order = ["lat", "lon"]
+    elif "rlat" in d.dims and "rlon" in d.dims:
+        transpose_order = ["rlat", "rlon"]
+    if "time" in d.dims and transpose_order:
         transpose_order.insert(0, "time")
-    transpose_order.extend(list(set(d.dims) - set(transpose_order)))
+        transpose_order.extend(list(set(d.dims) - set(transpose_order)))
     d = d.transpose(*transpose_order)
+    d = d.sortby(transpose_order)
 
     # Add dimension original name and update attrs
     dim_descriptions = m["dimensions"]

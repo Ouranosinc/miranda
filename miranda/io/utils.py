@@ -25,12 +25,14 @@ __all__ = [
 ]
 
 
-def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
-    """
+def name_output_file(
+    ds_or_dict: Union[xr.Dataset, Dict[str, str]], project: str, output_format: str
+) -> str:
+    """Name an output file based on facets within a Dataset or a dictionary.
 
     Parameters
     ----------
-    ds : xr.Dataset
+    ds_or_dict : xr.Dataset or dict
     project: str
     output_format : {"netcdf", "zarr"}
         Suffix to be used for filename
@@ -38,18 +40,59 @@ def name_output_file(ds: xr.Dataset, project: str, output_format: str) -> str:
     Returns
     -------
     str
+
+    Notes
+    -----
+    If using a dictionary, the following must be keys: "variable", "frequency", "institution", "time_start", "time_end".
+
     """
     if output_format.lower() not in {"netcdf", "zarr"}:
         raise NotImplementedError(f"Format: {output_format}.")
     else:
         suffix = dict(netcdf="nc", zarr="zarr")[output_format]
 
-    var_name = list(ds.data_vars.keys())[0]
-    time_freq = ds.attrs.get("frequency")
-    institution = ds.attrs.get("institution")
-    time_start, time_end = ds.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+    facets = dict()
+    facets["project"] = project
+    facets["suffix"] = suffix
 
-    return f"{var_name}_{time_freq}_{institution}_{project}_{time_start}-{time_end}.{suffix}"
+    if isinstance(ds_or_dict, xr.Dataset):
+        if len(ds_or_dict.data_vars) == 1:
+            facets["variable"] = list(ds_or_dict.data_vars.keys())[0]
+        elif (
+            len(ds_or_dict.data_vars) == 2
+            and "rotated_pole" in ds_or_dict.data_vars.keys()
+        ):
+            facets["variable"] = [
+                v for v in ds_or_dict.data_vars if v != "rotated_pole"
+            ][0]
+        else:
+            raise NotImplementedError(
+                f"Too many `data_vars` in Dataset: {' ,'.join(ds_or_dict.data_vars.keys())}."
+            )
+        facets["frequency"] = ds_or_dict.attrs.get("frequency")
+        facets["institution"] = ds_or_dict.attrs.get("institution")
+        facets["time_start"], facets["time_end"] = (
+            ds_or_dict.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+        )
+    elif isinstance(ds_or_dict, dict):
+        facets["variable"] = ds_or_dict.get("variable")
+        facets["frequency"] = ds_or_dict.get("variable")
+        facets["institution"] = ds_or_dict.get("variable")
+        facets["time_start"] = ds_or_dict.get("variable")
+        facets["time_end"] = ds_or_dict.get("variable")
+    else:
+        raise NotImplementedError("Must be a Dataset or dictionary.")
+
+    missing = []
+    for k, v in facets.items():
+        if v is None:
+            missing.append(k)
+    if missing:
+        raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
+
+    return "{variable}_{frequency}_{institution}_{project}_{time_start}-{time_end}.{suffix}".format(
+        **facets
+    )
 
 
 def delayed_write(

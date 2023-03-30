@@ -74,7 +74,7 @@ def aggregate(ds, freq: str = "day") -> Dict[str, xr.Dataset]:
             ds_out.attrs = ds.attrs.copy()
             ds_out.attrs["frequency"] = freq
 
-            with xclim.core.options.set_options(keep_attrs=True):
+            with xr.set_options(keep_attrs=True):
                 if variable.startswith("_"):
                     if op == "mean":
                         var = variable.strip("_")
