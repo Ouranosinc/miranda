@@ -6,20 +6,31 @@ History
 
 v0.4.0 (2023-03-30)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`),  Travis Logan (:user:`tlogan2000`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`).
 
 New features
 ^^^^^^^^^^^^
 * Improvements have been made to the development documentation; Project URLs, ReadTheDocs theming, and other quality of life changes.
 * Conversion JSON definitions now support pre-processing to render dimensions and variable names consistent before running corrections/conversions.
-* Dataset conversions now support ETS-GRNCH and ECCC RDRS projects.
+* New datasets with CF-like attributes conversion supported:
+    - RDRS (ECCC)
+    - GRNCH (ETS)
 * Preliminary ``miranda.io`` module for organizing output-writing functionality.
-* New ``fetch_chunk_config`` function for "rechunking" datasets according to project presets.
-* The ``name_output_file`` function now accepts a dictionary of facets for constructing filenames.
+* New ``miranda.io.fetch_chunk_config`` function for "rechunking" datasets according to project presets.
+* New ``mirands.io.utils.name_output_file`` for generating names from Dataset facets or from a dictionary.
+* New ``mirands.gis.subset_domain`` for clipping dataset to a preconfigured region.
+
+Bug fixes
+^^^^^^^^^
+* Many data-related utilities now have more accurate static typing.
+* Converted dataset global attributes are now synchronized for consistency.
+* ECMWF-based datasets now implement more consistent conversion factors and metadata.
+* ``miranda.storage.file_size`` now handles dictionaries of Pathlib objects.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Pre-commit version updates.
+* Improvements have been made to the development documentation; Project URLs, ReadTheDocs theming, installation methods, and other quality of life changes.
 * Schema and folder structure updates:
     - `gridded-obs` -> `reconstruction`
     - `bias-adjust-project` is used when present and not just when `level=="biasadjusted"`
