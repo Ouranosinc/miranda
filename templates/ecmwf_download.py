@@ -36,12 +36,14 @@ def main():
         "era5-single-levels",
         "era5-single-levels-preliminary-back-extension",
         "era5-single-levels-monthly-means",
+        "era5-land-monthly-means",
     ]
 
     request_era5(
         projects,
         variables=variables,
         year_start=2019,
+        year_end=2019,
         output_folder=target_folder,
         dry_run=False,
     )
