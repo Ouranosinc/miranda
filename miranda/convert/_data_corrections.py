@@ -119,6 +119,10 @@ def conservative_regrid(
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
 
+    logging.info(
+        f"Performing regridding and masking with `xesmf` using method: {method}."
+    )
+
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
 
@@ -782,6 +786,7 @@ def dataset_conversion(
     domain: Optional[str] = None,
     mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
     mask_cutoff: Union[float, bool] = False,
+    regrid: bool = False,
     add_version_hashes: bool = True,
     preprocess: Optional[Union[Callable, str]] = "auto",
     **xr_kwargs,
@@ -801,6 +806,8 @@ def dataset_conversion(
         DataArray or single data_variable dataset containing mask.
     mask_cutoff : float or bool
         If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: False.
+    regrid : bool
+        Performing regridding with xesmf. Default: False.
     add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
     preprocess : callable or str, optional
@@ -861,11 +868,8 @@ def dataset_conversion(
     if isinstance(mask, (str, Path)):
         mask = xr.open_dataset(mask)
     if isinstance(mask, (xr.Dataset, xr.DataArray)):
-        # TODO: This should only be triggered by differences in lat, lon grid.
-        # logging.info(
-        #     "Mask supplied. Performing conservative-normed regridding and masking."
-        # )
-        # mask = conservative_regrid(mask, ds)
+        if regrid:
+            mask = conservative_regrid(ds, mask)
         ds = threshold_mask(ds, mask=mask, mask_cutoff=mask_cutoff)
 
     return ds
