@@ -781,7 +781,7 @@ def dataset_conversion(
     project: str,
     domain: Optional[str] = None,
     mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
-    mask_cutoff: float = 0.5,
+    mask_cutoff: Union[float, bool] = False,
     add_version_hashes: bool = True,
     preprocess: Optional[Union[Callable, str]] = "auto",
     **xr_kwargs,
@@ -799,8 +799,8 @@ def dataset_conversion(
         Domain to perform subsetting for. Default: None.
     mask : Optional[Union[xr.Dataset, xr.DataArray]]
         DataArray or single data_variable dataset containing mask.
-    mask_cutoff : float
-        If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: 0.5.
+    mask_cutoff : float or bool
+        If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: False.
     add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
     preprocess : callable or str, optional
