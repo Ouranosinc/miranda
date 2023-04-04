@@ -41,7 +41,8 @@
     "latitude": {
       "_cf_dimension_name": "lat",
       "_precision": {
-        "era5-land": 4
+        "era5-land": 4,
+        "era5-land-monthly-means": 4
       },
       "axis": "Y",
       "standard_name": "latitude"
@@ -49,7 +50,8 @@
     "longitude": {
       "_cf_dimension_name": "lon",
       "_precision": {
-        "era5-land": 4
+        "era5-land": 4,
+        "era5-land-monthly-means": 4
       },
       "axis": "X",
       "standard_name": "longitude"
