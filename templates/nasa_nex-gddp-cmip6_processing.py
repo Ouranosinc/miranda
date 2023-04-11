@@ -14,14 +14,19 @@ def main():
             preprocess=False,
             project="NEX-GDDP-CMIP6",
         )
+        # the path is already ok, so just reuse it
+        end_path = path.split('downloaded/')[1]
 
+        calendar, size = io._rechunk.get_time_attrs(ds)
+        target_chunks = io._rechunk.translate_time_chunk({'time': '4 years', 'lat':50, 'lon':50}, calendar, size)
         io.write_dataset(
             ds,
-            project="era5-land-monthly-means",
-            output_path="~/Desktop/",
-            output_format="netcdf",
+            project="NEX-GDDP-CMIP6",
+            output_path=f"/jarre/scenario/jlavoie/data/NEX-GDDP-CMIP6_processed/NEX-GDDP-CMIP6/{end_path}",
+            output_format="zarr",
             overwrite=True,
             compute=True,
+            chunks=target_chunks
         )
 
 

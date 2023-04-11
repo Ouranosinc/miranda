@@ -17,6 +17,7 @@ __all__ = [
     "gather_agmerra",
     "gather_ecmwf",
     "gather_grnch",
+    "gather_nex",
     "gather_nrcan_gridded_obs",
     "gather_raw_rdrs_by_years",
     "gather_rdrs",

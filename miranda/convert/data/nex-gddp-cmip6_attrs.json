@@ -6,5 +6,9 @@
         "table_date": "2023-04-11",
         "table_id": "NEX-GDDP-CMIP6",
         "type": "simulation"
+    },
+    "variables": {
+    },
+    "dimensions": {
     }
 }
