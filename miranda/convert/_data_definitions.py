@@ -77,7 +77,7 @@ project_institutes = {
     "wfdei-gem-capa": "usask",
     "rdrs-v21": "eccc",
 }
-
+nex_variables = ['tasmin', 'tasmax', 'pr', 'hurs', 'rsds', 'sfcWind']
 
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
@@ -305,3 +305,32 @@ def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
         f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
     )
     return dict(cfsr=sorted(in_files_grnch))
+
+
+def gather_nex(
+    path: Union[str, os.PathLike],
+) -> Dict[str, List[Path]]:
+    """
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+    back_extension : bool
+    monthly_means : bool
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+
+    source=Path(path)
+    datasets= source.glob('*/*/*/*/*/*/*/*/*/')
+
+    out_dict={}
+    # separate files by datasets
+    for dataset in datasets:
+        in_files = list()
+        in_files.extend(list(sorted(dataset.glob("*.nc"))))
+        out_dict[str(dataset)]=in_files
+    return out_dict
+

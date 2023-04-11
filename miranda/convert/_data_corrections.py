@@ -57,6 +57,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
     elif project.startswith("ec"):
         metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
+    elif project in ["NEX-GDDP-CMIP6"]:
+        metadata_definition = json.load(open(data_folder / "nex-gddp-cmip6_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -802,6 +804,7 @@ def dataset_conversion(
     """
     if not isinstance(input_files, xr.Dataset):
         if isinstance(input_files, (str, os.PathLike)):
+            print(input_files)
             if Path(input_files).is_dir():
                 files = []
                 files.extend([f for f in Path(input_files).glob("*.nc")])
@@ -833,7 +836,6 @@ def dataset_conversion(
                 ds = process(ds)
         else:
             ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)
-
         if version_hashes:
             ds.attrs.update(dict(original_files=str(version_hashes)))
     else:
