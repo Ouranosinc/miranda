@@ -1,14 +1,12 @@
 {
-    "Header": {
-        "_miranda_version": true,
-        "institution": "NASA",
-        "processing_level": "biasadjusted",
-        "table_date": "2023-04-11",
-        "table_id": "NEX-GDDP-CMIP6",
-        "type": "simulation"
-    },
-    "variables": {
-    },
-    "dimensions": {
-    }
+  "Header": {
+    "_miranda_version": true,
+    "institution": "NASA",
+    "processing_level": "biasadjusted",
+    "table_date": "2023-04-11",
+    "table_id": "NEX-GDDP-CMIP6",
+    "type": "simulation"
+  },
+  "dimensions": {},
+  "variables": {}
 }

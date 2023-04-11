@@ -78,7 +78,7 @@ project_institutes = {
     "wfdei-gem-capa": "usask",
     "rdrs-v21": "eccc",
 }
-nex_variables = ['tasmin', 'tasmax', 'pr', 'hurs', 'rsds', 'sfcWind']
+nex_variables = ["tasmin", "tasmax", "pr", "hurs", "rsds", "sfcWind"]
 
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
@@ -324,14 +324,13 @@ def gather_nex(
     dict(str, list[pathlib.Path])
     """
 
-    source=Path(path)
-    datasets= source.glob('*/*/*/*/*/*/*/*/*/')
+    source = Path(path)
+    datasets = source.glob("*/*/*/*/*/*/*/*/*/")
 
-    out_dict={}
+    out_dict = {}
     # separate files by datasets
     for dataset in datasets:
         in_files = list()
         in_files.extend(list(sorted(dataset.glob("*.nc"))))
-        out_dict[str(dataset)]=in_files
+        out_dict[str(dataset)] = in_files
     return out_dict
-
