@@ -804,7 +804,6 @@ def dataset_conversion(
     """
     if not isinstance(input_files, xr.Dataset):
         if isinstance(input_files, (str, os.PathLike)):
-            print(input_files)
             if Path(input_files).is_dir():
                 files = []
                 files.extend([f for f in Path(input_files).glob("*.nc")])
@@ -815,7 +814,6 @@ def dataset_conversion(
             files = [Path(f) for f in input_files]
         else:
             files = input_files
-
         version_hashes = dict()
         if add_version_hashes:
             for file in files:

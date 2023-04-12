@@ -78,7 +78,6 @@ project_institutes = {
     "wfdei-gem-capa": "usask",
     "rdrs-v21": "eccc",
 }
-nex_variables = ["tasmin", "tasmax", "pr", "hurs", "rsds", "sfcWind"]
 
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
@@ -312,7 +311,7 @@ def gather_nex(
     path: Union[str, os.PathLike],
 ) -> Dict[str, List[Path]]:
     """
-
+    Put all files that should be contained in one dataset in one entry of the dictionnary.
     Parameters
     ----------
     path : str or os.PathLike
