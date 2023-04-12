@@ -69,8 +69,13 @@ def name_output_file(
             raise NotImplementedError(
                 f"Too many `data_vars` in Dataset: {' ,'.join(ds_or_dict.data_vars.keys())}."
             )
-        facets["frequency"] = ds_or_dict.attrs.get("frequency")
-        facets["institution"] = ds_or_dict.attrs.get("institution")
+        for f in ["frequency", "institution", "bias_adjust_project", "domain"]:
+            facets[f] = ds_or_dict.attrs.get(f)
+        if project in ["NEX-GDDP-CMIP6"]:
+            facets["source"] = ds_or_dict.attrs.get("cmip6_source_id")
+            facets["institution"] = ds_or_dict.attrs.get("cmip6_institution_id")
+            facets["member"] = ds_or_dict.attrs.get("variant_label")
+            facets["experiment"] = ds_or_dict.attrs.get("scenario")
         facets["time_start"], facets["time_end"] = (
             ds_or_dict.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
         )
@@ -90,9 +95,14 @@ def name_output_file(
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
 
-    return "{variable}_{frequency}_{institution}_{project}_{time_start}-{time_end}.{suffix}".format(
-        **facets
-    )
+    if project == "NEX-GDDP-CMIP6":
+        return "{bias_adjust_project}_{variable}_{frequency}_{institution}_{source}_{member}_{experiment}_{domain}_{time_start}-{time_end}.{suffix}".format(
+            **facets
+        )
+    else:
+        return "{variable}_{frequency}_{institution}_{project}_{time_start}-{time_end}.{suffix}".format(
+            **facets
+        )
 
 
 def delayed_write(
