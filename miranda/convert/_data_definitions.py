@@ -310,8 +310,8 @@ def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 def gather_nex(
     path: Union[str, os.PathLike],
 ) -> Dict[str, List[Path]]:
-    """
-    Put all files that should be contained in one dataset in one entry of the dictionnary.
+    """Put all files that should be contained in one dataset in one entry of the dictionnary.
+    
     Parameters
     ----------
     path : str or os.PathLike
