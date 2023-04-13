@@ -10,7 +10,7 @@ Contributors to this version: Juliette Lavoie (:user: `juliettelavoie`)
 
 New features
 ^^^^^^^^^^^^
-* Add a template for NEX-GDDP-CMIP6. (:pull:`120`).
+* Add a template for NEX-GDDP-CMIP6.
 
 v0.4.0 (2023-03-30)
 -------------------

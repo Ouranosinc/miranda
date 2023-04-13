@@ -69,7 +69,14 @@ def name_output_file(
             raise NotImplementedError(
                 f"Too many `data_vars` in Dataset: {' ,'.join(ds_or_dict.data_vars.keys())}."
             )
-        for f in ["frequency", "institution", "bias_adjust_project", "domain"]:
+        for f in [
+            "frequency",
+            "institution",
+            "bias_adjust_project",
+            "domain",
+            "type",
+            "processing_level",
+        ]:
             facets[f] = ds_or_dict.attrs.get(f)
         if project in ["NEX-GDDP-CMIP6"]:
             facets["source"] = ds_or_dict.attrs.get("cmip6_source_id")
@@ -94,9 +101,9 @@ def name_output_file(
             missing.append(k)
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
-
+    # TODO: add more general naming based on project
     if project == "NEX-GDDP-CMIP6":
-        return "{bias_adjust_project}_{variable}_{frequency}_{institution}_{source}_{member}_{experiment}_{domain}_{time_start}-{time_end}.{suffix}".format(
+        return "{frequency}_{variable}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{time_start}-{time_end}.{suffix}".format(
             **facets
         )
     else:
