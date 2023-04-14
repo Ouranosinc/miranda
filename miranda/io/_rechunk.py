@@ -225,3 +225,33 @@ def rechunk_files(
     if errored:
         errored_filenames = "\n".join(map(str, errored))
         logging.warning(f"Errored files are as follows: \n{errored_filenames}")
+
+
+def prepare_chunks_for_ds(ds, chunks):
+    """
+    Prepare the chunks to be use to write ds, including translating the time chunks,
+     making sure chunks are not too small and removing -1.
+    Parameters
+    ----------
+    ds: xr.Dataset
+      Dataset that we want to write with the chunks.
+    chunks: dict
+      Chunks wanted in a easy human format (with "4 years" and -1).
+
+    Returns
+    -------
+      Chunks in a format that is ready to be used to write to disk.
+    """
+    # check if any of the chunks are strings and need to be translated
+    if any(isinstance(x, str) for x in chunks.values()):
+        calendar, size = get_time_attrs(ds)
+        chunks = translate_time_chunk(chunks, calendar, size)
+
+    # replace -1 taht netcdf can't handle and cut chunks that are too big for the dim
+    for dim, c in chunks.copy().items():
+        length = ds.dims[dim]
+        if c == -1 or c > length:
+            logging.info(f"Chunk was changed from {c} to {length} for dimension {dim}.")
+            chunks[dim] = length
+
+    return chunks

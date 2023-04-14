@@ -13,7 +13,7 @@ from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
 
 from ._input import discover_data
-from ._rechunk import fetch_chunk_config, translate_time_chunk
+from ._rechunk import fetch_chunk_config, prepare_chunks_for_ds, translate_time_chunk
 from .utils import delayed_write, get_global_attrs, name_output_file, sort_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -80,7 +80,7 @@ def write_dataset(
         outfile_path,
         output_format,
         overwrite,
-        target_chunks=chunks,
+        target_chunks=prepare_chunks_for_ds(ds, chunks),
     )
     if compute:
         write_object.compute()

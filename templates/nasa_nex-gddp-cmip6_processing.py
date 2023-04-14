@@ -19,12 +19,6 @@ def main():
         # the path is already ok, so just reuse it
         end_path = path.split("downloaded/")[1]
 
-        # get right chunks
-        calendar, size = io._rechunk.get_time_attrs(ds)
-        target_chunks = io._rechunk.translate_time_chunk(
-            {"time": "4 years", "lat": 50, "lon": 50}, calendar, size
-        )
-
         # write to disk
         io.write_dataset(
             ds,
@@ -33,7 +27,7 @@ def main():
             output_format="zarr",
             overwrite=True,
             compute=True,
-            chunks=target_chunks,
+            chunks={"time": "4 years", "lat": 50, "lon": 50},
         )
 
 
