@@ -152,19 +152,19 @@ class Decoder:
         else:
             logging.info(f"Deciphering metadata with project = '{self.project}'")
 
-        manager = mp.Manager()
-        _file_facets = manager.dict()
-        lock = manager.Lock()
-        func = partial(
-            self._decoder, _file_facets, raise_error, self.project, self.guess, lock
-        )
+        with mp.Manager() as manager:
+            _file_facets = manager.dict()
+            lock = manager.Lock()
+            func = partial(
+                self._decoder, _file_facets, raise_error, self.project, self.guess, lock
+            )
 
-        with mp.Pool() as pool:
-            pool.imap(func, files, chunksize=chunk_size)
-            pool.close()
-            pool.join()
+            with mp.Pool() as pool:
+                pool.imap(func, files, chunksize=chunk_size)
+                pool.close()
+                pool.join()
 
-        self._file_facets.update(_file_facets)
+            self._file_facets.update(_file_facets)
 
     def facets_table(self):
         raise NotImplementedError()
