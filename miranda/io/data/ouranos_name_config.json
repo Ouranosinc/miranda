@@ -1,0 +1,3 @@
+{
+  "NEX-GDDP-CMIP6": "{frequency}_{variable}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{time}.{suffix}"
+}

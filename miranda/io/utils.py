@@ -1,3 +1,4 @@
+import json
 import logging.config
 import os
 from datetime import date
@@ -24,16 +25,18 @@ __all__ = [
     "sort_variables",
 ]
 
+_data_folder = Path(__file__).parent / "data"
+name_configurations = json.load(open(_data_folder / "ouranos_name_config.json"))
+
 
 def name_output_file(
-    ds_or_dict: Union[xr.Dataset, Dict[str, str]], project: str, output_format: str
+    ds_or_dict: Union[xr.Dataset, Dict[str, str]], output_format: str
 ) -> str:
     """Name an output file based on facets within a Dataset or a dictionary.
 
     Parameters
     ----------
     ds_or_dict : xr.Dataset or dict
-    project: str
     output_format : {"netcdf", "zarr"}
         Suffix to be used for filename
 
@@ -52,7 +55,6 @@ def name_output_file(
         suffix = dict(netcdf="nc", zarr="zarr")[output_format]
 
     facets = dict()
-    facets["project"] = project
     facets["suffix"] = suffix
 
     if isinstance(ds_or_dict, xr.Dataset):
@@ -70,30 +72,57 @@ def name_output_file(
                 f"Too many `data_vars` in Dataset: {' ,'.join(ds_or_dict.data_vars.keys())}."
             )
         for f in [
-            "frequency",
-            "institution",
             "bias_adjust_project",
             "domain",
-            "type",
+            "frequency",
+            "institution",
             "processing_level",
+            "project",
+            "type",
         ]:
             facets[f] = ds_or_dict.attrs.get(f)
-        if project in ["NEX-GDDP-CMIP6"]:
+        # TODO: This is `decoding` work. Facets should be standardized across all Datasets at this point when run.
+        if facets["project"] in ["NEX-GDDP-CMIP6"]:
             facets["source"] = ds_or_dict.attrs.get("cmip6_source_id")
             facets["institution"] = ds_or_dict.attrs.get("cmip6_institution_id")
             facets["member"] = ds_or_dict.attrs.get("variant_label")
             facets["experiment"] = ds_or_dict.attrs.get("scenario")
+
+        if facets["frequency"] in ["1hr", "day"]:
+            date_format = "%Y%m%d"
+        elif facets["frequency"] == "month":
+            date_format = "%Y%m"
+        elif facets["frequency"] == "year":
+            date_format = "%Y"
+        else:
+            raise KeyError("`frequency` not found.")
+
         facets["time_start"], facets["time_end"] = (
-            ds_or_dict.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+            ds_or_dict.time.isel(time=[0, -1]).dt.strftime(date_format).values
         )
     elif isinstance(ds_or_dict, dict):
-        facets["variable"] = ds_or_dict.get("variable")
-        facets["frequency"] = ds_or_dict.get("variable")
-        facets["institution"] = ds_or_dict.get("variable")
-        facets["time_start"] = ds_or_dict.get("variable")
-        facets["time_end"] = ds_or_dict.get("variable")
+        for f in [
+            "bias_adjust_project",
+            "domain",
+            "frequency",
+            "institution",
+            "processing_level",
+            "project",
+            "type",
+            "time",
+            "time_end",
+            "time_start",
+            "variable",
+        ]:
+            facets[f] = ds_or_dict.get(f)
     else:
         raise NotImplementedError("Must be a Dataset or dictionary.")
+
+    if {"time_start", "time_end"}.issubset(facets) and "time" not in facets:
+        if facets["time_start"] == facets["time_end"]:
+            facets["time"] = "-".join([facets["time_start"], facets["time_end"]])
+        else:
+            facets["time"] = facets["time_start"]
 
     missing = []
     for k, v in facets.items():
@@ -102,12 +131,11 @@ def name_output_file(
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
     # TODO: add more general naming based on project
-    if project == "NEX-GDDP-CMIP6":
-        return "{frequency}_{variable}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{time_start}-{time_end}.{suffix}".format(
-            **facets
-        )
+    if facets["project"] in name_configurations.keys():
+        return name_configurations[facets["project"]].format(**facets)
     else:
-        return "{variable}_{frequency}_{institution}_{project}_{time_start}-{time_end}.{suffix}".format(
+        # This is the default string
+        return "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}".format(
             **facets
         )
 
