@@ -837,3 +837,41 @@ class Decoder:
             pass
 
         return facets
+
+    @classmethod
+    def decode_nex_gddp_cmip6(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return facets
+
+        facets["experiment"] = data["scenario"]
+        facets["activity"] = (
+            "CMIP" if facets["experiment"] == "historical" else "ScenarioMIP"
+        )
+        facets["institution"] = data["cmip6_institution_id"]
+        facets["member"] = data["variant_label"]
+        facets["processing_level"] = "biasadjusted"
+        facets["bias_adjust_project"] = "NEX-GDDP-CMIP6"
+        facets["bias_adjust_institution"] = "NASA"
+        facets["mip_era"] = "CMIP6"
+        facets["source"] = data["cmip6_source_id"]
+        facets["type"] = "simulation"
+        facets["variable"] = variable
+        facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
+
+        try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderError:
+            pass
+
+        return facets

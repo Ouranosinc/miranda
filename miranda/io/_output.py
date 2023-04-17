@@ -74,6 +74,10 @@ def write_dataset(
         if outfile_path.is_file():
             outfile_path.unlink()
 
+    if chunks is None and "frequency" in ds.attrs:
+        freq = ds.attrs["frequency"]  # TOD0: check that this is really there
+        chunks = fetch_chunk_config(project, freq)
+
     logging.info(f"Writing {outfile}.")
     write_object = delayed_write(
         ds,

@@ -77,6 +77,7 @@ project_institutes = {
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
     "rdrs-v21": "eccc",
+    "NEX-GDDP-CMIP6": "nasa",
 }
 
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.

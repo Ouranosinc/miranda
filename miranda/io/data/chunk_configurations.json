@@ -80,5 +80,17 @@
         "time": 240
       }
     }
+  },
+  "NASA": {
+    "projects": [
+      "NEX-GDDP-CMIP6"
+    ],
+    "time": {
+      "day": {
+        "lat": 50,
+        "lon": 50,
+        "time": "4 years"
+      }
+    }
   }
 }
