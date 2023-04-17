@@ -1,0 +1,78 @@
+{
+  "files": {
+    "1hr": {
+      "default": {
+        "lat": 250,
+        "lon": 250,
+        "time": 168
+      },
+      "rotated": {
+        "rlat": 250,
+        "rlon": 250,
+        "time": 168
+      }
+    },
+    "day": {
+      "default": {
+        "lat": 125,
+        "lon": 125,
+        "time": "1 year"
+      },
+      "rotated": {
+        "rlat": 125,
+        "rlon": 125,
+        "time": "1 year"
+      }
+    },
+    "month": {
+      "default": {
+        "lat": 500,
+        "lon": 500,
+        "time": 120
+      },
+      "rotated": {
+        "rlat": 500,
+        "rlon": 500,
+        "time": 120
+      }
+    }
+  },
+  "time": {
+    "1hr": {
+      "default": {
+        "lat": 50,
+        "lon": 50,
+        "time": 1440
+      },
+      "rotated": {
+        "rlat": 50,
+        "rlon": 50,
+        "time": 1440
+      }
+    },
+    "day": {
+      "default": {
+        "lat": 50,
+        "lon": 50,
+        "time": "4 years"
+      },
+      "rotated": {
+        "rlat": 50,
+        "rlon": 50,
+        "time": "4 years"
+      }
+    },
+    "month": {
+      "default": {
+        "lat": 250,
+        "lon": 250,
+        "time": 240
+      },
+      "rotated": {
+        "rlat": 250,
+        "rlon": 250,
+        "time": 240
+      }
+    }
+  }
+}

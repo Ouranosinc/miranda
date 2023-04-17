@@ -13,7 +13,6 @@ def main():
         ds = convert.dataset_conversion(
             list_files,
             add_version_hashes=False,
-            preprocess=False,
             project="NEX-GDDP-CMIP6",
         )
         # the path is already ok, so just reuse it
