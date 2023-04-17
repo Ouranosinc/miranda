@@ -125,21 +125,23 @@ class Decoder:
 
         Parameters
         ----------
-        files: Union[str, Path, List[Union[str, Path]]]
-        chunks: int, optional
-        raise_error: bool
+        files : str or Path or list of str or Path or generator
+        chunks : int, optional
+            The chunk size used when processing files. Not to be confused with xarray chunks for dimensions.
+        raise_error : bool
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
 
-        if chunks is None:
-            if isinstance(files, list):
-                if len(files) >= 10:
-                    chunk_size = 10
-                else:
-                    chunk_size = len(files)
-            else:
+        if chunks is None and isinstance(files, list):
+            if len(files) >= 10:
                 chunk_size = 10
+            elif 1 <= len(files) < 10:
+                chunk_size = len(files)
+            else:
+                raise ValueError("No file entries found.")
+        elif isinstance(files, GeneratorType):
+            chunk_size = 10
         else:
             chunk_size = chunks
 
