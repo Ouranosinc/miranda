@@ -108,6 +108,19 @@
       "standard_name": "air_pressure_at_sea_level",
       "units": "Pa"
     },
+    "RDRS_v2.1_P_TD_1.5m": {
+      "_cf_variable_name": "tdps",
+      "_corrected_units": {
+        "rdrs-v21": "degC"
+      },
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "long_name": "1.5 metre dewpoint temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
     "RDRS_v2.1_P_TT_1.5m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {
