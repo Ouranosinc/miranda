@@ -58,6 +58,56 @@
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
+    "RDRS_v2.1_P_HR_1.5m": {
+      "_cf_variable_name": "hurs",
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "corrected_units": false,
+      "long_name": "Near-Surface Relative Humidity (1.5m)",
+      "standard_name": "relative_humidity",
+      "units": "%"
+    },
+    "RDRS_v2.1_P_HU_1.5m": {
+      "_cf_variable_name": "huss",
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "corrected_units": {
+        "rdrs-v21": "1"
+      },
+      "long_name": "Near-Surface Specific Humidity (1.5m)",
+      "standard_name": "specific_humidity",
+      "units": "1"
+    },
+    "RDRS_v2.1_P_P0_SFC": {
+      "_cf_variable_name": "ps",
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "corrected_units": {
+        "rdrs-v21": "mbar"
+      },
+      "long_name": "Surface Air Pressure",
+      "standard_name": "surface_air_pressure",
+      "units": "Pa"
+    },
+    "RDRS_v2.1_P_PN_SFC": {
+      "_cf_variable_name": "psl",
+      "_invert_sign": {},
+      "_offset_time": {},
+      "_transformation": {},
+      "cell_methods": "time: point",
+      "corrected_units": {
+        "rdrs-v21": "mbar"
+      },
+      "long_name": "Sea Level Pressure",
+      "standard_name": "air_pressure_at_sea_level",
+      "units": "Pa"
+    },
     "RDRS_v2.1_P_TT_1.5m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {
