@@ -4,6 +4,15 @@
 History
 =======
 
+v0.5.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+New features
+^^^^^^^^^^^^
+* Added support for collecting and converting `ptype` ECMWF ERA5 variable.
+
+
 v0.4.0 (2023-03-30)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`).
