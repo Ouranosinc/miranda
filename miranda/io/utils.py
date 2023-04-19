@@ -37,8 +37,9 @@ def name_output_file(
     Parameters
     ----------
     ds_or_dict : xr.Dataset or dict
+        A miranda-converted Dataset or a dictionary containing the appropriate facets.
     output_format : {"netcdf", "zarr"}
-        Suffix to be used for filename
+        Output filetype to be used for generating filename suffix.
 
     Returns
     -------
@@ -46,8 +47,8 @@ def name_output_file(
 
     Notes
     -----
-    If using a dictionary, the following must be keys: "variable", "frequency", "institution", "time_start", "time_end".
-
+    If using a dictionary, the following keys must be set:
+    * "variable", "frequency", "institution", "time_start", "time_end".
     """
     if output_format.lower() not in {"netcdf", "zarr"}:
         raise NotImplementedError(f"Format: {output_format}.")
@@ -81,12 +82,6 @@ def name_output_file(
             "type",
         ]:
             facets[f] = ds_or_dict.attrs.get(f)
-        # TODO: This is `decoding` work. Facets should be standardized across all Datasets at this point when run.
-        if facets["project"] in ["NEX-GDDP-CMIP6"]:
-            facets["source"] = ds_or_dict.attrs.get("cmip6_source_id")
-            facets["institution"] = ds_or_dict.attrs.get("cmip6_institution_id")
-            facets["member"] = ds_or_dict.attrs.get("variant_label")
-            facets["experiment"] = ds_or_dict.attrs.get("scenario")
 
         if facets["frequency"] in ["1hr", "day"]:
             date_format = "%Y%m%d"
@@ -130,7 +125,7 @@ def name_output_file(
             missing.append(k)
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
-    # TODO: add more general naming based on project
+
     if facets["project"] in name_configurations.keys():
         return name_configurations[facets["project"]].format(**facets)
     else:
