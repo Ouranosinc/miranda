@@ -1,5 +1,11 @@
 {
   "Header": {
+    "_map_attrs": {
+      "cmip6_institution_id": "institution",
+      "cmip6_source_id": "source",
+      "scenario": "experiment",
+      "variant_label": "member"
+    },
     "_miranda_version": true,
     "bias_adjust_institution": "NASA",
     "bias_adjust_project": "NEX-GDDP-CMIP6",
