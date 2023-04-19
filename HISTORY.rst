@@ -11,7 +11,14 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 New features
 ^^^^^^^^^^^^
 * Added support for collecting and converting `ptype` ECMWF ERA5 variable.
+* A new ``"_frequency": true`` toggle for returning the output frequency of converted data.
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Various fixes to existing docstrings
+* Time frequency checks are more resilient when converting Monthly time-step data
+* Masking and regridding of datasets when running ``convert_dataset`` is now optional or automatic.
+* Updated templates to newest API
 
 v0.4.0 (2023-03-30)
 -------------------
