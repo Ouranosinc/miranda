@@ -119,6 +119,10 @@ def conservative_regrid(
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
 
+    logging.info(
+        f"Performing regridding and masking with `xesmf` using method: {method}."
+    )
+
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
 
@@ -152,7 +156,7 @@ def threshold_mask(
 
     if isinstance(mask, xr.Dataset):
         if len(mask.data_vars) == 1:
-            mask_variable = list(mask.data_vars)[0].name
+            mask_variable = list(mask.data_vars)[0]
             mask = mask[mask_variable]
         else:
             raise ValueError(
@@ -532,9 +536,6 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
     if key in m["dimensions"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
-        if freq_found in ["M", "A"]:
-            freq_found = f"{freq_found}S"
-
         if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
                 msg = (
@@ -564,7 +565,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         if freq_found not in correct_times:
             error_msg = (
                 f"Time frequency {freq_found} not among allowed frequencies: "
-                f"{' ,'.join(correct_times)}"
+                f"{', '.join(correct_times) if isinstance(correct_times, list) else correct_times}"
             )
             if isinstance(correct_time_entry, dict):
                 error_msg = f"{error_msg} for project `{p}`."
@@ -573,9 +574,11 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             raise ValueError(error_msg)
 
         logging.info(f"Resampling dataset with time frequency: {freq_found}.")
-        d_out = d.assign_coords(
-            time=d.time.resample(time=freq_found).mean(dim="time").time
-        )
+        with xr.set_options(keep_attrs=True):
+            d_out = d.assign_coords(
+                time=d.time.resample(time=freq_found).mean(dim="time").time
+            )
+            d_out.time.attrs.update(d.time.attrs)
 
         prev_history = d.attrs.get("history", "")
         history = f"Resampled time with `freq={freq_found}`. {prev_history}"
@@ -625,9 +628,12 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         cf_name = dim_descriptions[dim].get("_cf_dimension_name")
         if cf_name is not None and cf_name in d.dims:
             d[cf_name].attrs.update(dict(original_variable=dim))
-            for field in dim_descriptions[dim].keys():
-                if not field.startswith("_"):
-                    d[cf_name].attrs.update({field: dim_descriptions[dim][field]})
+        else:
+            # variable name already follows CF standards
+            cf_name = dim
+        for field in dim_descriptions[dim].keys():
+            if not field.startswith("_"):
+                d[cf_name].attrs.update({field: dim_descriptions[dim][field]})
 
     prev_history = d.attrs.get("history", "")
     history = f"Transposed and renamed dimensions. {prev_history}"
@@ -695,6 +701,18 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             logging.warning("`__miranda_version__` not set for project. Not appending.")
     if "_miranda_version" in m["Header"]:
         del m["Header"]["_miranda_version"]
+
+    frequency = m["Header"].get("_frequency")
+    if frequency:
+        if isinstance(frequency, bool):
+            _, m["Header"]["frequency"] = get_time_frequency(d)
+        elif isinstance(frequency, dict):
+            if p in frequency.keys():
+                m["Header"]["frequency"] = get_time_frequency(d)
+        else:
+            logging.warning("`frequency` not set for project. Not appending.")
+    if "_frequency" in m["Header"]:
+        del m["Header"]["_frequency"]
 
     # Conditional handling of global attributes based on project name
     for field in [f for f in m["Header"] if f.startswith("_")]:
@@ -767,7 +785,8 @@ def dataset_conversion(
     project: str,
     domain: Optional[str] = None,
     mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
-    mask_cutoff: float = 0.5,
+    mask_cutoff: Union[float, bool] = False,
+    regrid: bool = False,
     add_version_hashes: bool = True,
     preprocess: Optional[Union[Callable, str]] = "auto",
     **xr_kwargs,
@@ -785,8 +804,10 @@ def dataset_conversion(
         Domain to perform subsetting for. Default: None.
     mask : Optional[Union[xr.Dataset, xr.DataArray]]
         DataArray or single data_variable dataset containing mask.
-    mask_cutoff : float
-        If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: 0.5.
+    mask_cutoff : float or bool
+        If land_sea_mask supplied, the threshold above which to mask with land_sea_mask. Default: False.
+    regrid : bool
+        Performing regridding with xesmf. Default: False.
     add_version_hashes : bool
         If True, version name and sha256sum of source file(s) will be added as a field among the global attributes.
     preprocess : callable or str, optional
@@ -800,7 +821,9 @@ def dataset_conversion(
     -------
     xr.Dataset or xr.DataArray
     """
-    if not isinstance(input_files, xr.Dataset):
+    if isinstance(input_files, xr.Dataset):
+        ds = input_files
+    else:
         if isinstance(input_files, (str, os.PathLike)):
             if Path(input_files).is_dir():
                 files = []
@@ -836,8 +859,6 @@ def dataset_conversion(
 
         if version_hashes:
             ds.attrs.update(dict(original_files=str(version_hashes)))
-    else:
-        ds = input_files
 
     ds = dataset_corrections(ds, project)
 
@@ -847,11 +868,8 @@ def dataset_conversion(
     if isinstance(mask, (str, Path)):
         mask = xr.open_dataset(mask)
     if isinstance(mask, (xr.Dataset, xr.DataArray)):
-        # TODO: This should only be triggered by differences in lat, lon grid.
-        # logging.info(
-        #     "Mask supplied. Performing conservative-normed regridding and masking."
-        # )
-        # mask = conservative_regrid(mask, ds)
+        if regrid:
+            mask = conservative_regrid(ds, mask)
         ds = threshold_mask(ds, mask=mask, mask_cutoff=mask_cutoff)
 
     return ds

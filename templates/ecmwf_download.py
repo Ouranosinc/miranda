@@ -37,6 +37,7 @@ def main():
         "era5-single-levels",
         "era5-single-levels-preliminary-back-extension",
         "era5-single-levels-monthly-means",
+        "era5-land-monthly-means",
     ]
 
     request_era5(
