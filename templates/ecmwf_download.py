@@ -24,6 +24,7 @@ def main():
     variables = [
         "d2m",  # "2m_dewpoint_temperature",
         "pev",  # "potential_evaporation",
+        "ptype",  # "precipitation_type",
         "rsn",  # "snow_density",
         "sd",  # "snow_depth",
         "sf",  # "snowfall",
@@ -42,6 +43,7 @@ def main():
         projects,
         variables=variables,
         year_start=2019,
+        year_end=2022,
         output_folder=target_folder,
         dry_run=False,
     )
