@@ -126,7 +126,7 @@ def request_era5(
     ].copy()
     del era5_single_levels["sde"]  # sde is not available for era5
     era5_single_levels.update(
-        msl="mean_sea_level_pressure", sd="snow_depth"
+        msl="mean_sea_level_pressure", sd="snow_depth", ptype="precipitation_type"
     )  # note difference in name vs era5-land cf_variable == snw"
     variable_reference[
         "era5-single-levels",
@@ -168,7 +168,7 @@ def request_era5(
             if "preliminary-back-extension" in project_name or project_name.startswith(
                 "era5-land"
             ):
-                project_year_start = 1950
+                project_year_start = 1940
             else:
                 project_year_start = 1959
         else:

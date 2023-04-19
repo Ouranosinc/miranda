@@ -108,7 +108,7 @@ def _gather(
         if suffix:
             pattern = glob_pattern.format(variable=variable, name=name, suffix=suffix)
         else:
-            pattern = glob_pattern.format(variable)
+            pattern = glob_pattern.format(variable=variable)
         if recursive:
             in_files.extend(list(sorted(source.rglob(pattern))))
         else:

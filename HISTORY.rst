@@ -6,11 +6,20 @@ History
 
 v0.5.0 (unreleased)
 -------------------
-Contributors to this version: Juliette Lavoie (:user: `juliettelavoie`)
+Contributors to this version: Juliette Lavoie (:user: `juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
 ^^^^^^^^^^^^
-* Add a template for NEX-GDDP-CMIP6.
+* Added support for collecting and converting `ptype` ECMWF ERA5 variable.
+* A new ``"_frequency": true`` toggle for returning the output frequency of converted data.
+* Add a new JSON template for NEX-GDDP-CMIP6 datasets.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Various fixes to existing docstrings
+* Time frequency checks are more resilient when converting Monthly time-step data.
+* Masking and regridding of datasets when running ``convert_dataset`` is now optional or automatic.
+* Updated templates to newest API.
 
 v0.4.0 (2023-03-30)
 -------------------

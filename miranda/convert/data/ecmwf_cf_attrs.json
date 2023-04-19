@@ -13,6 +13,7 @@
       "era5-single-levels-monthly-means-preliminary-back-extension": "https://doi.org/10.24381/cds.f17050d7",
       "era5-single-levels-preliminary-back-extension": "https://doi.org/10.24381/cds.adbb2d47"
     },
+    "_frequency": true,
     "_miranda_version": true,
     "_source": {
       "era5-land": "ERA5-Land",
@@ -40,7 +41,8 @@
     "latitude": {
       "_cf_dimension_name": "lat",
       "_precision": {
-        "era5-land": 4
+        "era5-land": 4,
+        "era5-land-monthly-means": 4
       },
       "axis": "Y",
       "standard_name": "latitude"
@@ -48,7 +50,8 @@
     "longitude": {
       "_cf_dimension_name": "lon",
       "_precision": {
-        "era5-land": 4
+        "era5-land": 4,
+        "era5-land-monthly-means": 4
       },
       "axis": "X",
       "standard_name": "longitude"
@@ -56,14 +59,14 @@
     "time": {
       "_ensure_correct_time": {
         "era5-land": "1H",
-        "era5-land-monthly-means": "1M",
+        "era5-land-monthly-means": "MS",
         "era5-pressure-levels": "1H",
-        "era5-pressure-levels-monthly-means": "1M",
-        "era5-pressure-levels-monthly-means-preliminary-back-extension": "1M",
+        "era5-pressure-levels-monthly-means": "MS",
+        "era5-pressure-levels-monthly-means-preliminary-back-extension": "MS",
         "era5-pressure-levels-preliminary-back-extension": "1H",
         "era5-single-levels": "1H",
-        "era5-single-levels-monthly-means": "1M",
-        "era5-single-levels-monthly-means-preliminary-back-extension": "1M",
+        "era5-single-levels-monthly-means": "MS",
+        "era5-single-levels-monthly-means-preliminary-back-extension": "MS",
         "era5-single-levels-preliminary-back-extension": "1H"
       },
       "_strict_time": false,
@@ -121,6 +124,17 @@
       "original_long_name": "Potential evaporation",
       "standard_name": "water_evapotranspiration_flux",
       "units": "kg m-2 s-1"
+    },
+    "ptype": {
+      "_cf_variable_name": "prtype",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter describes the type of precipitation at the surface, at the specified time. A precipitation type is assigned wherever there is a non-zero value of precipitation. In the ECMWF Integrated Forecasting System (IFS) there are only two predicted precipitation variables: rain and snow. Precipitation type is derived from these two predicted variables in combination with atmospheric conditions, such as temperature. Values of precipitation type defined in the IFS: 0: No precipitation, 1: Rain, 3: Freezing rain (i.e. supercooled raindrops which freeze on contact with the ground and other surfaces), 5: Snow, 6: Wet snow (i.e. snow particles which are starting to melt); 7: Mixture of rain and snow, 8: Ice pellets. These precipitation types are consistent with WMO Code Table 4.201. Other types in this WMO table are not defined in the IFS.",
+      "long_name": "Precipitation type",
+      "standard_name": "predominant_precipitation_type_at_surface",
+      "units": "1"
     },
     "q": {
       "_cf_variable_name": "hus",
