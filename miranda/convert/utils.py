@@ -17,11 +17,11 @@ __all__ = ["find_version_hash", "date_parser"]
 
 
 def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
-    """
+    """Check for an existing version hash file and, if one cannot be found, generate one from file.
 
     Parameters
     ----------
-    file : Path or str
+    file : str or os.PathLike
 
     Returns
     -------
