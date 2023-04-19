@@ -142,7 +142,7 @@ def delayed_write(
     overwrite: bool,
     target_chunks: Optional[dict] = None,
 ) -> dask.delayed:
-    """
+    """Stage a Dataset writing job using `dask.delayed` objects.
 
     Parameters
     ----------
@@ -197,6 +197,7 @@ def delayed_write(
 
 
 def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str, int):
+    """Determine attributes related to time dimensions."""
     if isinstance(file_or_dataset, (str, Path)):
         ds = xr.open_dataset(Path(file_or_dataset).expanduser())
     else:
@@ -211,6 +212,7 @@ def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str
 def get_global_attrs(
     file_or_dataset: Union[str, os.PathLike, xr.Dataset]
 ) -> Dict[str, Union[str, int]]:
+    """Collect global attributes from NetCDF, Zarr, or Dataset object."""
     if isinstance(file_or_dataset, (str, Path)):
         file = Path(file_or_dataset).expanduser()
     elif isinstance(file_or_dataset, xr.Dataset):
@@ -255,7 +257,7 @@ def sort_variables(
 
 
 def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
-    """
+    """Determine the chunks on disk for a given NetCDF or Zarr file.
 
     Parameters
     ----------
@@ -286,14 +288,14 @@ def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
     return chunks
 
 
-def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
-    """Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+def creation_date(path_to_file: Union[str, os.PathLike]) -> Union[float, date]:
+    """Return the date that a file was created, falling back to when it was last modified if unable to determine.
 
     See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
     ----------
-    path_to_file: Union[Path, str]
+    path_to_file : str or os.PathLike
 
     Returns
     -------
