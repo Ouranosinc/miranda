@@ -37,6 +37,7 @@ def convert_rdrs(
     output_format: str = "zarr",
     working_folder: Optional[Union[str, os.PathLike]] = None,
     overwrite: bool = False,
+    cfvariable_list: Optional[list] = None,
     **dask_kwargs,
 ):
     """
@@ -49,6 +50,7 @@ def convert_rdrs(
     output_format
     working_folder
     overwrite
+    cfvariable_list
     dask_kwargs
 
     Returns
@@ -57,6 +59,12 @@ def convert_rdrs(
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project=project)["variables"]
+    if cfvariable_list:
+        var_attrs = {
+            v: var_attrs[v]
+            for v in var_attrs
+            if var_attrs[v]["_cf_variable_name"] in cfvariable_list
+        }
     freq_dict = dict(h="hr", d="day")
 
     if isinstance(input_folder, str):
