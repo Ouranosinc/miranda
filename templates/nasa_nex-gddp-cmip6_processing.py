@@ -4,7 +4,8 @@ from miranda import convert, io
 
 
 def main():
-    path_nex_out = Path("INPUT_PATH")
+    # path_nex_out = Path("INPUT_PATH")
+    path_nex_out = Path("/jarre/scenario/jlavoie/data/NEX-GDDP-CMIP6_downloaded/")
     # put all nc that should be in 1 zarr together
     nex_files = convert.gather_nex(path_nex_out)
 
@@ -22,11 +23,12 @@ def main():
         io.write_dataset(
             ds,
             project="NEX-GDDP-CMIP6",
-            output_path=f"OUTPUT_PATH/{end_path}",
+            # output_path=f"OUTPUT_PATH/{end_path}",
+            output_path=f"/jarre/scenario/jlavoie/data/NEX-GDDP-CMIP6_processed/NEX-GDDP-CMIP6_v10/{end_path}",
             output_format="zarr",
             overwrite=True,
             compute=True,
-            chunks={"time": "4 years", "lat": 50, "lon": 50},
+            # chunks={"time": "4 years", "lat": 50, "lon": 50}, # should be given by the config
         )
 
 

@@ -77,9 +77,14 @@ def name_output_file(
             "domain",
             "frequency",
             "institution",
+            "source",
+            "experiment",
+            "member",
             "processing_level",
             "project",
             "type",
+            "mip_era",
+            "activity",
         ]:
             facets[f] = ds_or_dict.attrs.get(f)
 
@@ -127,8 +132,10 @@ def name_output_file(
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
 
     if facets["type"] in name_configurations.keys():
-        if facets["project"] in name_configurations["type"].keys():
-            return name_configurations[facets["project"]].format(**facets)
+        if facets["project"] in name_configurations[facets["type"]].keys():
+            return name_configurations[facets["type"]][facets["project"]].format(
+                **facets
+            )
     # This is the default string
     return "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}".format(
         **facets

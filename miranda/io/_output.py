@@ -64,7 +64,7 @@ def write_dataset(
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    outfile = name_output_file(ds, project, output_format)
+    outfile = name_output_file(ds, output_format)
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():
@@ -76,7 +76,7 @@ def write_dataset(
 
     if chunks is None and "frequency" in ds.attrs:
         freq = ds.attrs["frequency"]  # TOD0: check that this is really there
-        chunks = fetch_chunk_config(project, freq)
+        chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
 
     logging.info(f"Writing {outfile}.")
     write_object = delayed_write(
