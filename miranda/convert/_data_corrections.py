@@ -59,6 +59,10 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
     elif project in ["NEX-GDDP-CMIP6"]:
         metadata_definition = json.load(open(data_folder / "nex-gddp-cmip6_attrs.json"))
+    elif project in ["ESPO-G6-R2"]:
+        metadata_definition = json.load(open(data_folder / "espo-g6-r2_attrs.json"))
+    elif project in ["ESPO-G6-E5L"]:
+        metadata_definition = json.load(open(data_folder / "espo-g6-e5l_attrs.json"))
     else:
         raise NotImplementedError()
 
