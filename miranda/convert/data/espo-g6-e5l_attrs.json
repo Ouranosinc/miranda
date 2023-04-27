@@ -1,20 +1,20 @@
 {
   "Header": {
     "_map_attrs": {
-      "activity_id": "activity",
       "cat:experiment": "experiment",
       "institution_id": "institution",
       "source_id": "source",
       "variant_label": "member"
     },
     "_miranda_version": true,
+    "activity": "ScenarioMIP",
     "bias_adjust_institution": "Ouranos",
     "bias_adjust_project": "ESPO-G6-E5L",
     "domain": "NAM",
     "mip_era": "CMIP6",
     "processing_level": "biasadjusted",
     "table_date": "2023-04-24",
-    "table_id": "ESPO-G6-R2",
+    "table_id": "ESPO-G6-E5L",
     "type": "simulation",
     "version": "1.0.0"
   },
