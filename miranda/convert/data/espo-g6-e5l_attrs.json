@@ -1,5 +1,6 @@
 {
   "Header": {
+    "Notes": "Regridded on the grid of ERA5-Land, then bias-adjusted with detrended quantile mapping on a day-of-year basis with a window of 31 days, LOESS detrending and 50 quantiles. The reference was ERA5-Land over the 1991-2020 period. The variables tasmax, dtr and pr were adjusted, tasmin was computed from tasmax and dtr after the adjustment.",
     "_map_attrs": {
       "cat:experiment": "experiment",
       "institution_id": "institution",

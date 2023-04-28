@@ -1,5 +1,6 @@
 {
   "Header": {
+    "Notes": "Regridded on the grid of RDRS v2.1, then bias-adjusted with detrended quantile mapping on a day-of-year basis with a window of 31 days, LOESS detrending and 50 quantiles. The reference was RDRS v2.1 over the 1989-2018 period. The variables tasmax, dtr and pr were adjusted, tasmin was computed from tasmax and dtr after the adjustment.",
     "_map_attrs": {
       "cat:experiment": "experiment",
       "institution_id": "institution",
