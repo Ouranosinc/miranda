@@ -14,8 +14,6 @@ def main():
         ],
         "ESPO-G6-E5L": ["/crue/jlavoie/info-crue-cmip6/FINAL_QC/*"],
     }
-    # TODO: check sarah ssp585
-
     # paths = {"ESPO-G6-R2": ["PATH1", "PATH2"], "ESPO-G6-E5L": ["PATH1", "PATH2"]}
 
     for project in paths:
