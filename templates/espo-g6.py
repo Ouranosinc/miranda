@@ -2,21 +2,24 @@ import glob
 import os
 from pathlib import Path
 
+from dask.diagnostics import ProgressBar
+
 from miranda import convert, io, structure
 from miranda.decode import Decoder
 
 
 def main():
     paths = {
+        "ESPO-G6-E5L": ["/crue/jlavoie/ESPO-G6/extractamno_version/FINAL/*"],
         "ESPO-G6-R2": [
             "/jarre/scenario/jlavoie/ESPO-G6/FINAL/NAM-rdrs/*",
             "/jarre/braun/data/ESPO-G6/final/*",
         ],
-        "ESPO-G6-E5L": ["/crue/jlavoie/info-crue-cmip6/FINAL_QC/*"],
     }
     # paths = {"ESPO-G6-R2": ["PATH1", "PATH2"], "ESPO-G6-E5L": ["PATH1", "PATH2"]}
 
     for project in paths:
+        print(project)
         d = Decoder(project)
 
         files = []
@@ -26,7 +29,7 @@ def main():
         for f in files:
             if project == "ESPO-G6-R2":
                 facets = d.decode_espo_g6_r2(Path(f))  # can't make just decode work
-            elif project == "ESPO-G6-E5l":
+            elif project == "ESPO-G6-E5L":
                 facets = d.decode_espo_g6_e5l(Path(f))  # can't make just decode work
             else:
                 print("Wrong project!")
@@ -44,16 +47,16 @@ def main():
                         add_version_hashes=False,
                         project=project,
                     )
-
-                    # write to disk
-                    io.write_dataset(
-                        ds[[var]],
-                        project=project,
-                        output_path=new_path,
-                        output_format="zarr",
-                        overwrite=True,
-                        compute=True,
-                    )
+                    with ProgressBar():
+                        # write to disk
+                        io.write_dataset(
+                            ds[[var]],
+                            project=project,
+                            output_path=new_path,
+                            output_format="zarr",
+                            overwrite=True,
+                            compute=True,
+                        )
                 # TODO: manually add version to bias_adjust_project in the path
 
 
