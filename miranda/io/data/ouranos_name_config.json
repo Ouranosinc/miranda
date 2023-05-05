@@ -1,5 +1,7 @@
 {
   "simulation": {
-    "NEX-GDDP-CMIP6": "{variable}_{frequency}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{time_start}_{time_end}.{suffix}"
+    "ESPO-G6-E5L": "{variable}_{frequency}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{year_start}-{year_end}.{suffix}",
+    "ESPO-G6-R2": "{variable}_{frequency}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{year_start}-{year_end}.{suffix}",
+    "NEX-GDDP-CMIP6": "{variable}_{frequency}_{bias_adjust_project}_{mip_era}_{activity}_{domain}_{institution}_{source}_{experiment}_{member}_{year_start}-{year_end}.{suffix}"
   }
 }

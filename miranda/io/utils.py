@@ -100,6 +100,9 @@ def name_output_file(
         facets["time_start"], facets["time_end"] = (
             ds_or_dict.time.isel(time=[0, -1]).dt.strftime(date_format).values
         )
+        facets["year_start"], facets["year_end"] = ds_or_dict.time.isel(
+            time=[0, -1]
+        ).dt.year.values
     elif isinstance(ds_or_dict, dict):
         for f in [
             "bias_adjust_project",
