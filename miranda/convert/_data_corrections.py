@@ -57,6 +57,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
     elif project.startswith("ec"):
         metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
+    elif project in ["NEX-GDDP-CMIP6"]:
+        metadata_definition = json.load(open(data_folder / "nex-gddp-cmip6_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -689,18 +691,22 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     """
     logging.info("Converting metadata to CF-like conventions.")
 
+    header = m["Header"]
+
     # Static handling of version global attributes
-    miranda_version = m["Header"].get("_miranda_version")
+    miranda_version = header.get("_miranda_version")
     if miranda_version:
         if isinstance(miranda_version, bool):
-            m["Header"]["miranda_version"] = __miranda_version__
+            header["miranda_version"] = __miranda_version__
         elif isinstance(miranda_version, dict):
             if p in miranda_version.keys():
-                m["Header"]["miranda_version"] = __miranda_version__
+                header["miranda_version"] = __miranda_version__
         else:
-            logging.warning("`__miranda_version__` not set for project. Not appending.")
-    if "_miranda_version" in m["Header"]:
-        del m["Header"]["_miranda_version"]
+            logging.warning(
+                f"`_miranda_version` not set for project `{p}`. Not appending."
+            )
+    if "_miranda_version" in header:
+        del header["_miranda_version"]
 
     frequency = m["Header"].get("_frequency")
     if frequency:
@@ -715,21 +721,44 @@ def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
         del m["Header"]["_frequency"]
 
     # Conditional handling of global attributes based on project name
-    for field in [f for f in m["Header"] if f.startswith("_")]:
-        if p in m["Header"][field]:
-            if field == "_remove_attrs":
-                for ff in m["Header"][field][p]:
-                    del d.attrs[ff]
+    for field in [f for f in header if f.startswith("_")]:
+        if isinstance(header[field], list):
+            if p in header[field]:
+                attr_treatment = header[field][p]
             else:
-                m["Header"][field[1:]] = m["Header"][field][p]
-        elif field[1:] in m["Header"]:
-            pass
+                logging.warning(
+                    f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
+                )
+                continue
+        elif isinstance(header[field], dict):
+            attr_treatment = header[field]
         else:
-            raise AttributeError(f"`{field[1:]}` not found for project dataset.")
-        del m["Header"][field]
+            raise AttributeError(
+                "Attribute handling configuration seems to not be properly configured. Verify JSON."
+            )
+
+        if field == "_map_attrs":
+            for attribute, mapping in attr_treatment.items():
+                header[mapping] = d.attrs[attribute]
+                del d.attrs[attribute]
+        elif field == "_remove_attrs":
+            for ff in attr_treatment:
+                del d.attrs[ff]
+        elif isinstance(attr_treatment, str):
+            if field[1:] in d.attrs:
+                logging.warning(
+                    f"Overwriting `{field[1:]}` based on JSON configuration."
+                )
+            header[field[1:]] = attr_treatment
+        else:
+            raise AttributeError(
+                f"Attribute treatment `{field}` is not properly configured. Verify JSON."
+            )
+
+        del header[field]
 
     # Add global attributes
-    d.attrs.update(m["Header"])
+    d.attrs.update(header)
     d.attrs.update(dict(project=p))
 
     # Date-based versioning
@@ -835,7 +864,6 @@ def dataset_conversion(
             files = [Path(f) for f in input_files]
         else:
             files = input_files
-
         version_hashes = dict()
         if add_version_hashes:
             for file in files:
@@ -856,7 +884,6 @@ def dataset_conversion(
                 ds = process(ds)
         else:
             ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)
-
         if version_hashes:
             ds.attrs.update(dict(original_files=str(version_hashes)))
 

@@ -125,21 +125,23 @@ class Decoder:
 
         Parameters
         ----------
-        files: Union[str, Path, List[Union[str, Path]]]
-        chunks: int, optional
-        raise_error: bool
+        files : str or Path or list of str or Path or generator
+        chunks : int, optional
+            The chunk size used when processing files. Not to be confused with xarray chunks for dimensions.
+        raise_error : bool
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
 
-        if chunks is None:
-            if isinstance(files, list):
-                if len(files) >= 10:
-                    chunk_size = 10
-                else:
-                    chunk_size = len(files)
-            else:
+        if chunks is None and isinstance(files, list):
+            if len(files) >= 10:
                 chunk_size = 10
+            elif 1 <= len(files) < 10:
+                chunk_size = len(files)
+            else:
+                raise ValueError("No file entries found.")
+        elif isinstance(files, GeneratorType):
+            chunk_size = 10
         else:
             chunk_size = chunks
 
@@ -150,19 +152,19 @@ class Decoder:
         else:
             logging.info(f"Deciphering metadata with project = '{self.project}'")
 
-        manager = mp.Manager()
-        _file_facets = manager.dict()
-        lock = manager.Lock()
-        func = partial(
-            self._decoder, _file_facets, raise_error, self.project, self.guess, lock
-        )
+        with mp.Manager() as manager:
+            _file_facets = manager.dict()
+            lock = manager.Lock()
+            func = partial(
+                self._decoder, _file_facets, raise_error, self.project, self.guess, lock
+            )
 
-        with mp.Pool() as pool:
-            pool.imap(func, files, chunksize=chunk_size)
-            pool.close()
-            pool.join()
+            with mp.Pool() as pool:
+                pool.imap(func, files, chunksize=chunk_size)
+                pool.close()
+                pool.join()
 
-        self._file_facets.update(_file_facets)
+            self._file_facets.update(_file_facets)
 
     def facets_table(self):
         raise NotImplementedError()
@@ -828,6 +830,44 @@ class Decoder:
 
         try:
             facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderError:
+            pass
+
+        return facets
+
+    @classmethod
+    def decode_nex_gddp_cmip6(cls, file: Union[PathLike, str]) -> dict:
+        facets = dict()
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return facets
+
+        facets["experiment"] = data["scenario"]
+        facets["activity"] = (
+            "CMIP" if facets["experiment"] == "historical" else "ScenarioMIP"
+        )
+        facets["institution"] = data["cmip6_institution_id"]
+        facets["member"] = data["variant_label"]
+        facets["processing_level"] = "biasadjusted"
+        facets["bias_adjust_project"] = "NEX-GDDP-CMIP6"
+        facets["bias_adjust_institution"] = "NASA"
+        facets["mip_era"] = "CMIP6"
+        facets["source"] = data["cmip6_source_id"]
+        facets["type"] = "simulation"
+        facets["variable"] = variable
+        facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
+
+        try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
             facets["timedelta"] = cls._decode_time_info(
                 term=facets["frequency"], field="timedelta"
             )

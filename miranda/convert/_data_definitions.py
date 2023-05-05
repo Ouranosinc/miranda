@@ -17,6 +17,7 @@ __all__ = [
     "gather_agmerra",
     "gather_ecmwf",
     "gather_grnch",
+    "gather_nex",
     "gather_nrcan_gridded_obs",
     "gather_raw_rdrs_by_years",
     "gather_rdrs",
@@ -76,8 +77,8 @@ project_institutes = {
     "nrcan-gridded-10km": "nrcan",
     "wfdei-gem-capa": "usask",
     "rdrs-v21": "eccc",
+    "NEX-GDDP-CMIP6": "nasa",
 }
-
 
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
@@ -305,3 +306,31 @@ def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
         f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
     )
     return dict(cfsr=sorted(in_files_grnch))
+
+
+def gather_nex(
+    path: Union[str, os.PathLike],
+) -> Dict[str, List[Path]]:
+    """Put all files that should be contained in one dataset in one entry of the dictionnary.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+    back_extension : bool
+    monthly_means : bool
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+
+    source = Path(path)
+    datasets = source.glob("*/*/*/*/*/*/*/*/*/")
+
+    out_dict = {}
+    # separate files by datasets
+    for dataset in datasets:
+        in_files = list()
+        in_files.extend(list(sorted(dataset.glob("*.nc"))))
+        out_dict[str(dataset)] = in_files
+    return out_dict

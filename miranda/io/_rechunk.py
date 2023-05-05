@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Union
 
 import xarray as xr
+from xarray.core.utils import Frozen
 
-from miranda.convert import project_institutes
 from miranda.scripting import LOGGING_CONFIG
 
 from ._input import discover_data
@@ -17,10 +17,49 @@ from .utils import delayed_write, get_global_attrs, get_time_attrs, sort_variabl
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["fetch_chunk_config", "rechunk_files", "translate_time_chunk"]
+__all__ = [
+    "fetch_chunk_config",
+    "prepare_chunks_for_ds",
+    "rechunk_files",
+    "translate_time_chunk",
+]
 
 _data_folder = Path(__file__).parent / "data"
-chunk_configurations = json.load(open(_data_folder / "chunk_configurations.json"))
+chunk_configurations = json.load(open(_data_folder / "ouranos_chunk_config.json"))
+
+
+def prepare_chunks_for_ds(
+    ds: xr.Dataset, chunks: Dict[str, Union[str, int]]
+) -> Dict[str, int]:
+    """Prepare the chunks to be used to write Dataset.
+
+    This includes translating the time chunks, making sure chunks are not too small, and removing -1.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset that we want to write with the chunks.
+    chunks : dict
+        Desired chunks in human-readable format (with "4 years" and -1).
+
+    Returns
+    -------
+    dict
+        Chunks in a format that is ready to be used to write to disk.
+    """
+    # check if any of the chunks are strings and need to be translated
+    if any(isinstance(x, str) for x in chunks.values()):
+        calendar, size = get_time_attrs(ds)
+        chunks = translate_time_chunk(chunks, calendar, size)
+
+    # replace -1 that netcdf can't handle and cut chunks that are too big for the dim
+    for dim, c in chunks.copy().items():
+        length = ds.dims[dim]
+        if c == -1 or c > length:
+            logging.info(f"Chunk was changed from {c} to {length} for dimension {dim}.")
+            chunks[dim] = length
+
+    return chunks
 
 
 # Shamelessly stolen and modified from xscen
@@ -48,39 +87,39 @@ def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
 
 
 def fetch_chunk_config(
-    project: str, freq: str, priority: str = "files"
+    priority: str,
+    freq: str,
+    dims: Union[Sequence[str], Dict[str, int], Frozen],
+    default_config: Dict = chunk_configurations,
 ) -> Dict[str, int]:
     """
 
     Parameters
     ----------
-    project : str, optional
-        Supported projects. Used for determining chunk dictionary.
-    freq: {"1hr", "day", "month"}
-        The chunking regime for
     priority : {"time", "files"}
         Specifies whether the chunking regime should prioritize file granularity ("files") or time series ("time").
+    freq : {"1hr", "day", "month"}
+        The time frequency of the input data.
+    dims : sequence of str
+        The dimension names that will be used for chunking.
+    default_config : dict
+        The dictionary to use for determining the chunking configuration.
 
     Returns
     -------
-
+    Dict[str, int]
     """
-    institute = project_institutes[project]
-    entry = chunk_configurations[institute.upper()]
+    if isinstance(dims, (dict, Frozen)):
+        dims = {k for k in dims.keys()}
 
-    # TODO: Currently no explicit handling for multi-level data
-    if project in entry["projects"]:
-        return entry["time"][freq]
-        # if priority in entry[project]:
-        #     if freq in entry[priority]:
-        #         try:
-        #             return entry[priority][freq]
-        #         except KeyError:
-        #             raise KeyError(
-        #                 f"Chunks at frequency `{freq}` not found for project `{project}`."
-        #             )
-        # raise KeyError(f"Priority regime `{priority}` not found.")
-    raise KeyError(f"Project `{project}` not found.")
+    if priority in default_config:
+        if freq in default_config[priority]:
+            for config in default_config[priority][freq].keys():
+                if set(default_config[priority][freq][config]).issubset(dims):
+                    return default_config[priority][freq][config]
+            raise KeyError(f"Chunk dimensions `{dims}` configuration not found.")
+        raise KeyError(f"Frequency `{freq}` configuration not found.")
+    raise KeyError(f"Priority regime `{priority}` configuration not found.")
 
 
 def rechunk_files(
@@ -191,7 +230,7 @@ def rechunk_files(
             ds = xr.open_dataset(file, chunks={"time": -1})
 
             if target_chunks is None:
-                chunk_config = fetch_chunk_config(project, time_step, chunking_priority)
+                chunk_config = fetch_chunk_config(chunking_priority, time_step, ds.dims)
                 calendar, size = get_time_attrs(ds)
                 target_chunks = translate_time_chunk(chunk_config, calendar, size)
 
