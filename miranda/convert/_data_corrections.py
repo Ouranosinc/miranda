@@ -63,6 +63,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "espo-g6-r2_attrs.json"))
     elif project in ["ESPO-G6-E5L"]:
         metadata_definition = json.load(open(data_folder / "espo-g6-e5l_attrs.json"))
+    elif project in ["EMDNA"]:
+        metadata_definition = json.load(open(data_folder / "emdna_cf_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -465,6 +467,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
             d["time"]["units"] = m["dimensions"]["time"]["units"]
 
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
+        print(vv, unit)
         if unit:
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], unit)

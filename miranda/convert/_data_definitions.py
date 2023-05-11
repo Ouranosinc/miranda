@@ -334,3 +334,32 @@ def gather_nex(
         in_files.extend(list(sorted(dataset.glob("*.nc"))))
         out_dict[str(dataset)] = in_files
     return out_dict
+
+
+def gather_emdna(
+    path: Union[str, os.PathLike],
+) -> Dict[str, List[Path]]:
+    """Put all files with the same member together.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+
+    Returns
+    -------
+    dict(str, list[pathlib.Path])
+    """
+
+    source = Path(path)
+    member_dict = {}
+    # 100 members
+    members = [f"{i:03d}" for i in range(1, 101)]
+    for member in members:
+        member_dict[member] = list(
+            sorted(source.glob(f"EMDNA_estimate/*/EMDNA_*.{member}.nc4"))
+        )
+
+    # OI
+    member_dict["OI"] = list(sorted(source.glob("OI_estimate/*.nc4")))
+
+    return member_dict

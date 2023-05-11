@@ -1,6 +1,7 @@
 import json
 import logging.config
 import os
+import warnings
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
@@ -132,7 +133,9 @@ def name_output_file(
         if v is None:
             missing.append(k)
     if missing:
-        raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
+        warnings.warn(
+            f"The following facets were not found: {' ,'.join(missing)}."
+        )  # TODO: check that this change is ok
 
     if facets["type"] in name_configurations.keys():
         if facets["project"] in name_configurations[facets["type"]].keys():
