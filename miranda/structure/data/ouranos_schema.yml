@@ -1,18 +1,45 @@
+# This file defines the structure of the data on Ouranos' servers
+#
+# It tries to be define all cases, instead of being flexible, in order to detect potential errors in the facets.
+#
+# The path-builder function parses this tree from top to bottom, always using the first match.
+# Each child of the "datasets" top element may define the following fields:
+#
+#     with: # Section that decides if we use this element for the given file.
+#       - option: < facet >         # A facet and its values to match
+#         value: <value or values>  # this can be repeated
+#     structure: # The path structure, each element is mapped to a folder level
+#       # There are three ways to specify a facet to use:
+#       - < facet >
+#       - option: < facet >   # A test on the given facet's value.
+#         value: < value >    # Optional. If not given, the test is simple "facet is not empty"
+#         is_true: < facet >  # Optional. Facet to use if the test passes. If not given, this level is skipped resulting in a tree of a different depth.
+#         is_false: < facet > # Optional. Facet to use if the test fails. Same consequece if not given.
+#                             # The "concat" structure below can be given instead of a facet.
+#       - concat:    # The folder name consists in more than one facet, concatenated with a "_" by default.
+#         - < facet or option >   # Instead of a facet, one can give a "option" structure like above.
+#         - < facet >
+#
 ---
 datasets:
-  - option: type
-    value: station-obs
+  - with:
+      - option: type
+        value: station-obs
     structure:
       - type
       - institution
-      - source
-      - version
+      - concat:
+        - source
+        - option: version
+          is_true: version
       - frequency
       - option: member
         is_true: member
       - variable
-  - option: type
-    value: forecast
+    filename: [ variable, member, frequency, institution, source, version, dates ]
+  - with:
+      - option: type
+        value: forecast
     structure:
       - type
       - institution
@@ -20,22 +47,37 @@ datasets:
       - domain
       - frequency
       - variable
-  - option: type
-    value: reconstruction
+    filename: [ variable, frequency, institution, source, domain, dates ]
+  - with:
+      - option: type
+        value: reconstruction
     structure:
       - type
       - institution
-      - source
+      - concat:
+        - source
+        - option: version
+          is_true: version
       - domain
+      - option: member
+        is_true: member
       - frequency
       - variable
-  - option: type
-    value: simulation
+    filename: [ variable, frequency, institution, source, version, domain, member, dates ]
+  - with:
+      - option: type
+        value: simulation
+      - option: processing_level
+        value: [ raw, biasajusted ]
     structure:
       - type
       - processing_level
       - option: bias_adjust_project
-        is_true: bias_adjust_project
+        is_true:
+          concat:
+            - bias_adjust_project
+            - option: version
+              is_true: version
       - mip_era
       - activity
       - domain
@@ -48,3 +90,31 @@ datasets:
       - member
       - frequency
       - variable
+      filename: [ variable, frequency, bias_adjust_project, activity, institution, source, driving_model, experiment, member, dates ]
+  - option: type
+    value: simulation
+    # All others
+    structure:
+      - type
+      - option: bias_adjust_project
+        is_true:
+          concat:
+            - bias_adjust_project
+            - option: version
+              is_true: version
+        is_false:
+          text: raw
+      - mip_era
+      - activity
+      - domain
+      - institution
+      - source
+      - option: activity
+        value: CORDEX
+        is_true: driving_model
+      - experiment
+      - member
+      - processing_level
+      - frequency
+      - variable
+      filename: [ variable, frequency, bias_adjust_project, activity, institution, source, driving_model, experiment, member, dates ]
