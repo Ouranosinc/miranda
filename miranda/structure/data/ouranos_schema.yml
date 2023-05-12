@@ -27,6 +27,8 @@ datasets:
       - institution
       - source
       - domain
+      - option: member
+        is_true: member
       - frequency
       - variable
   - option: type

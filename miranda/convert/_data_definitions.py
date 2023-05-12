@@ -23,6 +23,7 @@ __all__ = [
     "gather_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
+    "gather_emdna",
     "nasa_ag_variables",
     "nrcan_variables",
     "project_institutes",
