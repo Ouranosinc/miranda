@@ -202,7 +202,7 @@ def _parse_option(option: dict, facets: dict):
     return answer
 
 
-def _parse_level(schema: dict | str, facets: dict):
+def _parse_level(schema: Union[dict, str], facets: dict):
     if isinstance(schema, str):
         # A single facet:
         if isna(facets[schema]):
