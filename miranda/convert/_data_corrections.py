@@ -332,6 +332,8 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 logging.info(
                     f"Performing amount-to-rate units conversion for variable `{vv}`."
                 )
+                print(d[vv])
+                print(m["variables"][vv]["units"])
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(
                         d[vv],
@@ -469,7 +471,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit)
+                d[vv] = units.convert_units_to(d[vv], unit, context="hydro")
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))

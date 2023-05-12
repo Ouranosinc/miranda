@@ -128,24 +128,24 @@ def name_output_file(
         else:
             facets["time"] = facets["time_start"]
 
-    missing = []
-    for k, v in facets.items():
-        if v is None:
-            missing.append(k)
-    if missing:
-        warnings.warn(
-            f"The following facets were not found: {' ,'.join(missing)}."
-        )  # TODO: check that this change is ok
-
+    # get the string for the name
     if facets["type"] in name_configurations.keys():
         if facets["project"] in name_configurations[facets["type"]].keys():
-            return name_configurations[facets["type"]][facets["project"]].format(
-                **facets
-            )
-    # This is the default string
-    return "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}".format(
-        **facets
-    )
+            str_name = name_configurations[facets["type"]][facets["project"]]
+    else:
+        str_name = "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}"
+
+    missing = []
+    for k, v in facets.items():
+        if (
+            v is None and k in str_name
+        ):  # only missing if the facets is needed in the name
+            missing.append(k)
+    if missing:
+        raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
+
+    # fill in string with facets
+    return str_name.format(**facets)
 
 
 def delayed_write(

@@ -1,4 +1,3 @@
-import glob
 import os
 from datetime import datetime
 from pathlib import Path
@@ -6,7 +5,6 @@ from pathlib import Path
 from dask.diagnostics import ProgressBar
 
 from miranda import convert, io, structure
-from miranda.decode import Decoder
 
 
 def preprocess_dna(ds):
@@ -24,14 +22,19 @@ def main():
         ds = convert.dataset_conversion(
             files, project="EMDNA", preprocess=preprocess_dna
         )
+
+        # remove var we don't need
+        if member == "OI":
+            ds = ds.drop_vars("pop")
+
+        # facets needed for building path
         ds.attrs["member"] = member
-        # TODO: deal with units
         facets = ds.attrs
         for var in ds.data_vars:
+            del ds[var].attrs["description"]  # remove old description
             facets["variable"] = var
-            out_path = "/jarre/scenario/staging/"
-            out_path = "/jarre/scenario/jlavoie/test"
 
+            out_path = "/jarre/scenario/staging/"
             # get full path
             new_path = structure.build_path_from_schema(facets, out_path)
             # add version by hand for now

@@ -38,18 +38,23 @@
   "variables": {
     "prcp": {
       "_cf_variable_name": "pr",
+      "_corrected_units": "mm d-1",
       "cell_methods": "area: mean time: mean",
       "long_name": "Precipitation",
-      "standard_name": "precipitation_flux"
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
     },
     "tmean": {
       "_cf_variable_name": "tas",
+      "_corrected_units": "degC",
       "cell_methods": "area: mean time: mean",
       "long_name": "Daily Mean Near-Surface Air Temperature",
-      "standard_name": "air_temperature"
+      "standard_name": "air_temperature",
+      "units": "K"
     },
     "trange": {
       "_cf_variable_name": "dtr",
+      "_corrected_units": "K",
       "cell_methods": "time: range within days time: mean over days",
       "long_name": "Daily temperature range",
       "standard_name": "air_temperature_range"
