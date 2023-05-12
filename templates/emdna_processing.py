@@ -35,7 +35,7 @@ def main():
             # get full path
             new_path = structure.build_path_from_schema(facets, out_path)
             # add version by hand for now
-            new_path = new_path.replace("EMDNA", "EMDNA_v10")
+            new_path = Path(str(new_path).replace("EMDNA", "EMDNA_v10"))
 
             if not os.path.exists(new_path):
                 with ProgressBar():
