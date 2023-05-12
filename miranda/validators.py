@@ -84,7 +84,14 @@ if VALIDATION_ENABLED:
             ),
             Optional("processing_level"): Or(*PROCESSING_LEVELS),
             "format": Or("netcdf", "zarr"),
-            Optional("version"): str,
+            Optional(
+                Literal(
+                    "version",
+                    description="A version string for evolutive products."
+                    "Stands for the bias-adjustment project version for simulations"
+                    "but for the source version for reconstructions and observations.",
+                )
+            ): str,
         },
         ignore_extra_keys=True,
     )
@@ -96,7 +103,8 @@ if VALIDATION_ENABLED:
             "source": str,
             "frequency": str,
             "variable": str,
-            "version": str,
+            Optional("member"): str,
+            Optional("version"): str,
         },
         ignore_extra_keys=True,
     )
@@ -108,8 +116,10 @@ if VALIDATION_ENABLED:
             "institution": str,
             "source": str,
             "domain": str,
+            Optional("member"): str,
             "frequency": str,
             "variable": str,
+            Optional("version"): str,
         },
         ignore_extra_keys=True,
     )
@@ -127,6 +137,7 @@ if VALIDATION_ENABLED:
             Optional("driving_model"): Or(*DRIVING_MODELS),
             Optional("bias_adjust_institution"): Or(*BIAS_ADJUST_INSTITUTIONS),
             Optional("bias_adjust_project"): str,
+            Optional("version"): str,
             "experiment": str,
             "member": str,
             "frequency": str,

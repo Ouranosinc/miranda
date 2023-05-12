@@ -1,6 +1,7 @@
 import logging
 from logging import config
 
+from pandas import Timedelta
 from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
@@ -12,6 +13,7 @@ __all__ = [
     "FREQUENCY_TO_POTENTIAL_TIME_UNITS",
     "TIME_UNITS_TO_FREQUENCY",
     "TIME_UNITS_TO_TIMEDELTA",
+    "freq_to_timedelta",
 ]
 
 TIME_UNITS_TO_FREQUENCY = {
@@ -65,6 +67,7 @@ for key, value in TIME_UNITS_TO_FREQUENCY.items():
     FREQUENCY_TO_POTENTIAL_TIME_UNITS.setdefault(value, list()).append(key)
 
 TIME_UNITS_TO_TIMEDELTA = {
+    "fx": "nan",
     "hourly": "1h",
     "hours": "1h",
     "hour": "1h",
@@ -103,6 +106,11 @@ TIME_UNITS_TO_TIMEDELTA = {
     "yr": "365d",
     "yrPt": "365d",
 }
+
+
+def freq_to_timedelta(freq: str) -> Timedelta:
+    """Convert a frequency string to a representative timedelta object."""
+    return Timedelta(TIME_UNITS_TO_TIMEDELTA[freq])
 
 
 class DecoderError(Exception):

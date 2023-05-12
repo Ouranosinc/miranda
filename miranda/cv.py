@@ -7,7 +7,7 @@ with HiddenPrints():
         import pyessv
 
         VALIDATION_ENABLED = True
-    except OSError:
+    except (OSError, ModuleNotFoundError):
         warnings.warn(
             "Source files for pyessv-archive files not present. Data validation checks will be skipped."
         )

@@ -9,17 +9,19 @@
 #       - option: < facet >         # A facet and its values to match
 #         value: <value or values>  # this can be repeated
 #     structure: # The path structure, each element is mapped to a folder level
-#       # There are three ways to specify a facet to use:
+#       # There are four ways to specify a folder name to use:
+#       # Each way can be used recursively in place for < facet >.
 #       - < facet >
 #       - option: < facet >   # A test on the given facet's value.
 #         value: < value >    # Optional. If not given, the test is simple "facet is not empty"
 #         is_true: < facet >  # Optional. Facet to use if the test passes. If not given, this level is skipped resulting in a tree of a different depth.
-#         is_false: < facet > # Optional. Facet to use if the test fails. Same consequece if not given.
-#                             # The "concat" structure below can be given instead of a facet.
+#         else: < facet > # Optional. Facet to use if the test fails. Same consequence as above if not given.
 #       - concat:    # The folder name consists in more than one facet, concatenated with a "_" by default.
-#         - < facet or option >   # Instead of a facet, one can give a "option" structure like above.
 #         - < facet >
-#
+#         - < facet >
+#       - text: < value >     # A fixed string
+#     filename: # The file name schema, a list of facet names. If a facet is empty, it will be skipped. Elements will be separated by "_".
+#               # The special "dates" facet will be replaced by the most concise way found to define the temporal range covered by the file.
 ---
 datasets:
   - with:
@@ -68,7 +70,7 @@ datasets:
       - option: type
         value: simulation
       - option: processing_level
-        value: [ raw, biasajusted ]
+        value: [ raw, biasadjusted ]
     structure:
       - type
       - processing_level
@@ -90,10 +92,11 @@ datasets:
       - member
       - frequency
       - variable
-      filename: [ variable, frequency, bias_adjust_project, activity, institution, source, driving_model, experiment, member, dates ]
-  - option: type
-    value: simulation
-    # All others
+    filename: [ variable, frequency, bias_adjust_project, version, activity, institution, source, driving_model, experiment, member, dates ]
+derived:
+  - with:
+    - option: type
+      value: simulation
     structure:
       - type
       - option: bias_adjust_project
@@ -102,7 +105,7 @@ datasets:
             - bias_adjust_project
             - option: version
               is_true: version
-        is_false:
+        else:
           text: raw
       - mip_era
       - activity
@@ -117,4 +120,21 @@ datasets:
       - processing_level
       - frequency
       - variable
-      filename: [ variable, frequency, bias_adjust_project, activity, institution, source, driving_model, experiment, member, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, activity, institution, source, driving_model, experiment, member, dates ]
+  - with:
+      - option: type
+        value: reconstruction
+    structure:
+      - type
+      - institution
+      - concat:
+        - source
+        - option: version
+          is_true: version
+      - domain
+      - option: member
+        is_true: member
+      - processing_level
+      - frequency
+      - variable
+    filename: [ variable, frequency, institution, source, version, domain, member, dates ]
