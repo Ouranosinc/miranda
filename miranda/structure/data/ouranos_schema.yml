@@ -53,6 +53,8 @@ datasets:
   - with:
       - option: type
         value: reconstruction
+      - option: processing_level
+        value: raw
     structure:
       - type
       - institution
@@ -60,9 +62,9 @@ datasets:
         - source
         - option: version
           is_true: version
-      - domain
       - option: member
         is_true: member
+      - domain
       - frequency
       - variable
     filename: [ variable, frequency, institution, source, version, domain, member, dates ]

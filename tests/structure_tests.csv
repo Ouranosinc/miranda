@@ -1,0 +1,13 @@
+type,processing_level,bias_adjust_institution,bias_adjust_project,mip_era,activity,driving_institution,driving_model,institution,source,experiment,member,frequency,variable,domain,date_start,date_end,version,path
+station-obs,raw,,,,,,,GovCan,AHCCD,,,day,tasmin,CAN,1960-01-01,1999-12-31,,station-obs/GovCan/AHCCD/day/tasmin/tasmin_day_GovCan_AHCCD_1960-1999
+station-obs,raw,,,,,,,GovCan,AHCCD,,,day,tasmin,CAN,1960-01-01,1999-12-31,gen3,station-obs/GovCan/AHCCD_gen3/day/tasmin/tasmin_day_GovCan_AHCCD_gen3_1960-1999
+station-obs,raw,,,,,,,GovCan,AHCCD,,,day,tasmin,CAN,1960-01-01,1999-02-05,gen3,station-obs/GovCan/AHCCD_gen3/day/tasmin/tasmin_day_GovCan_AHCCD_gen3_19600101-19990205
+station-obs,raw,,,,,,,GovCan,AHCCD,,,6hr,tasmin,CAN,1960-01-01,1960-01-31,gen3,station-obs/GovCan/AHCCD_gen3/6hr/tasmin/tasmin_6hr_GovCan_AHCCD_gen3_196001
+forecast,raw,,,,,,,GovMex,TijuanaPrev,,,hr,prsn,MEX,2023-01-01,2023-12-31,,forecast/GovMex/TijuanaPrev/MEX/hr/prsn/prsn_hr_GovMex_TijuanaPrev_MEX_2023
+reconstruction,raw,,,,,,,Aperture,GLaDOS,,,sem,cake,POR,2000-07-01,2001-06-30,v2,reconstruction/Aperture/GLaDOS_v2/POR/sem/cake/cake_sem_Aperture_GLaDOS_v2_POR_200007-200106
+reconstruction,raw,,,,,,,Aperture,GLaDOS,,,sem,cake,POR,2000-07-01,2001-06-30,,reconstruction/Aperture/GLaDOS/POR/sem/cake/cake_sem_Aperture_GLaDOS_POR_200007-200106
+reconstruction,delta-rel,,,,,,,Aperture,GLaDOS,,,yr,cake,POR,2000-01-01,2101-12-31,,reconstruction/Aperture/GLaDOS/POR/delta-rel/yr/cake/cake_yr_Aperture_GLaDOS_POR_2000-2101
+simulation,raw,,,CMIP9,CORDEX,Marcellin,Bob,Fafard,Romano,sspCacanne,r1i1p1f1n1,3hr,planet,presdechezvous,2034-01-01,2035-12-30,,simulation/raw/CMIP9/CORDEX/presdechezvous/Fafard/Romano/Bob/sspCacanne/r1i1p1f1n1/3hr/planet/planet_3hr_CORDEX_Fafard_Romano_Bob_sspCacanne_r1i1p1f1n1_2034-2035
+simulation,biasadjusted,Zone3,LeFilm,CMIP9,CORDEX,Marcellin,Bob,Fafard,Romano,sspCacanne,r1i1p1f1n1,3hr,planet,presdechezvous,2034-01-01,2035-12-30,v1,simulation/biasadjusted/LeFilm_v1/CMIP9/CORDEX/presdechezvous/Fafard/Romano/Bob/sspCacanne/r1i1p1f1n1/3hr/planet/planet_3hr_LeFilm_v1_CORDEX_Fafard_Romano_Bob_sspCacanne_r1i1p1f1n1_2034-2035
+simulation,indicator,Ouranos,ESPO-G7-N4,CMIP7,ScenarioMIP,,,CCCma,CanESM8,ssp119,r50i1p1,qtr,tx_days_above_40,NAM,2101-01-01,2200-12-31,,simulation/ESPO-G7-N4/CMIP7/ScenarioMIP/NAM/CCCma/CanESM8/ssp119/r50i1p1/indicator/qtr/tx_days_above_40/tx_days_above_40_qtr_ESPO-G7-N4_ScenarioMIP_CCCma_CanESM8_ssp119_r50i1p1_2101-2200
+simulation,delta-abs,Ouranos,ESPO-G7-N4,CMIP7,ScenarioMIP,,,CCCma,CanESM8,ssp119,r50i1p1,fx,tx_days_above_40,NAM,,,,simulation/ESPO-G7-N4/CMIP7/ScenarioMIP/NAM/CCCma/CanESM8/ssp119/r50i1p1/delta-abs/fx/tx_days_above_40/tx_days_above_40_fx_ESPO-G7-N4_ScenarioMIP_CCCma_CanESM8_ssp119_r50i1p1_fx
