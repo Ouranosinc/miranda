@@ -467,7 +467,6 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
             d["time"]["units"] = m["dimensions"]["time"]["units"]
 
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
-        print(vv, unit)
         if unit:
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], unit)
