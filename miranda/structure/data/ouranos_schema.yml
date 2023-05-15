@@ -98,7 +98,7 @@ datasets:
       - member
       - frequency
       - variable
-    filename: [ variable, frequency, bias_adjust_project, version, activity, domain, institution, source, driving_model, experiment, member, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, domain, institution, source, driving_model, experiment, member, dates ]
 ### Derived data
 #
 # This structure is meant for the output of scenario projects.
@@ -133,7 +133,7 @@ derived:
       - processing_level
       - frequency
       - variable
-    filename: [ variable, frequency, bias_adjust_project, version, activity, domain, institution, source, driving_model, experiment, member, processing_level, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, institution, source, driving_model, experiment, member, domain, processing_level, dates ]
   - with:
       - option: type
         value: reconstruction
@@ -150,4 +150,4 @@ derived:
       - processing_level
       - frequency
       - variable
-    filename: [ variable, frequency, institution, source, version, member, dates ]
+    filename: [ variable, frequency, institution, source, version, member, domain, processing_level, dates ]
