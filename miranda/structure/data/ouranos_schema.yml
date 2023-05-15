@@ -23,33 +23,38 @@
 #     filename: # The file name schema, a list of facet names. If a facet is empty, it will be skipped. Elements will be separated by "_".
 #               # The special "dates" facet will be replaced by the most concise way found to define the temporal range covered by the file.
 ---
+### Raw data
+#
+# This structure is meant for raw-like data, usually hourly or daily, used as input for scenario projects.
+# It includes bias-adjusted datasets.
 datasets:
   - with:
       - option: type
         value: station-obs
     structure:
       - type
+      - domain
       - institution
       - concat:
         - source
         - option: version
           is_true: version
-      - frequency
       - option: member
         is_true: member
+      - frequency
       - variable
-    filename: [ variable, member, frequency, institution, source, version, dates ]
+    filename: [ variable, frequency, domain, institution, source, version, member, dates ]
   - with:
       - option: type
         value: forecast
     structure:
       - type
+      - domain
       - institution
       - source
-      - domain
       - frequency
       - variable
-    filename: [ variable, frequency, institution, source, domain, dates ]
+    filename: [ variable, frequency, domain, institution, source, dates ]
   - with:
       - option: type
         value: reconstruction
@@ -57,6 +62,7 @@ datasets:
         value: raw
     structure:
       - type
+      - domain
       - institution
       - concat:
         - source
@@ -64,10 +70,9 @@ datasets:
           is_true: version
       - option: member
         is_true: member
-      - domain
       - frequency
       - variable
-    filename: [ variable, frequency, institution, source, version, domain, member, dates ]
+    filename: [ variable, frequency, domain, institution, source, version, member, dates ]
   - with:
       - option: type
         value: simulation
@@ -87,14 +92,21 @@ datasets:
       - domain
       - institution
       - source
-      - option: activity
-        value: CORDEX
+      - option: driving_model
         is_true: driving_model
       - experiment
       - member
       - frequency
       - variable
-    filename: [ variable, frequency, bias_adjust_project, version, activity, institution, source, driving_model, experiment, member, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, activity, domain, institution, source, driving_model, experiment, member, dates ]
+### Derived data
+#
+# This structure is meant for the output of scenario projects.
+# The main differences here are that:
+#
+#     - domain denotes the zone over which the scenario was computed, not the original source's coverage
+#     - processing_level has more possible values, denoting slight variant of the data instead of broad categories.
+#     As such, both fields are here much lower in the hierarchy.
 derived:
   - with:
     - option: type
@@ -111,18 +123,17 @@ derived:
           text: raw
       - mip_era
       - activity
-      - domain
       - institution
       - source
-      - option: activity
-        value: CORDEX
+      - option: driving_model
         is_true: driving_model
       - experiment
       - member
+      - domain
       - processing_level
       - frequency
       - variable
-    filename: [ variable, frequency, bias_adjust_project, version, activity, institution, source, driving_model, experiment, member, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, activity, domain, institution, source, driving_model, experiment, member, processing_level, dates ]
   - with:
       - option: type
         value: reconstruction
@@ -133,10 +144,10 @@ derived:
         - source
         - option: version
           is_true: version
-      - domain
       - option: member
         is_true: member
+      - domain
       - processing_level
       - frequency
       - variable
-    filename: [ variable, frequency, institution, source, version, domain, member, dates ]
+    filename: [ variable, frequency, institution, source, version, member, dates ]
