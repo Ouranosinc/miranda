@@ -332,8 +332,6 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 logging.info(
                     f"Performing amount-to-rate units conversion for variable `{vv}`."
                 )
-                print(d[vv])
-                print(m["variables"][vv]["units"])
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(
                         d[vv],
