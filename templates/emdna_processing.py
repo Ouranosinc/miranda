@@ -15,7 +15,8 @@ def preprocess_dna(ds):
 
 
 def main():
-    path = "/jarre/logan/EMDNA/"
+    path = "INPUT_PATH"
+    out_path = "OUTPUT_PATH"
 
     files_by_member = convert.gather_emdna(path)
     for member, files in files_by_member.items():
@@ -34,7 +35,6 @@ def main():
             del ds[var].attrs["description"]  # remove old description
             facets["variable"] = var
 
-            out_path = "/jarre/scenario/staging/"
             # get full path
             new_path = structure.build_path_from_schema(facets, out_path)
             # add version by hand for now
