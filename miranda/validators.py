@@ -27,7 +27,15 @@ if VALIDATION_ENABLED:
         "gridded-obs",
         "station-obs",
     ]
-    PROCESSING_LEVELS = ["raw", "biasadjusted", "extracted", "regridded"]
+    PROCESSING_LEVELS = [
+        "raw",
+        "biasadjusted",
+        "extracted",
+        "regridded",
+        "indicator",
+        "delta-abs",
+        "delta-rel",
+    ]
     BASIC_DT_VALIDATION = r"\s*(?=\d{2}(?:\d{2})?)"
     DATE_VALIDATION = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
 
@@ -112,7 +120,7 @@ if VALIDATION_ENABLED:
     GRIDDED_SCHEMA = Schema(
         {
             "type": Or("forecast", "gridded-obs", "reconstruction"),
-            "project": str,
+            # "project": str,
             "institution": str,
             "source": str,
             "domain": str,
@@ -131,9 +139,9 @@ if VALIDATION_ENABLED:
             "activity": str,
             "mip_era": str,
             "institution": Or(*INSTITUTIONS),
-            Optional("driving_institution"): Or(*INSTITUTIONS),
             "source": str,
             "domain": str,
+            Optional("driving_institution"): Or(*INSTITUTIONS),
             Optional("driving_model"): Or(*DRIVING_MODELS),
             Optional("bias_adjust_institution"): Or(*BIAS_ADJUST_INSTITUTIONS),
             Optional("bias_adjust_project"): str,

@@ -346,7 +346,9 @@ def build_path_from_schema(
     if validate and VALIDATION_ENABLED:
         if facets["type"] in validation_schemas.keys():
             try:
-                validation_schemas[facets["type"]].validate(facets)
+                validation_schemas[facets["type"]].validate(
+                    {k: v for k, v in facets.items() if not isna(v)}
+                )
             except SchemaError as e:
                 logging.error(
                     f"Validation issues found for file matching schema: {facets}: {e}"
