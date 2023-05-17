@@ -1,4 +1,4 @@
-# This file defines the structure of the data on Ouranos' servers
+# This file defines the structure of the data on disk.
 #
 # The path-builder function parses this tree from top to bottom, always using the first match.
 # Each child of the "datasets" top element may define the following fields:
@@ -59,46 +59,3 @@ datasets:
       - frequency
       - variable
     filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, domain, institution, source, driving_model, experiment, member, DATES ]
-### Derived data
-#
-# This structure is meant for the output of scenario projects.
-# The main differences here are that:
-#
-#     - domain denotes the zone over which the scenario was computed, not the original source's coverage
-#     - processing_level has more possible values, denoting slight variant of the data instead of broad categories.
-#     As such, both fields are here much lower in the hierarchy.
-derived:
-  - with:
-    - option: type
-      value: simulation
-    structure:
-      - type
-      - option: bias_adjust_project
-        is_true: [bias_adjust_project, version]
-        else:
-          text: raw
-      - mip_era
-      - activity
-      - institution
-      - source
-      - driving_model
-      - experiment
-      - member
-      - domain
-      - processing_level
-      - frequency
-      - variable
-    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, institution, source, driving_model, experiment, member, domain, processing_level, DATES ]
-  - with:
-      - option: type
-        value: reconstruction
-    structure:
-      - type
-      - institution
-      - [source, version]
-      - member
-      - domain
-      - processing_level
-      - frequency
-      - variable
-    filename: [ variable, frequency, institution, source, version, member, domain, processing_level, DATES ]

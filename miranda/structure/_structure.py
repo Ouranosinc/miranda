@@ -332,7 +332,7 @@ def build_path_from_schema(
     output_folder : str or os.PathLike
         Parent folder on which to extend the filetree structure.
     schema : str or os.PathLike, optional
-        Path to YAML schematic of database structure. If None, will use Ouranos schema.
+        Path to YAML schematic of database structure. If None, will use a base schema.
     top_folder : str
         Top-level of supplied schema, used for validation purposes. Default: "datasets".
     validate: bool
@@ -366,7 +366,7 @@ def build_path_from_schema(
         )
 
     if schema is None:
-        schema = Path(__file__).parent.joinpath("data").joinpath("ouranos_schema.yml")
+        schema = Path(__file__).parent.joinpath("data").joinpath("base_schema.yml")
 
     tree, filename = parse_schema(facets, schema, top_folder)
     return Path(output_folder).joinpath("/".join(tree)) / filename
