@@ -366,7 +366,7 @@ def build_path_from_schema(
         )
 
     if schema is None:
-        schema = Path(__file__).parent.joinpath("data").joinpath("base_schema.yml")
+        schema = Path(__file__).parent.joinpath("data").joinpath("base_schema.yaml")
 
     tree, filename = parse_schema(facets, schema, top_folder)
     return Path(output_folder).joinpath("/".join(tree)) / filename
