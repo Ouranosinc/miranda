@@ -204,23 +204,26 @@ def _parse_option(option: dict, facets: dict):
 
 def _parse_level(schema: Union[dict, str], facets: dict):
     if isinstance(schema, str):
+        if schema == "DATES":
+            return _parse_dates(facets)
+
         # A single facet:
         if isna(facets[schema]):
-            raise ValueError(f"Schema requires a value for facet {schema}.")
+            return None
         return facets[schema]
+    if isinstance(schema, list):
+        parts = []
+        for element in schema:
+            part = _parse_level(element, facets)
+            if not isna(part):
+                parts.append(part)
+        return "_".join(parts)
     if "option" in schema:
         answer = _parse_option(schema, facets)
         if isinstance(answer, bool) and not answer:
             # Test failed with no "else" value, we skip this level.
             return None
         return _parse_level(answer, facets)
-    if "concat" in schema:
-        parts = []
-        for element in schema["concat"]:
-            part = _parse_level(element, facets)
-            if not isna(part):
-                parts.append(part)
-        return "_".join(parts)
     if "text" in schema:
         return schema["text"]
     raise ValueError(f"Invalid schema : {schema}")
@@ -256,9 +259,9 @@ def _parse_dates(facets):
 def _parse_filename(schema: list, facets: dict) -> str:
     return "_".join(
         [
-            facets[element] if element != "dates" else _parse_dates(facets)
+            facets[element] if element != "DATES" else _parse_dates(facets)
             for element in schema
-            if element == "dates" or not isna(facets[element])
+            if element == "DATES" or not isna(facets[element])
         ]
     )
 

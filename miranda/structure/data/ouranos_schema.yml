@@ -1,7 +1,5 @@
 # This file defines the structure of the data on Ouranos' servers
 #
-# It tries to be define all cases, instead of being flexible, in order to detect potential errors in the facets.
-#
 # The path-builder function parses this tree from top to bottom, always using the first match.
 # Each child of the "datasets" top element may define the following fields:
 #
@@ -11,17 +9,15 @@
 #     structure: # The path structure, each element is mapped to a folder level
 #       # There are four ways to specify a folder name to use:
 #       # Each way can be used recursively in place for < facet >.
-#       - < facet >
+#       - < facet >           # If the facet is missing, this level is skipped, resulting in a tree of a different depth.
 #       - option: < facet >   # A test on the given facet's value.
 #         value: < value >    # Optional. If not given, the test is simple "facet is not empty"
 #         is_true: < facet >  # Optional. Facet to use if the test passes. If not given, this level is skipped resulting in a tree of a different depth.
 #         else: < facet > # Optional. Facet to use if the test fails. Same consequence as above if not given.
-#       - concat:    # The folder name consists in more than one facet, concatenated with a "_" by default.
-#         - < facet >
-#         - < facet >
+#       - [< facet >, < facet >, ...]:  # The folder name consists in more than one facet, concatenated with a "_" by default.
 #       - text: < value >     # A fixed string
 #     filename: # The file name schema, a list of facet names. If a facet is empty, it will be skipped. Elements will be separated by "_".
-#               # The special "dates" facet will be replaced by the most concise way found to define the temporal range covered by the file.
+#               # The special "DATES" facet will be replaced by the most concise way found to define the temporal range covered by the file.
 ---
 ### Raw data
 #
@@ -30,49 +26,18 @@
 datasets:
   - with:
       - option: type
-        value: station-obs
-    structure:
-      - type
-      - domain
-      - institution
-      - concat:
-        - source
-        - option: version
-          is_true: version
-      - option: member
-        is_true: member
-      - frequency
-      - variable
-    filename: [ variable, frequency, domain, institution, source, version, member, dates ]
-  - with:
-      - option: type
-        value: forecast
-    structure:
-      - type
-      - domain
-      - institution
-      - source
-      - frequency
-      - variable
-    filename: [ variable, frequency, domain, institution, source, dates ]
-  - with:
-      - option: type
-        value: reconstruction
+        value: [station-obs, reconstruction, forecast]
       - option: processing_level
         value: raw
     structure:
       - type
       - domain
       - institution
-      - concat:
-        - source
-        - option: version
-          is_true: version
-      - option: member
-        is_true: member
+      - [source, version]
+      - member
       - frequency
       - variable
-    filename: [ variable, frequency, domain, institution, source, version, member, dates ]
+    filename: [ variable, frequency, domain, institution, source, version, member, DATES ]
   - with:
       - option: type
         value: simulation
@@ -82,23 +47,18 @@ datasets:
       - type
       - processing_level
       - option: bias_adjust_project
-        is_true:
-          concat:
-            - bias_adjust_project
-            - option: version
-              is_true: version
+        is_true: [bias_adjust_project, version]
       - mip_era
       - activity
       - domain
       - institution
       - source
-      - option: driving_model
-        is_true: driving_model
+      - driving_model
       - experiment
       - member
       - frequency
       - variable
-    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, domain, institution, source, driving_model, experiment, member, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, domain, institution, source, driving_model, experiment, member, DATES ]
 ### Derived data
 #
 # This structure is meant for the output of scenario projects.
@@ -114,40 +74,31 @@ derived:
     structure:
       - type
       - option: bias_adjust_project
-        is_true:
-          concat:
-            - bias_adjust_project
-            - option: version
-              is_true: version
+        is_true: [bias_adjust_project, version]
         else:
           text: raw
       - mip_era
       - activity
       - institution
       - source
-      - option: driving_model
-        is_true: driving_model
+      - driving_model
       - experiment
       - member
       - domain
       - processing_level
       - frequency
       - variable
-    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, institution, source, driving_model, experiment, member, domain, processing_level, dates ]
+    filename: [ variable, frequency, bias_adjust_project, version, mip_era, activity, institution, source, driving_model, experiment, member, domain, processing_level, DATES ]
   - with:
       - option: type
         value: reconstruction
     structure:
       - type
       - institution
-      - concat:
-        - source
-        - option: version
-          is_true: version
-      - option: member
-        is_true: member
+      - [source, version]
+      - member
       - domain
       - processing_level
       - frequency
       - variable
-    filename: [ variable, frequency, institution, source, version, member, domain, processing_level, dates ]
+    filename: [ variable, frequency, institution, source, version, member, domain, processing_level, DATES ]
