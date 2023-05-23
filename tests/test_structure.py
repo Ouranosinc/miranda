@@ -17,7 +17,7 @@ def get_testing_paths():
 @pytest.mark.parametrize("facets,expected", get_testing_paths())
 def test_build_path_from_schema(facets, expected):
     root = Path("/")
-    out = build_path_from_schema(facets, root, top_folder="datasets")
+    out = build_path_from_schema(facets, root, category="raw")
 
     assert out is not None, "Path not build, invalid facets"
     assert str(out.relative_to(root)) == expected

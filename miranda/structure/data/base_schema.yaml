@@ -23,7 +23,7 @@
 #
 # This structure is meant for raw-like data, usually hourly or daily, used as input for scenario projects.
 # It includes bias-adjusted datasets.
-datasets:
+raw:
   - with:
       - option: type
         value: [station-obs, reconstruction, forecast]

@@ -276,7 +276,7 @@ def _parse_structure(schema: list, facets: dict) -> list:
 
 
 def parse_schema(
-    facets: dict, schema: Union[str, os.PathLike, dict], top_folder: str = "datasets"
+    facets: dict, schema: Union[str, os.PathLike, dict], category: str = "raw"
 ) -> Tuple[List[str], str]:
     """Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
 
@@ -284,7 +284,7 @@ def parse_schema(
     ----------
     facets : dict
     schema : str or os.PathLike or dict
-    top_folder : str
+    category : str
 
     Returns
     -------
@@ -295,9 +295,9 @@ def parse_schema(
             schema = yaml.safe_load(f.read())
 
     try:
-        parent = schema[top_folder]
+        parent = schema[category]
     except KeyError:
-        logging.error("Schema is not a valid facet-tree reference.")
+        logging.error(f"Category {category} is not defined in the schema.")
         raise
 
     for i, structure in enumerate(parent):
@@ -320,7 +320,7 @@ def build_path_from_schema(
     facets: dict,
     output_folder: Union[str, os.PathLike],
     schema: Optional[Union[str, os.PathLike, dict]] = None,
-    top_folder: str = "datasets",
+    category: str = "raw",
     validate: bool = True,
 ) -> Optional[Path]:
     """Build a filepath based on a valid data schema.
@@ -333,8 +333,8 @@ def build_path_from_schema(
         Parent folder on which to extend the filetree structure.
     schema : str or os.PathLike, optional
         Path to YAML schematic of database structure. If None, will use a base schema.
-    top_folder : str
-        Top-level of supplied schema, used for validation purposes. Default: "datasets".
+    cateogry : {raw, derived}
+        Category of the dataset, used for validation purposes and to find which schema to use. Default: "raw".
     validate: bool
         Run facets-validation checks over given file. Default: True.
 
@@ -368,7 +368,7 @@ def build_path_from_schema(
     if schema is None:
         schema = Path(__file__).parent.joinpath("data").joinpath("base_schema.yaml")
 
-    tree, filename = parse_schema(facets, schema, top_folder)
+    tree, filename = parse_schema(facets, schema, category)
     return Path(output_folder).joinpath("/".join(tree)) / filename
 
 
