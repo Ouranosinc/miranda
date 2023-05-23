@@ -44,6 +44,20 @@
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
+    "tasmax": {
+      "_corrected_units": "degC",
+      "cell_methods": "area: mean time: max",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tasmin": {
+      "_corrected_units": "degC",
+      "cell_methods": "area: mean time: min",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
     "tmean": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
