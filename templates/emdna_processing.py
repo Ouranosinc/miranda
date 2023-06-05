@@ -11,9 +11,7 @@ def preprocess_dna(ds):
     ds = ds.rename_dims({"x": "lon", "y": "lat"})
     ds = ds.set_index(lat="latitude", lon="longitude", time="date")
     ds["time"] = [datetime.strptime(str(d), "%Y%m%d") for d in ds["time"].values]
-    ds["tasmax"] = ds["tmean"] + (
-        0.5 * ds["trange"]
-    )  # TODO: do this more miranda-like?
+    ds["tasmax"] = ds["tmean"] + (0.5 * ds["trange"])
     ds["tasmin"] = ds["tmean"] - (0.5 * ds["trange"])
     return ds
 
