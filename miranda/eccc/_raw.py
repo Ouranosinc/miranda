@@ -688,7 +688,7 @@ def _export_agg_nc(args):
     encoding = {var: comp for var in dataset.data_vars}
     dataset.load().to_netcdf(
         path,
-        engine="netcdf4",
+        engine="h5netcdf",
         format="NETCDF4_CLASSIC",
         encoding=encoding,
     )
@@ -848,8 +848,8 @@ def _combine_years(
         with ProgressBar():
             ds.to_netcdf(
                 outfile,
-                engine="netcdf4",
-                format="NETCDF4",
+                engine="h5netcdf",
+                format="NETCDF4_CLASSIC",
                 encoding=encoding,
             )
     else:

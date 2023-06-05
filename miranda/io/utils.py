@@ -232,7 +232,7 @@ def get_global_attrs(
 
     if isinstance(file, Path):
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            with nc.Dataset(file, mode="r") as ds:
+            with nc.File(file, mode="r") as ds:
                 data = dict()
                 for k in ds.ncattrs():
                     data[k] = getattr(ds, k)

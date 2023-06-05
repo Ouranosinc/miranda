@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Union
 
 import schema
 import xarray as xr
-from clisops.core import subset_bbox
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar as xcal  # noqa
 
@@ -101,8 +100,18 @@ def cordex_aws_download(
     domain: Optional[str] = None,
 ):
     def _subset_preprocess(d: xr.Dataset, dom: List[float]) -> xr.Dataset:
-        n, w, s, e = subsetting_domains(dom)
-        return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
+        try:
+            from clisops.core import subset_bbox
+
+            n, w, s, e = subsetting_domains(dom)
+            return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
+        except ModuleNotFoundError:
+            log_msg = (
+                "This function requires the `clisops` library which is not installed. "
+                "Domain subsetting step will be skipped."
+            )
+            warnings.warn(log_msg)
+            return d
 
     schema.Schema(_allowed_args).validate(search)
 
@@ -206,4 +215,6 @@ def cordex_aws_download(
 
                 logging.info(f"Final count of files: {len(datasets)}")
 
-                xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")
+                xr.save_mfdataset(
+                    datasets, paths, engine="h5netcdf", format="NETCDF4_CLASSIC"
+                )

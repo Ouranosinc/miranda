@@ -70,7 +70,6 @@ nbsphinx_prolog = r"""
 # To avoid having to install these libraries on ReadTheDocs.
 autodoc_mock_imports = [
     "cdsapi",
-    "distributed",
     "ecmwfapi",
     "fabric",
     "intake",

@@ -8,4 +8,3 @@ numcodecs
 paramiko>=2.6.0
 s3fs
 scp
-# xesmf - not presently installable from PyPI and requires esmpy

@@ -21,8 +21,8 @@ clean-build:
 	rm -fr *.egg-info
 
 clean-docs:
-	rm -f docs/miranda*.rst
-	rm -f docs/modules.rst
+	rm -f docs/apidoc/miranda*.rst
+	rm -f docs/apidoc/modules.rst
 	$(MAKE) -C docs clean
 
 clean-pyc:
@@ -35,8 +35,8 @@ compliant:
 	black miranda tests
 
 lint:
-	flake8 miranda tests
 	black  --check miranda tests
+	flake8 miranda tests
 
 test:
 	pytest tests
@@ -50,8 +50,10 @@ coverage:
 	coverage html
 	open htmlcov/index.html
 
-docs: clean-docs
-	sphinx-apidoc -o docs/ --module-first miranda
+autodoc: clean-docs
+	sphinx-apidoc -o docs/apidoc --private --module-first miranda
+
+docs: autodoc
 	$(MAKE) -C docs linkcheck html
 ifndef READTHEDOCS
 	xdg-open docs/_build/html/index.html
