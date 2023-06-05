@@ -152,7 +152,9 @@ def reanalysis_processing(
                         # Subsetting operations
                         if domain.lower() in ["global", "not-specified"]:
                             if start or end:
-                                ds = xr.open_mfdataset(multi_files, **xr_kwargs).sel(time=slice(start, end))
+                                ds = xr.open_mfdataset(multi_files, **xr_kwargs).sel(
+                                    time=slice(start, end)
+                                )
                             else:
                                 ds = xr.open_mfdataset(multi_files, **xr_kwargs)
                         else:
