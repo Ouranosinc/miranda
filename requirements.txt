@@ -1,5 +1,6 @@
 cftime
 dask
+distributed
 h5netcdf
 netCDF4
 numpy
