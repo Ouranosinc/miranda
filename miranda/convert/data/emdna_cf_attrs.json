@@ -39,6 +39,9 @@
     "prcp": {
       "_cf_variable_name": "pr",
       "_corrected_units": "mm d-1",
+      "_transformation": {
+        "EMDNA": "amount2rate"
+      },
       "cell_methods": "area: mean time: mean",
       "long_name": "Precipitation",
       "standard_name": "precipitation_flux",

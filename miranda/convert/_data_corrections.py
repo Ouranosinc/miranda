@@ -328,6 +328,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                     d_out[vv] = out
                 converted.append(vv)
             elif trans == "amount2rate":
+                # NOTE: This treatment is no longer needed in xclim v0.43.0+ but is kept for backwards compatibility
                 # frequency-based totals to time-based flux
                 logging.info(
                     f"Performing amount-to-rate units conversion for variable `{vv}`."
