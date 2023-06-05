@@ -1,7 +1,6 @@
 import json
 import logging.config
 import os
-import warnings
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
@@ -128,12 +127,11 @@ def name_output_file(
         else:
             facets["time"] = facets["time_start"]
 
-    # get the string for the name
+    str_name = "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}"
+    # Get the string for the name
     if facets["type"] in name_configurations.keys():
         if facets["project"] in name_configurations[facets["type"]].keys():
             str_name = name_configurations[facets["type"]][facets["project"]]
-    else:
-        str_name = "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}"
 
     missing = []
     for k, v in facets.items():
