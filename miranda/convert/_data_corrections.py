@@ -2,6 +2,7 @@ import datetime
 import json
 import logging.config
 import os
+import warnings
 from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
@@ -9,7 +10,6 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
 import numpy as np
 import xarray as xr
 import xclim.core.units
-from clisops.core.subset import subset_bbox
 from xarray.coding import times
 from xclim.core import units
 from xclim.core.calendar import parse_offset
@@ -171,19 +171,29 @@ def threshold_mask(
     else:
         mask_variable = mask.name
 
-    log_msg = f"Masking dataset with {mask_variable}."
-    if mask_cutoff:
-        log_msg = f"{log_msg.strip('.')} at `{mask_cutoff}` cutoff value."
-    logging.info(log_msg)
+    try:
+        from clisops.core import subset_bbox
 
-    lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
-    lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
+        log_msg = f"Masking dataset with {mask_variable}."
+        if mask_cutoff:
+            log_msg = f"{log_msg.strip('.')} at `{mask_cutoff}` cutoff value."
+        logging.info(log_msg)
 
-    mask_subset = subset_bbox(
-        mask,
-        lon_bnds=lon_bounds,
-        lat_bnds=lat_bounds,
-    ).load()
+        lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
+        lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
+
+        mask_subset = subset_bbox(
+            mask,
+            lon_bnds=lon_bounds,
+            lat_bnds=lat_bounds,
+        ).load()
+    except ModuleNotFoundError:
+        log_msg = (
+            "This function requires the `clisops` library which is not installed. "
+            "subsetting step will be skipped."
+        )
+        warnings.warn(log_msg)
+        mask_subset = mask.load()
 
     if mask_subset.dtype == bool:
         if mask_cutoff:

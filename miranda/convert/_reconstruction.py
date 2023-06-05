@@ -1,11 +1,11 @@
 import logging.config
 import os
+import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 import dask.config
 import xarray as xr
-from clisops.core import subset
 from dask import compute
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar
@@ -152,11 +152,22 @@ def reanalysis_processing(
                         # Subsetting operations
                         if domain.lower() in ["global", "not-specified"]:
                             if start or end:
-                                ds = subset.subset_time(
-                                    xr.open_mfdataset(multi_files, **xr_kwargs),
-                                    start_date=start,
-                                    end_date=end,
-                                )
+                                try:
+                                    from clisops.core import subset_time
+
+                                    ds = subset_time(
+                                        xr.open_mfdataset(multi_files, **xr_kwargs),
+                                        start_date=start,
+                                        end_date=end,
+                                    )
+                                except ModuleNotFoundError:
+                                    log_msg = (
+                                        "This function requires the `clisops` library which is not installed. "
+                                        "Time subsetting step will be skipped."
+                                    )
+                                    warnings.warn(log_msg)
+                                    ds = xr.open_mfdataset(multi_files, **xr_kwargs)
+
                             else:
                                 ds = xr.open_mfdataset(multi_files, **xr_kwargs)
                         else:
