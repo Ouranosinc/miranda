@@ -1,4 +1,3 @@
-autopep8
 black
 bump2version
 coverage
@@ -9,7 +8,6 @@ nbsphinx
 pandoc
 pre-commit
 pytest
-pyupgrade
 sphinx
 sphinx_codeautolink
 sphinx_copybutton

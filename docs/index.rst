@@ -17,7 +17,7 @@ Contents:
    :maxdepth: 2
    :caption: All Modules
 
-   modules
+   apidoc/modules
 
 .. only:: html
 

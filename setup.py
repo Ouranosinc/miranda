@@ -19,23 +19,28 @@ if sys.argv[-1] == "publish":
     os.system("python setup.py sdist bdist_wheel upload")
     sys.exit()
 
-requirements = list()
+requirements = []
 with open("requirements.txt") as req:
     for dependency in req.readlines():
         if dependency == "pint" and sys.version_info[0:2] == (3, 8):
             dependency = "pint<0.20"
         requirements.append(dependency)
 
-remote_requirements = list()
+remote_requirements = []
 with open("requirements_remote.txt") as dev:
     for dependency in dev.readlines():
         remote_requirements.append(dependency)
 
-dev_requirements = list()
+gis_requirements = []
+with open("requirements_gis.txt") as dev:
+    for dependency in dev.readlines():
+        remote_requirements.append(dependency)
+
+dev_requirements = []
 with open("requirements_dev.txt") as dev:
     for dependency in dev.readlines():
         dev_requirements.append(dependency)
-dev_requirements.extend(remote_requirements)
+dev_requirements.extend(gis_requirements)
 
 docs_requirements = [
     "furo",
@@ -77,9 +82,10 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     extras_require={
-        "docs": docs_requirements,
-        "remote": remote_requirements,
         "dev": dev_requirements,
+        "docs": docs_requirements,
+        "gis": gis_requirements,
+        "remote": remote_requirements,
     },
     license=LICENSE,
     zip_safe=False,
