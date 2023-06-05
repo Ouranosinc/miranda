@@ -6,7 +6,7 @@ import sys
 from setuptools import find_packages, setup
 
 NAME = "miranda"
-VERSION = "0.4.5-beta"
+VERSION = "0.4.6-beta"
 DESCRIPTION = "Python utilities for climate data collection and management"
 KEYWORDS = "climate meteorology archiving collection NetCDF"
 URL = "https://github.com/Ouranosinc/miranda"
