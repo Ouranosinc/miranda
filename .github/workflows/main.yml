@@ -32,9 +32,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
-        run: pip install tox~=4.0
+        run: pip install tox
       - name: Run lint and docs testing suite
         run: tox -e ${{ matrix.tox-env }}
+        env:
+          READTHEDOCS: 1
 
   test:
     needs: lint_and_docs
@@ -51,20 +53,21 @@ jobs:
             python-version: "3.9"
           - tox-env: py310
             python-version: "3.10"
+          - tox-env: py311
+            python-version: "3.11"
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      if: "!endsWith(matrix.python-version, '-dev')"
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install GDAL
-      if: "endsWith(matrix.python-version, '-dev')"
+      if: "endsWith(matrix.tox-env, '-full')"
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
     - name: Install tox
-      run: pip install tox~=4.0
+      run: pip install tox
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
       env:
