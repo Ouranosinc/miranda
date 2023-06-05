@@ -35,6 +35,8 @@ jobs:
         run: pip install tox~=4.0
       - name: Run lint and docs testing suite
         run: tox -e ${{ matrix.tox-env }}
+        with:
+          READTHEDOCS: 1
 
   test:
     needs: lint_and_docs
