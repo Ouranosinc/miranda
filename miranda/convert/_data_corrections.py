@@ -63,6 +63,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "espo-g6-r2_attrs.json"))
     elif project in ["ESPO-G6-E5L"]:
         metadata_definition = json.load(open(data_folder / "espo-g6-e5l_attrs.json"))
+    elif project in ["EMDNA"]:
+        metadata_definition = json.load(open(data_folder / "emdna_cf_attrs.json"))
     else:
         raise NotImplementedError()
 
@@ -336,6 +338,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                     d_out[vv] = out
                 converted.append(vv)
             elif trans == "amount2rate":
+                # NOTE: This treatment is no longer needed in xclim v0.43.0+ but is kept for backwards compatibility
                 # frequency-based totals to time-based flux
                 logging.info(
                     f"Performing amount-to-rate units conversion for variable `{vv}`."
@@ -477,7 +480,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit)
+                d[vv] = units.convert_units_to(d[vv], unit, context="hydro")
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))

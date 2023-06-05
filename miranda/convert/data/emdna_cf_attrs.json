@@ -1,0 +1,80 @@
+{
+  "Header": {
+    "_miranda_version": true,
+    "domain": "NAM",
+    "frequency": "day",
+    "funding": "Global Water Futures (GWF)",
+    "institution": "USask",
+    "license": "These data are available under a Creative Commons Attribution 4.0 International license (CC BY 4.0) <https://creativecommons.org/licenses/by/4.0/>",
+    "notes": "Probabilistic methods are very useful to estimate the spatial variability in meteorological conditions (e.g., spatial patterns of precipitation and temperature across large domains). The ensemble can be used to evaluate the impact of the uncertainties in a myriad of applications.\n\nThe dataset EMDNA has 100 members with daily precipitation amount, mean daily temperature (Tmean), and daily temperature range (Trange) at the 0.1° spatial resolution from 1979 to 2018, derived from a fusion of station observations and reanalysis model outputs. Station observations are from a serially complete dataset for North America (SCDNA; Tang et al., 2020a). Reanalysis products include ERA5, JRA-55, and MERRA-2. EMDNA is expected to be useful for hydrological and meteorological applications in North America.\n\n Since some users prefer deterministic datasets, we also provide a deterministic dataset generated during the production of EMDNA ensemble forcings. The deterministic dataset merges station observations and reanalysis outputs using the Optimal Interpolation (OI) method, which is provided in the folder “OI_estimate”. The OI-merged dataset, which can be regarded as part of EMDNA, has precipitation, probability of precipitation, Tmean, and Trange. Its quality is better than either station interpolated estimates or reanalysis products.",
+    "recommended_citation": "Guoqiang Tang, Martyn P. Clark, Simon Michael Papalexiou, Andrew J. Newman, Andrew Wood, Dominique Brunet, and Paul H. Whitfield. 2020. EMDNA: Ensemble Meteorological Dataset for North America. Federated Research Data Repository. https://doi.org/10.20383/101.0275",
+    "references": "Guoqiang Tang, Martyn P. Clark, Andrew J. Newman, Andrew Wood, Simon Michael Papalexiou, Vincent Vionnet, and Paul H. Whitfield. SCDNA: a serially complete precipitation and temperature dataset for North America from 1979 to 2018. Earth System Science Data. 2020a. https://doi.org/10.5194/essd-12-2381-2020 AND Guoqiang Tang, Martyn P. Clark, Simon Michael Papalexiou, Andrew J. Newman, Andrew Wood, Dominique Brunet, and Paul H. Whitfield. EMDNA: Ensemble Meteorological Dataset for North America. Earth System Science Data. 2020b (submitted).",
+    "source": "EMDNA",
+    "table_date": "2023-05-11",
+    "table_id": "EMDNA",
+    "title": "EMDNA: Ensemble Meteorological Dataset for North America",
+    "type": "reconstruction",
+    "version": "1.0.0"
+  },
+  "dimensions": {
+    "lat": {
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "lon": {
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "axis": "T",
+      "long_name": "Time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "prcp": {
+      "_cf_variable_name": "pr",
+      "_corrected_units": "mm d-1",
+      "_transformation": {
+        "EMDNA": "amount2rate"
+      },
+      "cell_methods": "area: mean time: mean",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "tasmax": {
+      "_corrected_units": "degC",
+      "cell_methods": "area: mean time: max",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tasmin": {
+      "_corrected_units": "degC",
+      "cell_methods": "area: mean time: min",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tmean": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC",
+      "cell_methods": "area: mean time: mean",
+      "long_name": "Daily Mean Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "trange": {
+      "_cf_variable_name": "dtr",
+      "_corrected_units": "K",
+      "cell_methods": "time: range within days time: mean over days",
+      "long_name": "Daily temperature range",
+      "standard_name": "air_temperature_range"
+    }
+  }
+}
