@@ -215,4 +215,6 @@ def cordex_aws_download(
 
                 logging.info(f"Final count of files: {len(datasets)}")
 
-                xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")
+                xr.save_mfdataset(
+                    datasets, paths, engine="h5netcdf", format="NETCDF4_CLASSIC"
+                )
