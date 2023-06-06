@@ -131,22 +131,23 @@ def name_output_file(
         else:
             facets["time"] = facets["time_start"]
 
+    str_name = "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}"
+    # Get the string for the name
+    if facets["type"] in name_configurations.keys():
+        if facets["project"] in name_configurations[facets["type"]].keys():
+            str_name = name_configurations[facets["type"]][facets["project"]]
+
     missing = []
     for k, v in facets.items():
-        if v is None:
+        if (
+            v is None and k in str_name
+        ):  # only missing if the facets is needed in the name
             missing.append(k)
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
 
-    if facets["type"] in name_configurations.keys():
-        if facets["project"] in name_configurations[facets["type"]].keys():
-            return name_configurations[facets["type"]][facets["project"]].format(
-                **facets
-            )
-    # This is the default string
-    return "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}".format(
-        **facets
-    )
+    # fill in string with facets
+    return str_name.format(**facets)
 
 
 def delayed_write(
@@ -236,7 +237,7 @@ def get_global_attrs(
 
     if isinstance(file, Path):
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            with nc.File(file, mode="r") as ds:
+            with nc.Dataset(file, mode="r") as ds:
                 data = dict()
                 for k in ds.ncattrs():
                     data[k] = getattr(ds, k)

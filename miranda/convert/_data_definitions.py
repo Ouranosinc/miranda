@@ -25,6 +25,7 @@ __all__ = [
     "gather_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
+    "gather_emdna",
     "nasa_ag_variables",
     "nrcan_variables",
     "project_institutes",
@@ -138,9 +139,8 @@ def gather_ecmwf(
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
-    # ERA5-Single-Levels source data
     name = (
         f"{project}"
         f"{'-monthly-means' if monthly_means else ''}"
@@ -160,7 +160,7 @@ def gather_agmerra(path: str | os.PathLike) -> dict[str, list[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "merra", nasa_ag_variables, source=path, glob_pattern="AgMERRA_*_{variable}.nc4"
@@ -176,7 +176,7 @@ def gather_agcfsr(path: str | os.PathLike) -> dict[str, list[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "cfsr", nasa_ag_variables, source=path, glob_pattern="AgCFSR_*_{variable}.nc4"
@@ -208,7 +208,7 @@ def gather_wfdei_gem_capa(path: str | os.PathLike) -> dict[str, list[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "wfdei-gem-capa",
@@ -227,7 +227,7 @@ def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "sc-earth",
@@ -282,7 +282,7 @@ def gather_raw_rdrs_by_years(
 
     Returns
     -------
-    dict(str, dict(str, list[Path])) or None
+    dict[str, dict[str, list[pathlib.Path]]
     """
     # Time stamps starts at noon and flow into subsequent months
     # Need full year plus previous december in order to easily produce complete hourly frequency monthly files
@@ -334,7 +334,7 @@ def gather_nex(
 
     Returns
     -------
-    dict]str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     source = Path(path)
     datasets = source.glob("*/*/*/*/*/*/*/*/*/")
@@ -346,3 +346,33 @@ def gather_nex(
         in_files.extend(list(sorted(dataset.glob("*.nc"))))
         out_dict[str(dataset)] = in_files
     return out_dict
+
+
+def gather_emdna(
+    path: str | os.PathLike,
+) -> dict[str, list[Path]]:
+    """Gather raw EMDNA files for preprocessing.
+
+    Put all files with the same member together.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+
+    Returns
+    -------
+    dict[str, list[pathlib.Path]]
+    """
+    source = Path(path)
+    member_dict = {}
+    # 100 members
+    members = [f"{i:03d}" for i in range(1, 101)]
+    for member in members:
+        member_dict[member] = list(
+            sorted(source.glob(f"EMDNA_estimate/*/EMDNA_*.{member}.nc4"))
+        )
+
+    # OI
+    member_dict["OI"] = list(sorted(source.glob("OI_estimate/*.nc4")))
+
+    return member_dict
