@@ -20,7 +20,17 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.4.5-beta"
 
 
-from . import scripting  # convert,
-from . import archive, convert, cv, decode, io, structure, units, utils, validators
+from . import (
+    archive,
+    convert,
+    cv,
+    decode,
+    io,
+    scripting,
+    structure,
+    units,
+    utils,
+    validators,
+)
 from .data import DataBase
 from .storage import FileMeta, StorageState
