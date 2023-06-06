@@ -1,4 +1,0 @@
-clisops
-geopandas
-regionmask
-xesmf  # not presently installable from PyPI and requires esmpy
