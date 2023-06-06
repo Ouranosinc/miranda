@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging.config
 from collections.abc import Mapping
 from datetime import datetime as dt
-from typing import Union
 
 from miranda.scripting import LOGGING_CONFIG
 

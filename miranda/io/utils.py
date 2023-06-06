@@ -7,7 +7,6 @@ import os
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
-from typing import Union
 
 import dask
 import netCDF4 as nc  # noqa
@@ -325,7 +324,7 @@ def creation_date(path_to_file: str | os.PathLike) -> float | date:
 
     Returns
     -------
-    Union[float, date]
+    float or date
     """
     if os.name == "nt":
         return Path(path_to_file).stat().st_ctime

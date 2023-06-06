@@ -14,7 +14,7 @@ from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from io import StringIO
 from pathlib import Path
-from typing import TextIO, Union
+from typing import TextIO
 
 from .scripting import LOGGING_CONFIG
 

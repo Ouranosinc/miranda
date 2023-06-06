@@ -10,7 +10,6 @@ from logging import config
 from os import PathLike
 from pathlib import Path
 from types import GeneratorType
-from typing import Union
 
 import netCDF4 as nc  # noqa
 import pandas as pd
@@ -296,7 +295,7 @@ class Decoder:
 
         Parameters
         ----------
-        file : Union[os.PathLike, str], optional
+        file : os.PathLike or str, optional
         data : dict, optional
         term : str
         field : {"timedelta", "frequency"}
@@ -459,7 +458,7 @@ class Decoder:
 
         Parameters
         ----------
-        file: Union[os.PathLike, str]
+        file: os.PathLike or str
         data: dict
 
         Returns
