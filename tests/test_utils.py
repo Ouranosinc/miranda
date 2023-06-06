@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from datetime import date
 from pathlib import Path
@@ -5,10 +7,7 @@ from pathlib import Path
 import pytest  # noqa
 
 import miranda.eccc._utils as eccc_utils  # noqa
-import miranda.io._input
-import miranda.io.utils
 import miranda.utils
-from miranda import utils
 
 
 class TestWorkingDirectory:
@@ -16,7 +15,7 @@ class TestWorkingDirectory:
         present_directory = Path.cwd()
         parent = present_directory.parent
 
-        with utils.working_directory(parent) as location:
+        with miranda.utils.working_directory(parent) as location:
             assert location != present_directory
             assert Path.cwd() == parent
         assert Path.cwd() == present_directory
