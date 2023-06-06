@@ -1,10 +1,13 @@
+"""Database Management module."""
+from __future__ import annotations
+
 import logging.config
 import os
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
-from .io._input import find_filepaths
+from .io import find_filepaths
 from .scripting import LOGGING_CONFIG
 from .units import GiB
 from .validators import url_validate
@@ -15,15 +18,15 @@ __all__ = ["DataBase"]
 
 
 class DataBase:
-    """ """
+    """Database management class."""
 
     def __init__(
         self,
         source,
         *,
-        destination: Optional[Union[Path, str]] = None,
-        common_path: Optional[Union[Path, str]] = None,
-        file_pattern: Union[str, List[str]] = "*.nc",
+        destination: Path | str | None = None,
+        common_path: Path | str | None = None,
+        file_pattern: str | list[str] = "*.nc",
         project_name: str = None,
         recursive: bool = True,
     ):
@@ -43,7 +46,7 @@ class DataBase:
 
         elif isinstance(file_pattern, str):
             self.file_suffixes = [file_pattern]
-        elif isinstance(file_pattern, (GeneratorType, List)):
+        elif isinstance(file_pattern, (GeneratorType, list)):
             self.file_suffixes = file_pattern
 
         if not recursive:
@@ -60,33 +63,40 @@ class DataBase:
         self.successful_transfers = int(0)
 
     def __repr__(self):
+        """Repl function."""
         return "<{}.{} object at {}>".format(
             self.__class__.__module__, self.__class__.__name__, hex(id(self))
         )
 
     def __str__(self):
+        """String function."""
         prepr = "[%s]" % ", ".join([f'{k}: "{v}"' for k, v in self.__dict__.items()])
         return f"{self.__class__.__name__}({prepr})"
 
     def __getitem__(self, key):
+        """Getter."""
         return self.__dict__[key]
 
     def __setitem__(self, key, value):
+        """Setter."""
         self.__dict__[key] = value
 
     def __delitem__(self, key):
+        """Delete item."""
         del self.__dict__[key]
 
     def __contains__(self, key):
+        """Contains function."""
         return key in self.__dict__
 
     def __len__(self):
+        """Length."""
         return len(self._files)
 
-    def _scrape(self, source) -> List[Path]:
+    def _scrape(self, source) -> list[Path]:
         if source is None:
             raise ValueError("No source provided.")
-        if isinstance(source, (GeneratorType, List, Tuple, str, Path)):
+        if isinstance(source, (GeneratorType, list, tuple, str, Path)):
             files = find_filepaths(source, **self._as_dict())
             common_path = os.path.commonpath(files)
             self._files = files
@@ -102,22 +112,32 @@ class DataBase:
         }
 
     def items(self):
+        """Show items."""
         return self._as_dict().items()
 
     def keys(self):
+        """Show keys."""
         return self._as_dict().keys()
 
     def values(self):
+        """Show values."""
         return self._as_dict().values()
 
     def group_by(
         self,
         *,
-        common_path: Union[Path, str] = None,
+        common_path: Path | str = None,
         subdirectories: bool = True,
         dates: bool = True,
         size: int = 10 * GiB,
     ):
+        """Grouping meta-function.
+
+        Notes
+        -----
+        Not yet implemented.
+
+        """
         # use_grouping = True
         #
         # if subdirectories:
@@ -129,7 +149,8 @@ class DataBase:
         #         file_groups["."].append(f)
         pass
 
-    def target(self, target: Union[Path, str]):
+    def target(self, target: Path | str):
+        """Target directory or server address."""
         self._destination = target
         self._is_server = self._url_validate(target=target)
 
@@ -138,7 +159,9 @@ class DataBase:
         return url_validate(target=target)
 
     def archive(self):
+        """Not yet implemented."""
         pass
 
     def transfer(self):
+        """Not yet implemented."""
         pass

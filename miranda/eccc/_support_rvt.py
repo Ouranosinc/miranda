@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import re
 import urllib
@@ -14,10 +16,23 @@ import pandas as pd
 # FIXME: This function is a WIP - requires work.
 def gather_eccc_stations(
     timestep: str,
-    start_date: Optional[Union[datetime.datetime, str]] = None,
-    end_date: Optional[Union[datetime.datetime, str]] = None,
-    climate_id: Optional[str] = None,
+    start_date: datetime.datetime | str | None = None,
+    end_date: datetime.datetime | str | None = None,
+    climate_id: str | None = None,
 ) -> pd.DataFrame:
+    """Collect ECCC station data from the Environment and Climate Change Canada API.
+
+    Parameters
+    ----------
+    timestep : str
+    start_date : datetime.datetime or str, optional
+    end_date : datetime.datetime or str, optional
+    climate_id : str, optional
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
     if timestep.lower() in ["hourly", "daily"]:
         base_url = f"https://api.weather.gc.ca/collections/climate-{timestep}/"
     else:

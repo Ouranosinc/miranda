@@ -1,6 +1,6 @@
+"""Remote Operations module."""
 from __future__ import annotations
 
-import logging
 import logging.config
 import os
 import tarfile
@@ -31,19 +31,16 @@ def create_remote_directory(
     directory: str | os.PathLike,
     transport: SSHClient | fabric.Connection | miranda.remote.Connection,
 ) -> None:
-    """
-    This calls a "mkdir -p" function to create a folder structure over SFTP/SSH and waits
-    for confirmation before continuing
+    """Call "mkdir -p" function to create a folder structure over SFTP/SSH and wait for confirmation before continuing.
 
     Parameters
     ----------
-    directory : Union[str, os.PathLike]
-    transport : Union[SSHClient, fabric.Connection, Connection]
+    directory :  str or os.PathLike
+    transport : SSHClient or fabric.Connection or miranda.remote.Connection
 
     Returns
     -------
     None
-
     """
     if isinstance(directory, str):
         directory = Path(directory)
@@ -72,18 +69,19 @@ def create_archive(
     transport: SCPClient
     | SFTPClient
     | fabric.Connection
-    | miranda.remote.Connection = None,
+    | miranda.remote.Connection
+    | None = None,
     delete: bool = True,
     compression: bool = False,
     recursive: bool = True,
 ) -> None:
-    """
+    """Create an archive from source files and transfer to another location (remote or local).
 
     Parameters
     ----------
-    source_files : List[Union[str, os.PathLike]]
-    destination : Union[str, os.PathLike]
-    transport : Union[SCPClient, SFTPClient, fabric.Connection, Connection]
+    source_files : list of str or os.PathLike
+    destination : str or os.PathLike
+    transport : SCPClient or SFTPClient or fabric.Connection or miranda.remote.Connection, optional
     delete : bool
     compression : bool
     recursive : bool
@@ -91,7 +89,6 @@ def create_archive(
     Returns
     -------
     None
-
     """
     if compression:
         write = "w:gz"
@@ -121,22 +118,21 @@ def transfer_file(
     transport: SCPClient
     | SFTPClient
     | fabric.Connection
-    | miranda.remote.Connection = None,
+    | miranda.remote.Connection
+    | None = None,
 ) -> bool:
-    """
+    """Transfer file from one location (remote or local) to another.
 
     Parameters
     ----------
-    source_file : Union[str, os.PathLike]
-    destination_file : Union[str, os.PathLike]
-    transport : Union[SCPClient, SFTPClient, fabric.Connection, Connection]
+    source_file : str or os.PathLike
+    destination_file : str or os.PathLike
+    transport : SCPClient or SFTPClient or fabric.Connection or miranda.remote.Connection, optional
 
     Returns
     -------
     bool
-
     """
-
     source_file = Path(source_file)
     destination_file = Path(destination_file)
 

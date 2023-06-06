@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import logging.config
 import multiprocessing
@@ -78,10 +80,10 @@ def generate_hash_file(
 
 def generate_hash_metadata(
     in_file: os.PathLike,
-    version: Optional[str] = None,
-    hash_file: Optional[os.PathLike] = None,
+    version: str | None = None,
+    hash_file: os.PathLike | None = None,
     verify: bool = False,
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     hashversion = dict()
 
     if version is None:
@@ -113,12 +115,26 @@ def generate_hash_metadata(
 
 
 def create_version_hash_files(
-    input_files: Optional[
-        Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType]
-    ] = None,
-    facet_dict: Optional[Dict] = None,
+    input_files: str
+    | os.PathLike
+    | list[str | os.PathLike]
+    | GeneratorType
+    | None = None,
+    facet_dict: dict | None = None,
     verify_hash: bool = False,
 ) -> None:
+    """Create version hashes based on files or a facets dictionary.
+
+    Parameters
+    ----------
+    input_files : str, os.PathLike, list of str or os.PathLike, or GeneratorType
+    facet_dict : dict, optional
+    verify_hash : bool
+
+    Returns
+    -------
+    None
+    """
     if not facet_dict and not input_files:
         raise ValueError("Facets dictionary or sequence of filepaths required.")
 
@@ -153,8 +169,8 @@ def create_version_hash_files(
 
 
 def _structure_datasets(
-    in_file: Union[str, os.PathLike],
-    out_path: Union[str, os.PathLike],
+    in_file: str | os.PathLike,
+    out_path: str | os.PathLike,
     method: str,
     dry_run: bool = False,
 ):
@@ -170,19 +186,14 @@ def _structure_datasets(
                 if in_file.is_dir() and method.lower() == "copy":
                     method_mod = "tree"
 
-                if sys.version_info < (3, 9):
-                    getattr(shutil, f"{method}{method_mod}")(
-                        str(in_file), str(output_file)
-                    )
-                else:
-                    getattr(shutil, f"{method}{method_mod}")(in_file, output_file)
+                getattr(shutil, f"{method}{method_mod}")(in_file, output_file)
             print(f"{meth} {in_file.name} to {output_file}.")
         except FileExistsError:
             print(f"{in_file.name} already exists at location. Continuing...")
 
 
 def parse_schema(
-    facets: dict, schema: Union[str, os.PathLike, dict], top_folder: str = "datasets"
+    facets: dict, schema: str | os.PathLike | dict, top_folder: str = "datasets"
 ) -> list:
     """Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
 
@@ -272,11 +283,11 @@ def parse_schema(
 
 def build_path_from_schema(
     facets: dict,
-    output_folder: Union[str, os.PathLike],
-    schema: Optional[Union[str, os.PathLike, dict]] = None,
+    output_folder: str | os.PathLike,
+    schema: str | os.PathLike | dict | None = None,
     top_folder: str = "datasets",
     validate: bool = True,
-) -> Optional[Path]:
+) -> Path | None:
     """Build a filepath based on a valid data schema.
 
     Parameters
@@ -296,7 +307,6 @@ def build_path_from_schema(
     -------
     Path or None
     """
-
     if schema is None:
         schema = Path(__file__).parent.joinpath("data").joinpath("ouranos_schema.yml")
 
@@ -331,10 +341,10 @@ def build_path_from_schema(
 
 
 def structure_datasets(
-    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
-    output_folder: Union[str, os.PathLike],
+    input_files: str | os.PathLike | list[str | os.PathLike] | GeneratorType,
+    output_folder: str | os.PathLike,
     *,
-    project: Optional[str] = None,
+    project: str | None = None,
     guess: bool = True,
     dry_run: bool = False,
     method: str = "copy",
@@ -342,7 +352,7 @@ def structure_datasets(
     set_version_hashes: bool = False,
     verify_hashes: bool = False,
     suffix: str = "nc",
-) -> Dict[Path, Path]:
+) -> dict[Path, Path]:
     """
 
     Parameters

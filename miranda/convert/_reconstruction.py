@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import logging.config
 import os
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Union
 
 import dask.config
 import xarray as xr
@@ -36,14 +39,14 @@ def _drop_those_time_bnds(dataset: xr.Dataset) -> xr.Dataset:
 
 
 def reanalysis_processing(
-    data: Dict[str, List[Union[str, os.PathLike]]],
-    output_folder: Union[str, os.PathLike],
+    data: dict[str, list[str | os.PathLike]],
+    output_folder: str | os.PathLike,
     variables: Sequence[str],
-    aggregate: Union[str, bool] = False,
-    domains: Union[str, List[str]] = "_DEFAULT",
-    start: Optional[str] = None,
-    end: Optional[str] = None,
-    target_chunks: Optional[dict] = None,
+    aggregate: str | bool = False,
+    domains: str | list[str] = "_DEFAULT",
+    start: str | None = None,
+    end: str | None = None,
+    target_chunks: dict | None = None,
     output_format: str = "netcdf",
     overwrite: bool = False,
     engine: str = "h5netcdf",

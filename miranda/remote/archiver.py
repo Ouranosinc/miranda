@@ -1,8 +1,10 @@
-import logging
+"""Archive Module."""
+from __future__ import annotations
+
 import logging.config
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 from miranda.archive import (
     group_by_deciphered_date,
@@ -23,9 +25,9 @@ __all__ = ["archive_database"]
 
 
 def archive_database(
-    source: Union[Path, str, List],
-    common_path: Union[Path, str],
-    destination: Union[Path, str],
+    source: Path | str | list,
+    common_path: Path | str,
+    destination: Path | str,
     file_suffixes: str = ".nc",
     server: str = None,
     username: str = None,

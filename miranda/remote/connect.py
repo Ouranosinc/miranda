@@ -1,3 +1,6 @@
+"""Remote Connection Operations module."""
+from __future__ import annotations
+
 import logging.config
 import warnings
 from getpass import getpass
@@ -23,10 +26,12 @@ __all__ = ["Connection"]
 
 
 class Connection:
+    """Connection contextualise class."""
+
     def __init__(
         self,
-        username: Union[str, Path] = None,
-        host: Union[str, Path] = None,
+        username: str | Path = None,
+        host: str | Path = None,
         protocol: str = "sftp",
         *args,
         **kwargs,
@@ -43,9 +48,16 @@ class Connection:
             raise ValueError('Protocol must be "sftp" or "scp".')
 
     def update(self, **kwargs):
+        """Update connection keyword arguments.
+
+        Warnings
+        --------
+        Credentials are not encrypted.
+        """
         self._kwargs = kwargs
 
     def __call__(self, **kwargs):
+        """Update keyword arguments on call."""
         self.update(**kwargs)
         return self
 
@@ -56,6 +68,7 @@ class Connection:
         return f"<{self.__class__.__module__}.{self.__class__.__name__} object at {hex(id(self))}>"
 
     def connect(self, **kwargs):
+        """Connect to a remote server with credential prompts."""
         try:
             keywords = (
                 dict(**kwargs)

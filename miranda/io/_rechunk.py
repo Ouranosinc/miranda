@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import json
 import logging.config
 import os
 import shutil
 import time
+from collections.abc import Hashable, Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import xarray as xr
 from xarray.core.utils import Frozen
@@ -29,8 +32,8 @@ chunk_configurations = json.load(open(_data_folder / "ouranos_chunk_config.json"
 
 
 def prepare_chunks_for_ds(
-    ds: xr.Dataset, chunks: Dict[str, Union[str, int]]
-) -> Dict[str, int]:
+    ds: xr.Dataset, chunks: dict[str, str | int]
+) -> dict[str, int]:
     """Prepare the chunks to be used to write Dataset.
 
     This includes translating the time chunks, making sure chunks are not too small, and removing -1.
@@ -89,9 +92,9 @@ def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
 def fetch_chunk_config(
     priority: str,
     freq: str,
-    dims: Union[Sequence[str], Dict[str, int], Frozen],
-    default_config: Dict = chunk_configurations,
-) -> Dict[str, int]:
+    dims: Sequence[str] | dict[str, int] | Frozen | tuple[Hashable],
+    default_config: dict = chunk_configurations,
+) -> dict[str, int]:
     """
 
     Parameters
@@ -123,13 +126,13 @@ def fetch_chunk_config(
 
 
 def rechunk_files(
-    input_folder: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
-    project: Optional[str] = None,
-    time_step: Optional[str] = None,
+    input_folder: str | os.PathLike,
+    output_folder: str | os.PathLike,
+    project: str | None = None,
+    time_step: str | None = None,
     chunking_priority: str = "auto",
-    target_chunks: Optional[Dict[str, int]] = None,
-    variables: Optional[Sequence[str]] = None,
+    target_chunks: dict[str, int] | None = None,
+    variables: Sequence[str] | None = None,
     suffix: str = "nc",
     output_format: str = "netcdf",
     overwrite: bool = False,

@@ -1,3 +1,6 @@
+"""Adjusted and Homogenized Canadian Clime Data module."""
+from __future__ import annotations
+
 import calendar
 import logging.config
 from pathlib import Path
@@ -13,19 +16,31 @@ from miranda.scripting import LOGGING_CONFIG
 from ._utils import cf_ahccd_metadata
 
 logging.config.dictConfig(LOGGING_CONFIG)
-
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
 
 
 def convert_ahccd(
-    data_source: Union[str, Path],
-    output_dir: Union[str, Path],
+    data_source: str | Path,
+    output_dir: str | Path,
     variable: str,
-    generation: Optional[int] = None,
-):
-    output_dir = Path(output_dir).expanduser().joinpath(variable)
+    generation: int | None = None,
+) -> None:
+    """Convert Adjusted and Homogenized Canadian Climate Dataset files.
+
+    Parameters
+    ----------
+    data_source: str or Path
+    output_dir: str or Path
+    variable: str
+    generation: int, optional
+
+    Returns
+    -------
+    None
+    """
+    output_dir = Path(output_dir).resolve().joinpath(variable)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
@@ -42,7 +57,7 @@ def convert_ahccd(
 
     else:
         raise NotImplementedError(f"Code '{code} for generation {gen}.")
-    metadata_source = Path(__file__).parent.joinpath("data").joinpath(meta)
+    metadata_source = Path(__file__).resolve().parent.joinpath("data").joinpath(meta)
 
     if "tas" in variable:
         metadata = pd.read_csv(metadata_source, header=2)
@@ -79,7 +94,7 @@ def convert_ahccd(
                 )
                 ds_out.attrs = global_attrs
 
-                ds_out.to_netcdf(outfile)
+                ds_out.to_netcdf(outfile, engine="h5netcdf")
             else:
                 logger.warning(
                     f"metadata info for station {ff.name} not found : skipping"
@@ -126,7 +141,9 @@ def convert_ahccd(
                 ds_ahccd[clean_name].attrs["long_name"] = orig_name
 
             outfile.parent.mkdir(parents=True, exist_ok=True)
-            ds_ahccd.to_netcdf(outfile, format="NETCDF4_CLASSIC", mode="w")
+            ds_ahccd.to_netcdf(
+                outfile, engine="h5netcdf", format="NETCDF4_CLASSIC", mode="w"
+            )
 
             del ds_ahccd
     for nc in outfile.parent.glob("*.nc"):
@@ -136,13 +153,28 @@ def convert_ahccd(
 
 
 def convert_ahccd_fwf_files(
-    ff,
-    metadata,
-    variable,
+    ff: Path | str,
+    metadata: pd.DataFrame,
+    variable: str,
     generation: int = None,
-    cols_specs: Optional[List[Tuple[int, int]]] = None,
-    attrs: Optional[dict] = None,
+    cols_specs: list[tuple[int, int]] | None = None,
+    attrs: dict | None = None,
 ) -> xr.Dataset:
+    """Convert AHCCD fixed-width files.
+
+    Parameters
+    ----------
+    ff: str or Path
+    metadata: pandas.DataFrame
+    variable: str
+    generation
+    cols_specs
+    attrs
+
+    Returns
+    -------
+    xarray.Dataset
+    """
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )

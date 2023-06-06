@@ -1,5 +1,8 @@
+"""Special Time Units-Handling submodule."""
+from __future__ import annotations
+
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,9 +16,9 @@ GiB = int(pow(2, 30))
 
 def get_time_frequency(
     d: xr.Dataset,
-    expected_period: Optional[str] = None,
+    expected_period: str | None = None,
     minimum_continuous_period: str = "1M",
-) -> Tuple[List[Union[int, str]], str]:
+) -> tuple[list[int | str], str]:
     """Try to understand the Dataset frequency.
 
     If it can't be inferred with :py:func:`xarray.infer_freq` it tries to:
@@ -29,6 +32,7 @@ def get_time_frequency(
     Parameters
     ----------
     d : xr.Dataset
+        An xarray.Dataset.
     expected_period : str
         An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A")
         The time period expected of the input dataset.

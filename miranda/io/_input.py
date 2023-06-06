@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging.config
 import os
 from pathlib import Path
@@ -19,20 +21,20 @@ __all__ = [
 
 # FIXME: How are these two functions different?
 def discover_data(
-    input_files: Union[str, os.PathLike, List[Union[str, os.PathLike]], GeneratorType],
+    input_files: str | os.PathLike | list[str | os.PathLike] | GeneratorType,
     suffix: str = "nc",
     recurse: bool = True,
-) -> Union[List[Path], GeneratorType]:
+) -> list[Path] | GeneratorType:
     """Discover data.
 
     Parameters
     ----------
-    input_files: str or Path or List[Union[str, Path]] or GeneratorType
-      Path or string to a file, a folder, or a generator of paths.
-    suffix: str
-      File-ending suffix to search for. Default: "nc".
-    recurse: bool
-      Whether to recurse through folders or not. Default: True.
+    input_files : str or Path or List[Union[str, Path]] or GeneratorType
+        Path or string to a file, a folder, or a generator of paths.
+    suffix : str
+        File-ending suffix to search for. Default: "nc".
+    recurse : bool
+        Whether to recurse through folders or not. Default: True.
 
     Returns
     -------
@@ -41,7 +43,6 @@ def discover_data(
     Warnings
     --------
     Recursion through ".zarr" files is explicitly disabled. Recursive globs and generators will not be expanded/sorted.
-
     """
     if isinstance(input_files, (Path, str)):
         input_files = Path(input_files)
@@ -68,24 +69,23 @@ def discover_data(
 
 
 def find_filepaths(
-    source: Union[Path, str, GeneratorType, List[Union[Path, str]]],
+    source: str | Path | GeneratorType | list[Path | str],
     recursive: bool = True,
-    file_suffixes: Optional[Union[str, List[str]]] = None,
+    file_suffixes: str | list[str] | None = None,
     **_,
-) -> List[Path]:
+) -> list[Path]:
     """Find all available filepaths at a given source.
 
     Parameters
     ----------
-    source : Union[Path, str, GeneratorType, List[Union[Path, str]]]
+    source : str, Path, GeneratorType, or list[str or Path]
     recursive : bool
-    file_suffixes: List[str]
+    file_suffixes: str or list of str, optional
 
     Returns
     -------
     List[Path]
     """
-
     if file_suffixes is None:
         file_suffixes = ["*", ".*"]
     elif isinstance(file_suffixes, str):

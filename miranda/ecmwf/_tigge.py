@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import logging.config
 import multiprocessing
@@ -15,15 +17,15 @@ __all__ = ["request_tigge"]
 
 
 def request_tigge(
-    variables: List[str],
-    providers: Optional[List[str]] = None,
+    variables: list[str],
+    providers: list[str] | None = None,
     *,
     forecast_type: str = "pf",
-    times: Optional[List[str]] = None,
-    dates: Optional[List[str]] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-    output_folder: Optional[os.PathLike] = None,
+    times: list[str] | None = None,
+    dates: list[str] | None = None,
+    date_start: str | None = None,
+    date_end: str | None = None,
+    output_folder: os.PathLike | None = None,
     processes: int = 4,
 ) -> None:
     """Request tigge data from ECMWF in grib format.
@@ -51,7 +53,7 @@ def request_tigge(
         time: str,
         fc_type: str,
         provider: str,
-        nums: Optional[int],
+        nums: int | None,
         date: str,
     ):
         """Launch formatted request."""

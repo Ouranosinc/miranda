@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from logging.config import dictConfig
@@ -9,8 +11,8 @@ from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 
 dictConfig(LOGGING_CONFIG)
-Nested_List = List[List[Path]]
-PathDict = Dict[str, List[Path]]
+Nested_List = list[list[Path]]
+PathDict = dict[str, list[Path]]
 
 
 GiB = int(pow(2, 30))
@@ -24,10 +26,10 @@ __all__ = [
 
 
 def group_by_length(
-    files: Union[GeneratorType, List[Union[str, Path]]],
+    files: GeneratorType | list[str | Path],
     size: int = 10,
     sort: bool = False,
-) -> List[List[Path]]:
+) -> list[list[Path]]:
     """Group files by an arbitrary number of file entries.
 
     Parameters
@@ -61,8 +63,8 @@ def group_by_length(
 
 
 def group_by_deciphered_date(
-    files: Union[GeneratorType, List[Union[str, Path]]]
-) -> Dict[str, List[Path]]:
+    files: GeneratorType | list[str | Path],
+) -> dict[str, list[Path]]:
     """Find a common date and groups files based on year and month.
 
     Parameters
@@ -113,8 +115,8 @@ def group_by_deciphered_date(
 
 
 def group_by_size(
-    files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10 * GiB
-) -> List[List[Path]]:
+    files: GeneratorType | list[str | Path], size: int = 10 * GiB
+) -> list[list[Path]]:
     """Group files up until a desired size and save it as a grouping within a list.
 
     Parameters
@@ -126,7 +128,6 @@ def group_by_size(
     -------
     List[List[Path]]
     """
-
     logging.info(
         f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
     )
@@ -152,10 +153,9 @@ def group_by_size(
 
 
 def group_by_subdirectories(
-    files: Union[GeneratorType, List[Union[str, Path]]], within: Union[str, Path] = None
-) -> Dict[str, List[Path]]:
-    """
-    This function will group files based on the parent folder that they are located within.
+    files: GeneratorType | list[str | Path], within: str | Path = None
+) -> dict[str, list[Path]]:
+    """Group files based on the parent folder that they are located within.
 
     Parameters
     ----------

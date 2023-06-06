@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging.config
 from typing import List, Union
 
@@ -19,10 +21,26 @@ _gis_import_error_message = (
 
 
 def subset_domain(
-    ds: Union[xr.Dataset, xr.DataArray], domain: str, **kwargs
-) -> Union[xr.Dataset, xr.DataArray]:
+    ds: xr.Dataset | xr.DataArray, domain: str, **kwargs
+) -> xr.Dataset | xr.DataArray:
+    r"""Subset an xarray object according to a specific domain.
+
+    Notes
+    -----
+    Requires installation of GIS libraries.
+
+    Parameters
+    ----------
+    ds: xarray.Dataset or xarray.DataArray
+    domain: str
+    \*\*kwargs
+
+    Returns
+    -------
+    xarray.Dataset or xarray.DataArray
+    """
     try:
-        from clisops.core.subset import subset_bbox
+        from clisops.core.subset import subset_bbox  # noqa
     except ModuleNotFoundError:
         msg = _gis_import_error_message.format(subset_domain.__name__)
         raise ModuleNotFoundError(msg)
@@ -36,7 +54,7 @@ def subset_domain(
     return ds
 
 
-def subsetting_domains(domain: str) -> List:
+def subsetting_domains(domain: str) -> list:
     """Provides the bounding box coordinates for specific domains.
 
     Parameters
