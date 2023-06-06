@@ -61,7 +61,7 @@ def request_tigge(
         except ModuleNotFoundError:
             raise ModuleNotFoundError(
                 f"{_request_direct_tigge.__name__} requires additional dependencies. "
-                "Please install them with `pip install miranda[full]`."
+                "Please install them with `pip install miranda[remote]`."
             )
 
         number_range = ""

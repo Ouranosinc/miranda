@@ -26,7 +26,7 @@ try:
 except ImportError:
     warnings.warn(
         f"{__name__} functions require additional dependencies. "
-        "Please install them with `pip install miranda[full]`."
+        "Please install them with `pip install miranda[remote]`."
     )
 
 

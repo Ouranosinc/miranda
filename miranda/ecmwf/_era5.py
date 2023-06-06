@@ -20,7 +20,7 @@ try:
 except ModuleNotFoundError:
     warnings.warn(
         "ERA5 downloading capabilities requires additional dependencies. "
-        "Please install them with `pip install miranda[full]`."
+        "Please install them with `pip install miranda[remote]`."
     )
 
 from miranda.gis import subsetting_domains
