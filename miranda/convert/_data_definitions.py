@@ -5,7 +5,6 @@ import json
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size

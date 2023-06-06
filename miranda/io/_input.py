@@ -4,7 +4,6 @@ import logging.config
 import os
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Optional, Union
 
 import netCDF4 as nc  # noqa
 
@@ -29,7 +28,7 @@ def discover_data(
 
     Parameters
     ----------
-    input_files : str or Path or List[Union[str, Path]] or GeneratorType
+    input_files : str, pathlib.Path, list of str or Path, or GeneratorType
         Path or string to a file, a folder, or a generator of paths.
     suffix : str
         File-ending suffix to search for. Default: "nc".
@@ -38,7 +37,7 @@ def discover_data(
 
     Returns
     -------
-    list or generator of Path
+    list of pathlib.Path or GeneratorType of pathlib.Path
 
     Warnings
     --------
@@ -84,7 +83,7 @@ def find_filepaths(
 
     Returns
     -------
-    List[Path]
+    list of pathlib.Path
     """
     if file_suffixes is None:
         file_suffixes = ["*", ".*"]

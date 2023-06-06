@@ -5,7 +5,6 @@ import logging.config
 import warnings
 from getpass import getpass
 from pathlib import Path
-from typing import Union
 
 from miranda.scripting import LOGGING_CONFIG
 

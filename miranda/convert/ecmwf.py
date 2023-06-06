@@ -8,7 +8,6 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import xarray
 from dask.diagnostics import ProgressBar

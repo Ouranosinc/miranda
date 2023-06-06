@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 import warnings
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from datetime import datetime as dt
 from pathlib import Path
 from typing import Any
@@ -272,7 +272,7 @@ def request_era5(
 
 
 def _request_direct_era(
-    variables: Mapping[str, str],
+    variables: dict[str, str],
     project: str,
     domain: str,
     pressure_levels: list[str] | None,
@@ -284,7 +284,7 @@ def _request_direct_era(
 ):
     """Launch formatted request."""
 
-    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str], c: Any):
+    def __request(nc_name: str, p: str, rq_kwargs: dict[str, str], c: Any):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
             return

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Union
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -34,17 +34,17 @@ def get_time_frequency(
     d : xr.Dataset
         An xarray.Dataset.
     expected_period : str
-        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A")
+        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A").
         The time period expected of the input dataset.
         The "1M" period is specially-handled.
     minimum_continuous_period : str
-        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A")
+        An xarray-compatible time period (e.g. "1H", "1D", "7D", "1M", "1A").
         The minimum expected granular period that data should have continuous values for.
         The "1M" period is specially-handled.
 
     Returns
     -------
-    offset : List[Union[int, str]]
+    offset : list of int or str
         The offset a list of (multiplier, base)
     offset_meaning : str
         The offset meaning (single word)

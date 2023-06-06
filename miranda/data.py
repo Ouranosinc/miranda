@@ -5,7 +5,6 @@ import logging.config
 import os
 from pathlib import Path
 from types import GeneratorType
-from typing import Optional, Tuple, Union
 
 from .io import find_filepaths
 from .scripting import LOGGING_CONFIG

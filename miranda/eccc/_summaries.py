@@ -19,7 +19,6 @@ from collections import defaultdict
 from collections.abc import Generator
 from logging import config
 from pathlib import Path
-from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -201,7 +200,7 @@ def _read_multiple_daily_summaries(
 
     Parameters
     ----------
-    files : List[Union[str, Path]]
+    files : list of str or Path, or Generator[Path]
         A list of all the files to append.
     rm_flags : bool
         Removes all the 'Flag' and 'Quality' columns of the ECCC files. Default: False.
@@ -261,7 +260,7 @@ def _read_multiple_daily_summaries(
     return all_stations
 
 
-def _read_single_daily_summaries(file: Path | str) -> tuple[dict, pd.DataFrame]:
+def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
     """Read station summary information from CSV header.
 
     Notes
@@ -270,11 +269,11 @@ def _read_single_daily_summaries(file: Path | str) -> tuple[dict, pd.DataFrame]:
 
     Parameters
     ----------
-    file : Union[Path, str]
+    file : str or Path
 
     Returns
     -------
-    Tuple[dict, pd.DataFrame]
+    tuple[dict, pd.DataFrame]
     """
     # Read the whole file
     with open(file, encoding="utf-8-sig") as fi:

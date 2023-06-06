@@ -5,7 +5,6 @@ import re
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -34,13 +33,13 @@ def group_by_length(
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
+    files: GeneratorType or list of str or pathlib.Path
     size: int
     sort: bool
 
     Returns
     -------
-    List[List[Path]]
+    list[list[pathlib.Path]]
     """
     logging.info(f"Creating groups of {size} files")
     if sort:
@@ -69,11 +68,11 @@ def group_by_deciphered_date(
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
+    files: GeneratorType or list of str or pathlib.Path
 
     Returns
     -------
-    Dict[str, List[Path]]
+    dict[str, list[pathlib.Path]]
     """
     logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
@@ -121,12 +120,12 @@ def group_by_size(
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
-    size: int
+    files : GeneratorType or list of str or pathlib.Path
+    size : int
 
     Returns
     -------
-    List[List[Path]]
+    list[list[pathlib.Path]]
     """
     logging.info(
         f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
@@ -159,12 +158,12 @@ def group_by_subdirectories(
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
-    within: Union[str, Path]
+    files : GeneratorType or list of str or pathlib.Path
+    within : str or pathlib.Path
 
     Returns
     -------
-    Dict[str, List[Path]]
+    dict[str, list[pathlib.Path]]
     """
     if not within:
         within = Path.cwd()

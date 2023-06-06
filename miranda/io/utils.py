@@ -7,7 +7,7 @@ import os
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Union
 
 import dask
 import netCDF4 as nc  # noqa
@@ -161,7 +161,7 @@ def delayed_write(
 
     Parameters
     ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
+    ds : xr.Dataset
     outfile : str or os.PathLike
     target_chunks : dict
     output_format : {"netcdf", "zarr"}

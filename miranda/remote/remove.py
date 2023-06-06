@@ -7,7 +7,6 @@ from datetime import date
 from getpass import getpass
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Optional, Union
 
 from miranda.io.utils import creation_date
 from miranda.scripting import LOGGING_CONFIG
@@ -215,12 +214,12 @@ def delete_by_variable(
 
     Parameters
     ----------
-    target : Union[str, Path, List[Union[str, Path]], GeneratorType]
-    variables : List[str]
-    server :Optional[Union[str, Path]]
-    user : Optional[str]
-    password : Optional[str]
-    file_suffix : Optional[str]
+    target : str, Path, list of str or Path, or GeneratorType]
+    variables : list of str
+    server : str or Path, optional
+    user : str, optional
+    password : str, optional
+    file_suffix : str, optional
     delete : bool
 
     Returns

@@ -7,7 +7,6 @@ import logging.config
 import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import schema
 import xarray as xr

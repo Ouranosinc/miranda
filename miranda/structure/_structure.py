@@ -5,11 +5,9 @@ import logging.config
 import multiprocessing
 import os
 import shutil
-import sys
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Optional, Union
 
 import yaml
 from schema import SchemaError
@@ -357,9 +355,10 @@ def structure_datasets(
 
     Parameters
     ----------
-    input_files : str or Path or list of str or Path or GeneratorType
+    input_files : str, Path, list of str or Path, or GeneratorType
+        Files to be sorted.
     output_folder : str or Path
-
+        The desired location for the folder-tree.
     project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}, optional
         Project used to parse the facets of all supplied datasets.
         If not supplied, will attempt parsing with all available data categories for each file (slow)
@@ -382,7 +381,7 @@ def structure_datasets(
 
     Returns
     -------
-    Dict[Path, Path]
+    dict[Path, Path]
     """
     input_files = discover_data(input_files, suffix)
     if guess and project is None:

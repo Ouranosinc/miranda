@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import logging.config
 import os
-import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import dask.config
 import xarray as xr
@@ -57,8 +55,8 @@ def reanalysis_processing(
 
     Parameters
     ----------
-    data: Dict[str, List[str]]
-    output_folder: Union[str, os.PathLike]
+    data: dict[str, list[str]]
+    output_folder: str or os.PathLike
     variables: Sequence[str]
     aggregate: {"day", None}
     domains: {"QC", "CAN", "AMNO", "NAM", "GLOBAL"}

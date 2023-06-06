@@ -14,7 +14,7 @@ from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Optional, TextIO, Union
+from typing import TextIO, Union
 
 from .scripting import LOGGING_CONFIG
 
@@ -85,12 +85,11 @@ def working_directory(directory: str | Path) -> None:
 
     Parameters
     ----------
-    directory: Union[str, Path]
+    directory : str or pathlib.Path
 
     Returns
     -------
     None
-
     """
     owd = os.getcwd()
 

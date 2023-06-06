@@ -24,7 +24,6 @@ import subprocess
 from functools import reduce
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Union
 
 from .scripting import LOGGING_CONFIG
 

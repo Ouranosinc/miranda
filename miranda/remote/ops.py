@@ -8,7 +8,6 @@ import tempfile
 import time
 import warnings
 from pathlib import Path
-from typing import List, Union
 
 import miranda.remote
 from miranda.scripting import LOGGING_CONFIG

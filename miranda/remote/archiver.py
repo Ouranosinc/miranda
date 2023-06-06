@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging.config
 from collections import defaultdict
 from pathlib import Path
-from typing import Union
 
 from miranda.archive import (
     group_by_deciphered_date,

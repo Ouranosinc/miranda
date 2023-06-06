@@ -10,7 +10,7 @@ from logging import config
 from os import PathLike
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Optional, Union
+from typing import Union
 
 import netCDF4 as nc  # noqa
 import pandas as pd
@@ -28,7 +28,7 @@ from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderErro
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS
-    from miranda.validators import FACETS_SCHEMA
+    from miranda.validators import FACETS_SCHEMA  # noqa
 
 
 config.dictConfig(LOGGING_CONFIG)

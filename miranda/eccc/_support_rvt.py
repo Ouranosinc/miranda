@@ -4,7 +4,6 @@ import datetime
 import re
 import urllib
 from pathlib import Path
-from typing import Optional, Union
 
 import pandas as pd
 

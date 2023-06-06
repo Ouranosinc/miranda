@@ -7,7 +7,6 @@ import shutil
 import time
 from collections.abc import Hashable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
 
 import xarray as xr
 from xarray.core.utils import Frozen
@@ -110,7 +109,7 @@ def fetch_chunk_config(
 
     Returns
     -------
-    Dict[str, int]
+    dict[str, int]
     """
     if isinstance(dims, (dict, Frozen)):
         dims = {k for k in dims.keys()}

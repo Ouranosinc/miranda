@@ -7,7 +7,6 @@ import os
 from datetime import datetime as dt
 from datetime import timedelta as td
 from pathlib import Path
-from typing import List, Optional
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -32,11 +31,11 @@ def request_tigge(
 
     Parameters
     ----------
-    variables : List[str]
-    providers : List[str], optional
+    variables : list of str
+    providers : ist of str, optional
     forecast_type: {"pf", "cf"}
-    times : List[str], optional
-    dates : List[str]. optional
+    times : list of str, optional
+    dates : list of str. optional
     date_start : str, optional
     date_end : str, optional
     output_folder : os.PathLike, optional

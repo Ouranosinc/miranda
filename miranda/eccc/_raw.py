@@ -26,7 +26,6 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List, Optional, Set, Union
 from urllib.error import HTTPError
 
 import dask.dataframe as dd
@@ -493,16 +492,16 @@ def aggregate_stations(
 
     Parameters
     ----------
-    source_files: Union[str, Path]
-    output_folder: Union[str, Path]
-    variables: Optional[Union[str, int, List[Union[str, int]]]]
+    source_files: str or Path
+    output_folder: str or Path
+    variables: str or int or list of str or int, optional
     time_step: {"hourly", "daily"}
     include_flags: bool
     groupings: int
       The number of files in each group used for converting to multi-file Datasets.
-    mf_dataset_freq: Optional[str]
+    mf_dataset_freq: str, optional
       Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
-    temp_directory: Optional[Union[str, Path]]
+    temp_directory: str or Path, optional
       Use another temporary directory location in case default location is not spacious enough.
     n_workers: int
 
@@ -870,17 +869,16 @@ def merge_converted_variables(
 
     Parameters
     ----------
-    source_files: Union[str, Path]
-    output_folder: Union[str, Path]
-    variables: Optional[Union[str, int, List[Union[str, int]]]]
-    station_metadata: Optional[Union[str, Path]]
+    source_files: str, Path
+    output_folder: str, Path
+    variables: str or int or list of str or int, optional
+    station_metadata: str or Path, optional
     overwrite: bool
     n_workers: int
 
     Returns
     -------
     None
-
     """
     meta = load_station_metadata(station_metadata)
     metadata_file = Path(tempfile.NamedTemporaryFile(suffix=".nc", delete=False).name)
