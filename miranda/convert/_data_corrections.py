@@ -405,14 +405,14 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                 d_out[vv] = out
             converted.append(vv)
+            prev_history = d.attrs.get("history", "")
+            history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif offs is False:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
             continue
-        prev_history = d.attrs.get("history", "")
-        history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -432,14 +432,14 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                 out = d[vv]
                 d_out[out.name] = -out
             converted.append(vv)
+            prev_history = d.attrs.get("history", "")
+            history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif inv_sign is False:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
             continue
-        prev_history = d.attrs.get("history", "")
-        history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -493,6 +493,9 @@ def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
                     out = d[vv]
                     d_out[out.name] = out.clip(min_value, max_value)
                 converted.append(vv)
+                prev_history = d.attrs.get("history", "")
+                history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
+                d_out.attrs.update(dict(history=history))
             elif clip_values is False:
                 logging.info(
                     f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
@@ -501,10 +504,6 @@ def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
             else:
                 logging.info(f"No clipping of values needed for `{vv}` in `{p}`.")
                 continue
-
-            prev_history = d.attrs.get("history", "")
-            history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
-            d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
