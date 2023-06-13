@@ -116,7 +116,7 @@ def write_dataset_dict(
         if not outpath.exists() or overwrite:
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if outpath.exists():
-                shutil.rmtree(outfile)
+                shutil.rmtree(outpath)
 
             tmp_path = None
             if temp_folder:
