@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.6.0
     hooks:
       - id: pyupgrade
         args: [ '--py37-plus' ]
@@ -34,6 +34,7 @@ repos:
     rev: 23.3.0
     hooks:
       - id: black
+        args: [ '--target-version=py37' ]
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0
     hooks:
