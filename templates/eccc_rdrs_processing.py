@@ -10,9 +10,9 @@ def main():
     dask_dir = home.joinpath("tmpout", "dask")
     dask_dir.mkdir(parents=True, exist_ok=True)
     dask_kwargs = dict(
-        n_workers=8,
-        threads_per_worker=4,
-        memory_limit="7GB",
+        n_workers=5,
+        threads_per_worker=8,
+        memory_limit="5GB",
         dashboard_address=8998,
         local_directory=dask_dir,
         silence_logs=logging.ERROR,
@@ -25,21 +25,23 @@ def main():
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
         output_format="zarr",
         working_folder=Path(home).joinpath("tmpout", "rdrs"),
-        **dask_kwargs,
-    )
-
-    rdrs_to_daily(
-        project=project,
-        input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
-        output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
-        working_folder=Path(home).joinpath("tmpout", "rdrs1"),
+        cfvariable_list=["zg"],
         overwrite=False,
-        year_start=None,
-        year_end=None,
-        process_variables=None,
         **dask_kwargs,
     )
 
+    # rdrs_to_daily(
+    #     project=project,
+    #     input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
+    #     output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
+    #     working_folder=Path(home).joinpath("tmpout", "rdrs1"),
+    #     overwrite=False,
+    #     year_start=None,
+    #     year_end=None,
+    #     process_variables=['tdps','huss'], #huss
+    #     **dask_kwargs,
+    # )
+    #
     for freq in ["day", "1hr"]:
         infolder = Path(home).joinpath("RDRS_v21", f"tmp/ECCC/RDRS_v21/NAM/{freq}")
         for variable in [v for v in infolder.glob("*") if v.is_dir()]:
@@ -51,6 +53,7 @@ def main():
                     "RDRS_v21", f"converted/ECCC/RDRS_v21/NAM/{freq}/{variable.name}"
                 ),
                 overwrite=False,
+                **dask_kwargs,
             )
 
 
