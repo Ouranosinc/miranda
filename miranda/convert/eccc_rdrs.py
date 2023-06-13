@@ -118,7 +118,7 @@ def convert_rdrs(
                         output_folder=output_folder.joinpath(outfreq),
                         temp_folder=working_folder,
                         output_format=output_format,
-                        overwrite=False,
+                        overwrite=overwrite,
                         chunks=chunks,
                         **dask_kwargs,
                     )
