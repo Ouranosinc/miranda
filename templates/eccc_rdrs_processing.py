@@ -6,6 +6,8 @@ from miranda.io import concat_rechunk_zarr
 
 
 def main():
+    vars_to_process = ["zg"]
+
     home = Path("~").expanduser()
     dask_dir = home.joinpath("tmpout", "dask")
     dask_dir.mkdir(parents=True, exist_ok=True)
@@ -25,22 +27,22 @@ def main():
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
         output_format="zarr",
         working_folder=Path(home).joinpath("tmpout", "rdrs"),
-        cfvariable_list=["zg"],
+        cfvariable_list=vars_to_process,
         overwrite=False,
         **dask_kwargs,
     )
 
-    # rdrs_to_daily(
-    #     project=project,
-    #     input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
-    #     output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
-    #     working_folder=Path(home).joinpath("tmpout", "rdrs1"),
-    #     overwrite=False,
-    #     year_start=None,
-    #     year_end=None,
-    #     process_variables=['tdps','huss'], #huss
-    #     **dask_kwargs,
-    # )
+    rdrs_to_daily(
+        project=project,
+        input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
+        output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
+        working_folder=Path(home).joinpath("tmpout", "rdrs1"),
+        overwrite=False,
+        year_start=None,
+        year_end=None,
+        process_variables=vars_to_process,  # huss
+        **dask_kwargs,
+    )
     #
     for freq in ["day", "1hr"]:
         infolder = Path(home).joinpath("RDRS_v21", f"tmp/ECCC/RDRS_v21/NAM/{freq}")
