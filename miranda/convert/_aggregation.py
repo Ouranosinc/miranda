@@ -26,20 +26,19 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
     offset, meaning = get_time_frequency(ds, minimum_continuous_period="1h")
 
     aggregation_legend = dict()
-    for v in ["tas", "tdps"]:
+    for v in ["tas", "tdps", "hurs"]:
         if freq == meaning:
             if not hasattr(ds, v) and (
                 hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")
             ):
                 aggregation_legend[f"_{v}"] = {"mean"}
     for variable in ds.data_vars:
-        if variable in ["tas", "tdps"]:
+        if variable in ["tas", "tdps", "hurs"]:
             aggregation_legend[variable] = {"max", "mean", "min"}
         elif variable in [
             "evspsblpot",
             "hfls",
             "hfss",
-            "hurs",
             "hur",
             "huss",
             "hus",
