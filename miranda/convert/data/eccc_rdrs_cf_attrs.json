@@ -3,7 +3,7 @@
     "Conventions": "CF-1.8",
     "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product RDRS_v2 contains two variables for precipitation: 'RDRS_v2_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'RDRS_v2_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
     "_contact": {
-      "rdrs-v21": "???"
+      "rdrs-v21": ""
     },
     "_doi": {
       "rdrs-v21": "https://doi.org/10.5194/hess-25-4917-2021"
@@ -29,6 +29,7 @@
     "realm": "atmos",
     "table_date": "2023-03-23",
     "table_id": "eccc",
+    "terms_of_use": "RDRS v2.1 data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
     "type": "reconstruction"
   },
   "dimensions": {
@@ -36,7 +37,7 @@
       "_ensure_correct_time": {
         "rdrs-v21": "1H"
       },
-      "_strict_time": false,
+      "_strict_time": true,
       "axis": "T",
       "long_name": "time",
       "standard_name": "time"
@@ -45,9 +46,6 @@
   "variables": {
     "RDRS_v2.1_A_PR0_SFC": {
       "_cf_variable_name": "pr",
-      "_corrected_units": false,
-      "_invert_sign": {},
-      "_offset_time": {},
       "_transformation": {
         "rdrs-v21": "amount2rate"
       },
@@ -58,48 +56,42 @@
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
+    "RDRS_v2.1_P_GZ_SFC": {
+      "_cf_variable_name": "zg",
+      "cell_methods": "time: point",
+      "long_name": "surface geopotential height",
+      "standard_name": "air_temperature",
+      "units": "m"
+    },
     "RDRS_v2.1_P_HR_1.5m": {
       "_cf_variable_name": "hurs",
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
       "cell_methods": "time: point",
-      "corrected_units": false,
       "long_name": "Near-Surface Relative Humidity (1.5m)",
       "standard_name": "relative_humidity",
       "units": "%"
     },
     "RDRS_v2.1_P_HU_1.5m": {
       "_cf_variable_name": "huss",
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
-      "cell_methods": "time: point",
-      "corrected_units": {
+      "_corrected_units": {
         "rdrs-v21": "1"
       },
+      "cell_methods": "time: point",
       "long_name": "Near-Surface Specific Humidity (1.5m)",
       "standard_name": "specific_humidity",
       "units": "1"
     },
     "RDRS_v2.1_P_P0_SFC": {
       "_cf_variable_name": "ps",
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
-      "cell_methods": "time: point",
-      "corrected_units": {
+      "_corrected_units": {
         "rdrs-v21": "mbar"
       },
+      "cell_methods": "time: point",
       "long_name": "Surface Air Pressure",
       "standard_name": "surface_air_pressure",
       "units": "Pa"
     },
     "RDRS_v2.1_P_PN_SFC": {
       "_cf_variable_name": "psl",
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
       "cell_methods": "time: point",
       "corrected_units": {
         "rdrs-v21": "mbar"
@@ -113,9 +105,6 @@
       "_corrected_units": {
         "rdrs-v21": "degC"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
       "cell_methods": "time: point",
       "long_name": "1.5 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",
@@ -126,9 +115,6 @@
       "_corrected_units": {
         "rdrs-v21": "degC"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
       "cell_methods": "time: point",
       "long_name": "1.5 metre temperature",
       "standard_name": "air_temperature",
