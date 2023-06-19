@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import multiprocessing as mp
 import os
@@ -8,7 +10,6 @@ from logging import config
 from os import PathLike
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Optional, Union
 
 import netCDF4 as nc  # noqa
 import pandas as pd
@@ -26,7 +27,7 @@ from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderErro
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS
-    from miranda.validators import FACETS_SCHEMA
+    from miranda.validators import FACETS_SCHEMA  # noqa
 
 
 config.dictConfig(LOGGING_CONFIG)
@@ -37,7 +38,7 @@ __all__ = [
 ]
 
 
-def guess_project(file: Union[os.PathLike, str]) -> str:
+def guess_project(file: os.PathLike | str) -> str:
     """Guess the name of the project
 
     Parameters
@@ -66,17 +67,17 @@ class Decoder:
     guess = False
     _file_facets = dict()
 
-    def __init__(self, project: Optional[str]):
+    def __init__(self, project: str | None):
         self.project = project
 
     @staticmethod
     def _decoder(
-        d: Dict,
+        d: dict,
         fail_early: bool,
         proj: str,
         guess: bool,
         lock: mp.Lock,
-        file: Union[str, Path],
+        file: str | Path,
     ) -> None:
         if proj is None:
             if guess:
@@ -117,8 +118,8 @@ class Decoder:
 
     def decode(
         self,
-        files: Union[os.PathLike, str, List[Union[str, os.PathLike]], GeneratorType],
-        chunks: Optional[int] = None,
+        files: os.PathLike | str | list[str | os.PathLike] | GeneratorType,
+        chunks: int | None = None,
         raise_error: bool = False,
     ) -> None:
         """Decode facets from file or list of files.
@@ -169,11 +170,11 @@ class Decoder:
     def facets_table(self):
         raise NotImplementedError()
 
-    def file_facets(self) -> Dict[os.PathLike, Dict]:
+    def file_facets(self) -> dict[os.PathLike, dict]:
         return self._file_facets
 
     @classmethod
-    def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
+    def _from_dataset(cls, file: Path | str) -> (str, str, dict):
         file_name = Path(file).stem
 
         try:
@@ -245,7 +246,7 @@ class Decoder:
 
     @staticmethod
     def _decode_hour_of_day_info(
-        file: Union[PathLike, str],
+        file: PathLike | str,
     ) -> dict:
         """
 
@@ -284,17 +285,17 @@ class Decoder:
 
     @staticmethod
     def _decode_time_info(
-        file: Optional[Union[PathLike, str, List[str]]] = None,
-        data: Optional[Dict] = None,
-        term: Optional[str] = None,
+        file: PathLike | str | list[str] | None = None,
+        data: dict | None = None,
+        term: str | None = None,
         *,
         field: str = None,
-    ) -> Union[str, NaTType]:
+    ) -> str | NaTType:
         """
 
         Parameters
         ----------
-        file : Union[os.PathLike, str], optional
+        file : os.PathLike or str, optional
         data : dict, optional
         term : str
         field : {"timedelta", "frequency"}
@@ -452,12 +453,12 @@ class Decoder:
         raise DecoderError(f"Time frequency indiscernible for file `{file}`.")
 
     @staticmethod
-    def _decode_version(file: Union[PathLike, str], data: Dict) -> dict:
+    def _decode_version(file: PathLike | str, data: dict) -> dict:
         """
 
         Parameters
         ----------
-        file: Union[os.PathLike, str]
+        file: os.PathLike or str
         data: dict
 
         Returns
@@ -486,7 +487,7 @@ class Decoder:
         return version_info
 
     @classmethod
-    def decode_converted(cls, file: Union[PathLike, str]) -> dict:
+    def decode_converted(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -528,19 +529,19 @@ class Decoder:
         return facets
 
     @staticmethod
-    def decode_eccc_obs(self, file: Union[PathLike, str]) -> Dict:
+    def decode_eccc_obs(self, file: PathLike | str) -> dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_ahccd_obs(self, file: Union[PathLike, str]) -> Dict:
+    def decode_ahccd_obs(self, file: PathLike | str) -> dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_melcc_obs(self, file: Union[PathLike, str]) -> Dict:
+    def decode_melcc_obs(self, file: PathLike | str) -> dict:
         raise NotImplementedError()
 
     @classmethod
-    def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_pcic_candcs_u6(cls, file: PathLike | str) -> dict:
         if "Derived" in Path(file).parents:
             raise NotImplementedError("Derived CanDCS-U6 variables are not supported.")
 
@@ -591,7 +592,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip6(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -630,7 +631,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip5(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -668,7 +669,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cordex(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -802,7 +803,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
+    def decode_isimip_ft(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -841,7 +842,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_nex_gddp_cmip6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_nex_gddp_cmip6(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -879,7 +880,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_espo_g6_r2(cls, file: Union[PathLike, str]) -> dict:
+    def decode_espo_g6_r2(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -920,7 +921,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_espo_g6_e5l(cls, file: Union[PathLike, str]) -> dict:
+    def decode_espo_g6_e5l(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)

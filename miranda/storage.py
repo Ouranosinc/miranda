@@ -15,6 +15,8 @@ Functions:
  * :func:`size_division` - divide files based on number and size restrictions.
 
 """
+from __future__ import annotations
+
 import logging
 import logging.config
 import os
@@ -22,7 +24,6 @@ import subprocess
 from functools import reduce
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Union
 
 from .scripting import LOGGING_CONFIG
 
@@ -41,6 +42,8 @@ __all__ = [
 
 
 class DiskSpaceError(Exception):
+    """DiskSpaceError Exception."""
+
     pass
 
 
@@ -64,7 +67,6 @@ class FileMeta:
             if file exists, set to 0 otherwise).
 
         """
-
         # Make sure we have the full path of the file
         self.path = Path(path).absolute()
 
@@ -107,7 +109,6 @@ class StorageState:
             call to 'df').
 
         """
-
         # Make sure we have the full base path
         self.base_path = Path(base_path).absolute()
 
@@ -145,12 +146,12 @@ class StorageState:
             self.free_space = free_space
 
 
-def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
+def size_evaluation(file_list: list[str | FileMeta | Path]) -> int:
     """Total size of files.
 
     Parameters
     ----------
-    file_list : Union[str, Path, FileMeta]
+    file_list : list of str or Path or FileMeta
 
     Returns
     -------
@@ -158,7 +159,6 @@ def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
       total size of files in bytes.
 
     """
-
     if file_list:
         size = 0
         for file_to_add in file_list:
@@ -175,33 +175,32 @@ def size_evaluation(file_list: List[Union[str, FileMeta, Path]]) -> int:
 
 
 def size_division(
-    files_to_divide: Union[List, FileMeta, Path],
+    files_to_divide: list | FileMeta | Path,
     size_limit: int = 0,
     file_limit: int = 0,
     check_name_repetition: bool = False,
     preserve_order: bool = False,
-) -> List[list]:
+) -> list[list]:
     """Divide files according to size and number limits.
 
     Parameters
     ----------
-    files_to_divide : Union[List, FileMeta, Path]
+    files_to_divide : list of str or Path, FileMeta, Path
+        Files to be sorted.
     size_limit : int
-      Size limit of divisions in bytes. Default: 0 (no limit).
+        Size limit of divisions in bytes. Default: 0 (no limit).
     file_limit : int
-      Number of files limit of divisions. Default: 0 (no limit).
+        Number of files limit of divisions. Default: 0 (no limit).
     check_name_repetition : bool
-      Flag to prevent file name repetitions. Default: False.
+        Flag to prevent file name repetitions. Default: False.
     preserve_order : bool
-      Flag to force files to be restored in the order they are given. Default: False.
+        Flag to force files to be restored in the order they are given. Default: False.
 
     Returns
     -------
-    List[list]
-      list of divisions (each division is a list of FileMeta objects).
-
+    list[list]
+        list of divisions (each division is a list of FileMeta objects).
     """
-
     divisions = list()
     for file_divide in files_to_divide:
         # If file paths are given, convert to FileMeta objects first
@@ -240,20 +239,20 @@ def size_division(
 
 
 def file_size(
-    file_path_or_bytes_or_dict: Union[
-        Path,
-        str,
-        int,
-        List[Union[str, Path]],
-        GeneratorType,
-        Dict[str, Union[Path, List[Path]]],
-    ]
+    file_path_or_bytes_or_dict: (
+        Path
+        | str
+        | int
+        | list[str | Path]
+        | GeneratorType
+        | dict[str, Path | list[Path]]
+    )
 ) -> int:
-    """
+    """Return size of object in bytes.
 
     Parameters
     ----------
-    file_path_or_bytes_or_dict : Union[Path, str, int, List[Union[str, Path]], GeneratorType, Dict[str, Union[Path, List[Path]]]]
+    file_path_or_bytes_or_dict : Path or str or int, list of str or Path, GeneratorType, or dict[str, Path or list of Path]
 
     Returns
     -------
@@ -302,22 +301,33 @@ def file_size(
 
 
 def report_file_size(
-    file_path_or_bytes_or_dict: Union[
-        Path, str, int, List[Union[str, Path]], Dict[str, Union[Path, List[Path]]]
-    ],
+    file_path_or_bytes_or_dict: (
+        Path
+        | str
+        | int
+        | list[str | Path]
+        | GeneratorType
+        | dict[str, Path | list[Path]]
+    ),
     use_binary: bool = True,
     significant_digits: int = 2,
 ) -> str:
-    """
+    """Report file size in a human-readable format.
+
     This function will parse the contents of a list or generator of files and return the
     size in bytes of a file or a list of files in pretty formatted text.
+
+    Parameters
+    ----------
+    file_path_or_bytes_or_dict : Path or str or int, list of str or Path, GeneratorType, or dict[str, Path or list of Path]
+    use_binary : bool
+    significant_digits : int
+
     """
     _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
     def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
-        """
-        This function will format byte size into an appropriate nomenclature for prettier printing.
-        """
+        """Format byte size into an appropriate nomenclature for prettier printing."""
         import math
 
         base = 1024 if binary else 1000

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import logging.config
 import multiprocessing
@@ -5,7 +7,6 @@ import os
 from datetime import datetime as dt
 from datetime import timedelta as td
 from pathlib import Path
-from typing import List, Optional
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -15,26 +16,26 @@ __all__ = ["request_tigge"]
 
 
 def request_tigge(
-    variables: List[str],
-    providers: Optional[List[str]] = None,
+    variables: list[str],
+    providers: list[str] | None = None,
     *,
     forecast_type: str = "pf",
-    times: Optional[List[str]] = None,
-    dates: Optional[List[str]] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-    output_folder: Optional[os.PathLike] = None,
+    times: list[str] | None = None,
+    dates: list[str] | None = None,
+    date_start: str | None = None,
+    date_end: str | None = None,
+    output_folder: os.PathLike | None = None,
     processes: int = 4,
 ) -> None:
     """Request tigge data from ECMWF in grib format.
 
     Parameters
     ----------
-    variables : List[str]
-    providers : List[str], optional
+    variables : list of str
+    providers : ist of str, optional
     forecast_type: {"pf", "cf"}
-    times : List[str], optional
-    dates : List[str]. optional
+    times : list of str, optional
+    dates : list of str. optional
     date_start : str, optional
     date_end : str, optional
     output_folder : os.PathLike, optional
@@ -51,7 +52,7 @@ def request_tigge(
         time: str,
         fc_type: str,
         provider: str,
-        nums: Optional[int],
+        nums: int | None,
         date: str,
     ):
         """Launch formatted request."""
@@ -60,7 +61,7 @@ def request_tigge(
         except ModuleNotFoundError:
             raise ModuleNotFoundError(
                 f"{_request_direct_tigge.__name__} requires additional dependencies. "
-                "Please install them with `pip install miranda[full]`."
+                "Please install them with `pip install miranda[remote]`."
             )
 
         number_range = ""

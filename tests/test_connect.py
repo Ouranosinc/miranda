@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 
-import pytest
+import pytest  # noqa
 
 try:
     import fabric  # noqa

@@ -1,7 +1,9 @@
+"""Environment and Climate Change Canada RDRS conversion tools."""
+from __future__ import annotations
+
 import logging.config
 import os
 from pathlib import Path
-from typing import List, Optional, Set, Union
 
 import xarray as xr
 from numpy import unique
@@ -23,37 +25,35 @@ __all__ = ["convert_rdrs", "rdrs_to_daily"]
 # FIXME: Can we use `name_output_file` instead? We already have a better version of this function.
 
 
-def _get_drop_vars(
-    file: Union[str, os.PathLike], *, keep_vars: Union[List[str], Set[str]]
-):
+def _get_drop_vars(file: str | os.PathLike, *, keep_vars: list[str] | set[str]):
     drop_vars = list(xr.open_dataset(file).data_vars)
     return list(set(drop_vars) - set(keep_vars))
 
 
 def convert_rdrs(
     project: str,
-    input_folder: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
+    input_folder: str | os.PathLike,
+    output_folder: str | os.PathLike,
     output_format: str = "zarr",
-    working_folder: Optional[Union[str, os.PathLike]] = None,
+    working_folder: str | os.PathLike | None = None,
     overwrite: bool = False,
     **dask_kwargs,
-):
-    """
+) -> None:
+    r"""
 
     Parameters
     ----------
-    project
-    input_folder
-    output_folder
-    output_format
-    working_folder
-    overwrite
-    dask_kwargs
+    project : str
+    input_folder : str or os.PathLike
+    output_folder : str or os.PathLike
+    output_format : {"netcdf", "zarr"}
+    working_folder : str or os.PathLike, optional
+    overwrite : bool
+    \*\*dask_kwargs
 
     Returns
     -------
-
+    None
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project=project)["variables"]
@@ -68,21 +68,22 @@ def convert_rdrs(
 
     # FIXME: Do we want to collect everything? Maybe return a dictionary with years and associated files?
 
+    out_freq = None
     gathered = gather_raw_rdrs_by_years(input_folder)
     for year, ncfiles in gathered[project].items():
         ds_allvars = None
         if len(ncfiles) >= 28:
             for nc in ncfiles:
                 ds1 = xr.open_dataset(nc, chunks="auto")
-                if ds_allvars is None:
+                if ds_allvars is None and out_freq is None:
                     ds_allvars = ds1
-                    outfreq, meaning = get_time_frequency(ds1)
-                    outfreq = (
-                        f"{outfreq[0]}{freq_dict[outfreq[1]]}"
+                    out_freq, meaning = get_time_frequency(ds1)
+                    out_freq = (
+                        f"{out_freq[0]}{freq_dict[out_freq[1]]}"
                         if meaning == "hour"
-                        else freq_dict[outfreq[1]]
+                        else freq_dict[out_freq[1]]
                     )
-                    ds_allvars.attrs["frequency"] = outfreq
+                    ds_allvars.attrs["frequency"] = out_freq
                 else:
                     ds_allvars = xr.concat(
                         [ds_allvars, ds1], data_vars="minimal", dim="time"
@@ -103,11 +104,13 @@ def convert_rdrs(
                         add_version_hashes=False,
                         overwrite=overwrite,
                     )
-                    chunks = fetch_chunk_config(project=project, freq=outfreq)
+                    chunks = fetch_chunk_config(
+                        priority="time", freq=out_freq, dims=ds_corr.dims
+                    )
                     chunks["time"] = len(ds_corr.time)
                     write_dataset_dict(
                         {var_attrs[var_attr]["_cf_variable_name"]: ds_corr},
-                        output_folder=output_folder.joinpath(outfreq),
+                        output_folder=output_folder.joinpath(out_freq),
                         temp_folder=working_folder,
                         output_format=output_format,
                         overwrite=False,
@@ -119,34 +122,34 @@ def convert_rdrs(
 # FIXME: This looks mostly like code to stage writing out files. Should it be moved to an IO module?
 def rdrs_to_daily(
     project: str,
-    input_folder: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
-    working_folder: Optional[Union[str, os.PathLike]] = None,
+    input_folder: str | os.PathLike,
+    output_folder: str | os.PathLike,
+    working_folder: str | os.PathLike | None = None,
     overwrite: bool = False,
     output_format: str = "zarr",
-    year_start: Optional[int] = None,
-    year_end: Optional[int] = None,
-    process_variables: Optional[list] = None,
+    year_start: int | None = None,
+    year_end: int | None = None,
+    process_variables: list[str] | None = None,
     **dask_kwargs,
-):
-    """
+) -> None:
+    r"""Write out RDRS files to daily-timestep files.
 
     Parameters
     ----------
-    project
-    input_folder
-    output_folder
-    working_folder
-    overwrite
-    output_format
-    year_start
-    year_end
-    process_variables
-    dask_kwargs
+    project : str
+    input_folder : str or os.PathLike
+    output_folder : str or os.PathLike
+    working_folder : str or os.PathLike
+    overwrite : bool
+    output_format : {"netcdf", "zarr"}
+    year_start : int, optional
+    year_end : int, optional
+    process_variables : list of str, optional
+    \*\*dask_kwargs
 
     Returns
     -------
-
+    None
     """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder).expanduser()

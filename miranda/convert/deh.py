@@ -1,9 +1,11 @@
+"""DEH Hydrograph Conversion module."""
+from __future__ import annotations
+
 import json
 import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 import pandas as pd
 import xarray as xr
@@ -30,9 +32,8 @@ meta_patterns = {
 data_header_pattern = "Station Date Débit (m³/s) Remarque\n"
 
 
-def extract_daily(path: Union[os.PathLike, str]) -> Tuple[dict, pd.DataFrame]:
+def extract_daily(path: os.PathLike | str) -> tuple[dict, pd.DataFrame]:
     """Extract data and metadata from DEH (MELCC) stream flow file."""
-
     with open(path, encoding="latin1") as fh:
         txt = fh.read()
         txt = re.sub(" +", " ", txt)
@@ -119,7 +120,7 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
     return ds
 
 
-def open_txt(path: Union[str, Path], cf_table: Optional[dict] = cmor) -> xr.Dataset:
+def open_txt(path: str | Path, cf_table: dict | None = cmor) -> xr.Dataset:
     """Extract daily HQ meteorological data and convert to xr.DataArray with CF-Convention attributes."""
     meta, data = extract_daily(path)
     return to_cf(meta, data, cf_table)

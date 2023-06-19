@@ -1,3 +1,6 @@
+"""Data Validation module."""
+from __future__ import annotations
+
 import re
 import typing
 
@@ -146,7 +149,7 @@ if VALIDATION_ENABLED:
     )
 
 
-def url_validate(target: str) -> typing.Optional[typing.Match[str]]:
+def url_validate(target: str) -> typing.Match[str] | None:
     """Validate whether a supplied URL is reliably written.
 
     Parameters

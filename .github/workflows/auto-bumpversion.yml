@@ -6,8 +6,8 @@ on:
       - main
     paths-ignore:
       - HISTORY.rst
+      - pyproject.toml
       - setup.cfg
-      - setup.py
       - tox.ini
       - miranda/__init__.py
       - .github/**.yml

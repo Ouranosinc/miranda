@@ -12,16 +12,18 @@ New features
 ^^^^^^^^^^^^
 * Added support for collecting and converting `ptype` ECMWF ERA5 variable.
 * A new ``"_frequency": true`` toggle for returning the output frequency of converted data.
-* Add a new JSON template for NEX-GDDP-CMIP6 datasets.
+* Added a new JSON template for NEX-GDDP-CMIP6 datasets.
+* `miranda` is now `PEP 517 <https://peps.python.org/pep-0517/>`_ and `PEP 621 <https://peps.python.org/pep-0621/>`_ compliant, using the `flit <https://flit.pypa.io/en/stable/>`_ backend.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Various fixes to existing docstrings
+* Various fixes to existing docstrings.
 * Time frequency checks are more resilient when converting Monthly time-step data.
 * Masking and regridding of datasets when running ``convert_dataset`` is now optional or automatic.
 * Updated templates to newest API.
-* Created a `gis` recipe for exclusively installing gis libraries.
+* Created a `gis` recipe for exclusively installing GIS libraries.
 * Removed many unneeded dependencies, cleaned up Makefile.
+* All public-facing functions now contain at least a minimal docstring for documentation generation.
 
 v0.4.0 (2023-03-30)
 -------------------

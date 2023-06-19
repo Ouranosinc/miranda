@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import functools
 import logging.config
@@ -6,9 +8,10 @@ import os
 import re
 import shutil
 import warnings
+from collections.abc import Sequence
 from datetime import datetime as dt
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any
 
 import xarray as xr
 
@@ -17,7 +20,7 @@ try:
 except ModuleNotFoundError:
     warnings.warn(
         "ERA5 downloading capabilities requires additional dependencies. "
-        "Please install them with `pip install miranda[full]`."
+        "Please install them with `pip install miranda[remote]`."
     )
 
 from miranda.gis import subsetting_domains
@@ -45,19 +48,19 @@ ERA5_PROJECT_NAMES = [
 
 
 def request_era5(
-    projects: Union[str, List[str]],
+    projects: str | list[str],
     *,
-    variables: Optional[Union[str, Sequence[str]]] = None,
+    variables: str | Sequence[str] | None = None,
     domain: str = "AMNO",
-    pressure_levels: Optional[List[int]] = None,
+    pressure_levels: list[int] | None = None,
     separate_pressure_levels: bool = True,
-    output_folder: Optional[Union[str, os.PathLike]] = None,
-    year_start: Optional[Union[str, int]] = None,
-    year_end: Optional[Union[str, int]] = None,
+    output_folder: str | os.PathLike | None = None,
+    year_start: str | int | None = None,
+    year_end: str | int | None = None,
     dry_run: bool = False,
     processes: int = 10,
-    url: Optional[str] = None,
-    key: Optional[str] = None,
+    url: str | None = None,
+    key: str | None = None,
 ) -> None:
     """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
@@ -269,19 +272,19 @@ def request_era5(
 
 
 def _request_direct_era(
-    variables: Mapping[str, str],
+    variables: dict[str, str],
     project: str,
     domain: str,
-    pressure_levels: Optional[List[str]],
+    pressure_levels: list[str] | None,
     separate_pressure_level_requests: bool,
     product: str,
     dry_run: bool,
-    client: Optional[Any],
-    yearmonth: Tuple[int, str],
+    client: Any | None,
+    yearmonth: tuple[int, str],
 ):
     """Launch formatted request."""
 
-    def __request(nc_name: str, p: str, rq_kwargs: Mapping[str, str], c: Any):
+    def __request(nc_name: str, p: str, rq_kwargs: dict[str, str], c: Any):
         if Path(nc_name).exists():
             logging.info(f"Dataset {nc_name} already exists. Continuing...")
             return
@@ -352,7 +355,7 @@ def _request_direct_era(
         __request(netcdf_name, project, request_kwargs, client)
 
 
-def rename_era5_files(path: Union[os.PathLike, str]) -> None:
+def rename_era5_files(path: os.PathLike | str) -> None:
     """Rename badly named ERA5 files.
 
     Notes

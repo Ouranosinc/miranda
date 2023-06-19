@@ -13,13 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from __future__ import annotations
 
 __author__ = "Trevor James Smith"
 __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.4.6-beta"
 
 
-from . import (  # convert,
+from . import (
     archive,
     convert,
     cv,

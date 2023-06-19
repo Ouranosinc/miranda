@@ -6,8 +6,8 @@ on:
       - main
     paths-ignore:
       - HISTORY.rst
+      - pyproject.toml
       - setup.cfg
-      - setup.py
       - miranda/__init__.py
   pull_request:
 

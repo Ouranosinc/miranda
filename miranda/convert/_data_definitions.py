@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import datetime
 import json
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -96,12 +97,12 @@ xarray_frequencies_to_cmip6like = {
 
 def _gather(
     name: str,
-    variables: List[str],
-    source: Union[str, os.PathLike],
+    variables: list[str],
+    source: str | os.PathLike,
     glob_pattern: str,
-    suffix: Optional[str] = None,
-    recursive: Optional[bool] = False,
-) -> Dict[str, List[Path]]:
+    suffix: str | None = None,
+    recursive: bool | None = False,
+) -> dict[str, list[Path]]:
     source = Path(source).expanduser()
     logging.info(f"Gathering {name} files from: {source.as_posix()}")
     in_files = list()
@@ -122,10 +123,10 @@ def _gather(
 
 def gather_ecmwf(
     project: str,
-    path: Union[str, os.PathLike],
+    path: str | os.PathLike,
     back_extension: bool = False,
     monthly_means: bool = False,
-) -> Dict[str, List[Path]]:
+) -> dict[str, list[Path]]:
     """
 
     Parameters
@@ -137,9 +138,8 @@ def gather_ecmwf(
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
-    # ERA5-Single-Levels source data
     name = (
         f"{project}"
         f"{'-monthly-means' if monthly_means else ''}"
@@ -150,7 +150,7 @@ def gather_ecmwf(
     return _gather(name, era5_variables, source=path, glob_pattern=glob_pattern)
 
 
-def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_agmerra(path: str | os.PathLike) -> dict[str, list[Path]]:
     """Gather agMERRA source data.
 
     Parameters
@@ -159,14 +159,14 @@ def gather_agmerra(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "merra", nasa_ag_variables, source=path, glob_pattern="AgMERRA_*_{variable}.nc4"
     )
 
 
-def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_agcfsr(path: str | os.PathLike) -> dict[str, list[Path]]:
     """Gather agCFSR source data.
 
     Parameters
@@ -175,14 +175,14 @@ def gather_agcfsr(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "cfsr", nasa_ag_variables, source=path, glob_pattern="AgCFSR_*_{variable}.nc4"
     )
 
 
-def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_nrcan_gridded_obs(path: str | os.PathLike) -> dict[str, list[Path]]:
     """Gather NRCan Gridded Observations source data.
 
     Parameters
@@ -198,7 +198,7 @@ def gather_nrcan_gridded_obs(path: Union[str, os.PathLike]) -> Dict[str, List[Pa
     )
 
 
-def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_wfdei_gem_capa(path: str | os.PathLike) -> dict[str, list[Path]]:
     """Gather WFDEI-GEM-CaPa source data.
 
     Parameters
@@ -207,7 +207,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "wfdei-gem-capa",
@@ -217,7 +217,7 @@ def gather_wfdei_gem_capa(path: Union[str, os.PathLike]) -> Dict[str, List[Path]
     )
 
 
-def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
     """Gather SC-Earth source data
 
     Parameters
@@ -226,7 +226,7 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     return _gather(
         "sc-earth",
@@ -237,8 +237,8 @@ def gather_sc_earth(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
 
 def gather_rdrs(
-    name: str, path: Union[str, os.PathLike], suffix: str, key: str
-) -> Dict[str, Dict[str, List[Path]]]:
+    name: str, path: str | os.PathLike, suffix: str, key: str
+) -> dict[str, dict[str, list[Path]]]:
     """Gather RDRS processed source data.
 
     Parameters
@@ -246,11 +246,12 @@ def gather_rdrs(
     name : str
     path : str or os.PathLike
     suffix : str
-    key : str  one of 'raw' or 'cf' indicating which variable name dictionary to search for
+    key : {"raw", "cf"}
+        Indicating which variable name dictionary to search for.
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
     if isinstance(path, str):
         path = Path(path).expanduser()
@@ -270,8 +271,8 @@ def gather_rdrs(
 
 
 def gather_raw_rdrs_by_years(
-    path: Union[str, os.PathLike]
-) -> Dict[str, Dict[str, List[Path]]]:
+    path: str | os.PathLike,
+) -> dict[str, dict[str, list[Path]]]:
     """Gather raw RDRS files for preprocessing.
 
     Parameters
@@ -280,7 +281,7 @@ def gather_raw_rdrs_by_years(
 
     Returns
     -------
-    dict(str, dict(str, list[Path])) or None
+    dict[str, dict[str, list[pathlib.Path]]
     """
     # Time stamps starts at noon and flow into subsequent months
     # Need full year plus previous december in order to easily produce complete hourly frequency monthly files
@@ -295,7 +296,17 @@ def gather_raw_rdrs_by_years(
     return {"rdrs-v21": year_sets}
 
 
-def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
+def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
+    """Gather raw ETS-GRNCH files for preprocessing.
+
+    Parameters
+    ----------
+    path: str or os.PathLike
+
+    Returns
+    -------
+    dict(str, dict(str, list[Path])) or None
+    """
     # GRNCH-ETS source data
     source_grnch = Path(path)
     logging.info(f"Gathering GRNCH from: {source_grnch.as_posix()}")
@@ -310,25 +321,24 @@ def gather_grnch(path: Union[str, os.PathLike]) -> Dict[str, List[Path]]:
 
 
 def gather_nex(
-    path: Union[str, os.PathLike],
-) -> Dict[str, List[Path]]:
-    """Put all files that should be contained in one dataset in one entry of the dictionnary.
+    path: str | os.PathLike,
+) -> dict[str, list[Path]]:
+    """Gather raw NEX files for preprocessing.
+
+    Put all files that should be contained in one dataset in one entry of the dictionary.
 
     Parameters
     ----------
     path : str or os.PathLike
-    back_extension : bool
-    monthly_means : bool
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
-
     source = Path(path)
     datasets = source.glob("*/*/*/*/*/*/*/*/*/")
 
-    out_dict = {}
+    out_dict = dict()
     # separate files by datasets
     for dataset in datasets:
         in_files = list()
@@ -338,9 +348,11 @@ def gather_nex(
 
 
 def gather_emdna(
-    path: Union[str, os.PathLike],
-) -> Dict[str, List[Path]]:
-    """Put all files with the same member together.
+    path: str | os.PathLike,
+) -> dict[str, list[Path]]:
+    """Gather raw EMDNA files for preprocessing.
+
+    Put all files with the same member together.
 
     Parameters
     ----------
@@ -348,9 +360,8 @@ def gather_emdna(
 
     Returns
     -------
-    dict(str, list[pathlib.Path])
+    dict[str, list[pathlib.Path]]
     """
-
     source = Path(path)
     member_dict = {}
     # 100 members

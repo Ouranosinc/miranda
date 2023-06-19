@@ -1,11 +1,8 @@
-"""
-Tests for `miranda` module.
-"""
+from __future__ import annotations
+
 from pathlib import Path
 
 import miranda
-
-from .common import test_data
 
 
 class TestMirandaVersion:
@@ -32,7 +29,7 @@ class TestDatabase:
         db = miranda.DataBase(common)
 
         assert len(db) == 3
-        assert str(db.__dict__["_common_path"]).endswith("tests/common/cmip5")
+        assert str(db.__dict__["_common_path"]).endswith("tests/data/cmip5")
 
     def test_dict_funcs(self):
         common = Path(__file__).parent

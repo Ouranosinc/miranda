@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import logging
-from datetime import date
+from datetime import datetime
 from logging import config
 from pathlib import Path
-from typing import List, Union
 
 from miranda.io import find_filepaths
 from miranda.io.utils import creation_date
@@ -14,32 +15,35 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 
 def select_by_date_modified(
-    source: Union[Path, str],
-    year: int,
-    month: int,
-    day: int,
-    pattern: str = None,
-    datetime: date = None,
-) -> List:
-    """
+    source: str | Path,
+    year: int | None,
+    month: int | None,
+    day: int | None,
+    *,
+    suffixes: str = "nc",
+    date: datetime,
+) -> list[Path]:
+    """Select files by the date on which they were last modified.
 
     Parameters
     ----------
-    source
-    year
-    month
-    day
-    pattern
-    datetime
+    source : str or Path
+    year : int
+    month : int
+    day : int
+    suffixes : str
+    date : datetime.date
 
     Returns
     -------
-
+    list of Path
     """
+    if date:
+        date_selected = date
+    else:
+        date_selected = datetime(year, month, day)
 
-    date_selected = date(year, month, day) or datetime
-
-    files = find_filepaths(source, file_suffixes=pattern)
+    files = find_filepaths(source, file_suffixes=suffixes)
 
     selected_files = list()
     for file in files:

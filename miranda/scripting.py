@@ -1,8 +1,9 @@
+"""Scripting Helpers module."""
+from __future__ import annotations
+
 import pathlib
 import sys
 from datetime import datetime as dt
-
-MiB = int(pow(2, 20))
 
 _CONSOLE_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _LOGFILE_FORMAT = "%(asctime)s: [%(levelname)s]: %(filename)s(%(funcName)s:%(lineno)s) >>> %(message)s"
@@ -21,23 +22,19 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "formatter": "standard",
             "class": "logging.StreamHandler",
-            "stream": "ext://sys.stdout",  # Default is stderr
+            "stream": sys.stdout,
         },
         "rotated_file": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "logfile",
-            "filename": "{}_{}.log".format(
-                dt.now().strftime("%Y%m%d"), pathlib.Path(sys.argv[0]).stem
-            ),
-            "maxBytes": 2 * MiB,
+            "filename": f"{dt.now().strftime('%Y%m%d')}_{pathlib.Path(sys.argv[0]).stem}.log",
+            "maxBytes": 2 * 1024 * 1024,  # 2 MB
             "backupCount": 10,
         },
         "standard_file": {
             "class": "logging.FileHandler",
             "formatter": "logfile",
-            "filename": "{}_{}.log".format(
-                dt.now().strftime("%Y%m%d"), pathlib.Path(sys.argv[0]).stem
-            ),
+            "filename": f"{dt.now().strftime('%Y%m%d')}_{pathlib.Path(sys.argv[0]).stem}.log",
         },
     },
     "loggers": {

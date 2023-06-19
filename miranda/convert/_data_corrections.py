@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import datetime
 import json
 import logging.config
 import os
 import warnings
+from collections.abc import Iterator, Sequence
 from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, Iterator, List, Optional, Sequence, Union
+from typing import Any, Callable
 
 import numpy as np
 import xarray as xr
@@ -36,8 +39,18 @@ __all__ = [
 ]
 
 
-def load_json_data_mappings(project: str) -> dict:
-    data_folder = Path(__file__).parent / "data"
+def load_json_data_mappings(project: str) -> dict[str, Any]:
+    """Load JSON mappings for supported dataset conversions.
+
+    Parameters
+    ----------
+    project : str
+
+    Returns
+    -------
+    dict[str, Any]
+    """
+    data_folder = Path(__file__).resolve().parent / "data"
 
     if project.startswith("era5"):
         metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
@@ -89,9 +102,7 @@ def _iter_entry_key(ds, meta, entry, key, project):
         yield vv, val
 
 
-def _simple_fix_dims(
-    d: Union[xr.Dataset, xr.DataArray]
-) -> Union[xr.Dataset, xr.DataArray]:
+def _simple_fix_dims(d: xr.Dataset | xr.DataArray) -> xr.Dataset | xr.DataArray:
     """Adjust dimensions found in a file so that it can be used for regridding purposes."""
     if "lon" not in d.dims or "lat" not in d.dims:
         dim_rename = dict()
@@ -113,11 +124,11 @@ def _simple_fix_dims(
 
 
 def conservative_regrid(
-    ds: Union[xr.DataArray, xr.Dataset], ref_grid: Union[xr.DataArray, xr.Dataset]
-) -> Union[xr.DataArray, xr.Dataset]:
+    ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | xr.Dataset
+) -> xr.DataArray | xr.Dataset:
     """Perform a conservative_normed regridding"""
     try:
-        import xesmf as xe
+        import xesmf as xe  # noqa
     except ModuleNotFoundError:
         raise ModuleNotFoundError(
             "This function requires the `xesmf` library which is not installed. "
@@ -143,22 +154,22 @@ def conservative_regrid(
 
 
 def threshold_mask(
-    ds: Union[xr.Dataset, xr.DataArray],
+    ds: xr.Dataset | xr.DataArray,
     *,
-    mask: Union[xr.Dataset, xr.DataArray],
-    mask_cutoff: Union[float, bool] = False,
-) -> Union[xr.Dataset, xr.DataArray]:
+    mask: xr.Dataset | xr.DataArray,
+    mask_cutoff: float | bool = False,
+) -> xr.Dataset | xr.DataArray:
     """Land-Sea mask operations.
 
     Parameters
     ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
-    mask : Union[xr.Dataset, xr.DataArray]
+    ds : xr.Dataset or str or os.PathLike
+    mask : xr.Dataset or xr.DataArray
     mask_cutoff : float or bool
 
     Returns
     -------
-    Union[xr.Dataset, xr.DataArray]
+    xr.Dataset or xr.DataArray
     """
     mask = _simple_fix_dims(mask)
 
@@ -174,7 +185,7 @@ def threshold_mask(
         mask_variable = mask.name
 
     try:
-        from clisops.core import subset_bbox
+        from clisops.core import subset_bbox  # noqa
 
         log_msg = f"Masking dataset with {mask_variable}."
         if mask_cutoff:
@@ -251,6 +262,18 @@ def correct_time_entries(
 
 
 def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.Dataset:
+    """
+
+    Parameters
+    ----------
+    d : xarray.Dataset
+    split : str
+    location : int
+
+    Returns
+    -------
+    xarray.Dataset
+    """
     filename = d.encoding["source"]
     new_name = Path(filename).stem.split(split)[location]
     old_name = list(d.data_vars.keys())[0]
@@ -262,8 +285,20 @@ def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.
     return d.rename({old_name: new_name})
 
 
-def preprocessing_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
-    def _preprocess_correct(d: xr.Dataset, *, ops: List[partial]) -> xr.Dataset:
+def preprocessing_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
+    """Corrections function dispatcher to ensure minimal dataset validity on open.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+    project : str
+
+    Returns
+    -------
+    xarray.Dataset
+    """
+
+    def _preprocess_correct(d: xr.Dataset, *, ops: list[partial]) -> xr.Dataset:
         for correction in ops:
             d = correction(d)
         return d
@@ -286,7 +321,7 @@ def preprocessing_corrections(ds: xr.Dataset, *, project: str) -> xr.Dataset:
     return ds
 
 
-def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def _correct_units_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_corrected_units"
     for var, val in _iter_entry_key(d, m, "variables", key, p):
         if val:
@@ -301,7 +336,7 @@ def _correct_units_names(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 
 # for de-accumulation or conversion to flux
-def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_transformation"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
@@ -395,7 +430,7 @@ def _transform(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d_out
 
 
-def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_offset_time"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
@@ -444,7 +479,7 @@ def _offset_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d_out
 
 
-def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_invert_sign"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
@@ -472,7 +507,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 
 # For converting variable units to standard workflow units
-def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
+def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
     if "time" in m["dimensions"].keys():
         if m["dimensions"]["time"].get("units"):
             d["time"]["units"] = m["dimensions"]["time"]["units"]
@@ -489,7 +524,7 @@ def _units_cf_conversion(d: xr.Dataset, m: Dict) -> xr.Dataset:
 
 
 # For clipping variable values to an established maximum/minimum
-def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_clip_values"
     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
     converted = []
@@ -537,7 +572,7 @@ def _clip_values(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
     return d_out
 
 
-def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_ensure_correct_time"
     strict_time = "_strict_time"
 
@@ -609,7 +644,21 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
 
 # For renaming and reordering lat and lon dims
 def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    # Rename dimensions to CF to their equivalents
+    """Rename dimensions to CF to their equivalents.
+
+    Parameters
+    ----------
+    d : xarray.Dataset
+        Dataset with dimensions to be updated.
+    p : str
+        Dataset project name.
+    m : dict
+        Metadata definition dictionary for project and variable(s).
+
+    Returns
+    -------
+    xarray.Dataset
+    """
     rename_dims = dict()
     for dim in d.dims:
         if dim in m["dimensions"].keys():
@@ -662,7 +711,21 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
 
 def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    # Add variable metadata and remove nonstandard entries
+    """Add variable metadata and remove nonstandard entries.
+
+    Parameters
+    ----------
+    d : xarray.Dataset
+        Dataset with variable(s) to be updated.
+    p : str
+        Dataset project name.
+    m : dict
+        Metadata definition dictionary for project and variable(s).
+
+    Returns
+    -------
+    xarray.Dataset
+    """
     var_descriptions = m["variables"]
     var_correction_fields = [
         "_clip_values",
@@ -690,7 +753,7 @@ def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     return d
 
 
-def metadata_conversion(d: xr.Dataset, p: str, m: Dict) -> xr.Dataset:
+def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     """Update xarray dataset and data_vars with project-specific metadata fields.
 
     Parameters
@@ -821,22 +884,22 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 
 
 def dataset_conversion(
-    input_files: Union[
-        str,
-        os.PathLike,
-        Sequence[Union[str, os.PathLike]],
-        Iterator[os.PathLike],
-        xr.Dataset,
-    ],
+    input_files: (
+        str
+        | os.PathLike
+        | Sequence[str | os.PathLike]
+        | Iterator[os.PathLike]
+        | xr.Dataset
+    ),
     project: str,
-    domain: Optional[str] = None,
-    mask: Optional[Union[xr.Dataset, xr.DataArray]] = None,
-    mask_cutoff: Union[float, bool] = False,
+    domain: str | None = None,
+    mask: xr.Dataset | xr.DataArray | None = None,
+    mask_cutoff: float | bool = False,
     regrid: bool = False,
     add_version_hashes: bool = True,
-    preprocess: Optional[Union[Callable, str]] = "auto",
+    preprocess: Callable | str | None = "auto",
     **xr_kwargs,
-) -> Union[xr.Dataset, xr.DataArray]:
+) -> xr.Dataset | xr.DataArray:
     """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters

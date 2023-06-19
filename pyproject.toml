@@ -1,0 +1,139 @@
+[build-system]
+requires = ["flit_core >=3.8,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "miranda"
+authors = [
+  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
+]
+maintainers = [
+  {name = "Travis Logan", email = "logan.travis@ouranos.ca"},
+  {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
+]
+description = "Python utilities for climate data collection, conversion, and management"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.7.0"
+keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion"]
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Atmospheric Science"
+]
+dynamic = ["version"]
+dependencies = [
+  "cftime",
+  "dask",
+  "distributed",
+  "h5netcdf",
+  "netCDF4",
+  "numpy",
+  "pandas",
+  "pyessv",
+  "pyyaml",
+  "schema",
+  "xarray",
+  "xclim",
+  "zarr"
+]
+
+[project.optional-dependencies]
+dev = [
+  # Dev tools and testing
+  "black>=23.3.0",
+  "bump2version",
+  "coverage[toml]",
+  "flake8",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "tox"
+]
+docs = [
+  # Documentation and examples
+  "furo",
+  "ipykernel",
+  "nbsphinx",
+  "pandoc",
+  "sphinx",
+  "sphinx_codeautolink",
+  "sphinx_copybutton"
+]
+gis = [
+  # GIS library support
+  "clisops",
+  "geopandas",
+  "regionmask",
+  "xesmf"
+]
+remote = [
+  "cdsapi",
+  "ecmwf-api-client",
+  "fabric",
+  "intake",
+  "intake-esm",
+  "numcodecs",
+  "paramiko>=2.6.0",
+  "s3fs",
+  "scp"
+]
+
+[project.urls]
+"Homepage" = "https://miranda.readthedocs.io/"
+"Source" = "https://github.com/Ouranosinc/miranda/"
+"Changelog" = "https://miranda.readthedocs.io/en/stable/history.html"
+"Issue tracker" = "https://github.com/Ouranosinc/miranda/issues"
+"About Ouranos" = "https://www.ouranos.ca/en/"
+
+[tool]
+
+[tool.black]
+target-version = [
+  "py37"
+]
+
+[tool.coverage.run]
+relative_files = true
+omit = ["tests/*.py"]
+
+[tool.flit.sdist]
+include = [
+  "AUTHORS.rst",
+  "CONTRIBUTING.rst",
+  "HISTORY.rst",
+  "LICENSE",
+  "README.rst",
+  "docs/*.rst",
+  "docs/Makefile",
+  "docs/conf.py",
+  "docs/make.bat",
+  "docs/static/images/*.png"
+]
+exclude = [".*", "**/__pycache__", "**/*.py[co]", "docs/_build", "docs/apidoc/miranda*.rst", "docs/apidoc/modules.rst"]
+
+[tool.isort]
+profile = "black"
+py_version = 37
+append_only = true
+add_imports = "from __future__ import annotations"
+skip = ["templates", "docs/conf.py"]
+
+[tool.pytest.ini_options]
+addopts = [
+  "--verbose",
+  "--color=yes",
+  "--cov=miranda",
+  "--cov-report=term-missing"
+]
+filterwarnings = ["ignore::UserWarning"]

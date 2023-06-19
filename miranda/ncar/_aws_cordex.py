@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import functools
 import json
@@ -5,7 +7,6 @@ import logging.config
 import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import schema
 import xarray as xr
@@ -25,7 +26,7 @@ try:
 except ImportError:
     warnings.warn(
         f"{__name__} functions require additional dependencies. "
-        "Please install them with `pip install miranda[full]`."
+        "Please install them with `pip install miranda[remote]`."
     )
 
 
@@ -69,7 +70,7 @@ _allowed_args = schema.Schema(
 )
 
 
-def cordex_aws_calendar_correction(ds) -> Optional[xr.Dataset]:
+def cordex_aws_calendar_correction(ds) -> xr.Dataset | None:
     """AWS-stored CORDEX datasets are all on the same standard calendar, this converts
     the data back to the original calendar, removing added NaNs.
 
@@ -93,13 +94,15 @@ def cordex_aws_calendar_correction(ds) -> Optional[xr.Dataset]:
 
 
 def cordex_aws_download(
-    target_folder: Union[str, Path],
+    target_folder: str | Path,
     *,
-    search: Dict[str, Union[str, List[str]]],
+    search: dict[str, str | list[str]],
     correct_times: bool = False,
-    domain: Optional[str] = None,
+    domain: str | None = None,
 ):
-    def _subset_preprocess(d: xr.Dataset, dom: List[float]) -> xr.Dataset:
+    """Download CORDEX interpolated grid for North America from Amazon S3."""
+
+    def _subset_preprocess(d: xr.Dataset, dom: list[float]) -> xr.Dataset:
         try:
             from clisops.core import subset_bbox
 

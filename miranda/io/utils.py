@@ -1,9 +1,12 @@
+"""IO Utilities module."""
+from __future__ import annotations
+
 import json
 import logging.config
 import os
+from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
 
 import dask
 import netCDF4 as nc  # noqa
@@ -30,7 +33,7 @@ name_configurations = json.load(open(_data_folder / "ouranos_name_config.json"))
 
 
 def name_output_file(
-    ds_or_dict: Union[xr.Dataset, Dict[str, str]], output_format: str
+    ds_or_dict: xr.Dataset | dict[str, str], output_format: str
 ) -> str:
     """Name an output file based on facets within a Dataset or a dictionary.
 
@@ -148,16 +151,16 @@ def name_output_file(
 
 def delayed_write(
     ds: xr.Dataset,
-    outfile: Union[str, os.PathLike],
+    outfile: str | os.PathLike,
     output_format: str,
     overwrite: bool,
-    target_chunks: Optional[dict] = None,
+    target_chunks: dict | None = None,
 ) -> dask.delayed:
     """Stage a Dataset writing job using `dask.delayed` objects.
 
     Parameters
     ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
+    ds : xr.Dataset
     outfile : str or os.PathLike
     target_chunks : dict
     output_format : {"netcdf", "zarr"}
@@ -207,7 +210,7 @@ def delayed_write(
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
 
 
-def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str, int):
+def get_time_attrs(file_or_dataset: str | os.PathLike | xr.Dataset) -> (str, int):
     """Determine attributes related to time dimensions."""
     if isinstance(file_or_dataset, (str, Path)):
         ds = xr.open_dataset(Path(file_or_dataset).expanduser())
@@ -221,8 +224,8 @@ def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str
 
 
 def get_global_attrs(
-    file_or_dataset: Union[str, os.PathLike, xr.Dataset]
-) -> Dict[str, Union[str, int]]:
+    file_or_dataset: str | os.PathLike | xr.Dataset,
+) -> dict[str, str | int]:
     """Collect global attributes from NetCDF, Zarr, or Dataset object."""
     if isinstance(file_or_dataset, (str, Path)):
         file = Path(file_or_dataset).expanduser()
@@ -247,8 +250,19 @@ def get_global_attrs(
 
 
 def sort_variables(
-    files: List[Path], variables: Sequence[str]
-) -> Dict[str, List[Path]]:
+    files: list[Path], variables: Sequence[str]
+) -> dict[str, list[Path]]:
+    """Sort all variables within supplied files for treatment.
+
+    Parameters
+    ----------
+    files: list of Path
+    variables: sequence of str
+
+    Returns
+    -------
+    dict[str, list[Path]]
+    """
     variable_sorted = dict()
     if variables:
         logging.info("Sorting variables into groups. This could take some time.")
@@ -267,7 +281,7 @@ def sort_variables(
     return variable_sorted
 
 
-def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
+def get_chunks_on_disk(file: os.PathLike | str) -> dict:
     """Determine the chunks on disk for a given NetCDF or Zarr file.
 
     Parameters
@@ -299,7 +313,7 @@ def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
     return chunks
 
 
-def creation_date(path_to_file: Union[str, os.PathLike]) -> Union[float, date]:
+def creation_date(path_to_file: str | os.PathLike) -> float | date:
     """Return the date that a file was created, falling back to when it was last modified if unable to determine.
 
     See https://stackoverflow.com/a/39501288/1709587 for explanation.
@@ -310,7 +324,7 @@ def creation_date(path_to_file: Union[str, os.PathLike]) -> Union[float, date]:
 
     Returns
     -------
-    Union[float, date]
+    float or date
     """
     if os.name == "nt":
         return Path(path_to_file).stat().st_ctime
