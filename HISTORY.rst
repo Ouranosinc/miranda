@@ -4,7 +4,7 @@
 History
 =======
 
-v0.5.0 (unreleased)
+v0.5.0 (2023-06-19)
 -------------------
 Contributors to this version: Juliette Lavoie (:user: `juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
