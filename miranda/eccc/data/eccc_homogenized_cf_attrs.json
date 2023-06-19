@@ -1,0 +1,111 @@
+{
+  "Header": {
+    "Conventions": "CF-1.8",
+    "_product": {
+      "gen2": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 2",
+      "gen3": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 3"
+    },
+    "citation": {
+      "gen2": "Mekis, É and L.A. Vincent, 2011: An overview of the second generation adjusted daily precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), 163-177 doi:10.1080/07055900.2011.583910",
+      "gen3": "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"
+    },
+    "contact": "info.cccs-ccsc@canada.ca",
+    "documentation": "https://www.canada.ca/en/environment-climate-change/services/climate-change/canadian-centre-climate-services/display-download/technical-documentation-adjusted-climate-data.html",
+    "float_missing_value": "1e20",
+    "frequency": "day",
+    "institution": "GovCan",
+    "int_missing_value": "-999",
+    "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
+    "license_type": "permissive",
+    "organization": "ECCC",
+    "realm": "atmos",
+    "table_date": "2023-03-23",
+    "table_id": "ECCC"
+  },
+  "variable_entry": {
+    "dm": {
+      "add_offset": 273.15,
+      "cell_methods": "time: mean",
+      "comments": "Station data converted from Mean Temp (°C)",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Near-Surface Air Temperature",
+      "original_field": "Mean Temp (°C)",
+      "out_name": "tas",
+      "scale_factor": 1,
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K"
+    },
+    "dn": {
+      "add_offset": 273.15,
+      "cell_methods": "time: minimum",
+      "comments": "Station data converted from Min Temp (°C)",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "original_field": "Min Temp (°C)",
+      "out_name": "tasmin",
+      "scale_factor": 1,
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K"
+    },
+    "dr": {
+      "add_offset": 0,
+      "cell_methods": "time: mean",
+      "comments": "Station data converted from Total Rain (mm) using a density of 1000 kg/m³",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Liquid Precipitation",
+      "original_field": "Total Rain (mm)",
+      "out_name": "prlp",
+      "scale_factor": 1.1574074074074073e-05,
+      "standard_name": "rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1"
+    },
+    "ds": {
+      "add_offset": 0,
+      "cell_methods": "time: mean",
+      "comments": "station data converted from Total Snow (cm) using a density of 100 kg/m³",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Snowfall Flux",
+      "original_field": "Total Snow (cm)",
+      "out_name": "prsn",
+      "scale_factor": 1.1574074074074073e-05,
+      "standard_name": "snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1"
+    },
+    "dt": {
+      "add_offset": 0,
+      "cell_methods": "time: mean",
+      "comments": "Station data converted from Total Precip (mm) using a density of 1000 kg/m³",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Precipitation",
+      "original_field": "Total Precip (mm)",
+      "out_name": "pr",
+      "scale_factor": 1.1574074074074073e-05,
+      "standard_name": "precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1"
+    },
+    "dx": {
+      "add_offset": 273.15,
+      "cell_methods": "time: maximum",
+      "comments": "station data converted from Max Temp (°C)",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "original_field": "Max Temp (°C)",
+      "out_name": "tasmax",
+      "scale_factor": 1,
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K"
+    }
+  }
+}
