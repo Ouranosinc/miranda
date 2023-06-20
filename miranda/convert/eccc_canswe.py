@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ._data_corrections import dataset_corrections
+from .corrections import dataset_corrections
 
 __all__ = ["convert_canswe"]
 
@@ -55,7 +55,7 @@ def convert_canswe(file: str | Path, output: str | Path):
     ds.snd.attrs["ancillary_variables"] = "data_flag_snd qc_flag_snd"
     ds.snw.attrs["ancillary_variables"] = "data_flag_snw qc_flag_snw"
 
-    ds = dataset_corrections(ds, "ec-canswe")
+    ds = dataset_corrections(ds, "eccc-canswe")
     ds.attrs["frequency"] = "day"
     date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
     for var in ["snd", "snw"]:

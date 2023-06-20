@@ -27,6 +27,7 @@
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
+    "source": "RDRS",
     "table_date": "2023-03-23",
     "table_id": "eccc",
     "type": "reconstruction"
@@ -46,8 +47,8 @@
     "RDRS_v2.1_A_PR0_SFC": {
       "_cf_variable_name": "pr",
       "_corrected_units": false,
-      "_invert_sign": {},
-      "_offset_time": {},
+      "_invert_sign": false,
+      "_offset_time": false,
       "_transformation": {
         "rdrs-v21": "amount2rate"
       },
@@ -63,9 +64,9 @@
       "_corrected_units": {
         "rdrs-v21": "degC"
       },
-      "_invert_sign": {},
-      "_offset_time": {},
-      "_transformation": {},
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
       "cell_methods": "time: point",
       "long_name": "1.5 metre temperature",
       "standard_name": "air_temperature",

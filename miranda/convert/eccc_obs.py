@@ -1,3 +1,4 @@
+"""Specialized conversion tools for Environment and Climate Change Canada / Meteorological Service of Canada data."""
 ######################################################################
 # S.Biner, Ouranos, mai 2019
 #
@@ -36,21 +37,22 @@ from dask.diagnostics import ProgressBar
 from xclim.core.units import convert_units_to
 
 from miranda.archive import group_by_length
+from miranda.convert import load_json_data_mappings
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
-from miranda.units import GiB, MiB
 from miranda.utils import generic_extract_archive
-
-from ._utils import cf_station_metadata
 
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "aggregate_stations",
+    "merge_stations",
     "convert_flat_files",
     "merge_converted_variables",
 ]
 
+KiB = int(pow(2, 10))
+MiB = int(pow(2, 20))
+GiB = int(pow(2, 30))
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
@@ -86,7 +88,7 @@ def _remove_duplicates(ds):
 
 
 def _convert_station_file(
-    fichier: Path,
+    file: Path,
     output_path: Path,
     errored_files: list[Path],
     mode: str,
@@ -117,11 +119,11 @@ def _convert_station_file(
         missing_values = {-9999, "#####"}
 
     with tempfile.TemporaryDirectory() as temp_folder:
-        if fichier.suffix in [".gz", ".tar", ".zip", ".7z"]:
-            data_files = generic_extract_archive(fichier, output_dir=temp_folder)
+        if file.suffix in [".gz", ".tar", ".zip", ".7z"]:
+            data_files = generic_extract_archive(file, output_dir=temp_folder)
         else:
-            data_files = [fichier]
-        logging.info(f"Processing file: {fichier}.")
+            data_files = [file]
+        logging.info(f"Processing file: {file}.")
 
         size_limit = 1 * GiB
 
@@ -325,7 +327,7 @@ def _convert_station_file(
 
                     history = (
                         f"{dt.now().strftime('%Y-%m-%d %X')} converted from flat station file "
-                        f"(`{fichier.name}`) to n-dimensional array."
+                        f"(`{file.name}`) to n-dimensional array."
                     )
 
                     # TODO: This info should eventually be sourced from a JSON definition
@@ -432,8 +434,8 @@ def convert_flat_files(
 
     for variable_code in variables:
         variable_code = str(variable_code).zfill(3)
-        metadata = cf_station_metadata(variable_code)
-        nc_name = metadata["nc_name"]
+        metadata = load_json_data_mappings("eccc-obs")[variable_code]
+        nc_name = metadata["cf_variable_name"]
 
         rep_nc = Path(output_folder).joinpath(nc_name)
         rep_nc.mkdir(parents=True, exist_ok=True)
@@ -477,7 +479,7 @@ def convert_flat_files(
     logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")
 
 
-def aggregate_stations(
+def merge_stations(
     source_files: str | os.PathLike | None = None,
     output_folder: str | os.PathLike | None = None,
     time_step: str = None,
@@ -525,6 +527,7 @@ def aggregate_stations(
         pass
     elif isinstance(variables, (str, int)):
         variables = [variables]
+
     # TODO: have the variable gathered from a JSON file
     elif variables is None:
         if mode == "hourly":
@@ -542,8 +545,8 @@ def aggregate_stations(
         raise NotImplementedError()
 
     for variable_code in variables:
-        info = cf_station_metadata(variable_code)
-        variable_name = info["nc_name"]
+        info = load_json_data_mappings("eccc-obs")["variables"][variable_code]
+        variable_name = info["cf_variable_name"]
         logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
 
         # Only perform aggregation on available data with corresponding metadata
@@ -869,18 +872,18 @@ def merge_converted_variables(
 
     Parameters
     ----------
-    source_files: str, Path
-    output_folder: str, Path
-    variables: str or int or list of str or int, optional
-    station_metadata: str or Path, optional
-    overwrite: bool
-    n_workers: int
+    source_files : str, Path
+    output_folder : str, Path
+    variables : str or int or list of str or int, optional
+    station_metadata : str or Path, optional
+    overwrite : bool
+    n_workers : int
 
     Returns
     -------
     None
     """
-    meta = load_station_metadata(station_metadata)
+    meta = load_json_data_mappings("eccc-obs")
     metadata_file = Path(tempfile.NamedTemporaryFile(suffix=".nc", delete=False).name)
     meta.to_netcdf(metadata_file)
 
@@ -894,7 +897,7 @@ def merge_converted_variables(
         if not isinstance(variables, list):
             variables = [variables]
         for var in variables:
-            selected_variables.append(cf_station_metadata(var))
+            selected_variables.append(meta[var])
 
     variables_found = [x.name for x in source_files.iterdir() if x.is_dir()]
     if selected_variables:

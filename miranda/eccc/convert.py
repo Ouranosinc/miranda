@@ -10,7 +10,7 @@ import time
 from functools import partial
 from pathlib import Path
 
-from miranda.eccc._raw import _convert_station_file
+from miranda.convert.eccc_obs import _convert_station_file
 from miranda.eccc._utils import cf_station_metadata
 from miranda.scripting import LOGGING_CONFIG
 

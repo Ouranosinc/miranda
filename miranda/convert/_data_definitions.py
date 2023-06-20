@@ -5,6 +5,7 @@ import json
 import logging.config
 import os
 from pathlib import Path
+from typing import Any
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -21,10 +22,11 @@ __all__ = [
     "gather_nex",
     "gather_nrcan_gridded_obs",
     "gather_raw_rdrs_by_years",
-    "gather_rdrs",
+    "gather_eccc_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
     "gather_emdna",
+    "load_json_data_mappings",
     "nasa_ag_variables",
     "nrcan_variables",
     "project_institutes",
@@ -34,6 +36,54 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
+
+
+def load_json_data_mappings(project: str) -> dict[str, Any]:
+    """Load JSON mappings for supported dataset conversions.
+
+    Parameters
+    ----------
+    project : str
+
+    Returns
+    -------
+    dict[str, Any]
+    """
+    data_folder = Path(__file__).resolve().parent / "data"
+
+    if project.startswith("era5"):
+        metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+    elif project in ["rdrs-v21"]:
+        metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
+    elif project == "eccc-obs":
+        metadata_definition = json.load(open(data_folder / "eccc_obs_cf_attrs.json"))
+    elif project in ["agcfsr", "agmerra2"]:
+        metadata_definition = json.load(open(data_folder / "nasa_ag_cf_attrs.json"))
+    elif project in ["cordex", "cmip5", "cmip6"]:
+        metadata_definition = json.load(open(data_folder / "cmip_ouranos_attrs.json"))
+    elif project == "ets-grnch":
+        metadata_definition = json.load(open(data_folder / "ets_grnch_cf_attrs.json"))
+    elif project == "nrcan-gridded-10km":
+        raise NotImplementedError()
+    elif project == "wfdei-gem-capa":
+        metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
+    elif project.startswith("melcc"):
+        metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
+    elif project.startswith("ec"):
+        metadata_definition = json.load(open(data_folder / "eccc-canswe_cf_attrs.json"))
+    elif project in ["NEX-GDDP-CMIP6"]:
+        metadata_definition = json.load(open(data_folder / "nex-gddp-cmip6_attrs.json"))
+    elif project in ["ESPO-G6-R2"]:
+        metadata_definition = json.load(open(data_folder / "espo-g6-r2_attrs.json"))
+    elif project in ["ESPO-G6-E5L"]:
+        metadata_definition = json.load(open(data_folder / "espo-g6-e5l_attrs.json"))
+    elif project in ["EMDNA"]:
+        metadata_definition = json.load(open(data_folder / "emdna_cf_attrs.json"))
+    else:
+        raise NotImplementedError()
+
+    return metadata_definition
+
 
 eccc_rdrs_variables = dict()
 eccc_rdrs_variables["raw"] = [
@@ -54,7 +104,7 @@ era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
 ].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(open(_data_folder / "nasa_cf_attrs.json"))[
+nasa_ag_variables = json.load(open(_data_folder / "nasa_ag_cf_attrs.json"))[
     "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
@@ -236,7 +286,7 @@ def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
     )
 
 
-def gather_rdrs(
+def gather_eccc_rdrs(
     name: str, path: str | os.PathLike, suffix: str, key: str
 ) -> dict[str, dict[str, list[Path]]]:
     """Gather RDRS processed source data.

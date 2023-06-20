@@ -1,8 +1,8 @@
 from os import getenv
 from pathlib import Path
 
-from miranda.eccc import (
-    aggregate_stations,
+from miranda.convert.eccc_obs import (
+    merge_stations,
     convert_flat_files,
     merge_converted_variables,
 )
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         n_workers=n_workers,
     )
 
-    aggregate_stations(
+    merge_stations(
         source_files=merged,
         output_folder=final,
         time_step=time_step,
