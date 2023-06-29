@@ -12,8 +12,8 @@ def main():
     dask_dir = home.joinpath("tmpout", "dask")
     dask_dir.mkdir(parents=True, exist_ok=True)
     dask_kwargs = dict(
-        n_workers=5,
-        threads_per_worker=8,
+        n_workers=6,
+        threads_per_worker=6,
         memory_limit="5GB",
         dashboard_address=8998,
         local_directory=dask_dir,
@@ -43,7 +43,7 @@ def main():
         process_variables=vars_to_process,  # huss
         **dask_kwargs,
     )
-    #
+
     for freq in ["day", "1hr"]:
         infolder = Path(home).joinpath("RDRS_v21", f"tmp/ECCC/RDRS_v21/NAM/{freq}")
         for variable in [v for v in infolder.glob("*") if v.is_dir()]:
@@ -54,7 +54,7 @@ def main():
                 output_folder=Path(home).joinpath(
                     "RDRS_v21", f"converted/ECCC/RDRS_v21/NAM/{freq}/{variable.name}"
                 ),
-                overwrite=False,
+                overwrite=True,
                 **dask_kwargs,
             )
 
