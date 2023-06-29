@@ -57,10 +57,10 @@
       "units": "kg m-2 s-1"
     },
     "RDRS_v2.1_P_GZ_SFC": {
-      "_cf_variable_name": "zg",
+      "_cf_variable_name": "zgs",
       "cell_methods": "time: point",
       "long_name": "surface geopotential height",
-      "standard_name": "air_temperature",
+      "standard_name": "geopotential_height",
       "units": "m"
     },
     "RDRS_v2.1_P_HR_1.5m": {
