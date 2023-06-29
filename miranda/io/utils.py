@@ -100,7 +100,9 @@ def delayed_write(
     outfile: Union[str, os.PathLike],
     output_format: str,
     overwrite: bool,
+    encode: bool = True,
     target_chunks: Optional[dict] = None,
+    kwargs: Optional[dict] = None,
 ) -> dask.delayed:
     """
 
@@ -111,13 +113,16 @@ def delayed_write(
     target_chunks : dict
     output_format : {"netcdf", "zarr"}
     overwrite : bool
+    encode : bool
+    kwargs : list
 
     Returns
     -------
     dask.delayed.delayed
     """
     # Set correct chunks in encoding options
-    kwargs = dict()
+    if not kwargs:
+        kwargs = dict()
     kwargs["encoding"] = dict()
     try:
         for name, da in ds.data_vars.items():
@@ -139,15 +144,17 @@ def delayed_write(
                     kwargs["mode"] = "a"
             elif output_format == "zarr":
                 ds = ds.chunk(target_chunks)
-                kwargs["encoding"][name] = {
-                    "chunks": chunks,
-                    "compressor": zarr.Blosc(),
-                }
+                # if encode:
+                if "append_dim" not in kwargs.keys():
+                    kwargs["encoding"][name] = {
+                        "chunks": chunks,
+                    }
                 kwargs["compute"] = False
                 if overwrite:
                     kwargs["mode"] = "w"
         if kwargs["encoding"]:
-            kwargs["encoding"]["time"] = {"dtype": "int32"}
+            if "append_dim" not in kwargs.keys():
+                kwargs["encoding"]["time"] = {"dtype": "int32"}
 
     except KeyError:
         logging.error("Unable to encode chunks. Verify dataset.")
