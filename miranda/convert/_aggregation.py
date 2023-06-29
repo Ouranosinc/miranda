@@ -54,6 +54,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
             "snr",
             "snw",
             "swe",
+            "zgs",
         ]:
             aggregation_legend[variable] = {"mean"}
 
