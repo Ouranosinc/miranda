@@ -183,6 +183,8 @@ def concat_rechunk_zarr(
     outzarr = output_folder.joinpath(outzarr)
 
     if not outzarr.exists() or overwrite:
+        if outzarr.exists():
+            shutil.rmtree(outzarr)
         chunks = fetch_chunk_config(project=project, freq=freq, priority="time")
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(start_year), int(end_year) + 1)]
@@ -200,6 +202,7 @@ def concat_rechunk_zarr(
             chunks = translate_time_chunk(
                 chunks=chunks, calendar=ds.time.dt.calendar, timesize=len(ds.time)
             )
+            print(chunks)
             tmpzarr = outzarr.parent.joinpath(
                 "tmp",
                 f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
@@ -218,20 +221,56 @@ def concat_rechunk_zarr(
             with Client(**dask_kwargs):
                 dask.compute(job)
 
-        # get tmp zarrs
-        list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
-        ds = xr.open_mfdataset(list_zarr, engine="zarr")
-        # FIXME: Client is only needed for computation. Should be elsewhere.
-        job = delayed_write(
-            ds=ds,
-            outfile=outzarr,
-            output_format="zarr",
-            target_chunks=chunks,
-            overwrite=overwrite,
-        )  # kwargs=zarr_kwargs)
-        with Client(**dask_kwargs):
-            dask.compute(job)
+            # write to final
+            del ds
+            ds = xr.open_zarr(tmpzarr)
+            if outzarr.exists():
+                zarr_kwargs = dict(append_dim="time", mode="a")
+            else:
+                zarr_kwargs = None
+            job = delayed_write(
+                ds=ds,
+                outfile=outzarr,
+                output_format="zarr",
+                target_chunks=chunks,
+                overwrite=False,
+                encode=False,
+                kwargs=zarr_kwargs,
+            )
+            with Client(**dask_kwargs):
+                dask.compute(job)
+            shutil.rmtree(tmpzarr)
         shutil.rmtree(tmpzarr.parent)
+        # get tmp zarrs
+        # list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
+
+        # for zarr in list_zarr:
+        #
+        #     if outzarr.exists():
+        #         zarr_kwargs = dict(append_dim='time', mode='a')
+        #     else:
+        #         zarr_kwargs = None
+        #     job = delayed_write(
+        #         ds=ds,
+        #         outfile=outzarr,
+        #         output_format="zarr",
+        #         target_chunks=chunks,
+        #         overwrite=False,
+        #         encode=False,
+        #         kwargs=zarr_kwargs
+        #     )
+        #     with Client(**dask_kwargs):
+        #         dask.compute(job)
+        # ds = xr.open_mfdataset(list_zarr, engine="zarr")
+        # # FIXME: Client is only needed for computation. Should be elsewhere.
+        # job = delayed_write(
+        #     ds=ds,
+        #     outfile=outzarr,
+        #     output_format="zarr",
+        #     target_chunks=chunks,
+        #     overwrite=overwrite,
+        #
+        # )  # kwargs=zarr_kwargs)
 
 
 def merge_rechunk_zarrs(
