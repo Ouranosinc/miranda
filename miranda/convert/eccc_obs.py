@@ -27,6 +27,7 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
+from typing import List, Tuple, Union, Type, Any
 
 import dask.dataframe as dd
 import numpy as np
@@ -55,19 +56,23 @@ GiB = int(pow(2, 30))
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
-def fwf_column_definitions(time_frequency: str):
-    """Return the column widths for the fixed-width format."""
+def _fwf_column_definitions(time_frequency: str) -> Tuple[List[str], List[int], List[Type[Union[str, int]]]]:
+    """Return the column names, widths, and data types for the fixed-width format."""
 
     if time_frequency.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
+        column_names = ["code", "year", "month", "day", "code_var"]
         column_widths = [7, 4, 2, 2, 3] + [6, 1] * num_observations
+        column_dtypes = [str, int, int, int, str]
     elif time_frequency.lower() in ["d", "day", "daily"]:
         num_observations = 31
+        column_names = ["code", "year", "month", "code_var"]
         column_widths = [7, 4, 2, 3] + [6, 1] * num_observations
+        column_dtypes = [str, int, int, str]
     else:
         raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
 
-    return column_widths
+    return column_names, column_widths, column_dtypes
 
 
 def _remove_duplicates(ds):
@@ -80,9 +85,10 @@ def _remove_duplicates(ds):
 
 
 def convert_station(
-    data: str | os.PathLike, mode: str, using_dask_array: bool = False, **kwargs
+    data: str | os.PathLike, mode: str, using_dask_array: bool = False, *, client: Any, **kwargs
 ):
-    column_widths = fwf_column_definitions(mode)
+    data = Path(data)
+    column_names, column_widths, column_dtypes = _fwf_column_definitions(mode)
 
     if using_dask_array:
         pandas_reader = dd
@@ -105,20 +111,17 @@ def convert_station(
             **chunks,
         )
         if using_dask_array:
-            df = c.persist(df)
+            df = client.persist(df)
 
-    except FileNotFoundError:
-        logging.error(f"File {data} was not found.")
-        errored_files.append(data)
-        return
+    except FileNotFoundError as e:
+        msg = f"File {data} was not found: {e}"
+        logging.error(msg)
+        raise FileNotFoundError(msg)
 
-    except (UnicodeDecodeError, Exception) as e:
-        logging.error(
-            f"File {data.name} was unable to be read. "
-            f"This is probably an issue with the file: {e}"
-        )
-        errored_files.append(data)
-        return
+    except UnicodeDecodeError as e:
+        msg = f"File {data.name} was unable to be read. This is probably an issue with the file: {e}"
+        logging.error(msg)
+        raise UnicodeDecodeError(msg)
 
     # Loop through the station codes
     station_codes = df["code"].unique()
@@ -320,8 +323,6 @@ def _convert_station_file(
     errored_files: list[Path],
     mode: str,
     add_offset: float,
-    column_dtypes: list[str],
-    column_names: list[str],
     long_name: str,
     missing_flags: set[str],
     missing_values: set[str],
@@ -333,8 +334,6 @@ def _convert_station_file(
     variable_code: str,
     **dask_kwargs,
 ):
-    column_widths = fwf_column_definitions(mode)
-
     if not missing_values:
         missing_values = {-9999, "#####"}
 
@@ -362,7 +361,10 @@ def _convert_station_file(
                 using_dask = False
 
             with client(**dask_kwargs) as c:
-                convert_station(data, mode, using_dask=using_dask)
+                try:
+                    convert_station(data, mode, using_dask=using_dask)
+                except FileNotFoundError:
+                    errored_files.append(data)
 
         if os.listdir(temp_folder):
             for temporary_file in Path(temp_folder).glob("*"):
@@ -392,17 +394,6 @@ def convert_flat_files(
     None
     """
     func_time = time.time()
-
-    if mode.lower() in ["h", "hour", "hourly"]:
-        num_observations = 24
-        column_names = ["code", "year", "month", "day", "code_var"]
-        column_dtypes = [str, float, float, float, str]
-    elif mode.lower() in ["d", "day", "daily"]:
-        num_observations = 31
-        column_names = ["code", "year", "month", "code_var"]
-        column_dtypes = [str, float, float, str]
-    else:
-        raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
 
     # Preparing the data column headers
     for i in range(1, num_observations + 1):
