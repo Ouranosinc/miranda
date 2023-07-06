@@ -27,7 +27,7 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List, Tuple, Union, Type, Any
+from typing import Any, List
 
 import dask.dataframe as dd
 import numpy as np
@@ -56,21 +56,32 @@ GiB = int(pow(2, 30))
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
-def _fwf_column_definitions(time_frequency: str) -> Tuple[List[str], List[int], List[Type[Union[str, int]]]]:
+def _fwf_column_definitions(
+    time_frequency: str,
+) -> tuple[list[str], list[int], list[type[str | int]]]:
     """Return the column names, widths, and data types for the fixed-width format."""
 
+    # Preparing the column headers
     if time_frequency.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
         column_names = ["code", "year", "month", "day", "code_var"]
-        column_widths = [7, 4, 2, 2, 3] + [6, 1] * num_observations
+        column_widths = [7, 4, 2, 2, 3]
         column_dtypes = [str, int, int, int, str]
     elif time_frequency.lower() in ["d", "day", "daily"]:
         num_observations = 31
         column_names = ["code", "year", "month", "code_var"]
-        column_widths = [7, 4, 2, 3] + [6, 1] * num_observations
+        column_widths = [7, 4, 2, 3]
         column_dtypes = [str, int, int, str]
     else:
         raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
+
+    # Add the data columns
+    for i in range(1, num_observations + 1):
+        data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
+        column_names.append(data_entry)
+        column_names.append(flag_entry)
+        column_widths.extend([6, 1] * num_observations)
+        column_dtypes.extend([str, str])
 
     return column_names, column_widths, column_dtypes
 
@@ -85,7 +96,12 @@ def _remove_duplicates(ds):
 
 
 def convert_station(
-    data: str | os.PathLike, mode: str, using_dask_array: bool = False, *, client: Any, **kwargs
+    data: str | os.PathLike,
+    mode: str,
+    using_dask_array: bool = False,
+    *,
+    client: Any,
+    **kwargs,
 ):
     data = Path(data)
     column_names, column_widths, column_dtypes = _fwf_column_definitions(mode)
@@ -362,7 +378,7 @@ def _convert_station_file(
 
             with client(**dask_kwargs) as c:
                 try:
-                    convert_station(data, mode, using_dask=using_dask)
+                    convert_station(data, mode, using_dask=using_dask, client=c)
                 except FileNotFoundError:
                     errored_files.append(data)
 
@@ -393,15 +409,6 @@ def convert_flat_files(
     -------
     None
     """
-    func_time = time.time()
-
-    # Preparing the data column headers
-    for i in range(1, num_observations + 1):
-        data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
-        column_names.append(data_entry)
-        column_names.append(flag_entry)
-        column_dtypes.extend([str, str])
-
     if isinstance(variables, (str, int)):
         variables = [variables]
 
@@ -435,8 +442,6 @@ def convert_flat_files(
             errored_files=errored_files,
             mode=mode,
             variable_code=variable_code,
-            column_names=column_names,
-            column_dtypes=column_dtypes,
             **metadata,
         )
         with mp.Pool(processes=n_workers) as pool:
@@ -448,8 +453,6 @@ def convert_flat_files(
             logging.warning(
                 "Some files failed to be properly parsed:\n", ", ".join(errored_files)
             )
-
-    logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")
 
 
 def merge_stations(
