@@ -1,0 +1,268 @@
+﻿SITE_ID,SITE_NAME,FLUXNET2015,FLUXNET-CH4,LOCATION_LAT,LOCATION_LONG,LOCATION_ELEV,IGBP,MAT,MAP
+AR-SLu,San Luis,CC-BY-4.0,,-33.4648,-66.4598,,MF,,400
+AR-Vir,Virasoro,CC-BY-4.0,,-28.2395,-56.1886,,ENF,,
+AT-Neu,Neustift,CC-BY-4.0,CC-BY-4.0,47.1167,11.3175,970,GRA,6.5,852
+AU-ASM,Alice Springs,CC-BY-4.0,,-22.283,133.249,,SAV,,
+AU-Ade,Adelaide River,CC-BY-4.0,,-13.0769,131.1178,,WSA,,
+AU-Cpr,Calperum,CC-BY-4.0,,-34.0021,140.5891,,SAV,,
+AU-Cum,Cumberland Plain,CC-BY-4.0,,-33.6152,150.7236,,EBF,,
+AU-DaP,Daly River Savanna,CC-BY-4.0,,-14.0633,131.3181,,GRA,27.25,983.78
+AU-DaS,Daly River Cleared,CC-BY-4.0,,-14.1593,131.3881,,SAV,27.22,975.82
+AU-Dry,Dry River,CC-BY-4.0,,-15.2588,132.3706,,SAV,,
+AU-Emr,Emerald,CC-BY-4.0,,-23.8587,148.4746,,GRA,,
+AU-Fog,Fogg Dam,CC-BY-4.0,,-12.5452,131.3072,,WET,27.02,1323.69
+AU-GWW,"Great Western Woodlands, Western Australia, Australia",CC-BY-4.0,,-30.1913,120.6541,,SAV,,
+AU-Gin,Gingin,CC-BY-4.0,,-31.3764,115.7138,,WSA,,
+AU-How,Howard Springs,CC-BY-4.0,,-12.4943,131.1523,,WSA,27.01,1449.35
+AU-Lox,Loxton,CC-BY-4.0,,-34.4704,140.6551,,DBF,,
+AU-RDF,"Red Dirt Melon Farm, Northern Territory",CC-BY-4.0,,-14.5636,132.4776,,WSA,,
+AU-Rig,Riggs Creek,CC-BY-4.0,,-36.6499,145.5759,,GRA,,
+AU-Rob,"Robson Creek, Queensland, Australia",CC-BY-4.0,,-17.1175,145.6301,,EBF,,
+AU-Stp,Sturt Plains,CC-BY-4.0,,-17.1507,133.3502,,GRA,,
+AU-TTE,Ti Tree East,CC-BY-4.0,,-22.287,133.64,,GRA,,
+AU-Tum,Tumbarumba,CC-BY-4.0,,-35.6566,148.1517,1200,EBF,10.72,1159.01
+AU-Wac,Wallaby Creek,CC-BY-4.0,,-37.4259,145.1878,,EBF,12.76,1105.59
+AU-Whr,Whroo,CC-BY-4.0,,-36.6732,145.0294,,EBF,,
+AU-Wom,Wombat,CC-BY-4.0,,-37.4222,144.0944,705,EBF,,
+AU-Ync,Jaxa,CC-BY-4.0,,-34.9893,146.2907,,GRA,,
+BE-Bra,Brasschaat,CC-BY-4.0,,51.3076,4.5198,16,MF,9.8,750
+BE-Lon,Lonzee,CC-BY-4.0,,50.5516,4.7462,167,CRO,10,800
+BE-Vie,Vielsalm,CC-BY-4.0,,50.3049,5.9981,493,MF,7.8,1062
+BR-Npw,Northern Pantanal Wetland,,CC-BY-4.0,-16.498,-56.412,120,WSA,24.9,1486
+BR-Sa1,Santarem-Km67-Primary Forest,CC-BY-4.0,,-2.8567,-54.9589,88,EBF,26.13,2074.79
+BR-Sa3,Santarem-Km83-Logged Forest,CC-BY-4.0,,-3.018,-54.9714,100,EBF,26.12,2043.77
+BW-Gum,Guma,,CC-BY-4.0,-18.9647,22.3711,950,WET,21,460
+BW-Nxr,Nxaraga,,CC-BY-4.0,-19.5481,23.1792,950,GRA,21,460
+CA-Gro,"Ontario - Groundhog River, Boreal Mixedwood Forest",CC-BY-4.0,,48.2167,-82.1556,340,MF,1.3,831
+CA-Man,Manitoba - Northern Old Black Spruce (former BOREAS Northern Study Area),CC-BY-4.0,,55.8796,-98.4808,259,ENF,-3.2,520
+CA-NS1,UCI-1850 burn site,CC-BY-4.0,,55.8792,-98.4839,260,ENF,-2.89,500.29
+CA-NS2,UCI-1930 burn site,CC-BY-4.0,,55.9058,-98.5247,260,ENF,-2.88,499.82
+CA-NS3,UCI-1964 burn site,CC-BY-4.0,,55.9117,-98.3822,260,ENF,-2.87,502.22
+CA-NS4,UCI-1964 burn site wet,CC-BY-4.0,,55.9144,-98.3806,260,ENF,-2.87,502.22
+CA-NS5,UCI-1981 burn site,CC-BY-4.0,,55.8631,-98.485,260,ENF,-2.86,500.34
+CA-NS6,UCI-1989 burn site,CC-BY-4.0,,55.9167,-98.9644,244,OSH,-3.08,495.37
+CA-NS7,UCI-1998 burn site,CC-BY-4.0,,56.6358,-99.9483,297,OSH,-3.52,483.27
+CA-Oas,"Saskatchewan - Western Boreal, Mature Aspen",CC-BY-4.0,,53.6289,-106.1978,530,DBF,0.34,428.53
+CA-Obs,"Saskatchewan - Western Boreal, Mature Black Spruce",CC-BY-4.0,,53.9872,-105.1178,628.94,ENF,0.79,405.6
+CA-Qfo,"Quebec - Eastern Boreal, Mature Black Spruce",CC-BY-4.0,,49.6925,-74.3421,382,ENF,-0.36,962.32
+CA-SCB,Scotty Creek Bog,,CC-BY-4.0,61.3089,-121.2984,280,WET,-2.8,388
+CA-SCC,Scotty Creek Landscape,,CC-BY-4.0,61.3079,-121.2992,285,ENF,-2.8,387.6
+CA-SF1,"Saskatchewan - Western Boreal, forest burned in 1977",CC-BY-4.0,,54.485,-105.8176,536,ENF,0.4,470
+CA-SF2,"Saskatchewan - Western Boreal, forest burned in 1989",CC-BY-4.0,,54.2539,-105.8775,520,ENF,0.4,470
+CA-SF3,"Saskatchewan - Western Boreal, forest burned in 1998",CC-BY-4.0,,54.0916,-106.0053,540,OSH,0.4,470
+CA-TP1,Ontario - Turkey Point 2002 Plantation White Pine,CC-BY-4.0,,42.6609,-80.5595,265,ENF,8,1036
+CA-TP2,Ontario - Turkey Point 1989 Plantation White Pine,CC-BY-4.0,,42.7744,-80.4588,212,ENF,8,1036
+CA-TP3,Ontario - Turkey Point 1974 Plantation White Pine,CC-BY-4.0,,42.7068,-80.3483,184,ENF,8,1036
+CA-TP4,Ontario - Turkey Point 1939 Plantation White Pine,CC-BY-4.0,,42.7102,-80.3574,184,ENF,8,1036
+CA-TPD,Ontario - Turkey Point Mature Deciduous,CC-BY-4.0,,42.6353,-80.5577,260,DBF,8,1036
+CG-Tch,Tchizalamou,CC-BY-4.0,,-4.2892,11.6564,82,SAV,25.7,1150
+CH-Cha,Chamau,CC-BY-4.0,CC-BY-4.0,47.2102,8.4104,393,GRA,9.5,1136
+CH-Dav,Davos,CC-BY-4.0,CC-BY-4.0,46.8153,9.8559,1639,ENF,2.8,1062
+CH-Fru,Früebüel,CC-BY-4.0,,47.1158,8.5378,982,GRA,7.2,1651
+CH-Lae,Laegern,CC-BY-4.0,,47.4783,8.3644,689,MF,8.3,1100
+CH-Oe1,Oensingen grassland,CC-BY-4.0,,47.2858,7.7319,450,GRA,9,1100
+CH-Oe2,Oensingen crop,CC-BY-4.0,CC-BY-4.0,47.2864,7.7337,452,CRO,9.8,1155
+CN-Cha,Changbaishan,CC-BY-4.0,,42.4025,128.0958,,MF,2.16,663.59
+CN-Cng,Changling,CC-BY-4.0,,44.5934,123.5092,,GRA,,
+CN-Dan,Dangxiong,CC-BY-4.0,,30.4978,91.0664,,GRA,-1.54,246.88
+CN-Din,Dinghushan,CC-BY-4.0,,23.1733,112.5361,,EBF,19.64,1618.1
+CN-Du2,Duolun_grassland (D01),CC-BY-4.0,,42.0467,116.2836,,GRA,2.01,318.96
+CN-Du3,Duolun Degraded Meadow,CC-BY-4.0,,42.0551,116.2809,,GRA,,
+CN-Ha2,Haibei Shrubland,CC-BY-4.0,,37.6086,101.3269,,WET,,
+CN-HaM,Haibei Alpine Tibet site,CC-BY-4.0,,37.37,101.18,,GRA,,
+CN-Hgu,Hongyuan,,CC-BY-4.0,32.8453,102.59,3500,GRA,1.5,747
+CN-Qia,Qianyanzhou,CC-BY-4.0,,26.7414,115.0581,,ENF,18.95,1466.75
+CN-Sw2,Siziwang Grazed (SZWG),CC-BY-4.0,,41.7902,111.8971,,GRA,,
+CZ-BK1,Bily Kriz forest,CC-BY-4.0,,49.5021,18.5369,875,ENF,6.7,1316
+CZ-BK2,Bily Kriz grassland,CC-BY-4.0,,49.4944,18.5429,855,GRA,6.7,1316
+CZ-wet,Trebon (CZECHWET),CC-BY-4.0,,49.0247,14.7704,426,WET,7.7,604
+DE-Akm,Anklam,CC-BY-4.0,,53.8662,13.6834,-1,WET,8.7,558
+DE-Dgw,Dagowsee,,CC-BY-4.0,53.1514,13.0543,60,WAT,9.02,602.9
+DE-Geb,Gebesee,CC-BY-4.0,,51.0997,10.9146,161.5,CRO,8.5,470
+DE-Gri,Grillenburg,CC-BY-4.0,,50.95,13.5126,385,GRA,7.8,901
+DE-Hai,Hainich,CC-BY-4.0,,51.0792,10.4522,430,DBF,8.3,720
+DE-Hte,Huetelmoor,,CC-BY-4.0,54.2103,12.1761,0.2,WET,9.2,645
+DE-Kli,Klingenberg,CC-BY-4.0,,50.8931,13.5224,478,CRO,7.6,842
+DE-Lkb,Lackenberg,CC-BY-4.0,,49.0996,13.3047,1308,ENF,4,1599
+DE-Lnf,Leinefelde,CC-BY-4.0,,51.3282,10.3678,451,DBF,6.96,894.6
+DE-Obe,Oberbärenburg,CC-BY-4.0,,50.7867,13.7213,734,ENF,5.5,996
+DE-RuR,Rollesbroich,CC-BY-4.0,,50.6219,6.3041,514.7,GRA,7.7,1033
+DE-RuS,Selhausen Juelich,CC-BY-4.0,,50.8659,6.4471,102.755,CRO,10,700
+DE-Seh,Selhausen,CC-BY-4.0,,50.8706,6.4497,103,CRO,9.9,693
+DE-SfN,Schechenfilz Nord,CC-BY-4.0,CC-BY-4.0,47.8064,11.3275,590,WET,8.6,1127
+DE-Spw,Spreewald,CC-BY-4.0,,51.8922,14.0337,61,WET,8.7,558
+DE-Tha,Tharandt,CC-BY-4.0,,50.9626,13.5651,385,ENF,8.2,843
+DE-Zrk,Zarnekow,CC-BY-4.0,CC-BY-4.0,53.8759,12.889,0,WET,8.7,584
+DK-Eng,Enghave,CC-BY-4.0,,55.6905,12.1918,10,GRA,8,613
+DK-Fou,Foulum,CC-BY-4.0,,56.4842,9.5872,51,CRO,8,
+DK-Sor,Soroe,CC-BY-4.0,,55.4859,11.6446,40,DBF,8.2,660
+ES-Amo,Amoladeras,CC-BY-4.0,,36.8336,-2.2523,58,OSH,,0
+ES-LJu,Llano de los Juanes,CC-BY-4.0,,36.9266,-2.7521,1600,OSH,16,400
+ES-LgS,Laguna Seca,CC-BY-4.0,,37.0979,-2.9658,2267,OSH,,
+ES-Ln2,Lanjaron-Salvage logging,CC-BY-4.0,,36.9695,-3.4758,2249,OSH,,
+FI-Hyy,Hyytiala,CC-BY-4.0,CC-BY-4.0,61.8474,24.2948,181,ENF,3.8,709
+FI-Jok,Jokioinen,CC-BY-4.0,,60.8986,23.5134,109,CRO,4.6,627
+FI-Let,Lettosuo,CC-BY-4.0,,60.6418,23.9595,111,ENF,4.6,627
+FI-Lom,Lompolojankka,CC-BY-4.0,CC-BY-4.0,67.9972,24.2092,274,WET,-1.4,484
+FI-Si2,Siikaneva-2 Bog,,CC-BY-4.0,61.8372,24.1967,160,WET,3.5,701
+FI-Sii,Siikaneva,,CC-BY-4.0,61.8327,24.1928,160,WET,3.5,701
+FI-Sod,Sodankyla,CC-BY-4.0,,67.3624,26.6386,180,ENF,-1,500
+FR-Fon,Fontainebleau-Barbeau,CC-BY-4.0,,48.4764,2.7801,103,DBF,10.2,720
+FR-Gri,Grignon,CC-BY-4.0,,48.8442,1.9519,125,CRO,12,650
+FR-LBr,Le Bray,CC-BY-4.0,,44.7171,-0.7693,61,ENF,13.6,900
+FR-LGt,La Guette,,CC-BY-4.0,47.3229,2.2841,,WET,,
+FR-Pue,Puechabon,CC-BY-4.0,,43.7413,3.5957,270,EBF,13.5,883
+GF-Guy,Guyaflux (French Guiana),CC-BY-4.0,,5.2788,-52.9249,48,EBF,25.7,3041
+GH-Ank,Ankasa,CC-BY-4.0,,5.2685,-2.6942,124,EBF,26,1900
+GL-NuF,Nuuk Fen,CC-BY-4.0,,64.1308,-51.3861,50,WET,-1.4,750
+GL-ZaF,Zackenberg Fen,CC-BY-4.0,,74.4814,-20.5545,38,WET,-9,211
+GL-ZaH,Zackenberg Heath,CC-BY-4.0,,74.4733,-20.5503,38,GRA,-9,211
+HK-MPM,Mai Po Mangrove,,CC-BY-4.0,22.4982,114.0292,-1,EBF,23.3,1400
+ID-Pag,Palangkaraya undrained forest,,CC-BY-4.0,-2.32,113.9,30,EBF,26.2,2546
+IT-BCi,Borgo Cioffi,CC-BY-4.0,CC-BY-4.0,40.5237,14.9574,20,CRO,18,600
+IT-CA1,Castel d'Asso1,CC-BY-4.0,,42.3804,12.0266,200,DBF,14,766
+IT-CA2,Castel d'Asso2,CC-BY-4.0,,42.3772,12.026,200,CRO,14,766
+IT-CA3,Castel d'Asso3,CC-BY-4.0,,42.38,12.0222,197,DBF,14,766
+IT-Cas,Castellaro,,CC-BY-4.0,45.07,8.7175,89,CRO,11.9,
+IT-Col,Collelongo,CC-BY-4.0,,41.8494,13.5881,1560,DBF,6.3,1180
+IT-Cp2,Castelporziano2,CC-BY-4.0,,41.7043,12.3573,19,EBF,15.2,805
+IT-Cpz,Castelporziano,CC-BY-4.0,,41.7052,12.3761,68,EBF,15.6,780
+IT-Isp,Ispra ABC-IS,CC-BY-4.0,,45.8126,8.6336,210,DBF,12.2,1300
+IT-La2,Lavarone2,CC-BY-4.0,,45.9542,11.2853,1350,ENF,7.2,1150
+IT-Lav,Lavarone,CC-BY-4.0,,45.9562,11.2813,1353,ENF,7.8,1291
+IT-MBo,Monte Bondone,CC-BY-4.0,,46.0147,11.0458,1550,GRA,5.1,1214
+IT-Noe,Arca di Noe - Le Prigionette,CC-BY-4.0,,40.6062,8.1517,25,CSH,15.9,588
+IT-PT1,Parco Ticino forest,CC-BY-4.0,,45.2009,9.061,60,DBF,12.7,984
+IT-Ren,Renon,CC-BY-4.0,,46.5869,11.4337,1730,ENF,4.7,809.3
+IT-Ro1,Roccarespampani 1,CC-BY-4.0,,42.4081,11.93,235,DBF,15.15,876.2
+IT-Ro2,Roccarespampani 2,CC-BY-4.0,,42.3903,11.9209,160,DBF,15.15,876.2
+IT-SR2,San Rossore 2,CC-BY-4.0,,43.732,10.2909,4,ENF,14.2,920
+IT-SRo,San Rossore,CC-BY-4.0,,43.7279,10.2844,6,ENF,14.2,920
+IT-Tor,Torgnon,CC-BY-4.0,,45.8444,7.5781,2160,GRA,2.9,920
+JP-BBY,Bibai bog,,CC-BY-4.0,43.323,141.8107,,WET,,
+JP-MBF,Moshiri Birch Forest Site,CC-BY-4.0,,44.3869,142.3186,,DBF,,
+JP-Mse,Mase rice paddy field,,CC-BY-4.0,36.0539,140.0269,,CRO,,
+JP-SMF,Seto Mixed Forest Site,CC-BY-4.0,,35.2617,137.0788,,MF,,
+JP-SwL,Suwa Lake,,CC-BY-4.0,36.0466,138.1084,,WAT,,
+KR-CRK,Cheorwon Rice paddy,,CC-BY-4.0,38.2013,127.2506,182,CRO,11.2,1180.9
+MY-MLM,Maludam National Park,,CC-BY-4.0,1.4536,111.1495,,EBF,,
+MY-PSO,Pasoh Forest Reserve (PSO),CC-BY-4.0,,2.973,102.3062,,EBF,,
+NL-Hor,Horstermeer,CC-BY-4.0,CC-BY-4.0,52.2403,5.0713,2.2,GRA,10,800
+NL-Loo,Loobos,CC-BY-4.0,,52.1666,5.7436,25,ENF,9.8,786
+NZ-Kop,Kopuatai,,CC-BY-4.0,-37.3879,175.5539,,EBF,,
+PA-SPn,Sardinilla Plantation,CC-BY-4.0,,9.3181,-79.6346,78,DBF,26.5,2350
+PA-SPs,Sardinilla-Pasture,CC-BY-4.0,,9.3138,-79.6314,68,GRA,26.5,2350
+PH-RiF,Philippines Rice Institute flooded,,CC-BY-4.0,14.1412,121.2653,27,CRO,27.5,2112
+RU-Ch2,Chersky reference,,CC-BY-4.0,68.6169,161.3509,4,WET,-12.5,200
+RU-Che,Cherski,CC-BY-4.0,CC-BY-4.0,68.613,161.3414,6,WET,-11,197
+RU-Cok,Chokurdakh,CC-BY-4.0,CC-BY-4.0,70.8291,147.4943,48,OSH,-14.3,232
+RU-Fy2,Fyodorovskoye dry spruce,,CC-BY-4.0,56.4476,32.9019,,ENF,4.39,668.53
+RU-Fyo,Fyodorovskoye,CC-BY-4.0,,56.4615,32.9221,265,ENF,3.9,711
+RU-Ha1,Hakasia steppe,CC-BY-4.0,,54.7252,90.0022,446,GRA,-0.07,591.87
+RU-Sam,Samoylov,Tier 2,,72.3738,126.4958,,GRA,,
+RU-SkP,Yakutsk Spasskaya Pad larch,Tier 2,,62.255,129.168,246,DNF,,
+RU-Tks,Tiksi,Tier 2,,71.5943,128.8878,7,GRA,-12.7,323
+RU-Vrk,Seida/Vorkuta,Tier 2,Tier 2,67.0547,62.9405,100,CSH,-5.6,501
+SD-Dem,Demokeya,CC-BY-4.0,,13.2829,30.4783,500,SAV,26,320
+SE-Deg,Degero,,CC-BY-4.0,64.182,19.5565,270,GRA,1.2,523
+SE-St1,Stordalen grassland,Tier 2,Tier 2,68.3541,19.0503,351,WET,-0.7,303.3
+SJ-Adv,Adventdalen,CC-BY-4.0,,78.186,15.923,17,WET,,
+SJ-Blv,"Bayelva, Spitsbergen",CC-BY-4.0,,78.9216,11.8311,25,SNO,-4.5,400
+SN-Dhr,Dahra,CC-BY-4.0,,15.4028,-15.4322,40,SAV,29,404
+UK-LBT,London_BT,,CC-BY-4.0,51.5215,-0.1389,21,URB,11.3,592
+US-A03,ARM-AMF3-Oliktok,,CC-BY-4.0,70.4953,-149.8823,5,BSV,-11.2,115.1
+US-A10,ARM-NSA-Barrow,,CC-BY-4.0,71.3242,-156.6149,4,BSV,-11.2,115.1
+US-AR1,ARM USDA UNL OSU Woodward Switchgrass 1,CC-BY-4.0,,36.4267,-99.42,611,GRA,,
+US-AR2,ARM USDA UNL OSU Woodward Switchgrass 2,CC-BY-4.0,,36.6358,-99.5975,646,GRA,,
+US-ARM,ARM Southern Great Plains site- Lamont,CC-BY-4.0,,36.6058,-97.4888,314,CRO,14.76,843
+US-ARb,ARM Southern Great Plains burn site- Lamont,CC-BY-4.0,,35.5497,-98.0402,424,GRA,,
+US-ARc,ARM Southern Great Plains control site- Lamont,CC-BY-4.0,,35.5465,-98.04,424,GRA,,
+US-Atq,Atqasuk,CC-BY-4.0,CC-BY-4.0,70.4696,-157.4089,15,WET,-9.7,93
+US-BZB,Bonanza Creek Thermokarst Bog,,CC-BY-4.0,64.6955,-148.3208,100,WET,-2.4,274
+US-BZF,Bonanza Creek Rich Fen,,CC-BY-4.0,64.7013,-148.3121,95,WET,-2.4,274
+US-BZS,Bonanza Creek Black Spruce,,CC-BY-4.0,64.6963,-148.3235,100,ENF,-2.4,274
+US-Beo,Barrow Environmental Observatory (BEO) tower,,CC-BY-4.0,71.281,-156.6123,,WET,-11.3,72
+US-Bes,Barrow-Bes (Biocomplexity Experiment South tower),,CC-BY-4.0,71.2809,-156.5965,4.6,WET,-12,173
+US-Bi1,Bouldin Island Alfalfa,,CC-BY-4.0,38.0992,-121.4993,-2.7,CRO,16,338
+US-Bi2,Bouldin Island corn,,CC-BY-4.0,38.1091,-121.5351,-5,CRO,16,338
+US-Blo,Blodgett Forest,CC-BY-4.0,,38.8953,-120.6328,1315,ENF,11.09,1226
+US-CRT,Curtice Walter-Berger cropland,CC-BY-4.0,CC-BY-4.0,41.6285,-83.3471,180,CRO,10.1,849
+US-Cop,Corral Pocket,CC-BY-4.0,,38.09,-109.39,1520,GRA,,
+US-DPW,Disney Wilderness Preserve Wetland,,CC-BY-4.0,28.0521,-81.4361,23,WET,22.6,1142
+US-EDN,Eden Landing Ecological Reserve,,CC-BY-4.0,37.6156,-122.114,,WET,,
+US-EML,"Eight Mile Lake Permafrost thaw gradient, Healy Alaska.",,CC-BY-4.0,63.8784,-149.2536,700,OSH,-1,378
+US-GBT,GLEES Brooklyn Tower,CC-BY-4.0,,41.3658,-106.2397,3191,ENF,0.8,1200
+US-GLE,GLEES,CC-BY-4.0,,41.3665,-106.2399,3197,ENF,0.8,1200
+US-Goo,Goodwin Creek,CC-BY-4.0,,34.2547,-89.8735,87,GRA,15.89,1425.77
+US-HRA,Humnoke Farm Rice Field – Field A,,CC-BY-4.0,34.5852,-91.7517,,CRO,16.7,1250
+US-HRC,Humnoke Farm Rice Field – Field C,,CC-BY-4.0,34.5888,-91.7517,,CRO,16.7,1250
+US-Ha1,Harvard Forest EMS Tower (HFR1),CC-BY-4.0,,42.5378,-72.1715,340,DBF,6.62,1071
+US-Ho1,Howland Forest (main tower),,CC-BY-4.0,45.2041,-68.7402,60,ENF,5.27,1070
+US-IB2,Fermi National Accelerator Laboratory- Batavia (Prairie site),CC-BY-4.0,,41.8406,-88.241,226.5,GRA,9.04,930.25
+US-ICs,Imnavait Creek Watershed Wet Sedge Tundra,,CC-BY-4.0,68.6058,-149.311,920,WET,-7.4,318
+US-Ivo,Ivotuk,CC-BY-4.0,CC-BY-4.0,68.4865,-155.7503,568,WET,-8.28,304
+US-KS1,Kennedy Space Center (slash pine),CC-BY-4.0,,28.4583,-80.6709,1,ENF,21.9,1266
+US-KS2,Kennedy Space Center (scrub oak),CC-BY-4.0,,28.6086,-80.6715,3,CSH,21.66,1294
+US-LA1,Pointe-aux-Chenes Brackish Marsh,,CC-BY-4.0,29.5013,-90.4449,0,WET,20.7,1625
+US-LA2,Salvador WMA Freshwater Marsh,,CC-BY-4.0,29.8587,-90.2869,0,WET,20.2,1655
+US-LWW,Little Washita Watershed,CC-BY-4.0,,34.9604,-97.9789,365,GRA,16.09,805.12
+US-Lin,Lindcove Orange Orchard,CC-BY-4.0,,36.3566,-119.0922,131,CRO,,
+US-Los,Lost Creek,CC-BY-4.0,CC-BY-4.0,46.0827,-89.9792,480,WET,4.08,828
+US-MAC,MacArthur Agro-Ecology,,CC-BY-4.0,27.1632,-81.1873,,WET,,
+US-MMS,Morgan Monroe State Forest,CC-BY-4.0,,39.3232,-86.4131,275,DBF,10.85,1032
+US-MRM,Marsh Resource Meadowlands Mitigation Bank,,CC-BY-4.0,40.8164,-74.0435,1,WET,13.5,1120
+US-Me1,Metolius - Eyerly burn,CC-BY-4.0,,44.5794,-121.5,896,ENF,7.88,704.61
+US-Me2,Metolius mature ponderosa pine,CC-BY-4.0,,44.4523,-121.5574,1253,ENF,6.28,523
+US-Me3,Metolius-second young aged pine,CC-BY-4.0,,44.3154,-121.6078,1005,ENF,7.07,719
+US-Me4,Metolius-old aged ponderosa pine,CC-BY-4.0,,44.4992,-121.6224,922,ENF,7.61,1038.82
+US-Me5,Metolius-first young aged pine,CC-BY-4.0,,44.4372,-121.5668,1188,ENF,6.47,590.81
+US-Me6,Metolius Young Pine Burn,CC-BY-4.0,,44.3233,-121.6078,998,ENF,7.59,494
+US-Myb,Mayberry Wetland,CC-BY-4.0,CC-BY-4.0,38.0499,-121.765,-4,WET,15.9,338
+US-NC4,NC_AlligatorRiver,,CC-BY-4.0,35.7879,-75.9038,1,WET,16.6,1311
+US-NGB,NGEE Arctic Barrow,,CC-BY-4.0,71.28,-156.6092,5.273,SNO,-11.27,171
+US-NGC,NGEE Arctic Council,,CC-BY-4.0,64.8618,-163.7002,35,GRA,,
+US-NR1,Niwot Ridge Forest (LTER NWT1),CC-BY-4.0,,40.0329,-105.5464,3050,ENF,1.5,800
+US-Ne1,Mead - irrigated continuous maize site,CC-BY-4.0,,41.1651,-96.4766,361,CRO,10.07,790.37
+US-Ne2,Mead - irrigated maize-soybean rotation site,CC-BY-4.0,,41.1649,-96.4701,362,CRO,10.08,788.89
+US-Ne3,Mead - rainfed maize-soybean rotation site,CC-BY-4.0,,41.1797,-96.4397,363,CRO,10.11,783.68
+US-ORv,Olentangy River Wetland Research Park,CC-BY-4.0,CC-BY-4.0,40.0201,-83.0183,221,WET,11.63,1499.1
+US-OWC,Old Woman Creek,,CC-BY-4.0,41.3795,-82.5125,174,WET,10.7,930
+US-Oho,Oak Openings,CC-BY-4.0,,41.5545,-83.8438,230,DBF,10.1,849
+US-PFa,Park Falls/WLEF,CC-BY-4.0,CC-BY-4.0,45.9459,-90.2723,470,MF,4.33,823
+US-Prr,Poker Flat Research Range Black Spruce Forest,CC-BY-4.0,,65.1237,-147.4876,210,ENF,-2,275
+US-SRC,Santa Rita Creosote,CC-BY-4.0,,31.9083,-110.8395,950,OSH,22,330
+US-SRG,Santa Rita Grassland,CC-BY-4.0,,31.7894,-110.8277,1291,GRA,17,420
+US-SRM,Santa Rita Mesquite,CC-BY-4.0,,31.8214,-110.8661,1120,WSA,17.92,380
+US-Snd,Sherman Island,,CC-BY-4.0,38.0366,-121.754,-5,GRA,15.6,358
+US-Sne,Sherman Island Restored Wetland,,CC-BY-4.0,38.0369,-121.7547,-5,GRA,16.09,311
+US-Srr,Suisun marsh - Rush Ranch,,CC-BY-4.0,38.2006,-122.0264,8,WET,15.1,326
+US-StJ,St Jones Reserve,,CC-BY-4.0,39.0882,-75.4372,6.7,WET,13.5,1121
+US-Sta,Saratoga,CC-BY-4.0,,41.3966,-106.8024,2069,OSH,5.1,
+US-Syv,Sylvania Wilderness Area,CC-BY-4.0,,46.242,-89.3477,540,MF,3.81,826
+US-Ton,Tonzi Ranch,CC-BY-4.0,,38.4309,-120.966,177,WSA,15.8,559
+US-Tw1,Twitchell Wetland West Pond,CC-BY-4.0,CC-BY-4.0,38.1074,-121.6469,-5,WET,15.5,421
+US-Tw2,Twitchell Corn,CC-BY-4.0,,38.0969,-121.6365,-5,CRO,15.5,421
+US-Tw3,Twitchell Alfalfa,CC-BY-4.0,CC-BY-4.0,38.1152,-121.6469,-4,CRO,15.6,421
+US-Tw4,Twitchell East End Wetland,CC-BY-4.0,CC-BY-4.0,38.1027,-121.6413,-5,WET,15.6,421
+US-Tw5,East Pond Wetland,,CC-BY-4.0,38.1072,-121.6426,-5,WET,15.5,421
+US-Twt,Twitchell Island,CC-BY-4.0,CC-BY-4.0,38.1087,-121.6531,-7,CRO,15.6,421
+US-UMB,Univ. of Mich. Biological Station,CC-BY-4.0,,45.5598,-84.7138,234,DBF,5.83,803
+US-UMd,UMBS Disturbance,CC-BY-4.0,,45.5625,-84.6975,239,DBF,5.83,803
+US-Uaf,"University of Alaska, Fairbanks",,CC-BY-4.0,64.8663,-147.8555,155,ENF,-2.9,263
+US-Var,Vaira Ranch- Ione,CC-BY-4.0,,38.4133,-120.9508,129,GRA,15.8,559
+US-WCr,Willow Creek,CC-BY-4.0,,45.8059,-90.0799,520,DBF,4.02,787
+US-WPT,Winous Point North Marsh,CC-BY-4.0,CC-BY-4.0,41.4646,-82.9962,175,WET,10.1,849
+US-Whs,Walnut Gulch Lucky Hills Shrub,CC-BY-4.0,,31.7438,-110.0522,1370,OSH,17.6,320
+US-Wi0,Young red pine (YRP),CC-BY-4.0,,46.6188,-91.0814,349,ENF,,
+US-Wi1,Intermediate hardwood (IHW),CC-BY-4.0,,46.7305,-91.2329,352,DBF,,
+US-Wi2,Intermediate red pine (IRP),CC-BY-4.0,,46.6869,-91.1528,395,ENF,,
+US-Wi3,Mature hardwood (MHW),CC-BY-4.0,,46.6347,-91.0987,411,DBF,,
+US-Wi4,Mature red pine (MRP),CC-BY-4.0,,46.7393,-91.1663,352,ENF,,
+US-Wi5,Mixed young jack pine (MYJP),CC-BY-4.0,,46.6531,-91.0858,353,ENF,,
+US-Wi6,Pine barrens #1 (PB1),CC-BY-4.0,,46.6249,-91.2982,371,OSH,,
+US-Wi7,Red pine clearcut (RPCC),CC-BY-4.0,,46.6491,-91.0693,335,OSH,,
+US-Wi8,Young hardwood clearcut (YHW),CC-BY-4.0,,46.7223,-91.2524,348,DBF,,
+US-Wi9,Young Jack pine (YJP),CC-BY-4.0,,46.7385,-91.0746,350,ENF,,
+US-Wkg,Walnut Gulch Kendall Grasslands,CC-BY-4.0,,31.7365,-109.9419,1531,GRA,15.64,407
+ZA-Kru,Skukuza,Tier 2,,-25.0197,31.4969,359,SAV,21.9,547
+ZM-Mon,Mongu,CC-BY-4.0,,-15.4391,23.2525,1053,DBF,25,945

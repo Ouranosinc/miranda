@@ -1,0 +1,302 @@
+Variable,Units,Description
+TIMEKEEPING,,
+TIMESTAMP,YYYYMMDDHHMM,ISO timestamp - short format
+TIMESTAMP_START,YYYYMMDDHHMM,ISO timestamp start of averaging period - short format
+TIMESTAMP_END,YYYYMMDDHHMM,ISO timestamp end of averaging period - short format
+,,
+MICROMETEOROLOGICAL,,
+TA_F,,"Air temperature, consolidated from TA_F_MDS and TA_ERA"
+HH,deg C,TA_F_MDS used if TA_F_MDS_QC is 0 or 1
+DD,deg C,average from half-hourly data
+WW-YY,deg C,average from daily data
+TA_F_QC,,Quality flag for TA_F
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+SW_IN_POT,,"Shortwave radiation, incoming, potential (top of atmosphere)"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-MM,W m-2,average from daily data
+YY,,not available
+SW_IN_F,,"Shortwave radiation, incoming consolidated from SW_IN_F_MDS and SW_IN_ERA (negative values set to zero)"
+HH,W m-2,SW_IN_F_MDS used if SW_IN_F_MDS_QC is 0 or 1
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+SW_IN_F_QC,,Quality flag for SW_IN_F
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+LW_IN_F,,"Longwave radiation, incoming, consolidated from LW_IN_F_MDS and LW_IN_ERA"
+HH,W m-2,LW_IN_F_MDS used if LW_IN_F_MDS_QC is 0 or 1
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+LW_IN_F_QC,,Quality flag for LW_IN_F
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+VPD_F,,Vapor Pressure Deficit consolidated from VPD_F_MDS and VPD_ERA
+HH,hPa,VPD_F_MDS used if VPD_F_MDS_QC is 0 or 1
+DD,hPa,average from half-hourly data
+WW-YY,hPa,average from daily data
+VPD_F_QC,,Quality flag for VPD_F
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+PA_F,,Atmospheric pressure consolidated from PA and PA_ERA
+HH,kPa,PA used if measured
+DD,kPa,average from half-hourly data
+WW-YY,kPa,average from daily data
+PA_F_QC,,Quality flag for PA_F
+HH,nondimensional,0 = measured; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured data (average from daily data)"
+P_F,,Precipitation consolidated from P and P_ERA
+HH,mm,P used if measured (mm per dataset resolution: either hour or half-hour)
+DD,mm d-1,sum from half-hourly data (mm per day)
+WW-MM,mm d-1,average from daily data (mm per day)
+YY,mm y-1,sum from daily data (mm per year)
+P_F_QC,,Quality flag for P_F
+HH,nondimensional,0 = measured; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured data (average from daily data)"
+WS_F,,"Wind speed, consolidated from WS and WS_ERA"
+HH,m s-1,WS used if measured
+DD,m s-1,average from half-hourly data
+WW-YY,m s-1,average from daily data
+WS_F_QC,,Quality flag of WS_F
+HH,nondimensional,0 = measured; 2 = downscaled from ERA
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured data (average from daily data)"
+WD,,Wind direction
+HH,Decimal degrees,
+DD-YY,,not available
+RH,,"Relative humidity, range 0-100"
+HH,%,
+DD-YY,,not available
+USTAR,,Friction velocity
+HH,m s-1,
+DD,m s-1,average from half-hourly data (only days with more than 50% records available)
+WW-YY,m s-1,average from daily data (only periods with more than 50% records available)
+USTAR_QC,,Quality flag of USTAR
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+NETRAD,,Net radiation
+HH,W m-2,
+DD,W m-2,average from half-hourly data (only days with more than 50% records available)
+WW-YY,W m-2,average from daily data (only periods with more than 50% records available)
+NETRAD_QC,,Quality flag of NETRAD
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+PPFD_IN,,"Photosynthetic photon flux density, incoming"
+HH,µmolPhoton m-2 s-1,
+DD,µmolPhoton m-2 s-1,average from half-hourly data (only days with more than 50% records available)
+WW-YY,µmolPhoton m-2 s-1,average from daily data (only periods with more than 50% records available)
+PPFD_IN_QC,,Quality flag of PPFD_IN
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+PPFD_DIF,,"Photosynthetic photon flux density, diffuse incoming"
+HH,µmolPhoton m-2 s-1,
+DD,µmolPhoton m-2 s-1,average from half-hourly data (only days with more than 50% records available)
+WW-YY,µmolPhoton m-2 s-1,average from daily data (only periods with more than 50% records available)
+PPFD_DIF_QC,,Quality flag of PPFD_DIF
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+PPFD_OUT,,"Photosynthetic photon flux density, outgoing"
+HH,µmolPhoton m-2 s-1,
+DD,µmolPhoton m-2 s-1,average from half-hourly data (only days with more than 50% records available)
+WW-YY,µmolPhoton m-2 s-1,average from daily data (only periods with more than 50% records available)
+PPFD_OUT_QC,,Quality flag of PPFD_OUT
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+SW_DIF,,"Shortwave radiation, diffuse incoming"
+HH,W m-2,
+DD,W m-2,average from half-hourly data (only days with more than 50% records available)
+WW-YY,W m-2,average from daily data (only periods with more than 50% records available)
+SW_DIF_QC,,Quality flag of SW_DIF
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+SW_OUT,,"Shortwave radiation, outgoing"
+HH,W m-2,
+DD,W m-2,average from half-hourly data (only days with more than 50% records available)
+WW-YY,W m-2,average from daily data (only periods with more than 50% records available)
+SW_OUT_QC,,Quality flag of SW_OUT
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+LW_OUT,,"Longwave radiation, outgoing"
+HH,W m-2,
+DD,W m-2,average from half-hourly data (only days with more than 50% records available)
+WW-YY,W m-2,average from daily data (only periods with more than 50% records available)
+LW_OUT_QC,,Quality flag of LW_OUT
+HH,,not available
+DD,nondimensional,"fraction between 0-1, indicating percentage of data available (measured)"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of data available (average from daily data)"
+CO2_F_MDS,,"CO2 mole fraction, gapfilled with MDS"
+HH,µmolCO2 mol-1,
+DD,µmolCO2 mol-1,average from half-hourly data
+WW-YY,µmolCO2 mol-1,average from daily data
+CO2_F_MDS_QC,,Quality flag for CO2_F_MDS
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+TS_F_MDS_#,,"Soil temperature, gapfilled with MDS (numeric index ""#"" increases with the depth, 1 is shallowest)"
+HH,deg C,
+DD,deg C,average from half-hourly data
+WW-YY,deg C,average from daily data
+TS_F_MDS_#_QC,,Quality flag for TS_F_MDS_#
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+SWC_F_MDS_#,,"Soil water content, gapfilled with MDS (numeric index ""#"" increases with the depth, 1 is shallowest)"
+HH,%,
+DD,%,average from half-hourly data
+WW-YY,%,average from daily data
+SWC_F_MDS_#_QC,,Quality flag for SWC_F_MDS_#
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+,,
+ENERGY PROCESSING,,
+G_F_MDS,,Soil heat flux
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+G_F_MDS_QC,,Quality flag of G_F_MDS
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+LE_F_MDS,,"Latent heat flux, gapfilled using MDS method"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+LE_F_MDS_QC,,"Quality flag for LE_F_MDS, LE_CORR, LE_CORR25, and LE_CORR75."
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+LE_CORR,,"Latent heat flux, corrected LE_F_MDS by energy balance closure correction factor"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+LE_CORR_25,,"Latent heat flux, corrected LE_F_MDS by energy balance closure correction factor, 25th percentile"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,,not available
+LE_CORR_75,,"Latent heat flux, corrected LE_F_MDS by energy balance closure correction factor, 75th percentile"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,,not available
+LE_RANDUNC,,"Random uncertainty of LE, from measured only data"
+HH,W m-2,uses only data point where LE_F_MDS_QC is 0 and two hierarchical methods (see header and LE_RANDUNC_METHOD)
+DD-YY,W m-2,"from random uncertainty of individual half-hours (rand(i)) = [SQRT(SUM(rand(i)^2)) / n], where n is the number of half-hours used"
+H_F_MDS,,"Sensible heat flux, gapfilled using MDS method"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+H_F_MDS_QC,,"Quality flag for H_F_MDS, H_CORR, H_CORR25, and H_CORR75."
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+H_CORR,,"Sensible heat flux, corrected H_F_MDS by energy balance closure correction factor"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,W m-2,average from daily data
+H_CORR_25,,"Sensible heat flux, corrected H_F_MDS by energy balance closure correction factor, 25th percentile"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,,not available
+H_CORR_75,,"Sensible heat flux, corrected H_F_MDS by energy balance closure correction factor, 75th percentile"
+HH,W m-2,
+DD,W m-2,average from half-hourly data
+WW-YY,,not available
+H_RANDUNC,,"Random uncertainty of H, from measured only data"
+HH,W m-2,uses only data point where H_F_MDS_QC is 0 and two hierarchical methods (see header and H_RANDUNC_METHOD)
+DD-YY,W m-2,"from random uncertainty of individual half-hours (rand(i)) = [SQRT(SUM(rand(i)^2)) / n], where n is the number of half-hours used"
+,,
+NET ECOSYSTEM EXCHANGE,,
+NIGHT,,Flag indicating nighttime interval based on SW_IN_POT
+HH,nondimensional,"0 = daytime, 1 = nighttime"
+DD-YY,,not available
+NEE_VUT_REF,,"Net Ecosystem Exchange, using Variable Ustar Threshold (VUT) for each year, reference selected on the basis of the model efficiency (MEF). The MEF analysis is repeated for each time aggregation"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+NEE_VUT_REF_QC,,Quality flag for NEE_VUT_REF
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+NEE_VUT_REF_RANDUNC,,"Random uncertainty for NEE_VUT_REF, from measured only data"
+HH,µmolCO2 m-2 s-1,uses only data points where NEE_VUT_REF_QC is 0 and two hierarchical methods - see header and NEE_VUT_REF_RANDUNC_METHOD
+DD-MM,gC m-2 d-1,"from random uncertainty of individual half-hours (rand(i)) = [SQRT(SUM(rand(i)^2)) / n], where n is the number of half-hours used"
+YY,gC m-2 y-1,"from random uncertainty of individual half-hours (rand(i)) = [SQRT(SUM(rand(i)^2)) / n], where n is the number of half-hours used"
+NEE_VUT_XX,,"NEE VUT percentiles (approx. percentile indicated by XX, see doc.) calculated from the 40 estimates aggregated at the different time resolutions -- XX = 05, 16, 25, 50, 75, 84, 95"
+HH,µmolCO2 m-2 s-1,XXth percentile from 40 half-hourly NEE_VUT_XX
+DD,gC m-2 d-1,XXth percentile from 40 daily NEE_VUT_XX
+WW,gC m-2 d-1,XXth percentile from 40 weekly NEE_VUT_XX
+MM,gC m-2 d-1,XXth percentile from 40 monthly NEE_VUT_XX
+YY,gC m-2 y-1,XXth percentile from 40 yearly NEE_VUT_XX
+NEE_VUT_XX_QC,,"Quality flag for NEE_VUT_XX -- XX = 05, 16, 25, 50, 75, 84, 95"
+HH,nondimensional,0 = measured; 1 = good quality gapfill; 2 = medium; 3 = poor
+DD,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data"
+WW-YY,nondimensional,"fraction between 0-1, indicating percentage of measured and good quality gapfill data (average from daily data)"
+,,
+PARTITIONING,,
+NIGHTTIME,,
+RECO_NT_VUT_REF,,"Ecosystem Respiration, from Nighttime partitioning method, reference selected from RECO versions using model efficiency (MEF). The MEF analysis is repeated for each time aggregation"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+RECO_NT_VUT_XX,,"Ecosystem Respiration, from Nighttime partitioning method (with XX = 05, 16, 25, 50, 75, 84, 95)"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+GPP_NT_VUT_REF,,"Gross Primary Production, from Nighttime partitioning method, reference selected from GPP versions using model efficiency (MEF). The MEF analysis is repeated for each time aggregation"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+GPP_NT_VUT_XX,,"Gross Primary Production, from Nighttime partitioning method (with XX = 05, 16, 25, 50, 75, 84, 95)"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+,,
+DAYTIME,,
+RECO_DT_VUT_REF,,"Ecosystem Respiration, from Daytime partitioning method, reference selected from RECO versions using model efficiency (MEF). The MEF analysis is repeated for each time aggregation"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+RECO_DT_VUT_XX,,"Ecosystem Respiration, from Daytime partitioning method (with XX = 05, 16, 25, 50, 75, 84, 95)"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+GPP_DT_VUT_REF,,"Gross Primary Production, from Daytime partitioning method, reference selected from GPP versions using model efficiency (MEF). The MEF analysis is repeated for each time aggregation"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+GPP_DT_VUT_XX,,"Gross Primary Production, from Daytime partitioning method (with XX = 05, 16, 25, 50, 75, 84, 95)"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+,,
+SUNDOWN,,
+RECO_SR,,"Ecosystem Respiration, from Sundown Respiration partitioning method"
+HH,µmolCO2 m-2 s-1,
+DD,gC m-2 d-1,calculated from half-hourly data
+WW-MM,gC m-2 d-1,average from daily data
+YY,gC m-2 y-1,sum from daily data
+RECO_SR_N,,"Fraction between 0-1, indicating the percentage of data avaiable in the averaging period to parametrize the respiration model"
+HH,,not available
+DD-YY,nondimensional,percentage of data available

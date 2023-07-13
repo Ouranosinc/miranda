@@ -57,6 +57,8 @@ def load_json_data_mappings(project: str) -> dict:
         metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
     elif project.startswith("ec"):
         metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
+    elif project.startswith("fluxnet"):
+        metadata_definition = json.load(open(data_folder / "fluxnet_cf_attrs.json"))
     else:
         raise NotImplementedError()
 
