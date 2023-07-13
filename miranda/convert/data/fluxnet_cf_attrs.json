@@ -1,0 +1,18 @@
+{
+  "Header": {
+    "_miranda_version": true,
+    "abstract": "The SUBSET Data Product for the FLUXNET2015 Release includes fewer data variables, the ones most commonly used plus minimal data quality and uncertainty information. This significantly reduces the number of variables in this data product compared to the comprehensive FULLSET Data Product.",
+    "doi": "https://doi.org/10.1038/s41597-020-0534-3",
+    "institution": "FLUXNET",
+    "institution_name": "FLUXNET",
+    "license_type": "permissive",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "processing_level": "raw",
+    "site_info": "https://fluxnet.org/sites/site-list-and-pages/",
+    "terms_of_use": "FLUXNET2015 SUBSET - CC-BY-4.0 data use should follow these attribution guidelines:\nCite the collection paper (provided in the `doi` global attribute)\nList each site used by its FLUXNET ID and/or per-site DOIs in the paper (see `site_info` global attribute)\nIt is recommended that data users inform data providers of forthcoming publications using their data and cite individual sites’ DOIs for data used when feasible (email contacts can be found by navigating individual site links using the address found in the `site_info` global attribute.\nFor complete fluxnet data policy info see : https://fluxnet.org/data/data-policy/",
+    "title": "FLUXNET2015 SUBSET - CC-BY-4.0",
+    "type": "station-obs"
+  },
+  "dimensions": {},
+  "variables": {}
+}
