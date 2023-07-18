@@ -46,6 +46,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
             "prsn",
             "ps",
             "psl",
+            "rlds",
             "rsds",
             "rss",
             "rlds",

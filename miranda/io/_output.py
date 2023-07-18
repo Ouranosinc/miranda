@@ -179,7 +179,7 @@ def concat_rechunk_zarr(
         list_zarr[-1].stem.split("_")[-1], output_type="datetime"
     ).year
 
-    outzarr = f"{out_stem}_{start_year}_{end_year}.zarr"
+    outzarr = f"{out_stem.replace('rdrs-v21','RDRS_v21')}_{start_year}-{end_year}.zarr"
     outzarr = output_folder.joinpath(outzarr)
 
     if not outzarr.exists() or overwrite:

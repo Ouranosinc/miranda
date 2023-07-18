@@ -52,9 +52,22 @@
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
       "long_name": "Precipitation",
-      "original_long_name": "Total Precipitation",
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
+    },
+    "RDRS_v2.1_P_FB_SFC": {
+      "_cf_variable_name": "rsds",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "long_name": "Surface Downwelling Shortwave Radiation",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "units": "W m-2"
+    },
+    "RDRS_v2.1_P_FI_SFC": {
+      "_cf_variable_name": "rlds",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "long_name": "Surface Downwelling Longwave Radiation",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "units": "W m-2"
     },
     "RDRS_v2.1_P_GZ_SFC": {
       "_cf_variable_name": "zgs",

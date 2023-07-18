@@ -6,7 +6,7 @@ from miranda.io import concat_rechunk_zarr
 
 
 def main():
-    vars_to_process = ["zg"]
+    vars_to_process = ["rlds"]  # , "rsds"]
 
     home = Path("~").expanduser()
     dask_dir = home.joinpath("tmpout", "dask")
@@ -21,17 +21,17 @@ def main():
     )
     project = "rdrs-v21"
 
-    convert_rdrs(
-        project=project,
-        input_folder=Path(home).joinpath("RDRS_v21", "caspar"),
-        output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
-        output_format="zarr",
-        working_folder=Path(home).joinpath("tmpout", "rdrs"),
-        cfvariable_list=vars_to_process,
-        overwrite=False,
-        **dask_kwargs,
-    )
-
+    # convert_rdrs(
+    #     project=project,
+    #     input_folder=Path(home).joinpath("RDRS_v21", "caspar"),
+    #     output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
+    #     output_format="zarr",
+    #     working_folder=Path(home).joinpath("tmpout", "rdrs"),
+    #     cfvariable_list=vars_to_process,
+    #     overwrite=False,
+    #     **dask_kwargs,
+    # )
+    #
     rdrs_to_daily(
         project=project,
         input_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/1hr"),
