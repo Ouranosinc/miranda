@@ -814,7 +814,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             attr_treatment = header[field]
         else:
             raise AttributeError(
-                "Attribute handling configuration seems to not be properly configured. Verify JSON."
+                f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
             )
 
         if field == "_map_attrs":
@@ -824,18 +824,12 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         elif field == "_remove_attrs":
             for ff in attr_treatment:
                 del d.attrs[ff]
-
         else:
-            try:
-                if field[1:] in d.attrs:
-                    logging.warning(
-                        f"Overwriting `{field[1:]}` based on JSON configuration."
-                    )
-                header[field[1:]] = attr_treatment
-            except KeyError:
-                raise AttributeError(
-                    f"Attribute treatment `{field}` is not properly configured. Verify JSON."
+            if field[1:] in d.attrs:
+                logging.warning(
+                    f"Overwriting `{field[1:]}` based on JSON configuration."
                 )
+            header[field[1:]] = attr_treatment
 
         del header[field]
 
