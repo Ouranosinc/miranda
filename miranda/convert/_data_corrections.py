@@ -824,16 +824,18 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         elif field == "_remove_attrs":
             for ff in attr_treatment:
                 del d.attrs[ff]
-        elif isinstance(attr_treatment, str):
-            if field[1:] in d.attrs:
-                logging.warning(
-                    f"Overwriting `{field[1:]}` based on JSON configuration."
-                )
-            header[field[1:]] = attr_treatment
+
         else:
-            raise AttributeError(
-                f"Attribute treatment `{field}` is not properly configured. Verify JSON."
-            )
+            try:
+                if field[1:] in d.attrs:
+                    logging.warning(
+                        f"Overwriting `{field[1:]}` based on JSON configuration."
+                    )
+                header[field[1:]] = attr_treatment
+            except KeyError:
+                raise AttributeError(
+                    f"Attribute treatment `{field}` is not properly configured. Verify JSON."
+                )
 
         del header[field]
 
