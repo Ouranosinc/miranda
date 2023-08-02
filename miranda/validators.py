@@ -8,12 +8,12 @@ import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
-from .cv import VALIDATION_ENABLED
+from miranda.vocabularies.esgf import VALIDATION_ENABLED
 
 __all__ = ["url_validate"]
 
 if VALIDATION_ENABLED:
-    from .cv import (
+    from miranda.vocabularies.esgf import (
         ACTIVITIES,
         BIAS_ADJUST_INSTITUTIONS,
         DRIVING_MODELS,

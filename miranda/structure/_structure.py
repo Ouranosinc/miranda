@@ -12,10 +12,10 @@ from types import GeneratorType
 import yaml
 from schema import SchemaError
 
-from miranda.cv import VALIDATION_ENABLED
 from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.io import discover_data
 from miranda.scripting import LOGGING_CONFIG
+from miranda.vocabularies.esgf import VALIDATION_ENABLED
 
 if VALIDATION_ENABLED:
     from miranda.validators import validation_schemas
@@ -306,7 +306,9 @@ def build_path_from_schema(
     Path or None
     """
     if schema is None:
-        schema = Path(__file__).parent.joinpath("data").joinpath("ouranos_schema.yml")
+        schema = (
+            Path(__file__).parent.joinpath("configs").joinpath("ouranos_schema.yml")
+        )
 
     tree = parse_schema(facets, schema, top_folder)
     branch = tree[0]

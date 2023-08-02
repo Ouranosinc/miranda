@@ -45,9 +45,10 @@ from miranda.utils import generic_extract_archive
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "merge_stations",
     "convert_flat_files",
+    "convert_station",
     "merge_converted_variables",
+    "merge_stations",
 ]
 
 KiB = int(pow(2, 10))
@@ -60,8 +61,6 @@ def _fwf_column_definitions(
     time_frequency: str,
 ) -> tuple[list[str], list[int], list[type[str | int]]]:
     """Return the column names, widths, and data types for the fixed-width format."""
-
-    # Preparing the column headers
     if time_frequency.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
         column_names = ["code", "year", "month", "day", "code_var"]
@@ -103,6 +102,7 @@ def convert_station(
     client: Any,
     **kwargs,
 ):
+    """Convert a single station's data from the fixed-width format to a netCDF file."""
     data = Path(data)
     column_names, column_widths, column_dtypes = _fwf_column_definitions(mode)
 
@@ -690,7 +690,7 @@ def _tmp_zarr(
 
     try:
         ds = xr.open_mfdataset(
-            nc, combine="nested", concat_dim={"station"}, preprocess=_remove_duplicates
+            nc, combine="nested", concat_dim="station", preprocess=_remove_duplicates
         )
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])

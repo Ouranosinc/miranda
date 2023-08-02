@@ -1,3 +1,4 @@
+"""ECCC Geomet Module."""
 from __future__ import annotations
 
 import os
@@ -7,7 +8,8 @@ import pandas as pd
 import xarray as xr
 
 
-def load_station_metadata(meta: str | os.PathLike) -> xr.Dataset:
+def load_station_metadata(meta: str | os.PathLike | None) -> xr.Dataset:
+    """Method to load station metadata from a file or URL."""
     if meta:
         df_inv = pd.read_csv(meta, header=0)
     else:

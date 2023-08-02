@@ -18,11 +18,12 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["open_txt"]
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "data" / "deh_cf_attrs.json"))[  # noqa
+cmor = json.load(open(Path(__file__).parent / "configs" / "deh_cf_attrs.json"))[
     "variable_entry"
 ]
 
-# TODO: Some potentially useful attributes were skipped, because they would be complicated to include in a dataset since they vary per station
+# TODO: Some potentially useful attributes were skipped
+# because they would be complicated to include in a dataset since they vary per station
 meta_patterns = {
     "Station: ": "name",
     "Bassin versant: ": "bv",

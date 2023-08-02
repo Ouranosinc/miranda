@@ -21,7 +21,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["open_csv"]
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "data" / "hq_cf_attrs.json"))["variables"]
+cmor = json.load(open(Path(__file__).parent / "configs" / "hq_cf_attrs.json"))[
+    "variables"
+]
 
 fp = r"[-+]?\d*,\d+|\d+"
 
@@ -180,6 +182,6 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict | None = None) -> xr.Da
 
 
 def open_csv(path: str | Path, cf_table: dict | None = cmor) -> xr.DataArray:
-    """Extract daily HQ meteo data and convert to xr.DataArray with CF-Convention attributes."""
+    """Extract daily HQ meteo configs and convert to xr.DataArray with CF-Convention attributes."""
     meta, data = extract_daily(path)
     return to_cf(meta, data, cf_table)

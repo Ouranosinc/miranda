@@ -10,14 +10,119 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
+from miranda.preprocess._data_definitions import load_json_data_mappings
+from miranda.preprocess._treatments import basic_metadata_conversion
 from miranda.scripting import LOGGING_CONFIG
-
-from ._utils import cf_ahccd_metadata
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
+
+
+def _ahccd_metadata(
+    gen: int,
+) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
+    """
+
+    Parameters
+    ----------
+    gen: {1, 2, 3}
+
+    Returns
+    -------
+    dict[str, int or str or float], dict, list[tuple[int, int]], int
+    """
+    generation = {1: "First", 2: "Second", 3: "Third"}.get(gen)
+    if not generation:
+        raise NotImplementedError(f"Generation '{gen}' not supported")
+
+    config = load_json_data_mappings("eccc-homogenized")
+    metadata = basic_metadata_conversion("eccc-homogenized", config)
+    header = metadata["Header"]
+
+    # Conditional handling of global attributes based on generation
+    for field in [f for f in header if f.startswith("_")]:
+        if isinstance(header[field], dict):
+            attr_treatment = header[field]["generation"]
+        else:
+            raise AttributeError(
+                f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
+            )
+        if field in ["_citation" "_product"]:
+            for attribute, value in attr_treatment.items():
+                if attribute == generation:
+                    header[field[1:]] = value
+        del header[field]
+
+    return header
+
+
+def _column_definitions(
+    variable_code: str, metadata: dict
+) -> tuple[dict, list[tuple[int, int]], int]:
+    variable = metadata[variable_code]
+    variable["missing_flags"] = "M"
+    if variable["variable"].startswith("tas"):
+        variable["NaN_value"] = -9999.9
+        column_names = [
+            "No",
+            "StnId",
+            "Station name",
+            "Prov",
+            "FromYear",
+            "FromMonth",
+            "ToYear",
+            "ToMonth",
+            "%Miss",
+            "Lat(deg)",
+            "Long(deg)",
+            "Elev(m)",
+            "Joined",
+            "RCS",
+        ]
+        column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
+        ii = 9
+        for i in range(1, 32):
+            column_spaces.append((ii, ii + 7))
+            ii += 7
+            column_spaces.append((ii, ii + 1))
+            ii += 1
+        header_row = 3
+
+    elif variable["variable"].startswith("pr"):
+        variable["NaN_value"] = -9999.99
+        column_names = [
+            "Prov",
+            "Station name",
+            "stnid",
+            "beg yr",
+            "beg mon",
+            "end yr",
+            "end mon",
+            "lat (deg)",
+            "long (deg)",
+            "elev (m)",
+            "stns joined",
+        ]
+        column_spaces = [(0, 4), (4, 5), (5, 7), (7, 8)]
+        ii = 8
+        for i in range(1, 32):
+            column_spaces.append((ii, ii + 8))
+            ii += 8
+            column_spaces.append((ii, ii + 1))
+            ii += 1
+        header_row = 0
+
+    else:
+        raise KeyError
+
+    column_names = {
+        col.lower().split("(")[0].replace("%", "pct_").strip().replace(" ", "_"): col
+        for col in list(column_names)
+    }
+
+    return column_names, column_spaces, header_row
 
 
 def convert_ahccd(
@@ -45,6 +150,8 @@ def convert_ahccd(
     code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
         variable
     )
+
+    attrs = _ahccd_metadata(generation)
     var, col_names, col_spaces, header_row, global_attrs = cf_ahccd_metadata(
         code, generation
     )
@@ -56,7 +163,7 @@ def convert_ahccd(
 
     else:
         raise NotImplementedError(f"Code '{code} for generation {gen}.")
-    metadata_source = Path(__file__).resolve().parent.joinpath("data").joinpath(meta)
+    metadata_source = Path(__file__).resolve().parent.joinpath("configs").joinpath(meta)
 
     if "tas" in variable:
         metadata = pd.read_csv(metadata_source, header=2)
@@ -179,7 +286,7 @@ def convert_ahccd_fwf_files(
     )
 
     if attrs is None:
-        attrs, _, _, _, _ = cf_ahccd_metadata(code, generation)
+        attrs = _ahccd_metadata(generation)
     if cols_specs is None:
         _, _, cols_specs, _, _ = cf_ahccd_metadata(code, generation)
     _, _, _, nhead, _ = cf_ahccd_metadata(code, generation)

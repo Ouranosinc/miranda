@@ -100,7 +100,11 @@ remote = [
 
 [tool.black]
 target-version = [
-  "py37"
+  "py37",
+  "py38",
+  "py39",
+  "py310",
+  "py311"
 ]
 
 [tool.coverage.run]

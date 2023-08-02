@@ -10,31 +10,28 @@ import time
 from functools import partial
 from pathlib import Path
 
-from miranda.convert.eccc_obs import _convert_station_file
 from miranda.eccc._utils import cf_station_metadata
+from miranda.preprocess._eccc_obs import _convert_station_file
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-_data_folder = Path(__file__).parent / "data"
+_data_folder = Path(__file__).parent / "configs"
 
 eccc_observation_variables = dict()
 eccc_observation_variables["flat"] = [
-    v
-    for v in json.load(open(_data_folder / "eccc_obs_flat_attrs.json"))[
-        "variables"
-    ].keys()
+    v for v in json.load(open(_data_folder / "eccc-obs_attrs.json"))["variables"].keys()
 ]
 eccc_observation_variables["summary"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(open(_data_folder / "eccc_obs_summary_cf_attrs.json"))[
+    for attrs in json.load(open(_data_folder / "eccc-obs-summary_attrs.json"))[
         "variables"
     ].values()
 ]
 eccc_observation_variables["homogenized"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(open(_data_folder / "eccc_homogenized_cf_attrs.json"))[
+    for attrs in json.load(open(_data_folder / "eccc-homogenized_attrs.json"))[
         "variables"
     ].values()
 ]

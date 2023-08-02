@@ -1,0 +1,29 @@
+{
+  "Header": {
+    "_converter": true,
+    "_frequency": true,
+    "_miranda_version": true,
+    "_missing_flags": "M",
+    "_missing_values": [
+      "-999",
+      "1e20",
+      "-9999",
+      "#####"
+    ],
+    "acknowledgement": "This data is provided by Environment and Climate Change Canada (ECCC).",
+    "author": "Environment and Climate Change Canada (ECCC)",
+    "contact": "climatcentre-climatecentral@ec.gc.ca",
+    "documentation": "https://climate.weather.gc.ca/doc/Technical_Documentation.pdf",
+    "institution": "GovCan",
+    "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
+    "license_preamble": "The data is owned by the Government of Canada (Environment and Climate Change Canada), and fall under the licence agreement for use of Environment and Climate Change Canada data.",
+    "license_type": "permissive",
+    "organization": "ECCC",
+    "processing_level": "raw",
+    "source": "ECCC-OBS",
+    "table_date": "2023-08-02",
+    "title": "Environment and Climate Change Canada (ECCC) weather station observations",
+    "type": "station-obs",
+    "usage": "The original data is owned by the Government of Canada (Environment and Climate Change Canada), and falls under the licence agreement for use of Environment and Climate Change Canada data"
+  }
+}

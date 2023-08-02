@@ -35,7 +35,7 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-_data_folder = Path(__file__).parent / "data"
+_config_folder = Path(__file__).resolve().parent / "configs"
 
 
 def load_json_data_mappings(project: str) -> dict[str, Any]:
@@ -49,38 +49,50 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
     -------
     dict[str, Any]
     """
-    data_folder = Path(__file__).resolve().parent / "data"
-
     if project.startswith("era5"):
-        metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "ecmwf_cf_attrs.json"))
     elif project in ["rdrs-v21"]:
-        metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
+        metadata_definition = json.load(
+            open(_config_folder / "eccc-rdrs_cf_attrs.json")
+        )
     elif project == "eccc-obs":
-        metadata_definition = json.load(open(data_folder / "eccc_obs_cf_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "eccc-obs_cf_attrs.json"))
     elif project in ["agcfsr", "agmerra2"]:
-        metadata_definition = json.load(open(data_folder / "nasa_ag_cf_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "nasa_ag_cf_attrs.json"))
     elif project in ["cordex", "cmip5", "cmip6"]:
-        metadata_definition = json.load(open(data_folder / "cmip_ouranos_attrs.json"))
+        metadata_definition = json.load(
+            open(_config_folder / "cmip_ouranos_attrs.json")
+        )
     elif project == "ets-grnch":
-        metadata_definition = json.load(open(data_folder / "ets_grnch_cf_attrs.json"))
+        metadata_definition = json.load(
+            open(_config_folder / "ets_grnch_cf_attrs.json")
+        )
     elif project == "nrcan-gridded-10km":
         raise NotImplementedError()
     elif project == "wfdei-gem-capa":
-        metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
-    elif project.startswith("melcc"):
-        metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
-    elif project.startswith("ec"):
-        metadata_definition = json.load(open(data_folder / "eccc-canswe_cf_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "usask_cf_attrs.json"))
+    elif project == "melcc":
+        metadata_definition = json.load(open(_config_folder / "melcc_cf_attrs.json"))
+    elif project == "eccc-canswe":
+        metadata_definition = json.load(
+            open(_config_folder / "eccc-canswe_cf_attrs.json")
+        )
+    elif project == "eccc-homogenized":
+        metadata_definition = json.load(
+            open(_config_folder / "eccc-homogenized_cf_attrs.json")
+        )
     elif project in ["NEX-GDDP-CMIP6"]:
-        metadata_definition = json.load(open(data_folder / "nex-gddp-cmip6_attrs.json"))
+        metadata_definition = json.load(
+            open(_config_folder / "nex-gddp-cmip6_attrs.json")
+        )
     elif project in ["ESPO-G6-R2"]:
-        metadata_definition = json.load(open(data_folder / "espo-g6-r2_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "espo-g6-r2_attrs.json"))
     elif project in ["ESPO-G6-E5L"]:
-        metadata_definition = json.load(open(data_folder / "espo-g6-e5l_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "espo-g6-e5l_attrs.json"))
     elif project in ["EMDNA"]:
-        metadata_definition = json.load(open(data_folder / "emdna_cf_attrs.json"))
+        metadata_definition = json.load(open(_config_folder / "emdna_cf_attrs.json"))
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(f"Project not supported: {project}")
 
     return metadata_definition
 
@@ -88,27 +100,27 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
 eccc_rdrs_variables = dict()
 eccc_rdrs_variables["raw"] = [
     v
-    for v in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+    for v in json.load(open(_config_folder / "eccc-rdrs_cf_attrs.json"))[
         "variables"
     ].keys()
 ]
 eccc_rdrs_variables["cf"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+    for attrs in json.load(open(_config_folder / "eccc-rdrs_cf_attrs.json"))[
         "variables"
     ].values()
 ]
 
-era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
+era5_variables = json.load(open(_config_folder / "ecmwf_cf_attrs.json"))[
     "variables"
 ].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(open(_data_folder / "nasa_ag_cf_attrs.json"))[
+nasa_ag_variables = json.load(open(_config_folder / "nasa_ag_cf_attrs.json"))[
     "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
-wfdei_gem_capa_variables = json.load(open(_data_folder / "usask_cf_attrs.json"))[
+wfdei_gem_capa_variables = json.load(open(_config_folder / "usask_cf_attrs.json"))[
     "variables"
 ].keys()
 

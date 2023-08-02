@@ -1,7 +1,7 @@
 from os import getenv
 from pathlib import Path
 
-from miranda.convert.eccc_obs import (
+from miranda.preprocess._eccc_obs import (
     merge_stations,
     convert_flat_files,
     merge_converted_variables,

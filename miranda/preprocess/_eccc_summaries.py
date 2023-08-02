@@ -30,7 +30,7 @@ config.dictConfig(LOGGING_CONFIG)
 __all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
 
 eccc_metadata = json.load(
-    open(Path(__file__).parent / "eccc_obs_summary_cf_attrs.json")
+    open(Path(__file__).resolve().parent / "configs" / "eccc-obs-summary_cf_attrs.json")
 )["variable_entry"]
 
 
