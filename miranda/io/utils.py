@@ -28,7 +28,7 @@ __all__ = [
     "sort_variables",
 ]
 
-_data_folder = Path(__file__).parent / "configs"
+_data_folder = Path(__file__).parent / "data"
 name_configurations = json.load(open(_data_folder / "ouranos_name_config.json"))
 
 

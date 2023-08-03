@@ -26,7 +26,7 @@ __all__ = [
     "translate_time_chunk",
 ]
 
-_data_folder = Path(__file__).parent / "configs"
+_data_folder = Path(__file__).parent / "data"
 chunk_configurations = json.load(open(_data_folder / "ouranos_chunk_config.json"))
 
 
