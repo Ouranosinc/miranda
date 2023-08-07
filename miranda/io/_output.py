@@ -34,6 +34,7 @@ def write_dataset(
     ds: xr.DataArray | xr.Dataset,
     output_path: str | os.PathLike,
     output_format: str,
+    output_name: str | None = None,
     chunks: dict | None = None,
     overwrite: bool = False,
     compute: bool = True,
@@ -48,6 +49,8 @@ def write_dataset(
         Output folder path.
     output_format: {"netcdf", "zarr"}
         Output data container type.
+    output_name: str, optional
+        Output file name.
     chunks : dict, optional
         Chunking layout to be written to new files. If None, chunking will be left to the relevant backend engine.
     overwrite : bool
@@ -64,11 +67,15 @@ def write_dataset(
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    outfile = name_output_file(ds, output_format)
-    outfile_path = output_path.joinpath(outfile)
+    if not output_name:
+        output_name = name_output_file(ds, output_format)
+    else:
+        output_name = str(output_name)
+
+    outfile_path = output_path.joinpath(output_name)
 
     if overwrite and outfile_path.exists():
-        logging.warning(f"Removing existing {output_format} files for {outfile}.")
+        logging.warning(f"Removing existing {output_format} files for {output_name}.")
         if outfile_path.is_dir():
             shutil.rmtree(outfile_path)
         if outfile_path.is_file():
@@ -78,7 +85,7 @@ def write_dataset(
         freq = ds.attrs["frequency"]  # TOD0: check that this is really there
         chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
 
-    logging.info(f"Writing {outfile}.")
+    logging.info(f"Writing {output_name}.")
     write_object = delayed_write(
         ds,
         outfile_path,

@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from miranda.io import write_dataset
+from miranda.io.utils import name_output_file
 from miranda.preprocess._data_definitions import load_json_data_mappings
 from miranda.preprocess._treatments import basic_metadata_conversion
 from miranda.scripting import LOGGING_CONFIG
@@ -16,7 +18,29 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
-__all__ = ["convert_ahccd", "convert_ahccd_fwf_file"]
+__all__ = ["convert_ahccd", "convert_ahccd_fwf_file", "merge_ahccd"]
+
+
+def _ahccd_variable_code(code: str):
+    config = load_json_data_mappings("eccc-homogenized")
+    variable_codes = {}
+    for variable_code in config["variables"]:
+        variable_name = config["variables"][variable_code].get("_variable_name")
+        if variable_name:
+            variable_codes[variable_name] = variable_code
+        else:
+            raise AttributeError(
+                f"Variable `{variable_code}` is not properly configured. Verify JSON."
+            )
+
+    if code in variable_codes.values():
+        variable = code
+    else:
+        variable = variable_codes.get(code)
+    if not variable:
+        raise NotImplementedError(f"Variable `{code}` not supported.")
+
+    return variable
 
 
 def _ahccd_variable_metadata(
@@ -27,7 +51,7 @@ def _ahccd_variable_metadata(
 
     Parameters
     ----------
-    variable_code: {"dm", "dn", "dr", "ds", "dt", "dx"}
+    variable_code
     gen: {1, 2, 3}
 
     Returns
@@ -40,11 +64,9 @@ def _ahccd_variable_metadata(
 
     config = load_json_data_mappings("eccc-homogenized")
     metadata = basic_metadata_conversion("eccc-homogenized", config)
+    code = _ahccd_variable_code(variable_code)
 
-    variable_meta = metadata["variables"].get(variable_code)
-    if not variable_meta:
-        raise NotImplementedError(f"Variable `{variable_code}` not supported.")
-
+    variable_meta = metadata["variables"].get(code)
     variable_name = variable_meta.get("_variable_name")
     if variable_name:
         variable_meta = {variable_name: variable_meta}
@@ -53,24 +75,25 @@ def _ahccd_variable_metadata(
         variable_meta = {variable_code: variable_meta}
 
     header = metadata["Header"]
+    to_delete = []
     # Conditional handling of global attributes based on generation
     for field in [f for f in header if f.startswith("_")]:
         if isinstance(header[field], bool):
-            if header[field] and field[1:] == "variable":
+            if header[field] and field == "_variable":
                 header[field[1:]] = variable_name
-
         elif isinstance(header[field], dict):
             attr_treatment = header[field]["generation"]
             if field in ["_citation" "_product"]:
                 for attribute, value in attr_treatment.items():
                     if attribute == generation:
                         header[field[1:]] = value
-
         else:
             raise AttributeError(
                 f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
             )
+        to_delete.append(field)
 
+    for field in to_delete:
         del header[field]
 
     return variable_meta, header
@@ -167,9 +190,7 @@ def convert_ahccd_fwf_file(
     -------
     xarray.Dataset
     """
-    code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
-        variable
-    )
+    code = _ahccd_variable_code(variable)
 
     variable_meta, global_attrs = _ahccd_variable_metadata(code, generation)
     col_names, cols_specs, header = _ahccd_column_definitions(code)
@@ -282,8 +303,10 @@ def convert_ahccd(
     data_source: str | Path,
     output_dir: str | Path,
     variable: str,
+    *,
     generation: int,
     merge: bool = False,
+    overwrite: bool = False,
 ) -> None:
     """Convert Adjusted and Homogenized Canadian Climate Dataset files.
 
@@ -294,6 +317,7 @@ def convert_ahccd(
     variable: str
     generation: int
     merge: bool
+    overwrite: bool
 
     Returns
     -------
@@ -302,10 +326,7 @@ def convert_ahccd(
     output_dir = Path(output_dir).resolve().joinpath(variable)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
-        variable
-    )
-
+    code = _ahccd_variable_code(variable)
     var_meta, global_attrs = _ahccd_variable_metadata(code, generation)
     (
         col_names,
@@ -343,14 +364,11 @@ def convert_ahccd(
     # Convert station .txt files to netcdf
     for ff in Path(data_source).glob(f"{code}*.txt"):
         outfile = output_dir.joinpath(ff.name.replace(".txt", ".nc"))
-        if not outfile.exists():
+        if not outfile.exists() or overwrite:
             logger.info(ff.name)
 
             station_id = ff.name[2:].split(".txt")[0]
-            try:
-                metadata_st = metadata[metadata["stnid"] == int(station_id)]
-            except ValueError:
-                metadata_st = metadata[metadata["stnid"] == station_id]
+            metadata_st = metadata[metadata["stnid"] == station_id]
 
             if len(metadata_st) == 1:
                 ds_out = convert_ahccd_fwf_file(
@@ -363,38 +381,70 @@ def convert_ahccd(
                 logger.warning(
                     f"metadata info for station {ff.name} not found : skipping"
                 )
-    if not merge:
-        return
+        else:
+            logger.info(f"{outfile.name} already exists: Skipping...")
+    if merge:
+        merge_ahccd(data_source, output_dir, variable)
+    return
 
-    # merge individual stations to single .nc file
-    ncfiles = list(output_dir.glob(f"{code}*.nc"))
-    outfile = output_dir.parent.joinpath(
-        "merged_stations", f"ahccd_gen{generation}_{variable}.nc"
+
+def merge_ahccd(
+    data_source: str | Path,
+    output_dir: str | Path | None = None,
+    variable: str | None = None,
+    overwrite: bool = False,
+) -> None:
+    """Merge Adjusted and Homogenized Canadian Climate Dataset files."""
+    if variable:
+        code = _ahccd_variable_code(variable)
+        glob_pattern = f"{code}*.nc"
+        output_dir = Path(output_dir).resolve().joinpath(variable)
+    else:
+        glob_pattern = "*.nc"
+        output_dir = Path(output_dir).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Merge individual stations to single .nc file
+    ds_ahccd = xr.open_mfdataset(
+        list(data_source.glob(glob_pattern)), concat_dim="station", combine="nested"
     )
 
-    if not outfile.exists():
-        logger.info("merging stations :", variable)
-        ds_ahccd = xr.open_mfdataset(
-            ncfiles, concat_dim="station", combine="nested"
-        ).load()
+    for coord in ds_ahccd.coords:
+        # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
+        # Do not apply to datetime object
+        if coord != "time" and ds_ahccd[coord].dtype == "O":
+            ds_ahccd[coord] = ds_ahccd[coord].astype(str)
 
-        for coord in ds_ahccd.coords:
-            # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
-            # Do not apply to datetime object
-            if coord != "time" and ds_ahccd[coord].dtype == "O":
-                ds_ahccd[coord] = ds_ahccd[coord].astype(str)
+    variables_found = set()
+    for v in ds_ahccd.data_vars:
+        # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
+        # Do not apply to flag timeseries
+        if ds_ahccd[v].dtype == "O" and "flag" not in v:
+            ds_ahccd[v] = ds_ahccd[v].astype(str)
+        try:
+            variables_found.add(_ahccd_variable_code(str(v)))
+        except NotImplementedError:
+            pass
 
-        for v in ds_ahccd.data_vars:
-            # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
-            # Do not apply to flag timeseries
-            if ds_ahccd[v].dtype == "O" and "flag" not in v:
-                logger.info(v)
-                ds_ahccd[v] = ds_ahccd[v].astype(str)
+    # Name output file
+    ds_ahccd.attrs["variable"] = ", ".join(variables_found)
+    variables = "-".join(variables_found)
+    output_name = name_output_file(ds_ahccd, "netcdf", variables)
+    logger.info(
+        f"Many variables found. Merging station files in {data_source} as `{output_name}`."
+    )
 
-        outfile.parent.mkdir(parents=True, exist_ok=True)
-        ds_ahccd.to_netcdf(outfile, engine="h5netcdf", mode="w")
+    try:
+        logger.info(f"Writing merged file to: {output_dir}.")
+        write_dataset(
+            ds_ahccd,
+            output_dir,
+            output_format="netcdf",
+            output_name=output_name,
+            chunks={"time": 365},
+            overwrite=overwrite,
+            compute=True,
+        )
         del ds_ahccd
-    for nc in outfile.parent.glob("*.nc"):
-        logger.info(nc)
-        ds = xr.open_dataset(nc)
-        logger.info(ds)
+    except FileExistsError:
+        logger.info("Merged file already exists. Use overwrite=`True` to overwrite.")
