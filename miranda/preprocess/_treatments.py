@@ -22,7 +22,6 @@ def basic_metadata_conversion(
     -------
     xarray.Dataset
     """
-    logging.info("Converting metadata.")
     header = metadata["Header"]
 
     # Static handling of version global attributes

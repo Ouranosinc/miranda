@@ -16,7 +16,7 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
-__all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
+__all__ = ["convert_ahccd", "convert_ahccd_fwf_file"]
 
 
 def _ahccd_variable_metadata(
@@ -55,16 +55,22 @@ def _ahccd_variable_metadata(
     header = metadata["Header"]
     # Conditional handling of global attributes based on generation
     for field in [f for f in header if f.startswith("_")]:
-        if isinstance(header[field], dict):
+        if isinstance(header[field], bool):
+            if header[field] and field[1:] == "variable":
+                header[field[1:]] = variable_name
+
+        elif isinstance(header[field], dict):
             attr_treatment = header[field]["generation"]
+            if field in ["_citation" "_product"]:
+                for attribute, value in attr_treatment.items():
+                    if attribute == generation:
+                        header[field[1:]] = value
+
         else:
             raise AttributeError(
                 f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
             )
-        if field in ["_citation" "_product"]:
-            for attribute, value in attr_treatment.items():
-                if attribute == generation:
-                    header[field[1:]] = value
+
         del header[field]
 
     return variable_meta, header
@@ -141,7 +147,7 @@ def _ahccd_column_definitions(
     return column_names, column_spaces, header_row
 
 
-def convert_ahccd_fwf_files(
+def convert_ahccd_fwf_file(
     ff: Path | str,
     metadata: pd.DataFrame,
     variable: str,
@@ -235,7 +241,7 @@ def convert_ahccd_fwf_files(
         }
     )
 
-    ds.index = pd.to_datetime(time_ds)
+    ds.index = pd.to_datetime(time_ds)  # noqa
     ds = ds.to_xarray().rename({"index": "time"})
     ds_out = xr.Dataset(coords={"time": time1})
     for v in ds.data_vars:
@@ -277,6 +283,7 @@ def convert_ahccd(
     output_dir: str | Path,
     variable: str,
     generation: int,
+    merge: bool = False,
 ) -> None:
     """Convert Adjusted and Homogenized Canadian Climate Dataset files.
 
@@ -286,6 +293,7 @@ def convert_ahccd(
     output_dir: str or Path
     variable: str
     generation: int
+    merge: bool
 
     Returns
     -------
@@ -299,7 +307,6 @@ def convert_ahccd(
     )
 
     var_meta, global_attrs = _ahccd_variable_metadata(code, generation)
-
     (
         col_names,
         col_spaces,
@@ -346,7 +353,7 @@ def convert_ahccd(
                 metadata_st = metadata[metadata["stnid"] == station_id]
 
             if len(metadata_st) == 1:
-                ds_out = convert_ahccd_fwf_files(
+                ds_out = convert_ahccd_fwf_file(
                     ff, metadata_st, variable, generation=generation
                 )
                 ds_out.attrs = global_attrs
@@ -356,10 +363,11 @@ def convert_ahccd(
                 logger.warning(
                     f"metadata info for station {ff.name} not found : skipping"
                 )
+    if not merge:
+        return
 
     # merge individual stations to single .nc file
-    # variable
-    ncfiles = list(output_dir.glob("*.nc"))
+    ncfiles = list(output_dir.glob(f"{code}*.nc"))
     outfile = output_dir.parent.joinpath(
         "merged_stations", f"ahccd_gen{generation}_{variable}.nc"
     )
@@ -382,11 +390,6 @@ def convert_ahccd(
             if ds_ahccd[v].dtype == "O" and "flag" not in v:
                 logger.info(v)
                 ds_ahccd[v] = ds_ahccd[v].astype(str)
-
-        # for clean_name, orig_name in col_names.items():
-        #     if clean_name in ["lat", "long"]:
-        #         continue
-        #     ds_ahccd[clean_name].attrs["long_name"] = orig_name
 
         outfile.parent.mkdir(parents=True, exist_ok=True)
         ds_ahccd.to_netcdf(outfile, engine="h5netcdf", mode="w")
