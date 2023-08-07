@@ -37,7 +37,7 @@ from dask.diagnostics import ProgressBar
 from xclim.core.units import convert_units_to
 
 from miranda.archive import group_by_length
-from miranda.convert import load_json_data_mappings
+from miranda.preprocess._data_definitions import load_json_data_mappings
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
 from miranda.utils import generic_extract_archive

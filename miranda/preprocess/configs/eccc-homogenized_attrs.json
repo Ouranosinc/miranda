@@ -19,7 +19,7 @@
     "contact": "info.cccs-ccsc@canada.ca",
     "dataset_id": "d6813de6-b20a-46cc-8990-01862ae15c5f",
     "documentation": "https://www.canada.ca/en/environment-climate-change/services/climate-change/canadian-centre-climate-services/display-download/technical-documentation-adjusted-climate-data.html",
-    "domain": "AMNO",
+    "domain": "CAN",
     "frequency": "day",
     "institution": "GovCan",
     "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
@@ -29,7 +29,7 @@
     "processing_level": "adjusted",
     "project": "AHCCD",
     "realm": "atmos",
-    "source": "AHCCD",
+    "source": "msc",
     "table_date": "2023-08-03",
     "table_id": "ECCC",
     "type": "station-obs"

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import calendar
 import logging.config
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +11,10 @@ import xarray as xr
 
 from miranda.io import write_dataset
 from miranda.io.utils import name_output_file
-from miranda.preprocess._data_definitions import load_json_data_mappings
+from miranda.preprocess._data_definitions import (
+    find_project_variable_codes,
+    load_json_data_mappings,
+)
 from miranda.preprocess._treatments import basic_metadata_conversion
 from miranda.scripting import LOGGING_CONFIG
 
@@ -20,30 +22,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_file", "merge_ahccd"]
-
-
-def _ahccd_variable_code(code: str):
-    config = load_json_data_mappings("eccc-homogenized")
-    variable_codes = {}
-    for variable_code in config["variables"]:
-        variable_name = config["variables"][variable_code].get("_variable_name")
-        if variable_name:
-            variable_codes[variable_name] = variable_code
-        else:
-            warnings.warn(
-                f"Variable `{variable_code}` does not have accompanying `variable_name`. "
-                f"Verify JSON. Continuing with `{variable_code}` as `variable_name`."
-            )
-            variable_codes[variable_code] = variable_code
-
-    if code in variable_codes.values():
-        variable = code
-    else:
-        variable = variable_codes.get(code)
-    if not variable:
-        raise NotImplementedError(f"Variable `{code}` not supported.")
-
-    return variable
 
 
 def _ahccd_variable_metadata(
@@ -67,7 +45,7 @@ def _ahccd_variable_metadata(
 
     config = load_json_data_mappings("eccc-homogenized")
     metadata = basic_metadata_conversion("eccc-homogenized", config)
-    code = _ahccd_variable_code(variable_code)
+    code = find_project_variable_codes(variable_code, "eccc-homogenized")
 
     variable_meta = metadata["variables"].get(code)
     variable_name = variable_meta.get("_variable_name")
@@ -190,7 +168,7 @@ def convert_ahccd_fwf_file(
     -------
     xarray.Dataset
     """
-    code = _ahccd_variable_code(variable)
+    code = find_project_variable_codes(variable, "eccc-homogenized")
 
     variable_meta, global_attrs = _ahccd_variable_metadata(code, generation)
     col_names, cols_specs, header = _ahccd_column_definitions(code)
@@ -321,7 +299,7 @@ def convert_ahccd(
     output_dir = Path(output_dir).resolve().joinpath(variable)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    code = _ahccd_variable_code(variable)
+    code = find_project_variable_codes(variable, "eccc-homogenized")
     var_meta, global_attrs = _ahccd_variable_metadata(code, generation)
     (
         col_names,
@@ -391,7 +369,7 @@ def merge_ahccd(
 ) -> None:
     """Merge Adjusted and Homogenized Canadian Climate Dataset files."""
     if variable:
-        code = _ahccd_variable_code(variable)
+        code = find_project_variable_codes(variable, "eccc-homogenized")
         glob_pattern = f"{code}*.nc"
         output_dir = Path(output_dir).resolve().joinpath(variable)
     else:
@@ -417,7 +395,7 @@ def merge_ahccd(
         if ds_ahccd[v].dtype == "O" and "flag" not in v:
             ds_ahccd[v] = ds_ahccd[v].astype(str)
         try:
-            variables_found.add(_ahccd_variable_code(str(v)))
+            variables_found.add(find_project_variable_codes(str(v), "eccc-homogenized"))
         except NotImplementedError:
             pass
 
