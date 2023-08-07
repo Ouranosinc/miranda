@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import calendar
 import logging.config
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -29,9 +30,11 @@ def _ahccd_variable_code(code: str):
         if variable_name:
             variable_codes[variable_name] = variable_code
         else:
-            raise AttributeError(
-                f"Variable `{variable_code}` is not properly configured. Verify JSON."
+            warnings.warn(
+                f"Variable `{variable_code}` does not have accompanying `variable_name`. "
+                f"Verify JSON. Continuing with `{variable_code}` as `variable_name`."
             )
+            variable_codes[variable_code] = variable_code
 
     if code in variable_codes.values():
         variable = code
@@ -69,6 +72,7 @@ def _ahccd_variable_metadata(
     variable_meta = metadata["variables"].get(code)
     variable_name = variable_meta.get("_variable_name")
     if variable_name:
+        variable_meta["original_variable_name"] = variable_code
         variable_meta = {variable_name: variable_meta}
         del variable_meta[variable_name]["_variable_name"]
     else:
@@ -97,10 +101,6 @@ def _ahccd_variable_metadata(
         del header[field]
 
     return variable_meta, header
-
-
-def _ahccd_station_metadata(code):
-    pass
 
 
 def _ahccd_column_definitions(
@@ -270,13 +270,8 @@ def convert_ahccd_fwf_file(
 
     ds_out[variable].attrs = variable_meta[variable]
     metadata = metadata.to_xarray().rename({"index": "station"}).drop_vars("station")
-    metadata = metadata.assign_coords(
-        {
-            "stnid": metadata["stnid"].astype(str),
-            "station_name": metadata["station_name"],
-        }
-    )
-    ds_out = ds_out.assign_coords(station=metadata.stnid)
+    metadata = metadata.assign_coords(dict(station_name=metadata["station_name"]))
+    ds_out = ds_out.assign_coords(station=metadata.stnid.astype(str))
     metadata = metadata.drop_vars(["stnid", "station_name"])
 
     ds_out[f"{variable}_flag"].attrs["long_name"] = variable_meta[variable]["long_name"]
@@ -367,7 +362,7 @@ def convert_ahccd(
         if not outfile.exists() or overwrite:
             logger.info(ff.name)
 
-            station_id = ff.name[2:].split(".txt")[0]
+            station_id = ff.stem[2:]
             metadata_st = metadata[metadata["stnid"] == station_id]
 
             if len(metadata_st) == 1:
@@ -410,14 +405,14 @@ def merge_ahccd(
     )
 
     for coord in ds_ahccd.coords:
-        # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
+        # xarray object datatypes mix string and int (e.g. station) convert to string for merged nc files
         # Do not apply to datetime object
         if coord != "time" and ds_ahccd[coord].dtype == "O":
             ds_ahccd[coord] = ds_ahccd[coord].astype(str)
 
     variables_found = set()
     for v in ds_ahccd.data_vars:
-        # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
+        # xarray object datatypes mix string and int (e.g. station) convert to string for merged nc files
         # Do not apply to flag timeseries
         if ds_ahccd[v].dtype == "O" and "flag" not in v:
             ds_ahccd[v] = ds_ahccd[v].astype(str)
@@ -428,11 +423,14 @@ def merge_ahccd(
 
     # Name output file
     ds_ahccd.attrs["variable"] = ", ".join(variables_found)
-    variables = "-".join(variables_found)
+    if len(variables_found) > 1:
+        variables = "-".join(variables_found)
+        logger.info(
+            f"Many variables found. Merging station and variables files in {data_source}."
+        )
+    else:
+        variables = variables_found.pop()
     output_name = name_output_file(ds_ahccd, "netcdf", variables)
-    logger.info(
-        f"Many variables found. Merging station files in {data_source} as `{output_name}`."
-    )
 
     try:
         logger.info(f"Writing merged file to: {output_dir}.")
@@ -441,7 +439,6 @@ def merge_ahccd(
             output_dir,
             output_format="netcdf",
             output_name=output_name,
-            chunks={"time": 365},
             overwrite=overwrite,
             compute=True,
         )

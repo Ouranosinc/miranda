@@ -7,4 +7,4 @@ output = Path().cwd().parent / "test"
 variable = "tas"
 
 convert_ahccd(in_files, output, variable, generation=3)
-merge_ahccd(output.joinpath("tas"), output, variable, overwrite=True)
+merge_ahccd(output.joinpath("tas"), output.joinpath("merged"), variable, overwrite=True)

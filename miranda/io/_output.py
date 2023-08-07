@@ -82,8 +82,15 @@ def write_dataset(
             outfile_path.unlink()
 
     if chunks is None and "frequency" in ds.attrs:
-        freq = ds.attrs["frequency"]  # TOD0: check that this is really there
-        chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
+        freq = ds.attrs.get("frequency")
+        if not freq:
+            raise ValueError(
+                "If 'chunks' are not provided, the 'frequency' attribute must be set."
+            )
+        if "lat" in ds.dims and "lon" in ds.dims:
+            chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
+        elif "lat" not in ds.dims and "lon" not in ds.dims:
+            chunks = fetch_chunk_config(priority="stations", freq=freq, dims=ds.dims)
 
     logging.info(f"Writing {output_name}.")
     write_object = delayed_write(
