@@ -6,7 +6,6 @@ import json
 import logging.config
 import multiprocessing as mp
 import os
-import time
 from functools import partial
 from pathlib import Path
 
@@ -58,8 +57,6 @@ def convert_flat_files(
     -------
     None
     """
-    func_time = time.time()
-
     if mode.lower() in ["h", "hour", "hourly"]:
         num_observations = 24
         column_names = ["code", "year", "month", "day", "code_var"]
@@ -124,5 +121,3 @@ def convert_flat_files(
             logging.warning(
                 "Some files failed to be properly parsed:\n", ", ".join(errored_files)
             )
-
-    logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")

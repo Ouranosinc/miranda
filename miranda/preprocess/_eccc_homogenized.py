@@ -4,6 +4,7 @@ from __future__ import annotations
 import calendar
 import logging.config
 from pathlib import Path
+from typing import Any, Dict, List, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -83,7 +84,7 @@ def _ahccd_variable_metadata(
 
 def _ahccd_column_definitions(
     variable_code: str,
-) -> tuple[dict, list[tuple[int, int]], int]:
+) -> tuple[dict, list[tuple[int, int]], dict[str, type[str | int | float] | Any], int]:
     config = load_json_data_mappings("eccc-homogenized")
     metadata = basic_metadata_conversion("eccc-homogenized", config)
 
@@ -105,8 +106,25 @@ def _ahccd_column_definitions(
             "Joined",
             "RCS",
         ]
+        dtypes = [
+            str,
+            str,
+            str,
+            str,
+            int,
+            int,
+            int,
+            int,
+            float,
+            float,
+            float,
+            int,
+            str,
+            str,
+        ]
         column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
         ii = 9
+        # 31 days in a month
         for i in range(1, 32):
             column_spaces.append((ii, ii + 7))
             ii += 7
@@ -128,8 +146,10 @@ def _ahccd_column_definitions(
             "elev (m)",
             "stns joined",
         ]
+        dtypes = [str, str, str, int, int, int, int, float, float, int, str]
         column_spaces = [(0, 4), (4, 5), (5, 7), (7, 8)]
         ii = 8
+        # 31 days in a month
         for i in range(1, 32):
             column_spaces.append((ii, ii + 8))
             ii += 8
@@ -144,8 +164,12 @@ def _ahccd_column_definitions(
         col.lower().split("(")[0].replace("%", "pct_").strip().replace(" ", "_"): col
         for col in list(column_names)
     }
+    #
+    column_dtypes = {}
+    for col in column_names.keys():
+        column_dtypes[col] = dtypes[list(column_names.keys()).index(col)]
 
-    return column_names, column_spaces, header_row
+    return column_names, column_spaces, column_dtypes, header_row
 
 
 def convert_ahccd_fwf_file(
@@ -171,9 +195,9 @@ def convert_ahccd_fwf_file(
     code = find_project_variable_codes(variable, "eccc-homogenized")
 
     variable_meta, global_attrs = _ahccd_variable_metadata(code, generation)
-    col_names, cols_specs, header = _ahccd_column_definitions(code)
+    column_names, column_spaces, column_dtypes, header = _ahccd_column_definitions(code)
 
-    df = pd.read_fwf(ff, header=header, colspecs=cols_specs)
+    df = pd.read_fwf(ff, header=header, colspecs=column_spaces, dtype=column_dtypes)
     if "pr" in variable:
         cols = list(df.columns[0:3])
         cols = cols[0::2]
@@ -302,8 +326,9 @@ def convert_ahccd(
     code = find_project_variable_codes(variable, "eccc-homogenized")
     var_meta, global_attrs = _ahccd_variable_metadata(code, generation)
     (
-        col_names,
-        col_spaces,
+        column_names,
+        column_spaces,
+        column_dtypes,
         header_row,
     ) = _ahccd_column_definitions(code)
 
@@ -321,11 +346,11 @@ def convert_ahccd(
 
     if "tas" in variable:
         metadata = pd.read_csv(metadata_source, header=2)
-        metadata.columns = col_names.keys()
+        metadata.columns = column_names.keys()
 
     elif "pr" in variable:
         metadata = pd.read_csv(metadata_source, header=3)
-        metadata.columns = col_names.keys()
+        metadata.columns = column_names.keys()
         for index, row in metadata.iterrows():
             if isinstance(row["stnid"], str):
                 metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].replace(
@@ -336,8 +361,8 @@ def convert_ahccd(
 
     # Convert station .txt files to netcdf
     for ff in Path(data_source).glob(f"{code}*.txt"):
-        outfile = output_dir.joinpath(ff.name.replace(".txt", ".nc"))
-        if not outfile.exists() or overwrite:
+        output_name = ff.name.replace(".txt", ".nc")
+        if not output_dir.joinpath(output_name).exists() or overwrite:
             logger.info(ff.name)
 
             station_id = ff.stem[2:]
@@ -349,13 +374,20 @@ def convert_ahccd(
                 )
                 ds_out.attrs = global_attrs
 
-                ds_out.to_netcdf(outfile, engine="h5netcdf")
+                write_dataset(
+                    ds_out,
+                    output_dir,
+                    output_format="netcdf",
+                    output_name=output_name,
+                    overwrite=overwrite,
+                    compute=True,
+                )
             else:
                 logger.warning(
                     f"metadata info for station {ff.name} not found : skipping"
                 )
         else:
-            logger.info(f"{outfile.name} already exists: Skipping...")
+            logger.info(f"{output_name} already exists: Skipping...")
     if merge:
         merge_ahccd(data_source, output_dir, variable)
     return

@@ -45,19 +45,14 @@ from miranda.utils import generic_extract_archive
 config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "convert_flat_files",
     "convert_station",
     "merge_converted_variables",
     "merge_stations",
 ]
-
-KiB = int(pow(2, 10))
-MiB = int(pow(2, 20))
-GiB = int(pow(2, 30))
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
-def _fwf_column_definitions(
+def _obs_fwf_column_definitions(
     time_frequency: str,
 ) -> tuple[list[str], list[int], list[type[str | int]]]:
     """Return the column names, widths, and data types for the fixed-width format."""
@@ -104,7 +99,7 @@ def convert_station(
 ):
     """Convert a single station's data from the fixed-width format to a netCDF file."""
     data = Path(data)
-    column_names, column_widths, column_dtypes = _fwf_column_definitions(mode)
+    column_names, column_widths, column_dtypes = _obs_fwf_column_definitions(mode)
 
     if using_dask_array:
         pandas_reader = dd
@@ -360,7 +355,8 @@ def _convert_station_file(
             data_files = [file]
         logging.info(f"Processing file: {file}.")
 
-        size_limit = 1 * GiB
+        # 1 GiB
+        size_limit = 2**30
 
         for data in data_files:
             if file_size(data) > size_limit and "dask" in sys.modules:
@@ -386,73 +382,6 @@ def _convert_station_file(
             for temporary_file in Path(temp_folder).glob("*"):
                 if temporary_file in data_files:
                     temporary_file.unlink()
-
-
-def convert_flat_files(
-    source_files: str | os.PathLike,
-    output_folder: str | os.PathLike | list[str | int],
-    variables: str | int | list[str | int],
-    mode: str = "hourly",
-    n_workers: int = 4,
-) -> None:
-    """
-
-    Parameters
-    ----------
-    source_files: str or Path
-    output_folder: str or Path
-    variables: str or List[str]
-    mode: {"hourly", "daily"}
-    n_workers: int
-
-    Returns
-    -------
-    None
-    """
-    if isinstance(variables, (str, int)):
-        variables = [variables]
-
-    for variable_code in variables:
-        variable_code = str(variable_code).zfill(3)
-        metadata = load_json_data_mappings("eccc-obs")[variable_code]
-        nc_name = metadata["cf_variable_name"]
-
-        rep_nc = Path(output_folder).joinpath(nc_name)
-        rep_nc.mkdir(parents=True, exist_ok=True)
-
-        # Loop on the files
-        logging.info(
-            f"Collecting files for variable '{metadata['standard_name']}' "
-            f"(filenames containing '{metadata['_table_name']}')."
-        )
-        list_files = list()
-        if isinstance(source_files, list) or Path(source_files).is_file():
-            list_files.append(source_files)
-        else:
-            glob_patterns = [g for g in metadata["_table_name"]]
-            for pattern in glob_patterns:
-                list_files.extend(
-                    [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
-                )
-        manager = mp.Manager()
-        errored_files = manager.list()
-        converter_func = functools.partial(
-            _convert_station_file,
-            output_path=rep_nc,
-            errored_files=errored_files,
-            mode=mode,
-            variable_code=variable_code,
-            **metadata,
-        )
-        with mp.Pool(processes=n_workers) as pool:
-            pool.map(converter_func, list_files)
-            pool.close()
-            pool.join()
-
-        if errored_files:
-            logging.warning(
-                "Some files failed to be properly parsed:\n", ", ".join(errored_files)
-            )
 
 
 def merge_stations(
