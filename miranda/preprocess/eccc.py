@@ -2,122 +2,163 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging.config
 import multiprocessing as mp
 import os
+import tempfile
 from functools import partial
 from pathlib import Path
+from typing import Callable
 
-from miranda.eccc._utils import cf_station_metadata
-from miranda.preprocess._eccc_obs import _convert_station_file
+from dask.distributed import ProgressBar
+
 from miranda.scripting import LOGGING_CONFIG
+from miranda.storage import file_size, report_file_size
+from miranda.utils import generic_extract_archive
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 _data_folder = Path(__file__).parent / "configs"
 
-eccc_observation_variables = dict()
-eccc_observation_variables["flat"] = [
-    v for v in json.load(open(_data_folder / "eccc-obs_attrs.json"))["variables"].keys()
-]
-eccc_observation_variables["summary"] = [
-    attrs["_cf_variable_name"]
-    for attrs in json.load(open(_data_folder / "eccc-obs-summary_attrs.json"))[
-        "variables"
-    ].values()
-]
-eccc_observation_variables["homogenized"] = [
-    attrs["_cf_variable_name"]
-    for attrs in json.load(open(_data_folder / "eccc-homogenized_attrs.json"))[
-        "variables"
-    ].values()
-]
 
+def _run_func_on_archive_with_optional_dask(
+    file: Path,
+    function: Callable,
+    errored_files: list[Path],
+    **dask_kwargs,
+):
+    r"""Run a function on a file archive, extracting it if necessary.
 
-def convert_flat_files(
-    source_files: str | os.PathLike,
-    output_folder: str | os.PathLike | list[str | int],
-    variables: str | int | list[str | int],
-    mode: str = "hourly",
-    n_workers: int = 4,
-) -> None:
-    """
+    Notes
+    -----
+    If the file is larger than 1 GiB or dask_kwargs are passed, dask.dataframes will be used.
+    Partial function requires the function to accept the following parameters:
+      - file: Path
+      - using_dask: bool
+      - client: dask.distributed.Client
 
     Parameters
     ----------
-    source_files: str or Path
-    output_folder: str or Path
-    variables: str or List[str]
-    mode: {"hourly", "daily"}
-    n_workers: int
+    file: Path
+        File archive to process.
+    function: Callable
+        Function to run on the file.
+    errored_files: list[Path]
+        List of files that errored during processing.
+    \*\*dask_kwargs
+        Keyword arguments to pass to dask.distributed.Client.
 
     Returns
     -------
-    None
+
     """
-    if mode.lower() in ["h", "hour", "hourly"]:
-        num_observations = 24
-        column_names = ["code", "year", "month", "day", "code_var"]
-        column_dtypes = [str, float, float, float, str]
-    elif mode.lower() in ["d", "day", "daily"]:
-        num_observations = 31
-        column_names = ["code", "year", "month", "code_var"]
-        column_dtypes = [str, float, float, str]
-    else:
-        raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
 
-    # Preparing the data column headers
-    for i in range(1, num_observations + 1):
-        data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
-        column_names.append(data_entry)
-        column_names.append(flag_entry)
-        column_dtypes.extend([str, str])
-
-    if isinstance(variables, (str, int)):
-        variables = [variables]
-
-    for variable_code in variables:
-        variable_code = str(variable_code).zfill(3)
-        metadata = cf_station_metadata(variable_code)
-        nc_name = metadata["nc_name"]
-
-        rep_nc = Path(output_folder).joinpath(nc_name)
-        rep_nc.mkdir(parents=True, exist_ok=True)
-
-        # Loop on the files
-        logging.info(
-            f"Collecting files for variable '{metadata['standard_name']}' "
-            f"(filenames containing '{metadata['_table_name']}')."
-        )
-        list_files = list()
-        if isinstance(source_files, list) or Path(source_files).is_file():
-            list_files.append(source_files)
+    with tempfile.TemporaryDirectory() as temp_folder:
+        if file.suffix in [".gz", ".tar", ".zip", ".7z"]:
+            data_files = generic_extract_archive(file, output_dir=temp_folder)
         else:
-            glob_patterns = [g for g in metadata["_table_name"]]
-            for pattern in glob_patterns:
-                list_files.extend(
-                    [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
-                )
-        manager = mp.Manager()
-        errored_files = manager.list()
-        converter_func = partial(
-            _convert_station_file,
-            output_path=rep_nc,
-            errored_files=errored_files,
-            mode=mode,
-            variable_code=variable_code,
-            column_names=column_names,
-            column_dtypes=column_dtypes,
-            **metadata,
-        )
-        with mp.Pool(processes=n_workers) as pool:
-            pool.map(converter_func, list_files)
-            pool.close()
-            pool.join()
+            data_files = [file]
+        logging.info(f"Processing file: {file}.")
 
-        if errored_files:
-            logging.warning(
-                "Some files failed to be properly parsed:\n", ", ".join(errored_files)
-            )
+        # 1 GiB
+        size_limit = 2**30
+
+        for data in data_files:
+            size = file_size(data)
+            if size > size_limit or dask_kwargs:
+                if size > size_limit:
+                    logging.info(
+                        f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
+                    )
+                client = ProgressBar
+                using_dask = True
+            else:
+                logging.info(
+                    f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
+                )
+                client = contextlib.nullcontext
+                using_dask = False
+
+            with client(**dask_kwargs) as c:
+                try:
+                    function(data, using_dask=using_dask, client=c)
+                except FileNotFoundError:
+                    errored_files.append(data)
+
+        if os.listdir(temp_folder):
+            for temporary_file in Path(temp_folder).glob("*"):
+                if temporary_file in data_files:
+                    temporary_file.unlink()
+
+
+# def convert_flat_files(
+#     source_files: str | os.PathLike,
+#     output_folder: str | os.PathLike | list[str | int],
+#     variables: str | int | list[str | int],
+#     project: str = "eccc-obs",
+#     mode: str = "hourly",
+#     **dask_kwargs,
+# ) -> None:
+#     """
+#
+#     Parameters
+#     ----------
+#     source_files: str or Path
+#     output_folder: str or Path
+#     variables: str or List[str]
+#     project: {"eccc-obs", "eccc-obs-summary", "eccc-homogenized"}
+#     mode: {"hourly", "daily"}
+#
+#     Returns
+#     -------
+#     None
+#     """
+#
+#     if isinstance(variables, (str, int)):
+#         variables = [variables]
+#
+#     for variable_code in variables:
+#         variable_code = str(variable_code).zfill(3)
+#         metadata = load_json_data_mappings("eccc-obs").get(variable_code)
+#
+#
+#
+#         # Loop on the files
+#         logging.info(
+#             f"Collecting files for variable '{metadata['standard_name']}' "
+#             f"(filenames containing '{metadata['_table_name']}')."
+#         )
+#         list_files = list()
+#         if isinstance(source_files, list) or Path(source_files).is_file():
+#             list_files.append(source_files)
+#         else:
+#             glob_patterns = [g for g in metadata["_table_name"]]
+#             for pattern in glob_patterns:
+#                 list_files.extend(
+#                     [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
+#                 )
+#
+#
+#
+#
+#         manager = mp.Manager()
+#         errored_files = manager.list()
+#         converter_func = partial(
+#             _convert_station_file,
+#             output_path=rep_nc,
+#             errored_files=errored_files,
+#             mode=mode,
+#             variable_code=variable_code,
+#             column_names=column_names,
+#             column_dtypes=column_dtypes,
+#             **metadata,
+#         )
+#         with mp.Pool(processes=n_workers) as pool:
+#             pool.map(converter_func, list_files)
+#             pool.close()
+#             pool.join()
+#
+#

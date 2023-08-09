@@ -1,33 +1,18 @@
 """Specialized conversion tools for Environment and Climate Change Canada / Meteorological Service of Canada data."""
-######################################################################
-# S.Biner, Ouranos, mai 2019
-#
-# methodologie
-#
-# 1) on rassemble les fichiers netcdf des differentes eccc en un seul fichier netCDF.
-#
-# 2) on scan les fichiers sources annuels en cherchant une variable et on sauve
-# ce qu'on trouve dans des fichiers netcdf. On applique aussi les flags
-# et on fait les changements d'unites
-#
-# obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
-#######################################################################
 from __future__ import annotations
 
-import contextlib
 import functools
 import logging
 import multiprocessing as mp
 import os
 import re
-import sys
 import tempfile
 import time
 from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import dask.dataframe as dd
 import numpy as np
@@ -37,10 +22,13 @@ from dask.diagnostics import ProgressBar
 from xclim.core.units import convert_units_to
 
 from miranda.archive import group_by_length
-from miranda.preprocess._data_definitions import load_json_data_mappings
+from miranda.preprocess._data_definitions import (
+    find_project_variable_codes,
+    load_json_data_mappings,
+)
+from miranda.preprocess._metadata import eccc_variable_metadata, obs_column_definitions
 from miranda.scripting import LOGGING_CONFIG
-from miranda.storage import file_size, report_file_size
-from miranda.utils import generic_extract_archive
+from miranda.vocabularies.eccc import obs_vocabularies
 
 config.dictConfig(LOGGING_CONFIG)
 
@@ -52,32 +40,58 @@ __all__ = [
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
-def _obs_fwf_column_definitions(
-    time_frequency: str,
-) -> tuple[list[str], list[int], list[type[str | int]]]:
-    """Return the column names, widths, and data types for the fixed-width format."""
-    if time_frequency.lower() in ["h", "hour", "hourly"]:
-        num_observations = 24
-        column_names = ["code", "year", "month", "day", "code_var"]
-        column_widths = [7, 4, 2, 2, 3]
-        column_dtypes = [str, int, int, int, str]
-    elif time_frequency.lower() in ["d", "day", "daily"]:
-        num_observations = 31
-        column_names = ["code", "year", "month", "code_var"]
-        column_widths = [7, 4, 2, 3]
-        column_dtypes = [str, int, int, str]
+def convert_observation(
+    data_source: str | Path | list[str | Path],
+    output_dir: str | Path,
+    variable: str,
+    *,
+    generation: int | None = None,
+    merge: bool = False,
+    overwrite: bool = False,
+):
+    """Convert a single station's data from the fixed-width format to a netCDF file."""
+
+    output_dir = Path(output_dir).resolve().joinpath(variable)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    code = find_project_variable_codes(variable, "eccc-obs")
+    var_meta, global_attrs = eccc_variable_metadata(code, "eccc-obs", generation)
+    (
+        column_names,
+        column_spaces,
+        column_dtypes,
+        header_row,
+    ) = obs_column_definitions(code)
+
+    archives = list()
+    if isinstance(data_source, list) or Path(data_source).is_file():
+        archives.append(data_source)
     else:
-        raise NotImplementedError("`mode` must be 'h'/'hourly or 'd'/'daily'.")
+        tables = []
+        for repository in obs_vocabularies:
+            if code in repository.values():
+                tables.append(str(repository.keys()))
+        logging.info(
+            f"Collecting files for variable '{variable}'. "
+            f"Filename patterns containing variable code '{code}: {', '.join(tables)}'."
+        )
+        for table in tables:
+            archives.extend([f for f in Path(data_source).rglob(f"{table}*.gz")])
 
-    # Add the data columns
-    for i in range(1, num_observations + 1):
-        data_entry, flag_entry = f"D{i:0n}", f"F{i:0n}"
-        column_names.append(data_entry)
-        column_names.append(flag_entry)
-        column_widths.extend([6, 1] * num_observations)
-        column_dtypes.extend([str, str])
+    # Create the output directory
+    output_variable_dir = Path(output_dir).joinpath(variable)
+    output_variable_dir.mkdir(parents=True, exist_ok=True)
 
-    return column_names, column_widths, column_dtypes
+    # Loop on the files
+    errored_files = []
+    for file in archives:
+        # FIXME: convert the file using the appropriate function
+        pass
+
+    if errored_files:
+        logging.warning(
+            "Some files failed to be properly parsed:\n", ", ".join(errored_files)
+        )
 
 
 def _remove_duplicates(ds):
@@ -91,6 +105,7 @@ def _remove_duplicates(ds):
 
 def convert_station(
     data: str | os.PathLike,
+    variable: str,
     mode: str,
     using_dask_array: bool = False,
     *,
@@ -99,11 +114,13 @@ def convert_station(
 ):
     """Convert a single station's data from the fixed-width format to a netCDF file."""
     data = Path(data)
-    column_names, column_widths, column_dtypes = _obs_fwf_column_definitions(mode)
+    variable_code = find_project_variable_codes(variable, "eccc-obs")
+    column_names, column_widths, column_dtypes, header = obs_column_definitions(mode)
 
     if using_dask_array:
         pandas_reader = dd
-        chunks = dict(blocksize=200 * MiB)
+        # set the blocksize to 200 MB
+        chunks = dict(blocksize=200 * 2**20)
     else:
         pandas_reader = pd
         chunks = dict()
@@ -148,12 +165,12 @@ def convert_station(
             has_variable_codes = (df_code["code_var"] == variable_code).any()
         if not has_variable_codes:
             logging.info(
-                f"Variable `{nc_name}` not found for station code: {code} in file {data}. Continuing..."
+                f"Variable `{variable}` not found for station code: {code} in file {data}. Continuing..."
             )
             continue
 
         # Perform the data treatment
-        logging.info(f"Converting `{nc_name}` for station code: {code}")
+        logging.info(f"Converting `{variable}` for station code: {code}")
 
         # Dump the data into a DataFrame
         df_var = df_code[df_code["code_var"] == variable_code].copy()
@@ -326,62 +343,6 @@ def convert_station(
         del date_summations
 
     del df
-
-
-def _convert_station_file(
-    file: Path,
-    output_path: Path,
-    errored_files: list[Path],
-    mode: str,
-    add_offset: float,
-    long_name: str,
-    missing_flags: set[str],
-    missing_values: set[str],
-    nc_name: str,
-    raw_units: str,
-    units: str,
-    scale_factor: float,
-    standard_name: str,
-    variable_code: str,
-    **dask_kwargs,
-):
-    if not missing_values:
-        missing_values = {-9999, "#####"}
-
-    with tempfile.TemporaryDirectory() as temp_folder:
-        if file.suffix in [".gz", ".tar", ".zip", ".7z"]:
-            data_files = generic_extract_archive(file, output_dir=temp_folder)
-        else:
-            data_files = [file]
-        logging.info(f"Processing file: {file}.")
-
-        # 1 GiB
-        size_limit = 2**30
-
-        for data in data_files:
-            if file_size(data) > size_limit and "dask" in sys.modules:
-                logging.info(
-                    f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
-                )
-                client = ProgressBar
-                using_dask = True
-            else:
-                logging.info(
-                    f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
-                )
-                client = contextlib.nullcontext
-                using_dask = False
-
-            with client(**dask_kwargs) as c:
-                try:
-                    convert_station(data, mode, using_dask=using_dask, client=c)
-                except FileNotFoundError:
-                    errored_files.append(data)
-
-        if os.listdir(temp_folder):
-            for temporary_file in Path(temp_folder).glob("*"):
-                if temporary_file in data_files:
-                    temporary_file.unlink()
 
 
 def merge_stations(

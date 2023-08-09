@@ -4,7 +4,6 @@ from __future__ import annotations
 import calendar
 import logging.config
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -12,164 +11,17 @@ import xarray as xr
 
 from miranda.io import write_dataset
 from miranda.io.utils import name_output_file
-from miranda.preprocess._data_definitions import (
-    find_project_variable_codes,
-    load_json_data_mappings,
+from miranda.preprocess._data_definitions import find_project_variable_codes
+from miranda.preprocess._metadata import (
+    eccc_variable_metadata,
+    homogenized_column_definitions,
 )
-from miranda.preprocess._treatments import basic_metadata_conversion
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_file", "merge_ahccd"]
-
-
-def _ahccd_variable_metadata(
-    variable_code: str,
-    gen: int,
-) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
-    """
-
-    Parameters
-    ----------
-    variable_code
-    gen: {1, 2, 3}
-
-    Returns
-    -------
-    dict[str, int or str or float], dict, list[tuple[int, int]], int
-    """
-    generation = {1: "First", 2: "Second", 3: "Third"}.get(gen)
-    if not generation:
-        raise NotImplementedError(f"Generation '{gen}' not supported")
-
-    config = load_json_data_mappings("eccc-homogenized")
-    metadata = basic_metadata_conversion("eccc-homogenized", config)
-    code = find_project_variable_codes(variable_code, "eccc-homogenized")
-
-    variable_meta = metadata["variables"].get(code)
-    variable_name = variable_meta.get("_variable_name")
-    if variable_name:
-        variable_meta["original_variable_name"] = variable_code
-        variable_meta = {variable_name: variable_meta}
-        del variable_meta[variable_name]["_variable_name"]
-    else:
-        variable_meta = {variable_code: variable_meta}
-
-    header = metadata["Header"]
-    to_delete = []
-    # Conditional handling of global attributes based on generation
-    for field in [f for f in header if f.startswith("_")]:
-        if isinstance(header[field], bool):
-            if header[field] and field == "_variable":
-                header[field[1:]] = variable_name
-        elif isinstance(header[field], dict):
-            attr_treatment = header[field]["generation"]
-            if field in ["_citation" "_product"]:
-                for attribute, value in attr_treatment.items():
-                    if attribute == generation:
-                        header[field[1:]] = value
-        else:
-            raise AttributeError(
-                f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
-            )
-        to_delete.append(field)
-
-    for field in to_delete:
-        del header[field]
-
-    return variable_meta, header
-
-
-def _ahccd_column_definitions(
-    variable_code: str,
-) -> tuple[dict, list[tuple[int, int]], dict[str, type[str | int | float] | Any], int]:
-    config = load_json_data_mappings("eccc-homogenized")
-    metadata = basic_metadata_conversion("eccc-homogenized", config)
-
-    variable = metadata["variables"][variable_code]["_variable_name"]
-    if variable.startswith("tas"):
-        column_names = [
-            "No",
-            "StnId",
-            "Station name",
-            "Prov",
-            "FromYear",
-            "FromMonth",
-            "ToYear",
-            "ToMonth",
-            "%Miss",
-            "Lat(deg)",
-            "Long(deg)",
-            "Elev(m)",
-            "Joined",
-            "RCS",
-        ]
-        dtypes = [
-            str,
-            str,
-            str,
-            str,
-            int,
-            int,
-            int,
-            int,
-            float,
-            float,
-            float,
-            int,
-            str,
-            str,
-        ]
-        column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
-        ii = 9
-        # 31 days in a month
-        for i in range(1, 32):
-            column_spaces.append((ii, ii + 7))
-            ii += 7
-            column_spaces.append((ii, ii + 1))
-            ii += 1
-        header_row = 3
-
-    elif variable.startswith("pr"):
-        column_names = [
-            "Prov",
-            "Station name",
-            "stnid",
-            "beg yr",
-            "beg mon",
-            "end yr",
-            "end mon",
-            "lat (deg)",
-            "long (deg)",
-            "elev (m)",
-            "stns joined",
-        ]
-        dtypes = [str, str, str, int, int, int, int, float, float, int, str]
-        column_spaces = [(0, 4), (4, 5), (5, 7), (7, 8)]
-        ii = 8
-        # 31 days in a month
-        for i in range(1, 32):
-            column_spaces.append((ii, ii + 8))
-            ii += 8
-            column_spaces.append((ii, ii + 1))
-            ii += 1
-        header_row = 0
-
-    else:
-        raise KeyError
-
-    column_names = {
-        col.lower().split("(")[0].replace("%", "pct_").strip().replace(" ", "_"): col
-        for col in list(column_names)
-    }
-    #
-    column_dtypes = {}
-    for col in column_names.keys():
-        column_dtypes[col] = dtypes[list(column_names.keys()).index(col)]
-
-    return column_names, column_spaces, column_dtypes, header_row
 
 
 def convert_ahccd_fwf_file(
@@ -194,8 +46,12 @@ def convert_ahccd_fwf_file(
     """
     code = find_project_variable_codes(variable, "eccc-homogenized")
 
-    variable_meta, global_attrs = _ahccd_variable_metadata(code, generation)
-    column_names, column_spaces, column_dtypes, header = _ahccd_column_definitions(code)
+    variable_meta, global_attrs = eccc_variable_metadata(
+        code, "eccc-homogenized", generation
+    )
+    column_names, column_spaces, column_dtypes, header = homogenized_column_definitions(
+        code
+    )
 
     df = pd.read_fwf(ff, header=header, colspecs=column_spaces, dtype=column_dtypes)
     if "pr" in variable:
@@ -324,20 +180,21 @@ def convert_ahccd(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     code = find_project_variable_codes(variable, "eccc-homogenized")
-    var_meta, global_attrs = _ahccd_variable_metadata(code, generation)
+    var_meta, global_attrs = eccc_variable_metadata(
+        code, "eccc-homogenized", generation
+    )
     (
         column_names,
         column_spaces,
         column_dtypes,
         header_row,
-    ) = _ahccd_column_definitions(code)
+    ) = homogenized_column_definitions(code)
 
     gen = {2: "Second", 3: "Third"}.get(generation)
     if generation == 3 and code in {"dx", "dn", "dm"}:
         station_meta = "ahccd_gen3_temperature.csv"
     elif generation == 2 and code in {"dt", "ds", "dr"}:
         station_meta = "ahccd_gen2_precipitation.csv"
-
     else:
         raise NotImplementedError(f"Code '{code} for generation {gen}.")
     metadata_source = (

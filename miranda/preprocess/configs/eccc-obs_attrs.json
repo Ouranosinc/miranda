@@ -1,6 +1,5 @@
 {
   "Header": {
-    "_converter": true,
     "_frequency": true,
     "_miranda_version": true,
     "_missing_flags": "M",
@@ -25,5 +24,734 @@
     "title": "Environment and Climate Change Canada (ECCC) weather station observations",
     "type": "station-obs",
     "usage": "The original data is owned by the Government of Canada (Environment and Climate Change Canada), and falls under the licence agreement for use of Environment and Climate Change Canada data"
+  },
+  "variables": {
+    "001": {
+      "_variable_name": "tasmax",
+      "least_significant_digit": "",
+      "long_name": "Daily Maximum Temperature",
+      "original_units": "0.1 °C",
+      "raw_units": "degC",
+      "scale_factor": 0.1,
+      "standard_name": "air_temperature_maximum",
+      "units": "K"
+    },
+    "002": {
+      "_variable_name": "tasmin",
+      "least_significant_digit": "",
+      "long_name": "Daily Minimum Temperature",
+      "original_units": "0.1 °C",
+      "raw_units": "degC",
+      "scale_factor": 0.1,
+      "standard_name": "air_temperature_minimum",
+      "units": "K"
+    },
+    "003": {
+      "_variable_name": "tas",
+      "least_significant_digit": "",
+      "long_name": "Daily Mean Temperature",
+      "original_units": "0.1 °C",
+      "raw_units": "degC",
+      "scale_factor": 0.1,
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "010": {
+      "_variable_name": "prlptot",
+      "least_significant_digit": "",
+      "long_name": "Daily Total Rainfall",
+      "original_units": "0.1 mm day-1",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "liquid_precipitation_amount",
+      "units": "m"
+    },
+    "011": {
+      "_variable_name": "prsntot",
+      "least_significant_digit": "",
+      "long_name": "Daily Total Snowfall",
+      "original_units": "0.1 cm day-1",
+      "raw_units": "cm",
+      "scale_factor": 0.1,
+      "standard_name": "solid_precipitation_amount",
+      "units": "m"
+    },
+    "012": {
+      "_variable_name": "prcptot",
+      "least_significant_digit": "",
+      "long_name": "Daily Total Precipitation",
+      "original_units": "0.1 mm day-1",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "m"
+    },
+    "013": {
+      "_variable_name": "sndtot",
+      "least_significant_digit": "",
+      "long_name": "Snow on the Ground",
+      "original_units": "cm",
+      "raw_units": "cm",
+      "scale_factor": 1,
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "014": {
+      "_variable_name": "thunder",
+      "least_significant_digit": "",
+      "long_name": "Thunderstorms",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "thunderstorm_presence",
+      "units": "1"
+    },
+    "015": {
+      "_variable_name": "freezing_rain_drizzle",
+      "least_significant_digit": "",
+      "long_name": "Freezing rain or drizzle",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "freeze_rain_drizzle_presence",
+      "units": "1"
+    },
+    "016": {
+      "_variable_name": "hail",
+      "least_significant_digit": "",
+      "long_name": "Hail",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "hail_presence",
+      "units": "1"
+    },
+    "017": {
+      "_variable_name": "fog_ice_fog",
+      "least_significant_digit": "",
+      "long_name": "Fog or Ice Fog",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "fog_ice_fog_presence",
+      "units": "1"
+    },
+    "018": {
+      "_variable_name": "smoke_haze",
+      "least_significant_digit": "",
+      "long_name": "Smoke or Haze",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "smoke_haze_presence",
+      "units": "1"
+    },
+    "019": {
+      "_variable_name": "blowing_dust_sand",
+      "least_significant_digit": "",
+      "long_name": "Blowing Dust or Sand",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "blowing_dust_sand_presence",
+      "units": "1"
+    },
+    "020": {
+      "_variable_name": "blow_snow",
+      "least_significant_digit": "",
+      "long_name": "Blowing snow",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "blowing_snow_presence",
+      "units": "1"
+    },
+    "021": {
+      "_variable_name": "wind_gt_28kt",
+      "least_significant_digit": "",
+      "long_name": "Wind speed >= 28 Knots",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "wind_exceeding_28_knots",
+      "units": "1"
+    },
+    "022": {
+      "_variable_name": "wind_gt_34kt",
+      "least_significant_digit": "",
+      "long_name": "Wind speed >= 34 Knots",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "wind_exceeding_34_knots",
+      "units": "1"
+    },
+    "023": {
+      "_variable_name": "gust_dir_16pts",
+      "least_significant_digit": "",
+      "long_name": "Direction of extreme gust (16 pts) to December 1976",
+      "original_units": "10's of degrees",
+      "raw_units": "deg",
+      "scale_factor": 10,
+      "standard_name": "gust_to_direction",
+      "units": "deg"
+    },
+    "024": {
+      "_variable_name": "gust_speed",
+      "least_significant_digit": "",
+      "long_name": "Speed of extreme gust",
+      "original_units": "km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 1,
+      "standard_name": "wind_speed_of_gust",
+      "units": "m s-1"
+    },
+    "025": {
+      "_variable_name": "gust_hour",
+      "least_significant_digit": "",
+      "long_name": "UTC hour of extreme gust",
+      "raw_units": "h",
+      "scale_factor": 1,
+      "standard_name": "hour_of_extreme_gust",
+      "units": "h"
+    },
+    "061": {
+      "_variable_name": "rf1_radiation",
+      "least_significant_digit": "",
+      "long_name": "RF1 global solar radiation",
+      "original_units": "0.001 MJ/m",
+      "raw_units": "W m-2 h-1",
+      "scale_factor": 277.77777777777777,
+      "standard_name": "solar_radiation_flux",
+      "units": "W m-2 h-1"
+    },
+    "062": {
+      "_variable_name": "rf2_radiation",
+      "least_significant_digit": "",
+      "long_name": "RF2 sky (diffuse) radiation",
+      "original_units": "0.001 MJ/m",
+      "raw_units": "W m-2 h-1",
+      "scale_factor": 277.77777777777777,
+      "standard_name": "solar_radiation_flux",
+      "units": "W m-2 h-1"
+    },
+    "063": {
+      "_variable_name": "rf3_radiation",
+      "least_significant_digit": "",
+      "long_name": "RF3 reflected solar radiation",
+      "original_units": "0.001 MJ/m",
+      "raw_units": "W m-2 h-1",
+      "scale_factor": 277.77777777777777,
+      "standard_name": "solar_radiation_flux",
+      "units": "W m-2 h-1"
+    },
+    "064": {
+      "_variable_name": "rf4_radiation",
+      "least_significant_digit": "",
+      "long_name": "RF4 net all wave radiation",
+      "original_units": "0.001 MJ/m",
+      "raw_units": "W m-2 h-1",
+      "scale_factor": 277.77777777777777,
+      "standard_name": "solar_radiation_flux",
+      "units": "W m-2 h-1"
+    },
+    "067": {
+      "_variable_name": "rf7_radiation",
+      "least_significant_digit": "",
+      "long_name": "RF7 daylight illumination",
+      "original_units": "0.01 Kilolux_hrs",
+      "raw_units": "lux h",
+      "scale_factor": 10,
+      "standard_name": "solar_radiation_flux",
+      "units": "lux h"
+    },
+    "068": {
+      "_variable_name": "rf8_radiation",
+      "least_significant_digit": "",
+      "long_name": "RF8 direct solar radiation",
+      "original_units": "0.001 MJ/m",
+      "raw_units": "W m-2 h-1",
+      "scale_factor": 277.77777777777777,
+      "standard_name": "solar_radiation_flux",
+      "units": "W m-2 h-1"
+    },
+    "069": {
+      "_variable_name": "wind_dir_45B",
+      "least_significant_digit": "",
+      "long_name": "Direction - 45B anemometer (8 pts)",
+      "original_units": "10's of degrees",
+      "raw_units": "deg",
+      "scale_factor": 1,
+      "standard_name": "wind_to_direction",
+      "units": "deg"
+    },
+    "071": {
+      "_variable_name": "ceiling_hgt",
+      "least_significant_digit": "",
+      "long_name": "Ceiling height of lowest layer of clouds",
+      "original_units": "30's of meters",
+      "raw_units": "m",
+      "scale_factor": 30,
+      "standard_name": "ceiling_cloud_height",
+      "units": "m"
+    },
+    "072": {
+      "_variable_name": "visibility",
+      "least_significant_digit": "",
+      "long_name": "Visibility",
+      "original_units": "0.1 km",
+      "raw_units": "km",
+      "scale_factor": 0.1,
+      "standard_name": "visibility_in_air",
+      "units": "m"
+    },
+    "073": {
+      "_variable_name": "psl",
+      "least_significant_digit": "",
+      "long_name": "Sea Level Pressure",
+      "original_units": "0.01 kPa",
+      "raw_units": "Pa",
+      "scale_factor": 10,
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa"
+    },
+    "074": {
+      "_variable_name": "tds",
+      "least_significant_digit": "",
+      "long_name": "Dew Point Temperature",
+      "original_units": "0.1 °C",
+      "raw_units": "degC",
+      "scale_factor": 0.1,
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "075": {
+      "_variable_name": "wind_dir_u2a_16",
+      "least_significant_digit": "",
+      "long_name": "Wind Direction at 2 m (U2A Anemometer) (16 pts)",
+      "original_units": "10's of degrees",
+      "raw_units": "deg",
+      "scale_factor": 10,
+      "standard_name": "wind_direction_u2a",
+      "units": "deg"
+    },
+    "076": {
+      "_variable_name": "wind_speed_u2a",
+      "least_significant_digit": "",
+      "long_name": "Wind Speed - U2A (16 pts) to December 1970",
+      "original_units": "km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 1,
+      "standard_name": "wind_speed_u2a",
+      "units": "m s-1"
+    },
+    "077": {
+      "_variable_name": "pressure",
+      "least_significant_digit": "",
+      "long_name": "Station Pressure",
+      "original_units": "0.01 kPa",
+      "raw_units": "Pa",
+      "scale_factor": 10,
+      "standard_name": "atmospheric_pressure",
+      "units": "Pa"
+    },
+    "078": {
+      "_variable_name": "tas_dry",
+      "least_significant_digit": "",
+      "long_name": "Dry Bulb Temperature",
+      "original_units": "0.1 °C",
+      "raw_units": "degC",
+      "scale_factor": 0.1,
+      "standard_name": "dry_bulb_temperature",
+      "units": "K"
+    },
+    "079": {
+      "_variable_name": "tas_wet",
+      "least_significant_digit": "",
+      "long_name": "Wet Bulb temperature",
+      "original_units": "0.1 °C",
+      "raw_units": "degC",
+      "scale_factor": 0.1,
+      "standard_name": "wet_bulb_temperature",
+      "units": "K"
+    },
+    "080": {
+      "_variable_name": "hur",
+      "least_significant_digit": "",
+      "long_name": "Relative Humidity",
+      "original_units": "%",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "relative_humidity",
+      "units": "1"
+    },
+    "081": {
+      "_variable_name": "clo",
+      "least_significant_digit": "",
+      "long_name": "Total Cloud Opacity",
+      "original_units": "%",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "cloud_albedo",
+      "units": "1"
+    },
+    "082": {
+      "_variable_name": "clt",
+      "least_significant_digit": "",
+      "long_name": "Total Cloud Amount",
+      "original_units": "%",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "cloud_area_fraction",
+      "units": "1"
+    },
+    "089": {
+      "_variable_name": "freeze_rain",
+      "least_significant_digit": "",
+      "long_name": "Freezing Rain",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "freezing_rain",
+      "units": "1"
+    },
+    "094": {
+      "_variable_name": "ice_pellets",
+      "least_significant_digit": "",
+      "long_name": "Ice Pellets",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "ice_pellet_presence",
+      "units": "1"
+    },
+    "107": {
+      "_variable_name": "1low_cloud_opac",
+      "least_significant_digit": "",
+      "long_name": "Lowest cloud layer opacity",
+      "original_units": "Tenths",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "low_type_cloud_opacity_fraction",
+      "units": "1"
+    },
+    "108": {
+      "_variable_name": "1low_cloud_frac",
+      "least_significant_digit": "",
+      "long_name": "Lowest cloud layer amount or condition",
+      "original_units": "Tenths",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "low_type_cloud_area_fraction",
+      "units": "1"
+    },
+    "109": {
+      "_variable_name": "1low_cloud_type",
+      "least_significant_digit": "",
+      "long_name": "Lowest cloud layer type",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "low_type_cloud_type",
+      "units": "1"
+    },
+    "110": {
+      "_variable_name": "1low_cloud_hgt",
+      "least_significant_digit": "",
+      "long_name": "Lowest cloud layer height",
+      "original_units": "30's of meters",
+      "raw_units": "m",
+      "scale_factor": 30,
+      "standard_name": "low_type_cloud_height",
+      "units": "m"
+    },
+    "111": {
+      "_variable_name": "2low_cloud_opac",
+      "least_significant_digit": "",
+      "long_name": "Second lowest cloud layer opacity",
+      "original_units": "Tenths",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "low_type_cloud_opacity_fraction",
+      "units": "1"
+    },
+    "112": {
+      "_variable_name": "2low_cloud_frac",
+      "least_significant_digit": "",
+      "long_name": "Second lowest cloud layer amount or condition",
+      "original_units": "Tenths",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "low_type_cloud_area_fraction",
+      "units": "1"
+    },
+    "113": {
+      "_variable_name": "2low_cloud_type",
+      "least_significant_digit": "",
+      "long_name": "Second lowest cloud layer type",
+      "original_units": "",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "low_type_cloud_type",
+      "units": "1"
+    },
+    "114": {
+      "_variable_name": "2low_cloud_hgt",
+      "least_significant_digit": "",
+      "long_name": "Second lowest cloud layer height",
+      "original_units": "30's of meters",
+      "raw_units": "m",
+      "scale_factor": 30,
+      "standard_name": "low_type_cloud_height",
+      "units": "m"
+    },
+    "115": {
+      "_variable_name": "3low_cloud_opac",
+      "least_significant_digit": "",
+      "long_name": "Thirsd lowest cloud layer opacity",
+      "original_units": "Tenths",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "low_type_cloud_opacity_fraction",
+      "units": "1"
+    },
+    "116": {
+      "_variable_name": "3low_cloud_frac",
+      "least_significant_digit": "",
+      "long_name": "Third lowest cloud layer amount or condition",
+      "original_units": "Tenths",
+      "raw_units": "1",
+      "scale_factor": 10,
+      "standard_name": "low_type_cloud_area_fraction",
+      "units": "1"
+    },
+    "117": {
+      "_variable_name": "3low_cloud_type",
+      "least_significant_digit": "",
+      "long_name": "Third lowest cloud layer type",
+      "original_units": "",
+      "raw_units": "1",
+      "scale_factor": 1,
+      "standard_name": "low_type_cloud_type",
+      "units": "1"
+    },
+    "118": {
+      "_variable_name": "3low_cloud_hgt",
+      "least_significant_digit": "",
+      "long_name": "Third lowest cloud layer height",
+      "original_units": "30's of meters",
+      "raw_units": "m",
+      "scale_factor": 30,
+      "standard_name": "low_type_cloud_height",
+      "units": "m"
+    },
+    "123": {
+      "_variable_name": "rainfall",
+      "least_significant_digit": "",
+      "long_name": "Total Rainfall",
+      "original_units": "0.1 mm",
+      "raw_units": "mm h-1",
+      "scale_factor": 0.1,
+      "standard_name": "rainfall_flux",
+      "units": "kg m2 s-1"
+    },
+    "133": {
+      "_variable_name": "sun",
+      "least_significant_digit": "",
+      "long_name": "Sunshine",
+      "original_units": "0.1 hrs",
+      "raw_units": "h",
+      "scale_factor": 0.1,
+      "standard_name": "duration_of_sunshine",
+      "units": "s"
+    },
+    "156": {
+      "_variable_name": "wind_dir_u2a_36",
+      "least_significant_digit": "",
+      "long_name": "Wind Direction - U2A (36 pts) from January 1971",
+      "original_units": "10's of degrees",
+      "raw_units": "deg",
+      "scale_factor": 10,
+      "standard_name": "wind_direction_u2a",
+      "units": "deg"
+    },
+    "262": {
+      "_variable_name": "prtot",
+      "least_significant_digit": "",
+      "long_name": "Total Precipitation (minutes 00-60)",
+      "original_units": "0.1 mm",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "263": {
+      "_variable_name": "prtot_q1",
+      "least_significant_digit": "",
+      "long_name": "Total Precipitation (minutes 00-15)",
+      "original_units": "0.1 mm",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "264": {
+      "_variable_name": "prtot_q2",
+      "least_significant_digit": "",
+      "long_name": "Total Precipitation (minutes 15-30)",
+      "original_units": "0.1 mm",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "265": {
+      "_variable_name": "prtot_q3",
+      "least_significant_digit": "",
+      "long_name": "Total Precipitation (minutes 30-45)",
+      "original_units": "0.1 mm",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "266": {
+      "_variable_name": "prtot_q4",
+      "least_significant_digit": "",
+      "long_name": "Total Precipitation (minutes 45-60)",
+      "original_units": "0.1 mm",
+      "raw_units": "mm",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "267": {
+      "_variable_name": "precipitation_weight_q1",
+      "least_significant_digit": "",
+      "long_name": "Precipitation Gauge Weight per Unit Area (at minute 15)",
+      "original_units": "0.1 kg/m²",
+      "raw_units": "kg m-2",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "268": {
+      "_variable_name": "precipitation_weight_q2",
+      "least_significant_digit": "",
+      "long_name": "Precipitation Gauge Weight per Unit Area (at minute 30)",
+      "original_units": "0.1 kg/m²",
+      "raw_units": "kg m-2",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "269": {
+      "_variable_name": "precipitation_weight_q3",
+      "least_significant_digit": "",
+      "long_name": "Precipitation Gauge Weight per Unit Area (at minute 45)",
+      "original_units": "0.1 kg/m²",
+      "raw_units": "kg m-2",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "270": {
+      "_variable_name": "precipitation_weight_q4",
+      "least_significant_digit": "",
+      "long_name": "Precipitation Gauge Weight per Unit Area (at minute 60)",
+      "original_units": "0.1 kg/m²",
+      "raw_units": "kg m-2",
+      "scale_factor": 0.1,
+      "standard_name": "precipitation_amount",
+      "units": "kg m-2"
+    },
+    "271": {
+      "_variable_name": "wind_speed_q1",
+      "least_significant_digit": "",
+      "long_name": "Wind Speed at 2 m (minutes 00-15)",
+      "nc_units": "m s-1",
+      "original_units": "0.1 km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 0.1,
+      "standard_name": "wind_speed"
+    },
+    "272": {
+      "_variable_name": "wind_speed_q2",
+      "least_significant_digit": "",
+      "long_name": "Wind Speed at 2 m (minutes 15-30)",
+      "nc_units": "m s-1",
+      "original_units": "0.1 km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 0.1,
+      "standard_name": "wind_speed"
+    },
+    "273": {
+      "_variable_name": "wind_speed_q3",
+      "least_significant_digit": "",
+      "long_name": "Wind Speed at 2 m (minutes 30-45)",
+      "nc_units": "m s-1",
+      "original_units": "0.1 km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 0.1,
+      "standard_name": "wind_speed"
+    },
+    "274": {
+      "_variable_name": "wind_speed_q4",
+      "least_significant_digit": "",
+      "long_name": "Wind Speed at 2 m (minutes 45-60)",
+      "nc_units": "m s-1",
+      "original_units": "0.1 km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 0.1,
+      "standard_name": "wind_speed"
+    },
+    "275": {
+      "_variable_name": "snd_q4",
+      "least_significant_digit": "",
+      "long_name": "Snow Depth (at minute 60)",
+      "original_units": "cm",
+      "raw_units": "cm",
+      "scale_factor": 1,
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "276": {
+      "_variable_name": "snd_q1",
+      "least_significant_digit": "",
+      "long_name": "Snow Depth (at minute 15)",
+      "original_units": "cm",
+      "raw_units": "cm",
+      "scale_factor": 1,
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "277": {
+      "_variable_name": "snd_q2",
+      "least_significant_digit": "",
+      "long_name": "Snow Depth (at minute 30)",
+      "original_units": "cm",
+      "raw_units": "cm",
+      "scale_factor": 1,
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "278": {
+      "_variable_name": "snd_q3",
+      "least_significant_digit": "",
+      "long_name": "Snow Depth (at minute 45)",
+      "original_units": "cm",
+      "raw_units": "cm",
+      "scale_factor": 1,
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "279": {
+      "_variable_name": "wind_dir",
+      "least_significant_digit": "",
+      "long_name": "Wind Direction at 2 m (minutes 50-60)",
+      "nc_units": "deg",
+      "original_units": "Degrees",
+      "raw_units": "deg",
+      "scale_factor": 1,
+      "standard_name": "wind_direction"
+    },
+    "280": {
+      "_variable_name": "wind_speed",
+      "least_significant_digit": "",
+      "long_name": "Wind Speed at 2 m (minutes 50-60)",
+      "original_units": "0.1 km/h",
+      "raw_units": "km h-1",
+      "scale_factor": 0.1,
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    }
   }
 }
