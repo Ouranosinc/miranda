@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import contextlib
-import json
 import logging.config
-import multiprocessing as mp
 import os
 import tempfile
-from functools import partial
 from pathlib import Path
 from typing import Callable
 
@@ -69,7 +66,9 @@ def _run_func_on_archive_with_optional_dask(
         for data in data_files:
             size = file_size(data)
             if size > size_limit or dask_kwargs:
-                if size > size_limit:
+                if dask_kwargs:
+                    logging.info(f"`dask_kwargs` provided - Using dask.dataframes.")
+                elif size > size_limit:
                     logging.info(
                         f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
                     )

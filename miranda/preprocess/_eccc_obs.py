@@ -40,6 +40,15 @@ __all__ = [
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
+def _remove_duplicates(ds):
+    if any(ds.get_index("time").duplicated()):
+        logging.info(
+            f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
+            f"for station {ds.station_id.values}. Assuming first value."
+        )
+    return ds.sel(time=~ds.get_index("time").duplicated())
+
+
 def convert_observation(
     data_source: str | Path | list[str | Path],
     output_dir: str | Path,
@@ -92,15 +101,6 @@ def convert_observation(
         logging.warning(
             "Some files failed to be properly parsed:\n", ", ".join(errored_files)
         )
-
-
-def _remove_duplicates(ds):
-    if any(ds.get_index("time").duplicated()):
-        logging.info(
-            f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
-            f"for station {ds.station_id.values}. Assuming first value."
-        )
-    return ds.sel(time=~ds.get_index("time").duplicated())
 
 
 def convert_station(
@@ -665,7 +665,7 @@ def _combine_years(
 
     if _verbose:
         logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
-    ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
+    ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim="time")
     outfile = Path(out_folder).joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
         f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
@@ -702,9 +702,9 @@ def _combine_years(
         "elevation",
     ]
     for vv in meta.data_vars:
-        if vv.lower() not in keep_coords:
+        if str(vv).lower() not in keep_coords:
             continue
-        ds = ds.assign_coords({vv.lower(): meta[vv]})
+        ds = ds.assign_coords({str(vv).lower(): meta[vv]})
 
     for vv in ds.data_vars:
         if ds[vv].dtype == "O":
@@ -730,7 +730,6 @@ def merge_converted_variables(
     source_files: str | os.PathLike,
     output_folder: str | os.PathLike,
     variables: str | int | list[str | int] | None = None,
-    station_metadata: str | os.PathLike | None = None,
     overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
@@ -741,7 +740,6 @@ def merge_converted_variables(
     source_files : str, Path
     output_folder : str, Path
     variables : str or int or list of str or int, optional
-    station_metadata : str or Path, optional
     overwrite : bool
     n_workers : int
 
