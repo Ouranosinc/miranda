@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import datetime
+import inspect
+import json
 import logging.config
 import os
 import warnings
 from functools import partial
 from pathlib import Path
+from typing import Any, Dict
 
 import numpy as np
 import xarray as xr
@@ -15,11 +18,9 @@ from xclim.core import units
 from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
+from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
-
-from ._data_definitions import load_json_data_mappings
-from .utils import date_parser
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -33,6 +34,7 @@ __all__ = [
     "dimensions_compliance",
     "ensure_correct_time_frequency",
     "invert_value_sign",
+    "load_json_data_mappings",
     "metadata_conversion",
     "offset_time_dimension",
     "preprocessing_corrections",
@@ -40,6 +42,41 @@ __all__ = [
     "transform_values",
     "variable_conversion",
 ]
+
+
+def load_json_data_mappings(
+    project: str, configurations: dict[str, Path] | None = None
+) -> dict[str, Any]:
+    """Load JSON mappings for supported dataset conversions.
+
+    Parameters
+    ----------
+    project : str
+    configurations: dict, optional
+
+    Returns
+    -------
+    dict[str, Any]
+    """
+    if configurations is None:
+        calling_frame = inspect.currentframe().f_back
+        calling_file_path = calling_frame.f_globals["__file__"]
+        config_folder = Path(calling_file_path).parent / "configs"
+
+        configurations = {}
+        for configuration in config_folder.glob("*attrs.json"):
+            project = str(configuration.stem).split("_")[0]
+            if "|" in project:
+                for p in project.split("|"):
+                    configurations[p] = configuration
+            configurations[project] = configuration
+
+    if project in configurations.keys():
+        config_file = configurations[project]
+        metadata_definition = json.load(config_file.open())
+        return metadata_definition
+    else:
+        raise NotImplementedError(f"Project not supported: {project}")
 
 
 def _get_section_entry_key(meta, entry, var, key, project):

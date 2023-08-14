@@ -1,41 +1,14 @@
 from __future__ import annotations
 
-import json
 import warnings
 from pathlib import Path
-from typing import Any
+
+from miranda.treatments import load_json_data_mappings
 
 _config_folder = Path(__file__).resolve().parent / "configs"
 
 
-__all__ = ["load_json_data_mappings", "find_project_variable_codes"]
-
-
-def load_json_data_mappings(project: str) -> dict[str, Any]:
-    """Load JSON mappings for supported dataset conversions.
-
-    Parameters
-    ----------
-    project : str
-
-    Returns
-    -------
-    dict[str, Any]
-    """
-    if project == "eccc-homogenized":
-        metadata_definition = json.load(
-            open(_config_folder / "eccc-homogenized_attrs.json")
-        )
-    elif project == "eccc-obs":
-        metadata_definition = json.load(open(_config_folder / "eccc-obs_attrs.json"))
-    elif project == "eccc-obs-summary":
-        metadata_definition = json.load(
-            open(_config_folder / "eccc-obs-summary_attrs.json")
-        )
-    else:
-        raise NotImplementedError(f"Project not supported: {project}")
-
-    return metadata_definition
+__all__ = ["find_project_variable_codes"]
 
 
 def find_project_variable_codes(code: str, table: str) -> str:

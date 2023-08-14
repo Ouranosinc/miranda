@@ -67,7 +67,7 @@ def _run_func_on_archive_with_optional_dask(
             size = file_size(data)
             if size > size_limit or dask_kwargs:
                 if dask_kwargs:
-                    logging.info(f"`dask_kwargs` provided - Using dask.dataframes.")
+                    logging.info("`dask_kwargs` provided - Using dask.dataframes.")
                 elif size > size_limit:
                     logging.info(
                         f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."

@@ -9,8 +9,9 @@ from typing import Callable, Iterator, Sequence
 
 import xarray as xr
 
-from miranda.convert._data_definitions import load_json_data_mappings
-from miranda.convert._treatments import (
+from miranda.convert.utils import find_version_hash
+from miranda.gis import subset_domain
+from miranda.treatments import (
     cf_units_conversion,
     clip_values,
     conservative_regrid,
@@ -18,6 +19,7 @@ from miranda.convert._treatments import (
     dimensions_compliance,
     ensure_correct_time_frequency,
     invert_value_sign,
+    load_json_data_mappings,
     metadata_conversion,
     offset_time_dimension,
     preprocessing_corrections,
@@ -25,13 +27,42 @@ from miranda.convert._treatments import (
     transform_values,
     variable_conversion,
 )
-from miranda.convert.utils import find_version_hash
-from miranda.gis import subset_domain
+
+CONFIG_FOLDER = Path(__file__).parent / "data"
+CONFIG_FILES = {
+    "EMDNA": "emdna_cf_attrs.json",
+    "ESPO-G6-E5L": "espo-g6-e5l_attrs.json",
+    "ESPO-G6-R2": "espo-g6-r2_attrs.json",
+    "NEX-GDDP-CMIP6": "nex-gddp-cmip6_attrs.json",
+    "agcfsr": "agcfsr|agmerra2_cf_attrs.json",
+    "agmerra2": "agcfsr|agmerra2_cf_attrs.json",
+    "cmip": "cmip5|cmip6|cordex_ouranos_attrs.json",
+    "cordex": "cmip5|cmip6|cordex_ouranos_attrs.json",
+    "eccc-canswe": "eccc-canswe_cf_attrs.json",
+    "eccc-ahccd": "eccc-ahccd_cf_attrs.json",
+    "eccc-obs": "eccc-obs_cf_attrs.json",
+    "era5-land": "era5|era5-land_cf_attrs.json",
+    "era5-land-monthly-means": "era5|era5-land_cf_attrs.json",
+    "era5-pressure-levels": "era5|era5-land_cf_attrs.json",
+    "era5-pressure-levels-monthly-means": "era5|era5-land_cf_attrs.json",
+    "era5-pressure-levels-monthly-means-preliminary-back-extension": "era5|era5-land_cf_attrs.json",
+    "era5-pressure-levels-preliminary-back-extension": "era5|era5-land_cf_attrs.json",
+    "era5-single-levels": "era5|era5-land_cf_attrs.json",
+    "era5-single-levels-monthly-means": "era5|era5-land_cf_attrs.json",
+    "era5-single-levels-monthly-means-preliminary-back-extension": "era5|era5-land_cf_attrs.json",
+    "era5-single-levels-preliminary-back-extension": "era5|era5-land_cf_attrs.json",
+    "ets-grnch": "ets-grnch_cf_attrs.json",
+    "melcc": "melcc_cf_attrs.json",
+    "rdrs-v21": "eccc-rdrs_cf_attrs.json",
+    "wfdei-gem-capa": "wfdei-gem-capa_cf_attrs.json",
+}
+for k, v in CONFIG_FILES.items():
+    CONFIG_FILES[k] = CONFIG_FOLDER / v
 
 
 def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
-    metadata_definition = load_json_data_mappings(project)
+    metadata_definition = load_json_data_mappings(project, CONFIG_FILES)
 
     ds = correct_unit_names(ds, project, metadata_definition)
     ds = transform_values(ds, project, metadata_definition)

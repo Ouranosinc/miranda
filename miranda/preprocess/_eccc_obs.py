@@ -119,7 +119,7 @@ def convert_station(
 
     if using_dask_array:
         pandas_reader = dd
-        # set the blocksize to 200 MB
+        # set the block size to 200 MB
         chunks = dict(blocksize=200 * 2**20)
     else:
         pandas_reader = pd
@@ -149,7 +149,7 @@ def convert_station(
     except UnicodeDecodeError as e:
         msg = f"File {data.name} was unable to be read. This is probably an issue with the file: {e}"
         logging.error(msg)
-        raise UnicodeDecodeError(msg)
+        raise
 
     # Loop through the station codes
     station_codes = df["code"].unique()
