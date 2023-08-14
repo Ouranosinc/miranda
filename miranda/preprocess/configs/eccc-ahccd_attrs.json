@@ -34,6 +34,25 @@
     "table_id": "ECCC",
     "type": "station-obs"
   },
+  "dimensions:": {
+    "lat": {
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "long": {
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "axis": "T",
+      "long_name": "Time",
+      "standard_name": "time"
+    }
+  },
   "variables": {
     "dm": {
       "NaN_value": -9999.9,

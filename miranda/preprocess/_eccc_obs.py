@@ -22,12 +22,9 @@ from dask.diagnostics import ProgressBar
 from xclim.core.units import convert_units_to
 
 from miranda.archive import group_by_length
-from miranda.preprocess._data_definitions import (
-    find_project_variable_codes,
-    load_json_data_mappings,
-)
 from miranda.preprocess._metadata import eccc_variable_metadata, obs_column_definitions
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments import find_project_variable_codes, load_json_data_mappings
 from miranda.vocabularies.eccc import obs_vocabularies
 
 config.dictConfig(LOGGING_CONFIG)
@@ -59,7 +56,6 @@ def convert_observation(
     overwrite: bool = False,
 ):
     """Convert a single station's data from the fixed-width format to a netCDF file."""
-
     output_dir = Path(output_dir).resolve().joinpath(variable)
     output_dir.mkdir(parents=True, exist_ok=True)
 

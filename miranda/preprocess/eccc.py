@@ -26,7 +26,7 @@ def _run_func_on_archive_with_optional_dask(
     function: Callable,
     errored_files: list[Path],
     **dask_kwargs,
-):
+) -> None:
     r"""Run a function on a file archive, extracting it if necessary.
 
     Notes
@@ -50,9 +50,8 @@ def _run_func_on_archive_with_optional_dask(
 
     Returns
     -------
-
+    None
     """
-
     with tempfile.TemporaryDirectory() as temp_folder:
         if file.suffix in [".gz", ".tar", ".zip", ".7z"]:
             data_files = generic_extract_archive(file, output_dir=temp_folder)

@@ -4,10 +4,8 @@ import logging
 from typing import Any
 
 from miranda import __version__ as __miranda_version__
-from miranda.preprocess._data_definitions import (
-    find_project_variable_codes,
-    load_json_data_mappings,
-)
+from miranda.treatments import find_project_variable_codes
+from miranda.treatments.utils import load_json_data_mappings
 
 __all__ = [
     "eccc_variable_metadata",
@@ -17,29 +15,34 @@ __all__ = [
 
 
 def eccc_variable_metadata(
-    variable_code: str, project: str, gen: int | None = None
+    variable_code: str,
+    project: str,
+    generation: int | None = None,
+    metadata: dict | None = None,
 ) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
     """
 
     Parameters
     ----------
     variable_code: str
-    project: {"eccc-homogenized", "eccc-obs", "eccc-obs-summary"}
-    gen: {1, 2, 3}, optional
+    project: {"eccc-ahccd", "eccc-obs", "eccc-obs-summary"}
+    generation: {1, 2, 3}, optional
+    metadata: dict, optional
 
     Returns
     -------
     dict[str, int or str or float], dict, list[tuple[int, int]], int
     """
-    if project == "eccc-homogenized":
-        generation = {1: "First", 2: "Second", 3: "Third"}.get(gen)
+    if project == "eccc-ahccd":
+        generation = {1: "First", 2: "Second", 3: "Third"}.get(generation)
         if not generation:
-            raise NotImplementedError(f"Generation '{gen}' not supported")
+            raise NotImplementedError(f"Generation '{generation}' not supported")
     else:
         generation = None
 
-    metadata = load_json_data_mappings(project)
-    code = find_project_variable_codes(variable_code, project)
+    if not metadata:
+        metadata = load_json_data_mappings(project)
+    code = find_project_variable_codes(variable_code, metadata)
 
     # Variable metadata
     variable_meta = metadata["variables"].get(code)
@@ -95,6 +98,16 @@ def eccc_variable_metadata(
 def homogenized_column_definitions(
     variable_code: str,
 ) -> tuple[dict, list[tuple[int, int]], dict[str, type[str | int | float] | Any], int]:
+    """Return the column names, widths, and data types for the AHCCD fixed-width format data.
+
+    Parameters
+    ----------
+    variable_code : str
+
+    Returns
+    -------
+    tuple[dict, list[tuple[int, int]], dict[str, type[str | int | float] | Any], int]
+    """
     metadata = load_json_data_mappings("eccc-homogenized")
 
     variable = metadata["variables"][variable_code]["_variable_name"]

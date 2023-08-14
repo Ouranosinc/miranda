@@ -72,12 +72,14 @@ obs_vocabularies["MLY04"].append(158)  # Direction of extreme gust
 
 obs_groupings = dict()
 obs_groupings["HLY"] = list(
-    obs_vocabularies["HLY01"]
-    + obs_vocabularies["HLY01_RCS"]
-    + obs_vocabularies["HLY03"]
-    + obs_vocabularies["HLY10"]
-    + obs_vocabularies["HLY15"]
-    + obs_vocabularies["HLY21"]
+    set(
+        obs_vocabularies["HLY01"]
+        + obs_vocabularies["HLY01_RCS"]
+        + obs_vocabularies["HLY03"]
+        + obs_vocabularies["HLY10"]
+        + obs_vocabularies["HLY15"]
+        + obs_vocabularies["HLY21"]
+    )
 )
 obs_groupings["DLY"] = list(
     set(

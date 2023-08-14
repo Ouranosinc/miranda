@@ -10,23 +10,21 @@ from typing import Callable, Iterator, Sequence
 import xarray as xr
 
 from miranda.convert.utils import find_version_hash
-from miranda.gis import subset_domain
+from miranda.gis import conservative_regrid, subset_domain, threshold_mask
 from miranda.treatments import (
     cf_units_conversion,
     clip_values,
-    conservative_regrid,
     correct_unit_names,
     dimensions_compliance,
     ensure_correct_time_frequency,
     invert_value_sign,
-    load_json_data_mappings,
     metadata_conversion,
     offset_time_dimension,
     preprocessing_corrections,
-    threshold_mask,
     transform_values,
     variable_conversion,
 )
+from miranda.treatments.utils import load_json_data_mappings
 
 CONFIG_FOLDER = Path(__file__).parent / "data"
 CONFIG_FILES = {

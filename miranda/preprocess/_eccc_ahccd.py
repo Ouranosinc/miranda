@@ -11,12 +11,12 @@ import xarray as xr
 
 from miranda.io import write_dataset
 from miranda.io.utils import name_output_file
-from miranda.preprocess._data_definitions import find_project_variable_codes
 from miranda.preprocess._metadata import (
     eccc_variable_metadata,
     homogenized_column_definitions,
 )
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments import find_project_variable_codes, load_json_data_mappings
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
@@ -44,16 +44,19 @@ def convert_ahccd_fwf_file(
     -------
     xarray.Dataset
     """
-    code = find_project_variable_codes(variable, "eccc-homogenized")
+    configuration = load_json_data_mappings("eccc-ahccd")
+    code = find_project_variable_codes(variable, configuration)
 
     variable_meta, global_attrs = eccc_variable_metadata(
-        code, "eccc-homogenized", generation
+        code, "eccc-ahccd", generation, configuration
     )
     column_names, column_spaces, column_dtypes, header = homogenized_column_definitions(
         code
     )
 
     df = pd.read_fwf(ff, header=header, colspecs=column_spaces, dtype=column_dtypes)
+
+    # Handle different variable types
     if "pr" in variable:
         cols = list(df.columns[0:3])
         cols = cols[0::2]
@@ -67,6 +70,7 @@ def convert_ahccd_fwf_file(
     else:
         raise NotImplementedError(f"Variable `{variable}` not supported.")
 
+    # Extract relevant columns
     df = df[cols]
     df.replace(variable_meta[variable]["NaN_value"], np.NaN, inplace=True)
 
@@ -133,6 +137,7 @@ def convert_ahccd_fwf_file(
     metadata = metadata.drop_vars(["stnid", "station_name"])
 
     ds_out[f"{variable}_flag"].attrs["long_name"] = variable_meta[variable]["long_name"]
+
     ds_out["lon"] = metadata["long"]
     ds_out.lon.attrs["units"] = "degrees_east"
     ds_out.lon.attrs["axis"] = "X"
@@ -140,9 +145,9 @@ def convert_ahccd_fwf_file(
     ds_out.lat.attrs["units"] = "degrees_north"
     ds_out.lat.attrs["axis"] = "Y"
     ds_out["elev"] = metadata["elev"]
-    ds_out.elev.attrs["units"] = "m"
+    ds_out.elev.attrs["units"] = "meters"
+    ds_out.elev.attrs["positive"] = "up"
     ds_out.elev.attrs["axis"] = "Z"
-
     metadata = metadata.drop_vars(["long", "lat", "elev"])
     for vv in metadata.data_vars:
         if metadata[vv].dtype == "O" and (variable not in vv):
@@ -176,12 +181,14 @@ def convert_ahccd(
     -------
     None
     """
+    configuration = load_json_data_mappings("eccc-ahccd")
+
     output_dir = Path(output_dir).resolve().joinpath(variable)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    code = find_project_variable_codes(variable, "eccc-homogenized")
-    var_meta, global_attrs = eccc_variable_metadata(
-        code, "eccc-homogenized", generation
+    code = find_project_variable_codes(variable, configuration)
+    variable_meta, global_attrs = eccc_variable_metadata(
+        code, "eccc-ahccd", generation, configuration
     )
     (
         column_names,
@@ -257,8 +264,10 @@ def merge_ahccd(
     overwrite: bool = False,
 ) -> None:
     """Merge Adjusted and Homogenized Canadian Climate Dataset files."""
+    configuration = load_json_data_mappings("eccc-ahccd")
+
     if variable:
-        code = find_project_variable_codes(variable, "eccc-homogenized")
+        code = find_project_variable_codes(variable, configuration)
         glob_pattern = f"{code}*.nc"
         output_dir = Path(output_dir).resolve().joinpath(variable)
     else:
@@ -284,7 +293,7 @@ def merge_ahccd(
         if ds_ahccd[v].dtype == "O" and "flag" not in v:
             ds_ahccd[v] = ds_ahccd[v].astype(str)
         try:
-            variables_found.add(find_project_variable_codes(str(v), "eccc-homogenized"))
+            variables_found.add(find_project_variable_codes(str(v), configuration))
         except NotImplementedError:
             pass
 
