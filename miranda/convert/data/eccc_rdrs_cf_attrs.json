@@ -132,6 +132,34 @@
       "long_name": "1.5 metre temperature",
       "standard_name": "air_temperature",
       "units": "K"
+    },
+    "RDRS_v2.1_P_UUC_10m": {
+      "_cf_variable_name": "uas",
+      "cell_methods": "time: point",
+      "long_name": "Eastward Near-Surface Wind (10m)",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
+    "RDRS_v2.1_P_UVC_10m": {
+      "_cf_variable_name": "sfcWind",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Wind Speed (10m)",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "RDRS_v2.1_P_VVC_10m": {
+      "_cf_variable_name": "vas",
+      "cell_methods": "time: point",
+      "long_name": "Northward Near-Surface Wind (10m)",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
+    },
+    "RDRS_v2.1_P_WDC_10m": {
+      "_cf_variable_name": "winddir",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Meteorological Wind Direction (10m)",
+      "standard_name": "wind_from_direction",
+      "units": "deg"
     }
   }
 }
