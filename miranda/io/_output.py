@@ -221,25 +221,25 @@ def concat_rechunk_zarr(
             with Client(**dask_kwargs):
                 dask.compute(job)
 
-            # write to final
-            del ds
-            ds = xr.open_zarr(tmpzarr)
-            if outzarr.exists():
-                zarr_kwargs = dict(append_dim="time", mode="a")
-            else:
-                zarr_kwargs = None
-            job = delayed_write(
-                ds=ds,
-                outfile=outzarr,
-                output_format="zarr",
-                target_chunks=chunks,
-                overwrite=False,
-                encode=False,
-                kwargs=zarr_kwargs,
-            )
-            with Client(**dask_kwargs):
-                dask.compute(job)
-            shutil.rmtree(tmpzarr)
+        # write to final
+        tmpzarrlist = sorted(list(tmpzarr.parent.glob("*.zarr")))
+        del ds
+        ds = xr.open_mfdataset(
+            tmpzarrlist, engine="zarr", parallel=True, combine="by_coords"
+        )
+        zarr_kwargs = None
+        job = delayed_write(
+            ds=ds,
+            outfile=outzarr,
+            output_format="zarr",
+            target_chunks=chunks,
+            overwrite=False,
+            encode=False,
+            kwargs=zarr_kwargs,
+        )
+        with Client(**dask_kwargs):
+            dask.compute(job)
+            # shutil.rmtree(tmpzarr)
         shutil.rmtree(tmpzarr.parent)
         # get tmp zarrs
         # list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
