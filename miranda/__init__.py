@@ -17,7 +17,7 @@ from __future__ import annotations
 
 __author__ = "Trevor James Smith"
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.5.1-beta"
+__version__ = "0.5.2-beta"
 
 
 from . import (
