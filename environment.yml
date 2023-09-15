@@ -2,8 +2,8 @@ name: miranda
 channels:
   - conda-forge
 dependencies:
-  - python >=3.7
-  - black
+  - python >=3.7,<3.12
+  - black >=23.3.0
   - bump2version
   - cdsapi
   - cftime
@@ -14,7 +14,7 @@ dependencies:
   - ecmwf-api-client
   - fabric
   - flake8
-  - furo
+  - furo >=2023.07.26
   - h5netcdf
   - intake
   - intake-esm

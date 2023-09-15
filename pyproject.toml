@@ -62,11 +62,11 @@ dev = [
 ]
 docs = [
   # Documentation and examples
-  "furo",
+  "furo>=2023.07.26",
   "ipykernel",
   "nbsphinx",
   "pandoc",
-  "sphinx",
+  "sphinx>=7.1",
   "sphinx_codeautolink",
   "sphinx_copybutton"
 ]
