@@ -51,7 +51,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black>=23.9.1",
+  "black>=23.3.0",
   "bump2version",
   "coverage[toml]",
   "flake8",
