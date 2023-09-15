@@ -51,7 +51,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black>=23.3.0",
+  "black>=23.9.1",
   "bump2version",
   "coverage[toml]",
   "flake8",
@@ -62,11 +62,11 @@ dev = [
 ]
 docs = [
   # Documentation and examples
-  "furo",
+  "furo>=2023.07.26",
   "ipykernel",
   "nbsphinx",
   "pandoc",
-  "sphinx",
+  "sphinx>=7.1",
   "sphinx_codeautolink",
   "sphinx_copybutton"
 ]
