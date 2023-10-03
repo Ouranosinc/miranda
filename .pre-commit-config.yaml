@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.13.0
+    rev: v3.14.0
     hooks:
       - id: pyupgrade
         args: [ '--py37-plus' ]
@@ -21,6 +21,7 @@ repos:
       - id: debug-statements
       - id: pretty-format-json
         args: [ '--autofix', '--no-ensure-ascii' ]
+        # exclude: .ipynb
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.23.1
     hooks:
@@ -66,7 +67,7 @@ repos:
       - id: detect-secrets
         args: [ '--baseline=.secrets.baseline' ]
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.26.3
+    rev: 0.27.0
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
