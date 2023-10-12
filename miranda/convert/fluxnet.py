@@ -20,7 +20,6 @@ from ._data_corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-
 __all__ = ["convert_fluxnet"]
 
 
@@ -55,12 +54,18 @@ def add_allvars(dslist: List[xr.Dataset]) -> List[xr.Dataset]:
     -------
     dslist: list of xr.Dataset
     """
-    list1 = [list(d.data_vars) for d in dslist]
-    all_vars = {item for s in list1 for item in s}
+    list1 = [{v: d[v].attrs for v in d} for d in dslist]
+    all_vars = {}
+    for ll in list1:
+        for key, item in ll.items():
+            if key not in all_vars.keys():
+                all_vars[key] = item
+
     for d in dslist:
         for vv in all_vars:
             if vv not in d.data_vars:
                 d[vv] = xr.full_like(d["TA_F"], np.nan)
+                d[vv].attrs = all_vars[vv]
     return dslist
 
 
@@ -108,13 +113,8 @@ def combine_station_data(
         shutil.rmtree(tmpfolder)
     tmpfolder.mkdir(parents=True, exist_ok=True)
     sublists = [infiles[x : x + nsub] for x in range(0, len(infiles), nsub)]
-    joblist = []
     for ii, sublist in enumerate(sublists):
-        joblist.append((sublist, ii, tmpfolder, chunks))
-    with mp.Pool(n_workers) as pool:
-        pool.map(_combine_part, joblist)
-        pool.close()
-        pool.join()
+        _combine_part((sublist, ii, tmpfolder, chunks))
     dslist = [xr.open_zarr(f, chunks=chunks) for f in tmpfolder.glob("*.zarr")]
     dslist = add_allvars(dslist)
     ds = xr.concat(dslist, dim="SITE_ID")
@@ -267,6 +267,9 @@ def convert_fluxnet(
                             )
 
                         for vv in ds.data_vars:
+                            print(vv)
+                            if vv in ["SW_OUT", "LW_OUT"]:
+                                vv
                             ds[vv] = ds[vv].where(
                                 ds[vv] != -9999
                             )  # convert null values to nan
@@ -361,7 +364,7 @@ def convert_fluxnet(
                 dsout = combine_station_data(
                     infiles=infiles,
                     ds_stat=ds_stat,
-                    nsub=25,
+                    nsub=10,
                     n_workers=2,
                     chunks=target_chunks,
                     working_folder=working_folder,

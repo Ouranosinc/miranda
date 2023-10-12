@@ -23,6 +23,7 @@ def main():
         output_folder=Path(home).joinpath("fluxnet", "FLUXNET2015_subset"),
         output_format="netcdf",
         working_folder=Path(home).joinpath("tmpout", "fluxnet"),
+        overwrite=False,
         **dask_kwargs,
     )
 
