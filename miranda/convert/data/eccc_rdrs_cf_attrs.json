@@ -76,12 +76,31 @@
       "standard_name": "geopotential_height",
       "units": "m"
     },
+    "RDRS_v2.1_P_HR_09944": {
+      "_cf_variable_name": "hur",
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "long_name": "40 metre Relative Humidity (height is approximate :  see description)",
+      "standard_name": "relative_humidity",
+      "units": "%"
+    },
     "RDRS_v2.1_P_HR_1.5m": {
       "_cf_variable_name": "hurs",
       "cell_methods": "time: point",
       "long_name": "Near-Surface Relative Humidity (1.5m)",
       "standard_name": "relative_humidity",
       "units": "%"
+    },
+    "RDRS_v2.1_P_HU_09944": {
+      "_cf_variable_name": "hus",
+      "_corrected_units": {
+        "rdrs-v21": "1"
+      },
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "long_name": "40 metre Specific Humidity (height is approximate :  see description)",
+      "standard_name": "specific_humidity",
+      "units": "1"
     },
     "RDRS_v2.1_P_HU_1.5m": {
       "_cf_variable_name": "huss",
@@ -113,6 +132,29 @@
       "standard_name": "air_pressure_at_sea_level",
       "units": "Pa"
     },
+    "RDRS_v2.1_P_PR0_SFC": {
+      "_cf_variable_name": "prmod",
+      "_transformation": {
+        "rdrs-v21": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "description": "This field differs from the 'pr' variable. It is the model background field subsequently used by CaPA to produce 'pr'.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "RDRS_v2.1_P_TD_09944": {
+      "_cf_variable_name": "tdp",
+      "_corrected_units": {
+        "rdrs-v21": "degC"
+      },
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "long_name": "40 metre dewpoint temperature (height is approximate :  see description)",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
     "RDRS_v2.1_P_TD_1.5m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {
@@ -121,6 +163,17 @@
       "cell_methods": "time: point",
       "long_name": "1.5 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "RDRS_v2.1_P_TT_09944": {
+      "_cf_variable_name": "ta",
+      "_corrected_units": {
+        "rdrs-v21": "degC"
+      },
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "long_name": "40 metre temperature (height is approximate :  see description)",
+      "standard_name": "air_temperature",
       "units": "K"
     },
     "RDRS_v2.1_P_TT_1.5m": {

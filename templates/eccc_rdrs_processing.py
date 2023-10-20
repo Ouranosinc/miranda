@@ -6,7 +6,7 @@ from miranda.io import concat_rechunk_zarr
 
 
 def main():
-    vars_to_process = ["sfcWind"]  # , "vas", "sfcWind"]
+    vars_to_process = ["prmod"]  # , "vas", "sfcWind"]
 
     home = Path("~").expanduser()
     dask_dir = home.joinpath("tmpout", "dask")
@@ -21,16 +21,16 @@ def main():
     )
     project = "rdrs-v21"
 
-    convert_rdrs(
-        project=project,
-        input_folder=Path(home).joinpath("RDRS_v21", "caspar"),
-        output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
-        output_format="zarr",
-        working_folder=Path(home).joinpath("tmpout", "rdrs"),
-        cfvariable_list=vars_to_process,
-        overwrite=False,
-        **dask_kwargs,
-    )
+    # convert_rdrs(
+    #     project=project,
+    #     input_folder=Path(home).joinpath("RDRS_v21", "caspar"),
+    #     output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
+    #     output_format="zarr",
+    #     working_folder=Path(home).joinpath("tmpout", "rdrs"),
+    #     cfvariable_list=vars_to_process,
+    #     overwrite=False,
+    #     **dask_kwargs,
+    # )
 
     rdrs_to_daily(
         project=project,
@@ -40,7 +40,7 @@ def main():
         overwrite=False,
         year_start=None,
         year_end=None,
-        process_variables=vars_to_process,  # huss
+        process_variables=vars_to_process,
         **dask_kwargs,
     )
     # #
