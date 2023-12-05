@@ -69,17 +69,24 @@
       "standard_name": "surface_downwelling_longwave_flux_in_air",
       "units": "W m-2"
     },
-    "RDRS_v2.1_P_GZ_SFC": {
-      "_cf_variable_name": "zgs",
+    "RDRS_v2.1_P_GZ_09944": {
+      "_cf_variable_name": "zcrd09944",
       "cell_methods": "time: point",
-      "long_name": "surface geopotential height",
-      "standard_name": "geopotential_height",
+      "description": "Corresponding coordinate (09944) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
+      "long_name": "Model vertical grid coordinate",
+      "units": "m"
+    },
+    "RDRS_v2.1_P_GZ_SFC": {
+      "_cf_variable_name": "zcrd10000",
+      "cell_methods": "time: point",
+      "description": "Surface coordinate (10000) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
+      "long_name": "Model vertical grid coordinate at the surface",
       "units": "m"
     },
     "RDRS_v2.1_P_HR_09944": {
       "_cf_variable_name": "hur",
       "cell_methods": "time: point",
-      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "40 metre Relative Humidity (height is approximate :  see description)",
       "standard_name": "relative_humidity",
       "units": "%"
@@ -97,7 +104,7 @@
         "rdrs-v21": "1"
       },
       "cell_methods": "time: point",
-      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "40 metre Specific Humidity (height is approximate :  see description)",
       "standard_name": "specific_humidity",
       "units": "1"
@@ -150,7 +157,7 @@
         "rdrs-v21": "degC"
       },
       "cell_methods": "time: point",
-      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "40 metre dewpoint temperature (height is approximate :  see description)",
       "standard_name": "dew_point_temperature",
       "units": "K"
@@ -171,8 +178,8 @@
         "rdrs-v21": "degC"
       },
       "cell_methods": "time: point",
-      "description": "The approximate 40 metre level indicator is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface.",
-      "long_name": "40 metre temperature (height is approximate :  see description)",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "40 metre temperature. Height is approximate, see description.",
       "standard_name": "air_temperature",
       "units": "K"
     },
