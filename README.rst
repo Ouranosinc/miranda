@@ -54,7 +54,7 @@ In order to gain access to them, we strongly suggest using `Anaconda <https://ww
 
 For more information about Anaconda/Miniconda/conda-forge:
  * Miniconda: https://docs.conda.io/en/latest/miniconda.html
- * conda-forge: https://conda-forge.org/#about
+ * conda-forge: https://conda-forge.org/
 
 `miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary.
 This library is optional for users who do not require validation checks,

@@ -40,6 +40,8 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+docs/apidoc/miranda*.rst
+docs/apidoc/modules.rst
 
 # log files
 *.log
