@@ -47,15 +47,13 @@ jobs:
         env:
           READTHEDOCS: 1
 
-  test:
+  test-pypi:
     name: Test with Python${{ matrix.python-version }} (Python${{ matrix.python-version }} + tox)
     needs: lint_and_docs
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - tox-env: "py37"
-            python-version: "3.7"
           - tox-env: "py38-pyston"
             python-version: "3.8"
           - tox-env: "py39-full"
