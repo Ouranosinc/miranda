@@ -89,7 +89,7 @@ jobs:
 
   test-conda:
     name: Test with Python${{ matrix.python-version }} (Anaconda)
-    needs: lint
+    needs: lint_and_docs
     runs-on: ubuntu-latest
     strategy:
       matrix:
