@@ -19,6 +19,7 @@ dependencies:
   - numpy
   - pandas
   - paramiko >=2.6.0
+  - pyessv
   - pyproj
   - pyupgrade
   - pyyaml
