@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         tox-env:
-          - black
+          - lint
           - docs
         python-version:
           - "3.x"
