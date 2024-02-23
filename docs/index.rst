@@ -30,7 +30,7 @@ Welcome to miranda's documentation!
 Feedback
 ========
 
-If you have any suggestions or questions about **Miranda**, feel free to email `mailto:smith.trevorj@ouranos.ca`_.
+If you have any suggestions or questions about **Miranda**, feel free to email `smith.trevorj@ouranos.ca <mailto:smith.trevorj@ouranos.ca>`_.
 
 If you encounter any errors or problems with **Miranda**, please let us know!
 Open an Issue at the `GitHub main repository <https://github.com/Ouranosinc/miranda>`_.
