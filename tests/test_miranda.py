@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pkgutil
 from pathlib import Path
 
 import miranda
@@ -57,3 +58,16 @@ class TestDatabase:
         assert db._url_validate(url)
         assert db._url_validate(short_url)
         assert not db._url_validate(not_url)
+
+
+def test_package_metadata():
+    """Test the package metadata."""
+    project = pkgutil.get_loader("miranda").get_filename()
+
+    metadata = Path(project).resolve().parent.joinpath("__init__.py")
+
+    with open(metadata) as f:
+        contents = f.read()
+        assert """Trevor James Smith""" in contents
+        assert '__email__ = "smith.trevorj@ouranos.ca"' in contents
+        assert '__version__ = "0.6.0"' in contents

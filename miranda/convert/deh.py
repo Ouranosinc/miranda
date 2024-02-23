@@ -1,4 +1,5 @@
 """DEH Hydrograph Conversion module."""
+
 from __future__ import annotations
 
 import json
@@ -109,12 +110,12 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
         },
     )
 
-    ds.attrs[
-        "institution"
-    ] = "Ministère de l'Environnement et de la Lutte contre les changements climatiques"
-    ds.attrs[
-        "source"
-    ] = "Hydrometric data <https://www.cehq.gouv.qc.ca/hydrometrie/historique_donnees/index.asp>"
+    ds.attrs["institution"] = (
+        "Ministère de l'Environnement et de la Lutte contre les changements climatiques"
+    )
+    ds.attrs["source"] = (
+        "Hydrometric data <https://www.cehq.gouv.qc.ca/hydrometrie/historique_donnees/index.asp>"
+    )
     ds.attrs["redistribution"] = "Redistribution policy unknown. For internal use only."
 
     return ds

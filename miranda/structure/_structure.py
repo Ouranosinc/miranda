@@ -23,8 +23,8 @@ if VALIDATION_ENABLED:
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "create_version_hash_files",
     "build_path_from_schema",
+    "create_version_hash_files",
     "structure_datasets",
 ]
 
@@ -113,11 +113,9 @@ def generate_hash_metadata(
 
 
 def create_version_hash_files(
-    input_files: str
-    | os.PathLike
-    | list[str | os.PathLike]
-    | GeneratorType
-    | None = None,
+    input_files: (
+        str | os.PathLike | list[str | os.PathLike] | GeneratorType | None
+    ) = None,
     facet_dict: dict | None = None,
     verify_hash: bool = False,
 ) -> None:
@@ -351,7 +349,7 @@ def structure_datasets(
     verify_hashes: bool = False,
     suffix: str = "nc",
 ) -> dict[Path, Path]:
-    """
+    """Structure datasets.
 
     Parameters
     ----------

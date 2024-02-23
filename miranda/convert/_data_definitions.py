@@ -12,11 +12,12 @@ from miranda.storage import report_file_size
 logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
-    "era5_variables",
     "eccc_rdrs_variables",
+    "era5_variables",
     "gather_agcfsr",
     "gather_agmerra",
     "gather_ecmwf",
+    "gather_emdna",
     "gather_grnch",
     "gather_nex",
     "gather_nrcan_gridded_obs",
@@ -24,7 +25,6 @@ __all__ = [
     "gather_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
-    "gather_emdna",
     "nasa_ag_variables",
     "nrcan_variables",
     "project_institutes",
@@ -127,7 +127,7 @@ def gather_ecmwf(
     back_extension: bool = False,
     monthly_means: bool = False,
 ) -> dict[str, list[Path]]:
-    """
+    """Gather ECMWF source data.
 
     Parameters
     ----------
@@ -244,8 +244,11 @@ def gather_rdrs(
     Parameters
     ----------
     name : str
+        The variable to gather.
     path : str or os.PathLike
+        The location of the source data.
     suffix : str
+        The filename suffix.
     key : {"raw", "cf"}
         Indicating which variable name dictionary to search for.
 

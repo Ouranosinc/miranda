@@ -94,7 +94,7 @@ def fetch_chunk_config(
     dims: Sequence[str] | dict[str, int] | Frozen | tuple[Hashable],
     default_config: dict = chunk_configurations,
 ) -> dict[str, int]:
-    """
+    """Fetch data chunking configuration.
 
     Parameters
     ----------

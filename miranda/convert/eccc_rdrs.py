@@ -1,4 +1,5 @@
 """Environment and Climate Change Canada RDRS conversion tools."""
+
 from __future__ import annotations
 
 import logging.config
@@ -39,7 +40,7 @@ def convert_rdrs(
     overwrite: bool = False,
     **dask_kwargs,
 ) -> None:
-    r"""
+    r"""Convert RDRS dataset.
 
     Parameters
     ----------

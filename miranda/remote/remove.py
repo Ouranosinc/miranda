@@ -1,4 +1,5 @@
 """Remote File Removal Operations module."""
+
 from __future__ import annotations
 
 import logging.config
@@ -142,7 +143,7 @@ def delete_duplicates(
     pattern: str = None,
     delete_target_duplicates: bool = False,
 ) -> None:
-    """
+    """Delete duplicate files.
 
     Parameters
     ----------

@@ -127,9 +127,11 @@ class Decoder:
         Parameters
         ----------
         files : str or Path or list of str or Path or generator
+            The files to decode.
         chunks : int, optional
             The chunk size used when processing files. Not to be confused with xarray chunks for dimensions.
         raise_error : bool
+            Whether to raise an error if a file cannot be decoded.
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
@@ -248,7 +250,7 @@ class Decoder:
     def _decode_hour_of_day_info(
         file: PathLike | str,
     ) -> dict:
-        """
+        """Decode hour of day information.
 
         Parameters
         ----------
@@ -284,14 +286,14 @@ class Decoder:
             raise NotImplementedError()
 
     @staticmethod
-    def _decode_time_info(
+    def _decode_time_info(  # noqa: C901
         file: PathLike | str | list[str] | None = None,
         data: dict | None = None,
         term: str | None = None,
         *,
         field: str = None,
     ) -> str | NaTType:
-        """
+        """Decode time information.
 
         Parameters
         ----------
@@ -454,12 +456,12 @@ class Decoder:
 
     @staticmethod
     def _decode_version(file: PathLike | str, data: dict) -> dict:
-        """
+        """Decode version information.
 
         Parameters
         ----------
-        file: os.PathLike or str
-        data: dict
+        file : os.PathLike or str
+        data : dict
 
         Returns
         -------
@@ -488,6 +490,16 @@ class Decoder:
 
     @classmethod
     def decode_converted(cls, file: PathLike | str) -> dict:
+        """Decode converted data.
+
+        Parameters
+        ----------
+        file : os.PathLike or str
+
+        Returns
+        -------
+        dict
+        """
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)

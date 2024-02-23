@@ -29,9 +29,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 __all__ = [
+    "dataset_conversion",
     "dataset_corrections",
     "dims_conversion",
-    "dataset_conversion",
     "load_json_data_mappings",
     "metadata_conversion",
     "threshold_mask",
@@ -247,9 +247,7 @@ def correct_time_entries(
     date = date_parser(Path(filename).stem.split(split)[location])
     vals = np.arange(len(d[field]))
     days_since = f"days since {date}"
-    time = xr.coding.times.decode_cf_datetime(
-        vals, units=days_since, calendar="standard"
-    )
+    time = times.decode_cf_datetime(vals, units=days_since, calendar="standard")
     d = d.assign_coords({field: time})
 
     prev_history = d.attrs.get("history", "")
@@ -262,7 +260,7 @@ def correct_time_entries(
 
 
 def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.Dataset:
-    """
+    """Correct variable names.
 
     Parameters
     ----------
@@ -896,7 +894,7 @@ def dataset_conversion(
     preprocess: Callable | str | None = "auto",
     **xr_kwargs,
 ) -> xr.Dataset | xr.DataArray:
-    """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
+    r"""Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
     ----------
@@ -919,7 +917,7 @@ def dataset_conversion(
         Preprocessing functions to perform over each Dataset.
         Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
         Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
-    **xr_kwargs
+    \*\*xr_kwargs
         Arguments passed directly to xarray.
 
     Returns

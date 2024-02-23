@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from logging import config
 from pathlib import Path
 
 from miranda.io import find_filepaths
@@ -11,7 +10,7 @@ from miranda.scripting import LOGGING_CONFIG
 
 __all__ = ["select_by_date_modified"]
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)  # noqa
 
 
 def select_by_date_modified(

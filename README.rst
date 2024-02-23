@@ -2,12 +2,22 @@
 Miranda |logo|
 ==============
 
-|build| |coveralls| |black|
++----------------------------+-----------------------------------------------------+
+| Versions                   | |pypi| |versions|                                   |
++----------------------------+-----------------------------------------------------+
+| Documentation and Support  | |docs|                                              |
++----------------------------+-----------------------------------------------------+
+| Open Source                | |license| |ossf|                                    |
++----------------------------+-----------------------------------------------------+
+| Coding Standards           | |black| |ruff| |pre-commit|                         |
++----------------------------+-----------------------------------------------------+
+| Development Status         | |status| |build| |coveralls|                        |
++----------------------------+-----------------------------------------------------+
 
-Python utilities for climate data collection, conversion, and management
+Python utilities for climate data collection, conversion, and management.
 
-* Documentation: |docs|
-* Free Software: |license|
+* Free software: Apache Software License 2.0
+* Documentation: https://miranda.readthedocs.io.
 
 Features
 --------
@@ -60,7 +70,6 @@ For more information about Anaconda/Miniconda/conda-forge:
 This library is optional for users who do not require validation checks,
 but enabling this feature requires additional installation steps::
 
-
     $ mkdir -p ~/.esdoc
     $ git clone git@github.com:ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
 
@@ -68,26 +77,59 @@ Contributing
 ------------
 See the contributing documentation: https://miranda.readthedocs.io/en/latest/contributing.html
 
+Credits
+-------
+
+This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pypackage`_ project template.
+
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
+.. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
+
+
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+        :target: https://github.com/psf/black
+        :alt: Python Black
+
 .. |build| image:: https://github.com/Ouranosinc/miranda/actions/workflows/main.yml/badge.svg
-        :target: https://github.com/Ouranosinc/miranda/actions/workflows/main.yml
+        :target: https://github.com/Ouranosinc/miranda/actions
         :alt: Build Status
 
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/miranda/badge.svg
         :target: https://coveralls.io/github/Ouranosinc/miranda
         :alt: Coveralls
 
-.. |docs| image:: https://readthedocs.org/projects/miranda/badge
-        :target: https://miranda.readthedocs.io/en/latest
+.. |docs| image:: https://readthedocs.org/projects/miranda/badge/?version=latest
+        :target: https://miranda.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
 
 .. |license| image:: https://img.shields.io/github/license/Ouranosinc/miranda.svg
-        :target: https://github.com/Ouranosinc/miranda/blob/master/LICENSE
+        :target: https://github.com/Ouranosinc/miranda/blob/main/LICENSE
         :alt: License
 
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-        :target: https://github.com/psf/black
-        :alt: Python Black
+.. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/miranda/badge
+        :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/miranda
+        :alt: OpenSSF Scorecard
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/main/docs/_static/images/miranda-logo-small.png
         :target: https://github.com/Ouranosinc/miranda
         :alt: Miranda
+
+.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/miranda/main.svg
+        :target: https://results.pre-commit.ci/latest/github/Ouranosinc/miranda/main
+        :alt: pre-commit.ci status
+
+.. |pypi| image:: https://img.shields.io/pypi/v/miranda.svg
+        :target: https://pypi.python.org/pypi/miranda
+        :alt: PyPI
+
+.. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+        :target: https://github.com/astral-sh/ruff
+        :alt: Ruff
+
+.. |status| image:: https://www.repostatus.org/badges/latest/active.svg
+        :target: https://www.repostatus.org/#active
+        :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+
+.. |versions| image:: https://img.shields.io/pypi/pyversions/miranda.svg
+        :target: https://pypi.python.org/pypi/miranda
+        :alt: Supported Python Versions

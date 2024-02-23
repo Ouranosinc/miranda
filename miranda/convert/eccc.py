@@ -1,4 +1,5 @@
 """Environment and Climate Change Canada Data Conversion module."""
+
 from __future__ import annotations
 
 from pathlib import Path
