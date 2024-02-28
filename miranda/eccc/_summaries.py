@@ -27,7 +27,8 @@ import xarray as xr
 from miranda.scripting import LOGGING_CONFIG
 
 config.dictConfig(LOGGING_CONFIG)
-__all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
+
+__all__ = ["daily_summaries_to_netcdf", "extract_daily_summaries"]
 
 eccc_metadata = json.load(
     open(Path(__file__).parent / "eccc_obs_summary_cf_attrs.json")
@@ -192,7 +193,7 @@ def _read_multiple_daily_summaries(
     files: list[str | Path] | Generator[Path, None, None],
     rm_flags: bool = False,
 ) -> dict:
-    """
+    """Read multiple daily summary files.
 
     Notes
     -----

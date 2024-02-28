@@ -6,15 +6,16 @@ Disk space management
 Classes:
 
  * DiskSpaceError - the exception raised on failure.
- * :class:`FileMeta` - file and its size.
- * :class:`StorageState` - storage capacity and availability of a medium.
+ * :py:class:`FileMeta` - file and its size.
+ * :py:class:`StorageState` - storage capacity and availability of a medium.
 
 Functions:
 
- * :func:`total_size` - get total size of a list of files.
- * :func:`size_division` - divide files based on number and size restrictions.
+ * :py:func:`total_size` - get total size of a list of files.
+ * :py:func:`size_division` - divide files based on number and size restrictions.
 
 """
+
 from __future__ import annotations
 
 import logging
@@ -81,7 +82,7 @@ class FileMeta:
         else:
             self.size = size
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # noqa: D105
         if self.path == other.path:
             return True
         else:

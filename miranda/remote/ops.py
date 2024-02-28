@@ -1,4 +1,5 @@
 """Remote Operations module."""
+
 from __future__ import annotations
 
 import logging.config
@@ -65,11 +66,9 @@ def create_remote_directory(
 def create_archive(
     source_files: list[str | os.PathLike],
     destination: str | os.PathLike,
-    transport: SCPClient
-    | SFTPClient
-    | fabric.Connection
-    | miranda.remote.Connection
-    | None = None,
+    transport: (
+        SCPClient | SFTPClient | fabric.Connection | miranda.remote.Connection | None
+    ) = None,
     delete: bool = True,
     compression: bool = False,
     recursive: bool = True,
@@ -114,11 +113,9 @@ def create_archive(
 def transfer_file(
     source_file: str | os.PathLike,
     destination_file: str | os.PathLike,
-    transport: SCPClient
-    | SFTPClient
-    | fabric.Connection
-    | miranda.remote.Connection
-    | None = None,
+    transport: (
+        SCPClient | SFTPClient | fabric.Connection | miranda.remote.Connection | None
+    ) = None,
 ) -> bool:
     """Transfer file from one location (remote or local) to another.
 
@@ -143,7 +140,7 @@ def transfer_file(
                 f"Transferred { Path(destination_file).name} to {Path(destination_file).parent}"
             )
 
-        except (SCPException, SSHException, OSError) as e:
+        except (OSError, SCPException, SSHException) as e:
             msg = f'File "{destination_file.name}" failed to be transferred: {e}.'
             logging.warning(msg)
             return False
@@ -155,7 +152,7 @@ def transfer_file(
     else:
         try:
             destination_file.write_bytes(source_file.read_bytes())
-        except (SCPException, SSHException, OSError) as e:
+        except (OSError, SCPException, SSHException) as e:
             msg = f'File "{source_file.name}" failed to be copied: {e}'
             logging.error(msg)
             return False

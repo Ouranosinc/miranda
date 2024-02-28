@@ -2,6 +2,8 @@
 Usage
 =====
 
-To use Miranda in a project::
+To use miranda in a project:
 
-	import miranda
+.. code-block:: python
+
+    import miranda

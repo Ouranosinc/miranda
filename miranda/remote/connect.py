@@ -1,4 +1,5 @@
 """Remote Connection Operations module."""
+
 from __future__ import annotations
 
 import logging.config
@@ -60,10 +61,10 @@ class Connection:
         self.update(**kwargs)
         return self
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return f"Connection to {self.host} as {self.user}"
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         return f"<{self.__class__.__module__}.{self.__class__.__name__} object at {hex(id(self))}>"
 
     def connect(self, **kwargs):
@@ -92,8 +93,8 @@ class Connection:
         except Exception as e:
             raise e
 
-    def __enter__(self, **kwargs):
+    def __enter__(self, **kwargs):  # noqa: D105
         return self.connect()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: D105
         self.__c.close()
