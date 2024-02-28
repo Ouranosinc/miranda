@@ -51,27 +51,27 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "pip>=23.1.2",
-  "bump-my-version>=0.17.1",
-  "watchdog>=3.0.0",
-  "flake8>=6.1.0",
-  "flake8-alphabetize>=0.0.21",
-  "flake8-rst-docstrings>=0.3.0",
-  "flit>=3.9.0",
-  "tox>=4.5.1",
-  "coverage>=6.2.2,<7.0.0",
-  "coveralls>=3.3.1",
-  "pytest>=7.3.1",
-  "pytest-cov>=4.0.0",
-  "black==24.1.1",
-  "blackdoc==0.3.9",
-  "isort==5.13.2",
-  "ruff>=0.2.0",
-  "pre-commit>=3.3.2"
+  "pip >=23.1.2",
+  "bump-my-version >=0.18.3",
+  "watchdog >=3.0.0",
+  "flake8 >=6.1.0",
+  "flake8-alphabetize >=0.0.21",
+  "flake8-rst-docstrings >=0.3.0",
+  "flit >=3.9.0",
+  "tox >=4.5.1",
+  "coverage >=6.2.2,<7.0.0",
+  "coveralls >=3.3.1",
+  "pytest >=7.3.1",
+  "pytest-cov >=4.0.0",
+  "black ==24.2.0",
+  "blackdoc ==0.3.9",
+  "isort ==5.13.2",
+  "ruff >=0.2.0",
+  "pre-commit >=3.3.2"
 ]
 docs = [
   # Documentation and examples
-  "sphinx>=7.1",
+  "sphinx >=7.1",
   "sphinx_codeautolink",
   "sphinx_copybutton",
   "sphinx-intl",
@@ -81,7 +81,7 @@ docs = [
   "ipython",
   "ipykernel",
   "jupyter_client",
-  "furo>=2023.07.26"
+  "furo >=2023.07.26"
 ]
 gis = [
   # GIS library support
@@ -97,7 +97,7 @@ remote = [
   "intake",
   "intake-esm",
   "numcodecs",
-  "paramiko>=2.6.0",
+  "paramiko >=2.6.0",
   "s3fs",
   "scp"
 ]
