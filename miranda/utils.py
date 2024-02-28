@@ -1,4 +1,5 @@
 """Miscellaneous Helper Utilities module."""
+
 from __future__ import annotations
 
 import gzip
@@ -47,11 +48,11 @@ class HiddenPrints:
     CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)-
     """
 
-    def __enter__(self):
+    def __enter__(self):  # noqa: D105
         self._original_stdout = sys.stdout
         sys.stdout = open(os.devnull, "w")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: D105
         sys.stdout.close()
         sys.stdout = self._original_stdout
 

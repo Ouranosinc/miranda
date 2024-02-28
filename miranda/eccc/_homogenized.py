@@ -1,4 +1,5 @@
 """Adjusted and Homogenized Canadian Clime Data module."""
+
 from __future__ import annotations
 
 import calendar

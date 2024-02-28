@@ -1,4 +1,5 @@
 """Aggregation module."""
+
 from __future__ import annotations
 
 import logging.config
@@ -11,7 +12,7 @@ from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["aggregations_possible", "aggregate"]
+__all__ = ["aggregate", "aggregations_possible"]
 
 # There needs to be a better way (is there something in xclim?)
 _resampling_keys = dict()
@@ -72,7 +73,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
 
 
 def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
-    """
+    """Aggregate a dataset to a specified frequency.
 
     Parameters
     ----------

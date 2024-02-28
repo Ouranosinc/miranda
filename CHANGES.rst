@@ -1,8 +1,15 @@
 .. :changelog:
 
-=======
-History
-=======
+=========
+Changelog
+=========
+
+v0.6.0 (unreleased)
+-------------------
+
+Announcements
+^^^^^^^^^^^^^
+* `miranda` boilerplate code is now versioned with `cruft <http://sddsd.sdss.sdsd>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
 
 v0.5.0 (2023-06-19)
 -------------------

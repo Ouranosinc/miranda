@@ -1,4 +1,5 @@
 """Archive Module."""
+
 from __future__ import annotations
 
 import logging.config

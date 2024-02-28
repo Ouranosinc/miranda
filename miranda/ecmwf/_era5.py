@@ -30,7 +30,11 @@ from miranda.units import get_time_frequency
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["request_era5", "rename_era5_files", "ERA5_PROJECT_NAMES"]
+__all__ = [
+    "ERA5_PROJECT_NAMES",
+    "rename_era5_files",
+    "request_era5",
+]
 
 
 ERA5_PROJECT_NAMES = [

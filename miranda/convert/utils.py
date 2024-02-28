@@ -1,4 +1,5 @@
 """Conversion Utilities submodule."""
+
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +16,7 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["find_version_hash", "date_parser"]
+__all__ = ["date_parser", "find_version_hash"]
 
 
 def find_version_hash(file: os.PathLike | str) -> dict:

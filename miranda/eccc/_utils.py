@@ -6,13 +6,13 @@ from datetime import datetime as dt
 
 from miranda.scripting import LOGGING_CONFIG
 
-__all__ = ["cf_station_metadata", "cf_ahccd_metadata"]
+__all__ = ["cf_ahccd_metadata", "cf_station_metadata"]
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | str]:
-    """
+    """CF metadata for hourly station data.
 
     Parameters
     ----------
@@ -841,7 +841,7 @@ def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | 
 def cf_ahccd_metadata(
     code: str, gen: int
 ) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
-    """
+    """CF compliant metadata for ECCC Adjusted and Homogenized Climate Data (AHCCD).
 
     Parameters
     ----------

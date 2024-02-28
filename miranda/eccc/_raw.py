@@ -165,7 +165,7 @@ def _convert_station_file(
                     errored_files.append(data)
                     return
 
-                except (UnicodeDecodeError, Exception) as e:
+                except UnicodeDecodeError as e:
                     logging.error(
                         f"File {data.name} was unable to be read. "
                         f"This is probably an issue with the file: {e}"
@@ -393,15 +393,15 @@ def convert_flat_files(
     mode: str = "hourly",
     n_workers: int = 4,
 ) -> None:
-    """
+    """Convert flat formatted files.
 
     Parameters
     ----------
-    source_files: str or Path
-    output_folder: str or Path
-    variables: str or List[str]
-    mode: {"hourly", "daily"}
-    n_workers: int
+    source_files : str or Path
+    output_folder : str or Path
+    variables : str or List[str]
+    mode : {"hourly", "daily"}
+    n_workers : int
 
     Returns
     -------
@@ -488,22 +488,28 @@ def aggregate_stations(
     temp_directory: str | os.PathLike | None = None,
     n_workers: int = 1,
 ) -> None:
-    """
+    """Aggregate stations.
 
     Parameters
     ----------
-    source_files: str or Path
-    output_folder: str or Path
-    variables: str or int or list of str or int, optional
-    time_step: {"hourly", "daily"}
-    include_flags: bool
-    groupings: int
-      The number of files in each group used for converting to multi-file Datasets.
-    mf_dataset_freq: str, optional
-      Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
-    temp_directory: str or Path, optional
-      Use another temporary directory location in case default location is not spacious enough.
-    n_workers: int
+    source_files : str or Path
+        Source files to be aggregated.
+    output_folder : str or Path
+        Output folder for the aggregated files.
+    variables : str or int or list of str or int, optional
+        The variable codes to be aggregated.
+    time_step : {"hourly", "daily"}
+        The time step to be used for aggregation.
+    include_flags : bool
+        Include flags in the output files.
+    groupings : int
+        The number of files in each group used for converting to multi-file Datasets.
+    mf_dataset_freq : str, optional
+        Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
+    temp_directory : str or Path, optional
+        Use another temporary directory location in case default location is not spacious enough.
+    n_workers : int
+        The number of workers to use.
 
     Returns
     -------
@@ -865,16 +871,16 @@ def merge_converted_variables(
     overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
-    """
+    """Merge converted variables.
 
     Parameters
     ----------
-    source_files: str, Path
-    output_folder: str, Path
-    variables: str or int or list of str or int, optional
-    station_metadata: str or Path, optional
-    overwrite: bool
-    n_workers: int
+    source_files : str, Path
+    output_folder : str, Path
+    variables : str or int or list of str or int, optional
+    station_metadata : str or Path, optional
+    overwrite : bool
+    n_workers : int
 
     Returns
     -------

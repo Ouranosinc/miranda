@@ -1,4 +1,5 @@
 """Database Management module."""
+
 from __future__ import annotations
 
 import logging.config
