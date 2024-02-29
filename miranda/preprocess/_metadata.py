@@ -15,23 +15,23 @@ __all__ = [
 
 
 def eccc_variable_metadata(
-    variable_code: str,
+    variable_code: str | int,
     project: str,
     generation: int | None = None,
     metadata: dict | None = None,
-) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
+) -> dict[str, Any]:
     """Return the metadata for a given variable code and project.
 
     Parameters
     ----------
-    variable_code: str
+    variable_code: str or int
     project: {"eccc-ahccd", "eccc-obs", "eccc-obs-summary"}
     generation: {1, 2, 3}, optional
     metadata: dict, optional
 
     Returns
     -------
-    dict[str, int or str or float], dict, list[tuple[int, int]], int
+    dict
     """
     if project == "eccc-ahccd":
         generation = {1: "First", 2: "Second", 3: "Third"}.get(generation)
@@ -42,6 +42,10 @@ def eccc_variable_metadata(
 
     if not metadata:
         metadata = load_json_data_mappings(project)
+
+    if isinstance(variable_code, int):
+        variable_code = str(variable_code).zfill(3)
+
     code = find_project_variable_codes(variable_code, metadata)
 
     # Variable metadata
@@ -92,7 +96,7 @@ def eccc_variable_metadata(
     for field in to_delete:
         del header[field]
 
-    return variable_meta, header
+    return dict(metadata=variable_meta, header=header)
 
 
 def homogenized_column_definitions(
