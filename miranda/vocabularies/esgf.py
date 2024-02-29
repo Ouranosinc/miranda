@@ -1,4 +1,5 @@
-"""ESGF Vocabularies."""
+"""ESGF Controlled Vocabulary module."""
+
 from __future__ import annotations
 
 import warnings

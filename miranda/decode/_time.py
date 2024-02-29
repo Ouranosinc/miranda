@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import logging
-from logging import config
 
 from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.scripting import LOGGING_CONFIG
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)  # noqa
 
 __all__ = [
     "DecoderError",

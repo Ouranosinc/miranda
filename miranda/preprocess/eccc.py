@@ -33,9 +33,9 @@ def _run_func_on_archive_with_optional_dask(
     -----
     If the file is larger than 1 GiB or dask_kwargs are passed, dask.dataframes will be used.
     Partial function requires the function to accept the following parameters:
-      - file: Path
-      - using_dask: bool
-      - client: dask.distributed.Client
+    - file: Path
+    - using_dask: bool
+    - client: dask.distributed.Client
 
     Parameters
     ----------

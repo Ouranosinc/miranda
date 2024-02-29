@@ -1,4 +1,5 @@
 """MELCC (Québec) Weather Stations data conversion module."""
+
 from __future__ import annotations
 
 import datetime as dt
@@ -41,15 +42,15 @@ frequencies = {
 }
 
 __all__ = [
-    "parse_var_code",
+    "concat",
+    "convert_mdb",
+    "convert_melcc_obs",
+    "convert_snow_table",
     "list_tables",
-    "read_table",
+    "parse_var_code",
     "read_definitions",
     "read_stations",
-    "convert_mdb",
-    "convert_snow_table",
-    "concat",
-    "convert_melcc_obs",
+    "read_table",
 ]
 
 
@@ -304,9 +305,9 @@ def convert_mdb(
         new_var_name = list(
             filter(lambda k: not k.endswith("_flag"), ds.data_vars.keys())
         )[0]
-        ds.attrs[
-            "history"
-        ] = f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{tab} to netCDF."
+        ds.attrs["history"] = (
+            f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{tab} to netCDF."
+        )
         date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
         outs[(new_var_name, code)] = (
             output / f"{new_var_name}_{code}_MELCC_{raw.attrs['frequency']}_{date}.nc"
@@ -415,9 +416,9 @@ def concat(
         **{f"priority={i}": ds for i, ds in dss.items()},
     )
     instruments = [dss[p][vv].melcc_code for p in sorted(dss)]
-    ds_merged[vv].attrs[
-        "melcc_code"
-    ] = "Merged sources in ascending priority : " + " ,".join(map(str, instruments))
+    ds_merged[vv].attrs["melcc_code"] = (
+        "Merged sources in ascending priority : " + " ,".join(map(str, instruments))
+    )
 
     ds_merged.attrs.update(
         source="info-climat-merged",

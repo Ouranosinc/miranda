@@ -20,7 +20,7 @@ def eccc_variable_metadata(
     generation: int | None = None,
     metadata: dict | None = None,
 ) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
-    """
+    """Return the metadata for a given variable code and project.
 
     Parameters
     ----------

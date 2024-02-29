@@ -1,4 +1,5 @@
 """Hydro Quebec Weather Station Data Conversion module."""
+
 from __future__ import annotations
 
 import csv

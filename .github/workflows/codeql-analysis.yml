@@ -15,9 +15,8 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
-      - HISTORY.rst
+      - CHANGES.rst
       - pyproject.toml
-      - setup.cfg
       - tox.ini
       - miranda/__init__.py
       - .github/**.yml

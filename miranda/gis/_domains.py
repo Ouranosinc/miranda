@@ -10,7 +10,11 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["subset_domain", "subsetting_domains", "add_ar6_regions"]
+__all__ = [
+    "add_ar6_regions",
+    "subset_domain",
+    "subsetting_domains",
+]
 
 _gis_import_error_message = (
     "`{}` requires installation of the miranda GIS libraries. These can be installed using the"

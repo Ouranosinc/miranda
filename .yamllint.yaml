@@ -3,6 +3,6 @@
 rules:
   document-start: disable
   line-length:
-    max: 88
+    max: 120
     level: warning
   truthy: disable

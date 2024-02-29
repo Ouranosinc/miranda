@@ -1,4 +1,5 @@
 """IO Output Operations module."""
+
 from __future__ import annotations
 
 import logging.config
@@ -23,10 +24,10 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 
 __all__ = [
-    "write_dataset",
-    "write_dataset_dict",
     "concat_rechunk_zarr",
     "merge_rechunk_zarrs",
+    "write_dataset",
+    "write_dataset_dict",
 ]
 
 

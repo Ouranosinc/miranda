@@ -1,4 +1,5 @@
 """Dataset corrections submodule."""
+
 from __future__ import annotations
 
 import datetime
@@ -102,7 +103,7 @@ def dataset_conversion(
     preprocess: Callable | str | None = "auto",
     **xr_kwargs,
 ) -> xr.Dataset | xr.DataArray:
-    """Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
+    r"""Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
     ----------
@@ -125,7 +126,7 @@ def dataset_conversion(
         Preprocessing functions to perform over each Dataset.
         Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
         Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
-    **xr_kwargs
+    \*\*xr_kwargs
         Arguments passed directly to xarray.
 
     Returns
