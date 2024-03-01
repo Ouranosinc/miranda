@@ -75,6 +75,7 @@ docs = [
   "sphinx_codeautolink",
   "sphinx_copybutton",
   "sphinx-intl",
+  "sphinx-mdinclude",
   "sphinxcontrib-napoleon",
   "nbsphinx",
   "pandoc",
