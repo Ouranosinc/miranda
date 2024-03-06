@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable
 
-from dask.distributed import ProgressBar
+from dask.diagnostics import ProgressBar
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
