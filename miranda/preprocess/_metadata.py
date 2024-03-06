@@ -46,7 +46,10 @@ def eccc_variable_metadata(
     if isinstance(variable_code, int):
         variable_code = str(variable_code).zfill(3)
 
-    code = find_project_variable_codes(variable_code, metadata)
+    try:
+        code = find_project_variable_codes(variable_code, metadata)
+    except KeyError:
+        raise KeyError(f"Variable code `{variable_code}` not found in metadata.")
 
     # Variable metadata
     variable_meta = metadata["variables"].get(code)
