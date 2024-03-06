@@ -27,6 +27,10 @@ def find_project_variable_codes(code: str, configuration: dict[str, Any]) -> str
     str
     """
     variable_codes = {}
+
+    if "variables" not in configuration:
+        raise ValueError("No `variables` section found in configuration. Check JSON.")
+
     for variable_code in configuration["variables"]:
         variable_name = configuration["variables"][variable_code].get("_variable_name")
         if variable_name:
