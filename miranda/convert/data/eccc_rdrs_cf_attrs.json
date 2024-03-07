@@ -193,6 +193,14 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
+    "RDRS_v2.1_P_UUC_09944": {
+      "_cf_variable_name": "ua",
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Eastward Wind (40m). Height is approximate, see description.",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
     "RDRS_v2.1_P_UUC_10m": {
       "_cf_variable_name": "uas",
       "cell_methods": "time: point",
@@ -200,11 +208,27 @@
       "standard_name": "eastward_wind",
       "units": "m s-1"
     },
+    "RDRS_v2.1_P_UVC_09944": {
+      "_cf_variable_name": "40mWind",
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Wind Speed (40m). Height is approximate, see description.",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
     "RDRS_v2.1_P_UVC_10m": {
       "_cf_variable_name": "sfcWind",
       "cell_methods": "time: point",
       "long_name": "Near-Surface Wind Speed (10m)",
       "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "RDRS_v2.1_P_VVC_09944": {
+      "_cf_variable_name": "va",
+      "cell_methods": "time: point",
+      "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Northward Wind (40m). Height is approximate, see description.",
+      "standard_name": "northward_wind",
       "units": "m s-1"
     },
     "RDRS_v2.1_P_VVC_10m": {
