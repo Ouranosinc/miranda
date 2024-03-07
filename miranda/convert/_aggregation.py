@@ -33,7 +33,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
             ):
                 aggregation_legend[f"_{v}"] = {"mean"}
     for variable in ds.data_vars:
-        if variable in ["tas", "ta", "tdps", "hurs"]:
+        if variable in ["tas", "ta", "tdps", "tdp", "hurs", "hur"]:
             aggregation_legend[variable] = {"max", "mean", "min"}
         elif variable in ["sfcWind"]:
             aggregation_legend[variable] = {"max", "mean"}
@@ -41,7 +41,6 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
             "evspsblpot",
             "hfls",
             "hfss",
-            "hur",
             "huss",
             "hus",
             "pr",
@@ -59,8 +58,12 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
             "snw",
             "swe",
             "uas",
+            "ua",
             "vas",
-            "zgs",
+            "va",
+            "40mWind",
+            "zcrd10000",
+            "zcrd09944",
         ]:
             aggregation_legend[variable] = {"mean"}
 
