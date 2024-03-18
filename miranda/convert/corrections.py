@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import datetime
 import os
+import pathlib
 from functools import partial
-from pathlib import Path
 from typing import Callable, Iterator, Sequence
 
 import xarray as xr
@@ -27,7 +27,7 @@ from miranda.treatments import (
 )
 from miranda.treatments.utils import load_json_data_mappings
 
-CONFIG_FOLDER = Path(__file__).parent / "data"
+CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
 CONFIG_FILES = {
     "EMDNA": "emdna_cf_attrs.json",
     "ESPO-G6-E5L": "espo-g6-e5l_attrs.json",
@@ -89,9 +89,9 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 def dataset_conversion(
     input_files: (
         str
-        | os.PathLike
-        | Sequence[str | os.PathLike]
-        | Iterator[os.PathLike]
+        | pathlib.Path
+        | Sequence[str | pathlib.Path]
+        | Iterator[pathlib.Path]
         | xr.Dataset
     ),
     project: str,
@@ -137,14 +137,14 @@ def dataset_conversion(
         ds = input_files
     else:
         if isinstance(input_files, (str, os.PathLike)):
-            if Path(input_files).is_dir():
+            if pathlib.Path(input_files).is_dir():
                 files = []
-                files.extend([f for f in Path(input_files).glob("*.nc")])
-                files.extend([f for f in Path(input_files).glob("*.zarr")])
+                files.extend([f for f in pathlib.Path(input_files).glob("*.nc")])
+                files.extend([f for f in pathlib.Path(input_files).glob("*.zarr")])
             else:
-                files = [Path(input_files)]
+                files = [pathlib.Path(input_files)]
         elif isinstance(input_files, (Sequence, Iterator)):
-            files = [Path(f) for f in input_files]
+            files = [pathlib.Path(f) for f in input_files]
         else:
             files = input_files
         version_hashes = dict()
@@ -175,7 +175,7 @@ def dataset_conversion(
     if domain:
         ds = subset_domain(ds, domain)
 
-    if isinstance(mask, (str, Path)):
+    if isinstance(mask, (str, pathlib.Path)):
         mask = xr.open_dataset(mask)
     if isinstance(mask, (xr.Dataset, xr.DataArray)):
         if regrid:
