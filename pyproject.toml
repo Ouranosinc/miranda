@@ -34,7 +34,7 @@ classifiers = [
 dynamic = ["description", "version"]
 dependencies = [
   "cftime",
-  "dask",
+  "dask[dataframe]",
   "distributed",
   "h5netcdf",
   "netCDF4",
