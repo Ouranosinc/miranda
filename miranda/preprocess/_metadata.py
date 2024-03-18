@@ -51,11 +51,14 @@ def eccc_variable_metadata(
 
     # Variable metadata
     variable_meta = metadata["variables"].get(variable_code)
-    variable_name = variable_meta.get("_variable_name")
-    if variable_name:
-        variable_meta["original_variable_code"] = variable_code
-        variable_meta = {variable_name: variable_meta}
-        del variable_meta[variable_name]["_variable_name"]
+    variable_name_fields = ["_variable_name", "_cf_variable_name"]
+    if set(variable_name_fields).issubset(variable_meta.keys()):
+        for variable_field in variable_name_fields:
+            variable_name = variable_meta.get(variable_field)
+            if variable_name:
+                variable_meta["original_variable_code"] = variable_code
+                del variable_meta[variable_field]
+                variable_meta = {variable_name: variable_meta}
     else:
         variable_meta = {variable_code: variable_meta}
 
