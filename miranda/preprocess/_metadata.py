@@ -49,8 +49,11 @@ def eccc_variable_metadata(
 
     # code = find_project_variable_codes(variable_code, metadata)
 
+    print("stuff")
+
     # Variable metadata
     variable_meta = metadata["variables"].get(variable_code)
+    variable_name = ""
     variable_name_fields = ["_variable_name", "_cf_variable_name"]
     if set(variable_name_fields).issubset(variable_meta.keys()):
         for variable_field in variable_name_fields:
@@ -61,6 +64,8 @@ def eccc_variable_metadata(
                 variable_meta = {variable_name: variable_meta}
     else:
         variable_meta = {variable_code: variable_meta}
+    if not variable_name:
+        variable_name = variable_code
 
     # Dataset metadata
     header = metadata.get("Header")
