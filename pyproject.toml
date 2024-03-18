@@ -52,7 +52,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "pip >=23.1.2",
+  "pip >=23.3.0",
   "bump-my-version >=0.18.3",
   "watchdog >=3.0.0",
   "flake8 >=6.1.0",
