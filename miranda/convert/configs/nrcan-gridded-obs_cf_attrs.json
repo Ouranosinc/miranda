@@ -43,89 +43,53 @@
     },
     "time": {
       "axis": "T",
-      "calendar": "gregorian",
+      "calendar": "standard",
       "long_name": "Time",
       "standard_name": "time"
     }
   },
   "variables": {
-    "dm": {
-      "_cf_variable_name": "tas",
-      "add_offset": 273.15,
-      "cell_methods": "time: mean",
-      "comments": "Station data converted from Mean Temp (°C)",
-      "frequency": "day",
-      "grid_mapping": "regular_lon_lat",
-      "long_name": "Near-Surface Air Temperature",
-      "original_field": "Mean Temp (°C)",
-      "standard_name": "air_temperature",
-      "type": "real",
-      "units": "K"
-    },
-    "dn": {
-      "_cf_variable_name": "tasmin",
-      "add_offset": 273.15,
-      "cell_methods": "time: minimum",
-      "comments": "Station data converted from Min Temp (°C)",
-      "frequency": "day",
-      "grid_mapping": "regular_lon_lat",
-      "long_name": "Daily Minimum Near-Surface Air Temperature",
-      "original_field": "Min Temp (°C)",
-      "standard_name": "air_temperature",
-      "type": "real",
-      "units": "K"
-    },
-    "dr": {
-      "_cf_variable_name": "prlp",
-      "cell_methods": "time: mean",
-      "comments": "Station data converted from Total Rain (mm) using a density of 1000 kg/m³",
-      "frequency": "day",
-      "grid_mapping": "regular_lon_lat",
-      "long_name": "Liquid Precipitation",
-      "original_field": "Total Rain (mm)",
-      "scale_factor": 1.1574074074074073e-05,
-      "standard_name": "rainfall_flux",
-      "type": "real",
-      "units": "kg m-2 s-1"
-    },
-    "ds": {
-      "_cf_variable_name": "prsn",
-      "cell_methods": "time: mean",
-      "comments": "station data converted from Total Snow (cm) using a density of 100 kg/m³",
-      "frequency": "day",
-      "grid_mapping": "regular_lon_lat",
-      "long_name": "Snowfall Flux",
-      "original_field": "Total Snow (cm)",
-      "scale_factor": 1.1574074074074073e-05,
-      "standard_name": "snowfall_flux",
-      "type": "real",
-      "units": "kg m-2 s-1"
-    },
-    "dt": {
-      "_cf_variable_name": "pr",
-      "cell_methods": "time: mean",
-      "comments": "Station data converted from Total Precip (mm) using a density of 1000 kg/m³",
-      "frequency": "day",
-      "grid_mapping": "regular_lon_lat",
-      "long_name": "Precipitation",
-      "original_field": "Total Precip (mm)",
-      "scale_factor": 1.1574074074074073e-05,
-      "standard_name": "precipitation_flux",
-      "type": "real",
-      "units": "kg m-2 s-1"
-    },
-    "dx": {
+    "maxt": {
       "_cf_variable_name": "tasmax",
-      "add_offset": 273.15,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": "op + 273.15",
       "cell_methods": "time: maximum",
-      "comments": "station data converted from Max Temp (°C)",
       "frequency": "day",
       "grid_mapping": "regular_lon_lat",
       "long_name": "Daily Maximum Near-Surface Air Temperature",
-      "original_field": "Max Temp (°C)",
+      "original_units": "°C",
+      "original_field": "Maximum Temperature / températures maximales",
       "standard_name": "air_temperature",
-      "type": "real",
       "units": "K"
+    },
+    "mint": {
+      "_cf_variable_name": "tasmin",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": "op + 273.15",
+      "cell_methods": "time: minimum",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Minimum Temperature / températures minimales",
+      "original_units": "°C",
+      "original_field": "Min Temp (°C)",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "pcp": {
+      "_cf_variable_name": "pr",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": "amount2rate",
+      "cell_methods": "time: mean",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Precipitation",
+      "original_field": "precipitation / précipitations",
+      "original_units": "mm",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
     }
   }
 }
