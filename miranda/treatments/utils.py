@@ -51,11 +51,11 @@ def load_json_data_mappings(
 
         configurations = {}
         for configuration in config_folder.glob("*attrs.json"):
-            project = str(configuration.stem).split("_")[0]
+            project_config = str(configuration.stem).split("_")[0]
             if "|" in project:
-                for p in project.split("|"):
+                for p in project_config.split("|"):
                     configurations[p] = configuration
-            configurations[project] = configuration
+            configurations[project_config] = configuration
 
     if project in configurations.keys():
         config_file = configurations[project]

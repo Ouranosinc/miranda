@@ -34,8 +34,6 @@ def eccc_variable_metadata(
     -------
     dict
     """
-    print(locals())
-
     if project == "eccc-ahccd":
         generation = {1: "First", 2: "Second", 3: "Third"}.get(generation)
         if not generation:
@@ -45,7 +43,6 @@ def eccc_variable_metadata(
 
     if not metadata:
         metadata = load_json_data_mappings(project)
-        print(metadata)
 
     if isinstance(variable_code, int):
         variable_code = str(variable_code).zfill(3)
