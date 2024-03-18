@@ -34,6 +34,8 @@ def eccc_variable_metadata(
     -------
     dict
     """
+    print(locals())
+
     if project == "eccc-ahccd":
         generation = {1: "First", 2: "Second", 3: "Third"}.get(generation)
         if not generation:
@@ -43,16 +45,18 @@ def eccc_variable_metadata(
 
     if not metadata:
         metadata = load_json_data_mappings(project)
+        print(metadata)
 
     if isinstance(variable_code, int):
         variable_code = str(variable_code).zfill(3)
 
     # code = find_project_variable_codes(variable_code, metadata)
 
-    print("stuff")
-
     # Variable metadata
     variable_meta = metadata["variables"].get(variable_code)
+    if variable_meta is None:
+        raise ValueError(f"No metadata found for variable code: {variable_code}")
+
     variable_name = ""
     variable_name_fields = ["_variable_name", "_cf_variable_name"]
     if set(variable_name_fields).issubset(variable_meta.keys()):
