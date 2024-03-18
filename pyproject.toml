@@ -185,7 +185,11 @@ include = [
   "docs/make.bat",
   "tests/*.py",
   "tox.ini",
-  "miranda"
+  "miranda",
+  "miranda/convert/configs/*.json",
+  "miranda/preprocess/configs/*.csv",
+  "miranda/preprocess/configs/*.json",
+  "miranda/structure/data/*.yml"
 ]
 exclude = [
   "*.py[co]",
