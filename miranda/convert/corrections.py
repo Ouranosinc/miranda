@@ -26,7 +26,7 @@ from miranda.treatments import (
 )
 from miranda.treatments.utils import load_json_data_mappings
 
-CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
+CONFIG_FOLDER = pathlib.Path(__file__).parent / "configs"
 CONFIG_FILES = {
     "EMDNA": "emdna_cf_attrs.json",
     "ESPO-G6-E5L": "espo-g6-e5l_attrs.json",
