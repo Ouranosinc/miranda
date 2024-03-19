@@ -17,5 +17,5 @@ if __name__ == "__main__":
         guess=False,
         method="copy",
         make_dirs=True,
-        filename_pattern="*.zarr",
+        suffix="zarr",
     )

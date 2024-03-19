@@ -50,7 +50,7 @@ def discover_data(
                 input_files = sorted(list(input_files.glob(f"*.{suffix}")))
             else:
                 input_files = input_files.rglob(f"*.{suffix}")
-        if input_files.is_file():
+        elif input_files.is_file():
             logging.warning(
                 "Data discovery yielded a single file. Casting to `list[Path]`."
             )
