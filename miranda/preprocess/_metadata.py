@@ -4,7 +4,8 @@ import logging
 from typing import Any
 
 from miranda import __version__ as __miranda_version__
-from miranda.treatments import find_project_variable_codes
+
+# from miranda.treatments import find_project_variable_codes
 from miranda.treatments.utils import load_json_data_mappings
 
 __all__ = [
@@ -46,17 +47,26 @@ def eccc_variable_metadata(
     if isinstance(variable_code, int):
         variable_code = str(variable_code).zfill(3)
 
-    code = find_project_variable_codes(variable_code, metadata)
+    # code = find_project_variable_codes(variable_code, metadata)
 
     # Variable metadata
-    variable_meta = metadata["variables"].get(code)
-    variable_name = variable_meta.get("_variable_name")
-    if variable_name:
-        variable_meta["original_variable_name"] = variable_code
-        variable_meta = {variable_name: variable_meta}
-        del variable_meta[variable_name]["_variable_name"]
+    variable_meta = metadata["variables"].get(variable_code)
+    if variable_meta is None:
+        raise ValueError(f"No metadata found for variable code: {variable_code}")
+
+    variable_name = ""
+    variable_name_fields = ["_variable_name", "_cf_variable_name"]
+    if set(variable_name_fields).issubset(variable_meta.keys()):
+        for variable_field in variable_name_fields:
+            variable_name = variable_meta.get(variable_field)
+            if variable_name:
+                variable_meta["original_variable_code"] = variable_code
+                del variable_meta[variable_field]
+                variable_meta = {variable_name: variable_meta}
     else:
         variable_meta = {variable_code: variable_meta}
+    if not variable_name:
+        variable_name = variable_code
 
     # Dataset metadata
     header = metadata.get("Header")

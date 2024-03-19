@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import os
 import pathlib
 from functools import partial
 from typing import Callable, Iterator, Sequence
@@ -107,7 +106,7 @@ def dataset_conversion(
 
     Parameters
     ----------
-    input_files : str or os.PathLike or Sequence[str or os.PathLike] or Iterator[os.PathLike] or xr.Dataset
+    input_files : str or pathlib.Path or Sequence[str or pathlib.Path] or Iterator[pathlib.Path] or xr.Dataset
         Files or objects to be converted.
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
     project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
@@ -136,7 +135,7 @@ def dataset_conversion(
     if isinstance(input_files, xr.Dataset):
         ds = input_files
     else:
-        if isinstance(input_files, (str, os.PathLike)):
+        if isinstance(input_files, (str, pathlib.Path)):
             if pathlib.Path(input_files).is_dir():
                 files = []
                 files.extend([f for f in pathlib.Path(input_files).glob("*.nc")])
