@@ -24,14 +24,15 @@ __version__ = "0.6.0-dev.1"
 from . import (
     archive,
     convert,
-    cv,
     decode,
     io,
+    preprocess,
     scripting,
     structure,
     units,
     utils,
     validators,
+    vocabularies,
 )
 from .data import DataBase
 from .storage import FileMeta, StorageState

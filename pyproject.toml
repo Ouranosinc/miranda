@@ -12,7 +12,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.8.0"
+requires-python = ">=3.7.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -23,6 +23,7 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -51,7 +52,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "pip >=23.1.2",
+  "pip >=23.3.0",
   "bump-my-version >=0.18.3",
   "watchdog >=3.0.0",
   "flake8 >=6.1.0",
@@ -113,6 +114,7 @@ remote = [
 
 [tool.black]
 target-version = [
+  "py37",
   "py38",
   "py39",
   "py310",
@@ -183,7 +185,11 @@ include = [
   "docs/make.bat",
   "tests/*.py",
   "tox.ini",
-  "miranda"
+  "miranda",
+  "miranda/convert/configs/*.json",
+  "miranda/preprocess/configs/*.csv",
+  "miranda/preprocess/configs/*.json",
+  "miranda/structure/data/*.yml"
 ]
 exclude = [
   "*.py[co]",
@@ -203,13 +209,13 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 38
+py_version = 37
 append_only = true
 add_imports = "from __future__ import annotations"
 skip = ["templates", "docs/conf.py"]
 
 [tool.mypy]
-python_version = 3.8
+python_version = 3.7
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
@@ -231,7 +237,7 @@ testpaths = "tests"
 [tool.ruff]
 src = ["miranda"]
 line-length = 150
-target-version = "py38"
+target-version = "py37"
 exclude = [
   ".eggs",
   ".git",

@@ -22,13 +22,10 @@ from xclim.core.formatting import update_history
 from xclim.core.units import convert_units_to, pint_multiply, str2pint
 
 from miranda import __version__
+from miranda.convert.corrections import dataset_corrections
 from miranda.scripting import LOGGING_CONFIG
-
-from ._data_corrections import (
-    dataset_corrections,
-    load_json_data_mappings,
-    metadata_conversion,
-)
+from miranda.treatments import metadata_conversion
+from miranda.treatments.utils import load_json_data_mappings
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
@@ -565,7 +562,7 @@ def convert_snow_table(file: str | Path, output: str | Path):
         )
 
     ds.attrs.update(frequency="2sem")
-    meta = load_json_data_mappings("melcc-snow")
+    meta = load_json_data_mappings("melcc")
     ds = metadata_conversion(ds, "melcc-snow", meta)
     date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
     # Save
