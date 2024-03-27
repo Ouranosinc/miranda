@@ -185,12 +185,12 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     converted = []
     for vv in d.data_vars:
         if vv in m["variables"].keys():
-            clip_values = _get_section_entry_key(m, "variables", vv, key, p)
+            clip_vals = _get_section_entry_key(m, "variables", vv, key, p)
             if clip_values:
                 min_value, max_value = None, None
                 # Gather unit conversion context, if applicable
-                context = clip_values.get("context", None)
-                for op, value in clip_values.items():
+                context = clip_vals.get("context", None)
+                for op, value in clip_vals.items():
                     if op == "min":
                         min_value = xclim.core.units.convert_units_to(
                             value, d[vv], context
