@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinx_mdinclude",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
@@ -107,7 +108,7 @@ author = "Miranda project Development Team"
 # built documents.
 #
 # The short X.Y version.
-version = miranda.__version__
+version = miranda.__version__.split("-")[0]
 # The full version, including alpha/beta/rc tags.
 release = miranda.__version__
 

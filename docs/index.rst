@@ -11,6 +11,7 @@ Welcome to miranda's documentation!
    contributing
    authors
    changes
+   security
    license
 
 .. toctree::
