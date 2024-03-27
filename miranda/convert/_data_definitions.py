@@ -86,6 +86,7 @@ project_institutes = {
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
 xarray_frequencies_to_cmip6like = {
+    "h": "hr",
     "H": "hr",
     "D": "day",
     "W": "sem",
