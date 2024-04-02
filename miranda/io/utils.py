@@ -241,7 +241,8 @@ def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
             for v in ds.variables:
                 chunks[v] = dict()
                 for ii, dim in enumerate(ds[v].dimensions):
-                    chunks[v][dim] = ds[v].chunking()[ii]
+                    if ds[v].chunking():
+                        chunks[v][dim] = ds[v].chunking()[ii]
     elif file.suffix.lower() == "zarr" and file.is_dir():
         with zarr.open(file, "r") as ds:  # noqa
             for v in ds.arrays():

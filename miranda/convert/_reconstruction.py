@@ -141,7 +141,9 @@ def reanalysis_processing(
                         file_name = "_".join([var, time_freq, institute, project])
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
-
+                        if not chunks:
+                            chunks = dict(time=24 * 10, lon=50, lat=50)
+                            print(chunks)
                         xr_kwargs = dict(
                             chunks=chunks,
                             engine=engine,
