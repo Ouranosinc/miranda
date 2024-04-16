@@ -13,11 +13,11 @@ Announcements
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Miranda now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
+* `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
 
 v0.5.0 (2023-06-19)
 -------------------
-Contributors to this version: Juliette Lavoie (:user: `juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
 ^^^^^^^^^^^^
