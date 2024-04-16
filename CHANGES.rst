@@ -9,7 +9,11 @@ v0.6.0 (unreleased)
 
 Announcements
 ^^^^^^^^^^^^^
-* `miranda` boilerplate code is now versioned with `cruft <http://sddsd.sdss.sdsd>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
+* `miranda` boilerplate code is now versioned with `cruft <https://cruft.github.io/cruft>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Miranda now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
 
 v0.5.0 (2023-06-19)
 -------------------
