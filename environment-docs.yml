@@ -13,4 +13,5 @@ dependencies:
   - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-intl
+  - sphinx-mdinclude
   - sphinxcontrib-napoleon
