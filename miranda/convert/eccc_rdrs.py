@@ -11,11 +11,12 @@ from numpy import unique
 
 from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments import load_json_data_mappings
 from miranda.units import get_time_frequency
 
 from ._aggregation import aggregate
-from ._data_corrections import dataset_conversion, load_json_data_mappings
-from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
+from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
+from .corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -160,7 +161,7 @@ def rdrs_to_daily(
         working_folder = Path(working_folder).expanduser()
 
     # GATHER ALL RDRS FILES
-    gathered = gather_rdrs(project, input_folder, "zarr", "cf")
+    gathered = gather_eccc_rdrs(project, input_folder, "zarr", "cf")
     files = gathered["rdrs-v21"]  # noqa
     if process_variables:
         for vv in [f for f in files.keys() if f not in process_variables]:

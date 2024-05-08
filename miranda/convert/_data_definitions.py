@@ -16,13 +16,13 @@ __all__ = [
     "era5_variables",
     "gather_agcfsr",
     "gather_agmerra",
+    "gather_eccc_rdrs",
     "gather_ecmwf",
     "gather_emdna",
     "gather_grnch",
     "gather_nex",
     "gather_nrcan_gridded_obs",
     "gather_raw_rdrs_by_years",
-    "gather_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
@@ -33,34 +33,35 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-_data_folder = Path(__file__).parent / "data"
+_config_folder = Path(__file__).resolve().parent / "configs"
+
 
 eccc_rdrs_variables = dict()
 eccc_rdrs_variables["raw"] = [
     v
-    for v in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+    for v in json.load(open(_config_folder / "eccc-rdrs_cf_attrs.json"))[
         "variables"
     ].keys()
 ]
 eccc_rdrs_variables["cf"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(open(_data_folder / "eccc_rdrs_cf_attrs.json"))[
+    for attrs in json.load(open(_config_folder / "eccc-rdrs_cf_attrs.json"))[
         "variables"
     ].values()
 ]
 
-era5_variables = json.load(open(_data_folder / "ecmwf_cf_attrs.json"))[
+era5_variables = json.load(open(_config_folder / "era5|era5-land_cf_attrs.json"))[
     "variables"
 ].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(open(_data_folder / "nasa_cf_attrs.json"))[
+nasa_ag_variables = json.load(open(_config_folder / "agcfsr|agmerra2_cf_attrs.json"))[
     "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
-wfdei_gem_capa_variables = json.load(open(_data_folder / "usask_cf_attrs.json"))[
-    "variables"
-].keys()
+wfdei_gem_capa_variables = json.load(
+    open(_config_folder / "wfdei-gem-capa_cf_attrs.json")
+)["variables"].keys()
 
 project_institutes = {
     "cfsr": "ncar",
@@ -85,6 +86,7 @@ project_institutes = {
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
 xarray_frequencies_to_cmip6like = {
+    "h": "hr",
     "H": "hr",
     "D": "day",
     "W": "sem",
@@ -236,7 +238,7 @@ def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
     )
 
 
-def gather_rdrs(
+def gather_eccc_rdrs(
     name: str, path: str | os.PathLike, suffix: str, key: str
 ) -> dict[str, dict[str, list[Path]]]:
     """Gather RDRS processed source data.

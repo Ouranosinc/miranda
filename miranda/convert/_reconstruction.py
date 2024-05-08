@@ -17,8 +17,8 @@ from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 
 from ._aggregation import aggregate as aggregate_func
-from ._data_corrections import dataset_corrections
 from ._data_definitions import project_institutes, xarray_frequencies_to_cmip6like
+from .corrections import dataset_corrections
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
