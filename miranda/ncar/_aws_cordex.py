@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import functools
 import json
@@ -5,11 +7,9 @@ import logging.config
 import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import schema
 import xarray as xr
-from clisops.core import subset_bbox
 from dask.diagnostics import ProgressBar
 from xclim.core import calendar as xcal  # noqa
 
@@ -26,7 +26,7 @@ try:
 except ImportError:
     warnings.warn(
         f"{__name__} functions require additional dependencies. "
-        "Please install them with `pip install miranda[full]`."
+        "Please install them with `pip install miranda[remote]`."
     )
 
 
@@ -70,7 +70,7 @@ _allowed_args = schema.Schema(
 )
 
 
-def cordex_aws_calendar_correction(ds) -> Optional[xr.Dataset]:
+def cordex_aws_calendar_correction(ds) -> xr.Dataset | None:
     """AWS-stored CORDEX datasets are all on the same standard calendar, this converts
     the data back to the original calendar, removing added NaNs.
 
@@ -94,15 +94,27 @@ def cordex_aws_calendar_correction(ds) -> Optional[xr.Dataset]:
 
 
 def cordex_aws_download(
-    target_folder: Union[str, Path],
+    target_folder: str | Path,
     *,
-    search: Dict[str, Union[str, List[str]]],
+    search: dict[str, str | list[str]],
     correct_times: bool = False,
-    domain: Optional[str] = None,
+    domain: str | None = None,
 ):
-    def _subset_preprocess(d: xr.Dataset, dom: List[float]) -> xr.Dataset:
-        n, w, s, e = subsetting_domains(dom)
-        return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
+    """Download CORDEX interpolated grid for North America from Amazon S3."""
+
+    def _subset_preprocess(d: xr.Dataset, dom: list[float]) -> xr.Dataset:
+        try:
+            from clisops.core import subset_bbox
+
+            n, w, s, e = subsetting_domains(dom)
+            return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
+        except ModuleNotFoundError:
+            log_msg = (
+                "This function requires the `clisops` library which is not installed. "
+                "Domain subsetting step will be skipped."
+            )
+            warnings.warn(log_msg)
+            return d
 
     schema.Schema(_allowed_args).validate(search)
 
@@ -206,4 +218,6 @@ def cordex_aws_download(
 
                 logging.info(f"Final count of files: {len(datasets)}")
 
-                xr.save_mfdataset(datasets, paths, format="NETCDF4_CLASSIC")
+                xr.save_mfdataset(
+                    datasets, paths, engine="h5netcdf", format="NETCDF4_CLASSIC"
+                )

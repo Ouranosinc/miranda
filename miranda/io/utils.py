@@ -1,8 +1,13 @@
+"""IO Utilities module."""
+
+from __future__ import annotations
+
+import json
 import logging.config
 import os
+from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
 
 import dask
 import netCDF4 as nc  # noqa
@@ -24,18 +29,21 @@ __all__ = [
     "sort_variables",
 ]
 
+_data_folder = Path(__file__).parent / "data"
+name_configurations = json.load(open(_data_folder / "ouranos_name_config.json"))
+
 
 def name_output_file(
-    ds_or_dict: Union[xr.Dataset, Dict[str, str]], project: str, output_format: str
+    ds_or_dict: xr.Dataset | dict[str, str], output_format: str
 ) -> str:
     """Name an output file based on facets within a Dataset or a dictionary.
 
     Parameters
     ----------
     ds_or_dict : xr.Dataset or dict
-    project: str
+        A miranda-converted Dataset or a dictionary containing the appropriate facets.
     output_format : {"netcdf", "zarr"}
-        Suffix to be used for filename
+        Output filetype to be used for generating filename suffix.
 
     Returns
     -------
@@ -43,8 +51,8 @@ def name_output_file(
 
     Notes
     -----
-    If using a dictionary, the following must be keys: "variable", "frequency", "institution", "time_start", "time_end".
-
+    If using a dictionary, the following keys must be set:
+    * "variable", "frequency", "institution", "time_start", "time_end".
     """
     if output_format.lower() not in {"netcdf", "zarr"}:
         raise NotImplementedError(f"Format: {output_format}.")
@@ -52,7 +60,6 @@ def name_output_file(
         suffix = dict(netcdf="nc", zarr="zarr")[output_format]
 
     facets = dict()
-    facets["project"] = project
     facets["suffix"] = suffix
 
     if isinstance(ds_or_dict, xr.Dataset):
@@ -69,52 +76,100 @@ def name_output_file(
             raise NotImplementedError(
                 f"Too many `data_vars` in Dataset: {' ,'.join(ds_or_dict.data_vars.keys())}."
             )
-        facets["frequency"] = ds_or_dict.attrs.get("frequency")
-        facets["institution"] = ds_or_dict.attrs.get("institution")
+        for f in [
+            "bias_adjust_project",
+            "domain",
+            "frequency",
+            "institution",
+            "source",
+            "experiment",
+            "member",
+            "processing_level",
+            "project",
+            "type",
+            "mip_era",
+            "activity",
+        ]:
+            facets[f] = ds_or_dict.attrs.get(f)
+
+        if facets["frequency"] in ["1hr", "day"]:
+            date_format = "%Y%m%d"
+        elif facets["frequency"] == "month":
+            date_format = "%Y%m"
+        elif facets["frequency"] == "year":
+            date_format = "%Y"
+        else:
+            raise KeyError("`frequency` not found.")
+
         facets["time_start"], facets["time_end"] = (
-            ds_or_dict.time.isel(time=[0, -1]).dt.strftime("%Y%m%d").values
+            ds_or_dict.time.isel(time=[0, -1]).dt.strftime(date_format).values
         )
+        facets["year_start"], facets["year_end"] = ds_or_dict.time.isel(
+            time=[0, -1]
+        ).dt.year.values
     elif isinstance(ds_or_dict, dict):
-        facets["variable"] = ds_or_dict.get("variable")
-        facets["frequency"] = ds_or_dict.get("variable")
-        facets["institution"] = ds_or_dict.get("variable")
-        facets["time_start"] = ds_or_dict.get("variable")
-        facets["time_end"] = ds_or_dict.get("variable")
+        for f in [
+            "bias_adjust_project",
+            "domain",
+            "frequency",
+            "institution",
+            "processing_level",
+            "project",
+            "type",
+            "time",
+            "time_end",
+            "time_start",
+            "variable",
+        ]:
+            facets[f] = ds_or_dict.get(f)
     else:
         raise NotImplementedError("Must be a Dataset or dictionary.")
 
+    if {"time_start", "time_end"}.issubset(facets) and "time" not in facets:
+        if facets["time_start"] == facets["time_end"]:
+            facets["time"] = "-".join([facets["time_start"], facets["time_end"]])
+        else:
+            facets["time"] = facets["time_start"]
+
+    str_name = "{variable}_{frequency}_{institution}_{project}_{time}.{suffix}"
+    # Get the string for the name
+    if facets["type"] in name_configurations.keys():
+        if facets["project"] in name_configurations[facets["type"]].keys():
+            str_name = name_configurations[facets["type"]][facets["project"]]
+
     missing = []
     for k, v in facets.items():
-        if v is None:
+        if (
+            v is None and k in str_name
+        ):  # only missing if the facets is needed in the name
             missing.append(k)
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
 
-    return "{variable}_{frequency}_{institution}_{project}_{time_start}-{time_end}.{suffix}".format(
-        **facets
-    )
+    # fill in string with facets
+    return str_name.format(**facets)
 
 
 def delayed_write(
     ds: xr.Dataset,
-    outfile: Union[str, os.PathLike],
+    outfile: str | os.PathLike,
     output_format: str,
     overwrite: bool,
     encode: bool = True,
-    target_chunks: Optional[dict] = None,
+    target_chunks: dict | None = None,
     kwargs: Optional[dict] = None,
 ) -> dask.delayed:
-    """
+    """Stage a Dataset writing job using `dask.delayed` objects.
 
     Parameters
     ----------
-    ds : Union[xr.Dataset, str, os.PathLike]
+    ds : xr.Dataset
     outfile : str or os.PathLike
     target_chunks : dict
     output_format : {"netcdf", "zarr"}
     overwrite : bool
     encode : bool
-    kwargs : list
+    kwargs : dict
 
     Returns
     -------
@@ -163,7 +218,8 @@ def delayed_write(
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
 
 
-def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str, int):
+def get_time_attrs(file_or_dataset: str | os.PathLike | xr.Dataset) -> (str, int):
+    """Determine attributes related to time dimensions."""
     if isinstance(file_or_dataset, (str, Path)):
         ds = xr.open_dataset(Path(file_or_dataset).expanduser())
     else:
@@ -176,8 +232,9 @@ def get_time_attrs(file_or_dataset: Union[str, os.PathLike, xr.Dataset]) -> (str
 
 
 def get_global_attrs(
-    file_or_dataset: Union[str, os.PathLike, xr.Dataset]
-) -> Dict[str, Union[str, int]]:
+    file_or_dataset: str | os.PathLike | xr.Dataset,
+) -> dict[str, str | int]:
+    """Collect global attributes from NetCDF, Zarr, or Dataset object."""
     if isinstance(file_or_dataset, (str, Path)):
         file = Path(file_or_dataset).expanduser()
     elif isinstance(file_or_dataset, xr.Dataset):
@@ -201,8 +258,19 @@ def get_global_attrs(
 
 
 def sort_variables(
-    files: List[Path], variables: Sequence[str]
-) -> Dict[str, List[Path]]:
+    files: list[Path], variables: Sequence[str]
+) -> dict[str, list[Path]]:
+    """Sort all variables within supplied files for treatment.
+
+    Parameters
+    ----------
+    files: list of Path
+    variables: sequence of str
+
+    Returns
+    -------
+    dict[str, list[Path]]
+    """
     variable_sorted = dict()
     if variables:
         logging.info("Sorting variables into groups. This could take some time.")
@@ -221,8 +289,8 @@ def sort_variables(
     return variable_sorted
 
 
-def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
-    """
+def get_chunks_on_disk(file: os.PathLike | str) -> dict:
+    """Determine the chunks on disk for a given NetCDF or Zarr file.
 
     Parameters
     ----------
@@ -254,18 +322,18 @@ def get_chunks_on_disk(file: Union[os.PathLike, str]) -> dict:
     return chunks
 
 
-def creation_date(path_to_file: Union[Path, str]) -> Union[float, date]:
-    """Try to get the date that a file was created, falling back to when it was last modified if that isn't possible.
+def creation_date(path_to_file: str | os.PathLike) -> float | date:
+    """Return the date that a file was created, falling back to when it was last modified if unable to determine.
 
     See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
     ----------
-    path_to_file: Union[Path, str]
+    path_to_file : str or os.PathLike
 
     Returns
     -------
-    Union[float, date]
+    float or date
     """
     if os.name == "nt":
         return Path(path_to_file).stat().st_ctime

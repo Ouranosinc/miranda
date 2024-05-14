@@ -11,12 +11,14 @@
 # "Max Temp (°C)" is renamed "tasmax" and converted to °K.
 #
 #####################################################################
+from __future__ import annotations
+
 import json
 import logging
 from collections import defaultdict
+from collections.abc import Generator
 from logging import config
 from pathlib import Path
-from typing import Generator, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -25,7 +27,8 @@ import xarray as xr
 from miranda.scripting import LOGGING_CONFIG
 
 config.dictConfig(LOGGING_CONFIG)
-__all__ = ["extract_daily_summaries", "daily_summaries_to_netcdf"]
+
+__all__ = ["daily_summaries_to_netcdf", "extract_daily_summaries"]
 
 eccc_metadata = json.load(
     open(Path(__file__).parent / "eccc_obs_summary_cf_attrs.json")
@@ -34,24 +37,24 @@ eccc_metadata = json.load(
 
 # Searches a location for the station data, then calls the needed scripts to read and assembles the data using pandas
 def extract_daily_summaries(
-    path_station: Union[Path, str], rm_flags: bool = False, file_suffix: str = ".csv"
+    path_station: Path | str, rm_flags: bool = False, file_suffix: str = ".csv"
 ) -> dict:
-    """
+    """Extract daily climate summaries from ECCC CSV files.
 
     Parameters
     ----------
-    path_station : Union[Path, str]
-      PathLike or str to the station's folder containing the csv files.
+    path_station : str or Path
+        PathLike or str to the station's folder containing the csv files.
     rm_flags : bool
-      Removes the 'Flag' and 'Quality' columns of the ECCC files.
+        Removes the 'Flag' and 'Quality' columns of the ECCC files.
     file_suffix : str
-      File suffixes used by the tabular data. Default: ".csv".
+        File suffixes used by the tabular data. Default: ".csv".
+
     Returns
     -------
     dict
-      dict containing the station metadata, as well as the data stored within a pandas Dataframe.
+        dict containing the station metadata, as well as the data stored within a pandas Dataframe.
     """
-
     # Find the CSV files
     if "*" not in file_suffix:
         file_suffix = f"*{file_suffix}"
@@ -63,15 +66,18 @@ def extract_daily_summaries(
     return stations
 
 
-# Uses xarray to transform the 'station' from find_and_extract_dly into a CF-Convention netCDF file
-def daily_summaries_to_netcdf(station: dict, path_output: Union[Path, str]) -> None:
-    """
+#
+def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
+    """Convert daily climate summaries to NetCDF files.
+
+    Uses xarray to transform the 'station' from find_and_extract_dly into a CF-Convention netCDF file
 
     Parameters
     ----------
     station : dict
-      dict created by using find_and_extract_dly
-    path_output: Union[Path, str]
+        dict created by using find_and_extract_dly
+    path_output: str or Path
+        Output path.
 
     Returns
     -------
@@ -182,25 +188,28 @@ def daily_summaries_to_netcdf(station: dict, path_output: Union[Path, str]) -> N
 ##########################################
 
 
-# This calls _read_single_eccc_dly and appends the data in a single Dict
+# This
 def _read_multiple_daily_summaries(
-    files: Union[List[Union[str, Path]], Generator[Path, None, None]],
+    files: list[str | Path] | Generator[Path, None, None],
     rm_flags: bool = False,
 ) -> dict:
-    """
+    """Read multiple daily summary files.
+
+    Notes
+    -----
+    This calls `_read_single_eccc_dly` and appends the data in a single Dict.
 
     Parameters
     ----------
-    files : List[Union[str, Path]]
-      A list of all the files to append.
+    files : list of str or Path, or Generator[Path]
+        A list of all the files to append.
     rm_flags : bool
-      Removes all the 'Flag' and 'Quality' columns of the ECCC files. Default: False.
+        Removes all the 'Flag' and 'Quality' columns of the ECCC files. Default: False.
 
     Returns
     -------
     dict
     """
-
     # Extract the data for each files
     all_stations = dict()
     station_data = list()
@@ -222,43 +231,50 @@ def _read_multiple_daily_summaries(
             station_data
         )  # FIXME: Find the way to combine list of dataframes into one
 
-        # datafull = datafull.append(data, ignore_index=True)
-
         # change the Date/Time column to a datetime64 type
         station_summary_full["Date/Time"] = pd.to_datetime(
             station_summary_full["Date/Time"]
         )
 
         # if wanted, remove the quality and flag columns
-        # if rm_flags:
-        #     index_quality = [
-        #         i for i, s in enumerate(datafull.columns.values) if "Quality" in s
-        #     ]
-        #     datafull = datafull.drop(datafull.columns.values[index_quality], axis="columns")
-        #     index_flag = [i for i, s in enumerate(datafull.columns.values) if "Flag" in s]
-        #     datafull = datafull.drop(datafull.columns.values[index_flag], axis="columns")
+        if rm_flags:
+            index_quality = [
+                i
+                for i, s in enumerate(station_summary_full.columns.values)
+                if "Quality" in s
+            ]
+            station_summary_full = station_summary_full.drop(
+                station_summary_full.columns.values[index_quality], axis="columns"
+            )
+            index_flag = [
+                i
+                for i, s in enumerate(station_summary_full.columns.values)
+                if "Flag" in s
+            ]
+            station_summary_full = station_summary_full.drop(
+                station_summary_full.columns.values[index_flag], axis="columns"
+            )
 
         # combine everything in a single Dict
-        # station = station_meta
         all_stations[station_code] = station_summary_full
 
     return all_stations
 
 
-# This is the script that actually reads the CSV files.
-# The metadata are saved in a Dict, while the data is returned as a pandas Dataframe.
-# FIXME: Climate Services Canada has changed the way they store metadata -- No longer in CSV heading
-# FIXME: Mohammad feel free to remove this
-def _read_single_daily_summaries(file: Union[Path, str]) -> Tuple[dict, pd.DataFrame]:
-    """
+def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
+    """Read station summary information from CSV header.
+
+    Notes
+    -----
+    Climate Services Canada has changed the way they store metadata and no longer store this infor in the CSV heading.
 
     Parameters
     ----------
-    file : Union[Path, str]
+    file : str or Path
 
     Returns
     -------
-    Tuple[dict, pd.DataFrame]
+    tuple[dict, pd.DataFrame]
     """
     # Read the whole file
     with open(file, encoding="utf-8-sig") as fi:

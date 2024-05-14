@@ -1,3 +1,7 @@
+"""Miscellaneous Helper Utilities module."""
+
+from __future__ import annotations
+
 import gzip
 import logging.config
 import os
@@ -7,10 +11,11 @@ import tarfile
 import tempfile
 import warnings
 import zipfile
+from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from io import StringIO
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, TextIO, Union
+from typing import TextIO
 
 from .scripting import LOGGING_CONFIG
 
@@ -34,15 +39,20 @@ ISO_8601 = (
 
 
 class HiddenPrints:
-    # Solution from https://stackoverflow.com/a/45669280/7322852
-    # Credit to Alexander C (https://stackoverflow.com/users/2039471/alexander-c)
-    # CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+    """Special context manager for hiding print statements.
 
-    def __enter__(self):
+    Notes
+    -----
+    Solution from https://stackoverflow.com/a/45669280/7322852
+    Credit to Alexander C (https://stackoverflow.com/users/2039471/alexander-c)
+    CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)-
+    """
+
+    def __enter__(self):  # noqa: D105
         self._original_stdout = sys.stdout
         sys.stdout = open(os.devnull, "w")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: D105
         sys.stdout.close()
         sys.stdout = self._original_stdout
 
@@ -68,7 +78,7 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
 
 
 @contextmanager
-def working_directory(directory: Union[str, Path]) -> None:
+def working_directory(directory: str | Path) -> None:
     """Change the working directory within a context object.
 
     This function momentarily changes the working directory within the context and reverts to the file working directory
@@ -76,12 +86,11 @@ def working_directory(directory: Union[str, Path]) -> None:
 
     Parameters
     ----------
-    directory: Union[str, Path]
+    directory : str or pathlib.Path
 
     Returns
     -------
     None
-
     """
     owd = os.getcwd()
 
@@ -118,16 +127,16 @@ def single_item_list(iterable: Iterable) -> bool:
 
 
 def generic_extract_archive(
-    resources: Union[str, Path, List[Union[bytes, str, Path]]],
-    output_dir: Optional[Union[str, Path]] = None,
-) -> List[Path]:
+    resources: str | Path | list[bytes | str | Path],
+    output_dir: str | Path | None = None,
+) -> list[Path]:
     """Extract archives (tar/zip) to a working directory.
 
     Parameters
     ----------
-    resources : Union[str, Path, List[Union[bytes, str, Path]]]
+    resources : str or Path or list of bytes or str or Path
         list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
-    output_dir : Optional[Union[str, Path]]
+    output_dir : str or Path, optional
         string or Path to a working location (default: temporary folder).
 
     Returns
@@ -135,7 +144,6 @@ def generic_extract_archive(
     list
         List of original or of extracted files
     """
-
     archive_types = [".gz", ".tar", ".zip", ".7z"]
     output_dir = output_dir or tempfile.gettempdir()
 
@@ -192,20 +200,20 @@ def generic_extract_archive(
 
 
 def list_paths_with_elements(
-    base_paths: Union[str, List[str]], elements: List[str]
-) -> List[Dict]:
+    base_paths: str | list[str], elements: list[str]
+) -> list[dict]:
     """List a given path structure.
 
     Parameters
     ----------
-    base_paths : List[str]
-        list of paths from which to start the search.
-    elements : List[str]
-        ordered list of the expected elements.
+    base_paths : list of str
+        List of paths from which to start the search.
+    elements : list of str
+        Ordered list of the expected elements.
 
     Returns
     -------
-    List[Dict]
+    list of dict
         The keys are 'path' and each of the members of the given elements, the path is the absolute path.
 
     Notes
@@ -220,7 +228,6 @@ def list_paths_with_elements(
 
     Obviously, 'path' should not be in the input list of elements.
     """
-
     # Make sure the base_paths input is a list of absolute path
     paths = list()
     if not hasattr(base_paths, "__iter__"):
@@ -254,8 +261,8 @@ def list_paths_with_elements(
 
 
 def publish_release_notes(
-    style: str = "md", file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
-) -> Optional[str]:
+    style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
+) -> str | None:
     """Format release history in Markdown or ReStructuredText.
 
     Parameters
@@ -329,18 +336,18 @@ def publish_release_notes(
     print(history, file=file)
 
 
-def read_privileges(location: Union[Path, str], strict: bool = False) -> bool:
+def read_privileges(location: str | Path, strict: bool = False) -> bool:
     """Determine whether a user has read privileges to a specific file.
 
     Parameters
     ----------
-    location: Union[Path, str]
+    location: str or Path
     strict: bool
 
     Returns
     -------
     bool
-      Whether the current user shell has read privileges
+        Whether the current user shell has read privileges
     """
     msg = ""
     try:

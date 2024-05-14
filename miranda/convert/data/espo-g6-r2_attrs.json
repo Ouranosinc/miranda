@@ -1,0 +1,24 @@
+{
+  "Header": {
+    "Notes": "Regridded on the grid of RDRS v2.1, then bias-adjusted with detrended quantile mapping on a day-of-year basis with a window of 31 days, LOESS detrending and 50 quantiles. The reference was RDRS v2.1 over the 1989-2018 period. The variables tasmax, dtr and pr were adjusted, tasmin was computed from tasmax and dtr after the adjustment.",
+    "_map_attrs": {
+      "cat:experiment": "experiment",
+      "institution_id": "institution",
+      "source_id": "source",
+      "variant_label": "member"
+    },
+    "_miranda_version": true,
+    "activity": "ScenarioMIP",
+    "bias_adjust_institution": "Ouranos",
+    "bias_adjust_project": "ESPO-G6-R2",
+    "domain": "NAM",
+    "mip_era": "CMIP6",
+    "processing_level": "biasadjusted",
+    "table_date": "2023-04-24",
+    "table_id": "ESPO-G6-R2",
+    "type": "simulation",
+    "version": "1.0.0"
+  },
+  "dimensions": {},
+  "variables": {}
+}

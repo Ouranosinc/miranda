@@ -1,10 +1,13 @@
+"""Remote File Removal Operations module."""
+
+from __future__ import annotations
+
 import logging.config
 import warnings
 from datetime import date
 from getpass import getpass
 from pathlib import Path
 from types import GeneratorType
-from typing import List, Optional, Union
 
 from miranda.io.utils import creation_date
 from miranda.scripting import LOGGING_CONFIG
@@ -17,7 +20,7 @@ try:
 except ImportError:
     warnings.warn(
         f"{__name__} functions require additional dependencies. "
-        "Please install them with `pip install miranda[full]`."
+        "Please install them with `pip install miranda[remote]`."
     )
 
 
@@ -29,22 +32,19 @@ __all__ = [
 ]
 
 
-def file_emptier(*, file_list: Union[List[Union[str, Path]], GeneratorType]) -> None:
-    """
-    Provided a list of file paths, will open and overwrite them in order to delete data while preserving the file name.
+def file_emptier(*, file_list: list[str | Path] | GeneratorType) -> None:
+    """Open and overwrite a list of file paths in order to delete data while preserving the file name.
 
     Parameters
     ----------
-    file_list: List[Union[str, Path]]
-      List of files to be overwritten
+    file_list : list of str or Path, or GeneratorType
+        List of files to be overwritten
 
     Returns
     -------
     None
     """
-
-    file_list = [Path(f) for f in file_list]
-    file_list.sort()
+    file_list = sorted([Path(f) for f in file_list])
 
     logging.info(
         f"Found {len(file_list)} files totalling {report_file_size(file_list)}."
@@ -57,35 +57,34 @@ def file_emptier(*, file_list: Union[List[Union[str, Path]], GeneratorType]) -> 
 
 def delete_by_date(
     *,
-    source: Union[str, Path],
-    year: Optional[int] = None,
-    month: Optional[int] = None,
-    day: Optional[int] = None,
-    pattern: Optional[str] = None,
-    server: Optional[Union[str, Path]] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    date_object: Optional[date] = None,
+    source: str | Path,
+    year: int | None = None,
+    month: int | None = None,
+    day: int | None = None,
+    pattern: str | None = None,
+    server: str | Path | None = None,
+    user: str | None = None,
+    password: str | None = None,
+    date_object: date | None = None,
 ) -> None:
-    """
+    """Remove a selection of files based on a given date of last modification.
 
     Parameters
     ----------
-    source: Union[str, Path]
-    year: Optional[int]
-    month: Optional[int]
-    day: Optional[int]
-    pattern: Optional[str]
-    server: Optional[Union[str, Path]]
-    user: Optional[str]
-    password: Optional[str]
-    date_object: Optional[date]
+    source: str or Path
+    year: int, optional
+    month: int, optional
+    day: int, optional
+    pattern: str, optional
+    server: str or Path, optional
+    user: str, optional
+    password: str, optional
+    date_object: date, optional
 
     Returns
     -------
     None
     """
-
     user = user or input("Username:")
     password = password or getpass("Password:")
 
@@ -136,21 +135,21 @@ def delete_by_date(
 
 def delete_duplicates(
     *,
-    source: Union[str, Path],
-    target: Union[str, Path],
-    server: Optional[Union[str, Path]],
+    source: str | Path,
+    target: str | Path,
+    server: str | Path | None = None,
     user: str = None,
     password: str = None,
     pattern: str = None,
     delete_target_duplicates: bool = False,
 ) -> None:
-    """
+    """Delete duplicate files.
 
     Parameters
     ----------
-    source : Union[str, Path]
-    target : Union[str, Path]
-    server : Optional[Union[str, Path]]
+    source : str or Path
+    target : str or Path
+    server : str or Path, optional
     user: str
     password : str
     pattern: str
@@ -160,7 +159,6 @@ def delete_duplicates(
     -------
     None
     """
-
     user = user or input("Username:")
     password = password or getpass("Password:")
     glob_pattern = pattern or "*.nc"
@@ -202,33 +200,33 @@ def delete_duplicates(
 
 def delete_by_variable(
     *,
-    target: Union[str, Path, List[Union[str, Path]], GeneratorType] = None,
-    variables: List[str] = None,
-    server: Optional[str or Path],
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    file_suffix: Optional[str] = None,
+    target: str | Path | list[str | Path] | GeneratorType = None,
+    variables: list[str],
+    server: str | Path | None = None,
+    user: str | None = None,
+    password: str | None = None,
+    file_suffix: str | None = None,
     delete: bool = False,
 ) -> None:
-    """
+    """Delete according to variable name.
+
     Given target location(s), a list of variables and a server address, perform a glob search
-     and delete file names starting with the variables identified
+    and delete file names starting with the variables identified
 
     Parameters
     ----------
-    target : Union[str, Path, List[Union[str, Path]], GeneratorType]
-    variables : List[str]
-    server :Optional[Union[str, Path]]
-    user : Optional[str]
-    password : Optional[str]
-    file_suffix : Optional[str]
+    target : str, Path, list of str or Path, or GeneratorType]
+    variables : list of str
+    server : str or Path, optional
+    user : str, optional
+    password : str, optional
+    file_suffix : str, optional
     delete : bool
 
     Returns
     -------
     None
     """
-
     user = user or input("Username:")
     password = password or getpass("Password:")
 

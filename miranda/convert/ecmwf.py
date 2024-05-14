@@ -1,3 +1,7 @@
+"""ECMWF TIGGE Conversion module."""
+
+from __future__ import annotations
+
 import itertools as it
 import logging.config
 import multiprocessing
@@ -5,7 +9,6 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import xarray
 from dask.diagnostics import ProgressBar
@@ -18,8 +21,8 @@ __all__ = ["tigge_convert"]
 
 
 def tigge_convert(
-    source: Optional[os.PathLike] = None,
-    target: Optional[os.PathLike] = None,
+    source: os.PathLike | None = None,
+    target: os.PathLike | None = None,
     processes: int = 8,
 ) -> None:
     """Convert grib2 file to netCDF format.

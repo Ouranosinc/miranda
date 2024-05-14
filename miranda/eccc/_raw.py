@@ -11,6 +11,8 @@
 #
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
+from __future__ import annotations
+
 import contextlib
 import functools
 import logging
@@ -24,7 +26,6 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import List, Optional, Set, Union
 from urllib.error import HTTPError
 
 import dask.dataframe as dd
@@ -53,7 +54,7 @@ __all__ = [
 TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 
-def load_station_metadata(meta: Union[str, os.PathLike]) -> xr.Dataset:
+def load_station_metadata(meta: str | os.PathLike) -> xr.Dataset:
     if meta:
         df_inv = pd.read_csv(meta, header=0)
     else:
@@ -87,14 +88,14 @@ def _remove_duplicates(ds):
 def _convert_station_file(
     fichier: Path,
     output_path: Path,
-    errored_files: List[Path],
+    errored_files: list[Path],
     mode: str,
     add_offset: float,
-    column_dtypes: List[str],
-    column_names: List[str],
+    column_dtypes: list[str],
+    column_names: list[str],
     long_name: str,
-    missing_flags: Set[str],
-    missing_values: Set[str],
+    missing_flags: set[str],
+    missing_values: set[str],
     nc_name: str,
     raw_units: str,
     units: str,
@@ -164,7 +165,7 @@ def _convert_station_file(
                     errored_files.append(data)
                     return
 
-                except (UnicodeDecodeError, Exception) as e:
+                except UnicodeDecodeError as e:
                     logging.error(
                         f"File {data.name} was unable to be read. "
                         f"This is probably an issue with the file: {e}"
@@ -386,21 +387,21 @@ def _convert_station_file(
 
 
 def convert_flat_files(
-    source_files: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike, List[Union[str, int]]],
-    variables: Union[str, int, List[Union[str, int]]],
+    source_files: str | os.PathLike,
+    output_folder: str | os.PathLike | list[str | int],
+    variables: str | int | list[str | int],
     mode: str = "hourly",
     n_workers: int = 4,
 ) -> None:
-    """
+    """Convert flat formatted files.
 
     Parameters
     ----------
-    source_files: str or Path
-    output_folder: str or Path
-    variables: str or List[str]
-    mode: {"hourly", "daily"}
-    n_workers: int
+    source_files : str or Path
+    output_folder : str or Path
+    variables : str or List[str]
+    mode : {"hourly", "daily"}
+    n_workers : int
 
     Returns
     -------
@@ -477,32 +478,38 @@ def convert_flat_files(
 
 
 def aggregate_stations(
-    source_files: Optional[Union[str, os.PathLike]] = None,
-    output_folder: Optional[Union[str, os.PathLike]] = None,
+    source_files: str | os.PathLike | None = None,
+    output_folder: str | os.PathLike | None = None,
     time_step: str = None,
-    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
+    variables: str | int | list[str | int] | None = None,
     include_flags: bool = True,
-    groupings: Optional[int] = None,
-    mf_dataset_freq: Optional[str] = None,
-    temp_directory: Optional[Union[str, os.PathLike]] = None,
+    groupings: int | None = None,
+    mf_dataset_freq: str | None = None,
+    temp_directory: str | os.PathLike | None = None,
     n_workers: int = 1,
 ) -> None:
-    """
+    """Aggregate stations.
 
     Parameters
     ----------
-    source_files: Union[str, Path]
-    output_folder: Union[str, Path]
-    variables: Optional[Union[str, int, List[Union[str, int]]]]
-    time_step: {"hourly", "daily"}
-    include_flags: bool
-    groupings: int
-      The number of files in each group used for converting to multi-file Datasets.
-    mf_dataset_freq: Optional[str]
-      Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
-    temp_directory: Optional[Union[str, Path]]
-      Use another temporary directory location in case default location is not spacious enough.
-    n_workers: int
+    source_files : str or Path
+        Source files to be aggregated.
+    output_folder : str or Path
+        Output folder for the aggregated files.
+    variables : str or int or list of str or int, optional
+        The variable codes to be aggregated.
+    time_step : {"hourly", "daily"}
+        The time step to be used for aggregation.
+    include_flags : bool
+        Include flags in the output files.
+    groupings : int
+        The number of files in each group used for converting to multi-file Datasets.
+    mf_dataset_freq : str, optional
+        Resampling frequency for creating output multi-file Datasets. E.g. 'YS': 1 year per file, '5YS': 5 years per file.
+    temp_directory : str or Path, optional
+        Use another temporary directory location in case default location is not spacious enough.
+    n_workers : int
+        The number of workers to use.
 
     Returns
     -------
@@ -688,7 +695,7 @@ def _export_agg_nc(args):
     encoding = {var: comp for var in dataset.data_vars}
     dataset.load().to_netcdf(
         path,
-        engine="netcdf4",
+        engine="h5netcdf",
         format="NETCDF4_CLASSIC",
         encoding=encoding,
     )
@@ -698,9 +705,9 @@ def _export_agg_nc(args):
 
 def _tmp_zarr(
     iterable: int,
-    nc: List[Union[str, os.PathLike]],
-    tempdir: Union[str, os.PathLike],
-    group: Optional[int] = None,
+    nc: list[str | os.PathLike],
+    tempdir: str | os.PathLike,
+    group: int | None = None,
 ) -> None:
     logging.info(
         f"Processing batch of files {iterable + 1}"
@@ -737,9 +744,9 @@ def _tmp_zarr(
 def _combine_years(
     station_folder: str,
     varia: str,
-    out_folder: Union[str, os.PathLike],
-    meta_file: Union[str, os.PathLike],
-    rejected: List[str],
+    out_folder: str | os.PathLike,
+    meta_file: str | os.PathLike,
+    rejected: list[str],
     _verbose: bool = False,
 ) -> None:
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
@@ -848,8 +855,8 @@ def _combine_years(
         with ProgressBar():
             ds.to_netcdf(
                 outfile,
-                engine="netcdf4",
-                format="NETCDF4",
+                engine="h5netcdf",
+                format="NETCDF4_CLASSIC",
                 encoding=encoding,
             )
     else:
@@ -857,28 +864,27 @@ def _combine_years(
 
 
 def merge_converted_variables(
-    source_files: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
-    variables: Optional[Union[str, int, List[Union[str, int]]]] = None,
-    station_metadata: Optional[Union[str, os.PathLike]] = None,
+    source_files: str | os.PathLike,
+    output_folder: str | os.PathLike,
+    variables: str | int | list[str | int] | None = None,
+    station_metadata: str | os.PathLike | None = None,
     overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
-    """
+    """Merge converted variables.
 
     Parameters
     ----------
-    source_files: Union[str, Path]
-    output_folder: Union[str, Path]
-    variables: Optional[Union[str, int, List[Union[str, int]]]]
-    station_metadata: Optional[Union[str, Path]]
-    overwrite: bool
-    n_workers: int
+    source_files : str, Path
+    output_folder : str, Path
+    variables : str or int or list of str or int, optional
+    station_metadata : str or Path, optional
+    overwrite : bool
+    n_workers : int
 
     Returns
     -------
     None
-
     """
     meta = load_station_metadata(station_metadata)
     metadata_file = Path(tempfile.NamedTemporaryFile(suffix=".nc", delete=False).name)

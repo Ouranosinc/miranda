@@ -2,45 +2,60 @@
 Installation
 ============
 
-At the command line, enter::
 
-    $ pip install miranda
+Stable release
+--------------
+
+To install miranda, run this command in your terminal:
+
+.. code-block:: console
+
+    $ python -m pip install miranda
 
 This is the preferred method to install miranda, as it will always install the most recent stable release.
 
 To make use of remote operations (`miranda.remote`) and some dataset downloading functions (`miranda.ncar` `miranda.ecmwf`), additional libraries are needed.
 They can can be installed with the following::
 
-    $ pip install miranda[full]
+    $ pip install miranda[remote]
+
+For better RAM usage when converting datasets, some additional/optional GIS libraries can be installed as well::
+
+    $ pip install miranda[gis]
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
-.. _pip: https://pip.pypa.io/en/stable/
+.. _pip: https://pip.pypa.io
 .. _Python installation guide: https://docs.python-guide.org/starting/installation/
 
 From sources
 ------------
+
 The sources for miranda can be downloaded from the `Github repo`_.
 
-You can either clone the public repository::
+You can either clone the public repository:
 
-    $ git clone git://github.com/Ouranosinc/miranda
+.. code-block:: console
 
-Or download the `tarball`_::
+    $ git clone git@github.com:Zeitsperre/miranda
 
-    $ curl -OL https://github.com/Ouranosinc/miranda/tarball/main
+Or download the `tarball`_:
 
-Once you have a copy of the source, you can install it with::
+.. code-block:: console
 
-    $ python setup.py install
+    $ curl -OJL https://github.com/Zeitsperre/miranda/tarball/main
 
-Alternatively, you can also install a local copy via pip::
+Once you have a copy of the source, you can install it with:
 
-    $ pip install .
+.. code-block:: console
 
-.. _Github repo: https://github.com/Ouranosinc/miranda
-.. _tarball: https://codeload.github.com/Ouranosinc/miranda/legacy.tar.gz/main
+    $ python -m pip install .
+
+
+.. _Github repo: https://github.com/Zeitsperre/miranda
+.. _tarball: https://github.com/Zeitsperre/miranda/tarball/main
+
 
 Creating a Conda environment
 ----------------------------

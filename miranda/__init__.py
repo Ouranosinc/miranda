@@ -14,12 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__author__ = "Trevor James Smith"
+from __future__ import annotations
+
+__author__ = """Trevor James Smith"""
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.4.0"
+__version__ = "0.6.0-dev.2"
 
 
-from . import (  # convert,
+from . import (
     archive,
     convert,
     cv,

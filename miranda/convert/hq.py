@@ -1,10 +1,13 @@
+"""Hydro Quebec Weather Station Data Conversion module."""
+
+from __future__ import annotations
+
 import csv
 import datetime as dt
 import json
 import logging.config
 import re
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -63,7 +66,7 @@ converters = {
 }
 
 
-def guess_variable(meta, cf_table: Optional[dict]) -> Tuple[str, Optional[str]]:
+def guess_variable(meta, cf_table: dict | None) -> tuple[str, str | None]:
     """Return the corresponding CMOR variable."""
     if cf_table is None:
         cf_table = cmor
@@ -107,9 +110,8 @@ cf_frequency = {
 cf_attrs_names = {"x": "lon", "y": "lat", "z": "elevation", "nom": "site"}
 
 
-def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
+def extract_daily(path) -> tuple[dict, pd.DataFrame]:
     """Extract data and metadata from HQ meteo file."""
-
     with open(path, encoding="latin1") as fh:
         txt = fh.read()
         meta, data = re.split(data_header_pattern, txt, maxsplit=2)
@@ -145,11 +147,8 @@ def extract_daily(path) -> Tuple[dict, pd.DataFrame]:
     return m, d
 
 
-def to_cf(
-    meta: dict, data: pd.DataFrame, cf_table: Optional[dict] = None
-) -> xr.DataArray:
+def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict | None = None) -> xr.DataArray:
     """Return CF-compliant metadata."""
-
     if cf_table is None:
         cf_table = dict()
 
@@ -181,7 +180,7 @@ def to_cf(
     return cf_corrected
 
 
-def open_csv(path: Union[str, Path], cf_table: Optional[dict] = cmor) -> xr.DataArray:
+def open_csv(path: str | Path, cf_table: dict | None = cmor) -> xr.DataArray:
     """Extract daily HQ meteo data and convert to xr.DataArray with CF-Convention attributes."""
     meta, data = extract_daily(path)
     return to_cf(meta, data, cf_table)

@@ -1,9 +1,12 @@
+"""Conversion Utilities submodule."""
+
+from __future__ import annotations
+
 import hashlib
 import logging.config
 import os
 import re
 from pathlib import Path
-from typing import Dict, Union
 
 import cftime
 import pandas as pd
@@ -13,15 +16,15 @@ from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["find_version_hash", "date_parser"]
+__all__ = ["date_parser", "find_version_hash"]
 
 
-def find_version_hash(file: Union[os.PathLike, str]) -> Dict:
-    """
+def find_version_hash(file: os.PathLike | str) -> dict:
+    """Check for an existing version hash file and, if one cannot be found, generate one from file.
 
     Parameters
     ----------
-    file : Path or str
+    file : str or os.PathLike
 
     Returns
     -------
@@ -68,7 +71,7 @@ def date_parser(
     end_of_period: bool = False,
     output_type: str = "str",
     strftime_format: str = "%Y-%m-%d",
-) -> Union[str, pd.Timestamp, NaTType]:
+) -> str | pd.Timestamp | NaTType:
     """Parses datetime objects from a string representation of a date or both a start and end date.
 
     Parameters
@@ -91,7 +94,6 @@ def date_parser(
     -----
     Adapted from code written by Gabriel Rondeau-Genesse (@RondeauG)
     """
-
     # Formats, ordered depending on string length
     formats = {
         4: ["%Y"],

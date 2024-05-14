@@ -1,8 +1,11 @@
+"""Remote Connection Operations module."""
+
+from __future__ import annotations
+
 import logging.config
 import warnings
 from getpass import getpass
 from pathlib import Path
-from typing import Union
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -13,7 +16,7 @@ try:
 except ImportError:
     warnings.warn(
         f"{__name__} functions require additional dependencies."
-        f"Please install them with `pip install miranda[full]`."
+        f"Please install them with `pip install miranda[remote]`."
     )
 
 
@@ -23,10 +26,12 @@ __all__ = ["Connection"]
 
 
 class Connection:
+    """Connection contextualise class."""
+
     def __init__(
         self,
-        username: Union[str, Path] = None,
-        host: Union[str, Path] = None,
+        username: str | Path = None,
+        host: str | Path = None,
         protocol: str = "sftp",
         *args,
         **kwargs,
@@ -43,19 +48,27 @@ class Connection:
             raise ValueError('Protocol must be "sftp" or "scp".')
 
     def update(self, **kwargs):
+        """Update connection keyword arguments.
+
+        Warnings
+        --------
+        Credentials are not encrypted.
+        """
         self._kwargs = kwargs
 
     def __call__(self, **kwargs):
+        """Update keyword arguments on call."""
         self.update(**kwargs)
         return self
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return f"Connection to {self.host} as {self.user}"
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         return f"<{self.__class__.__module__}.{self.__class__.__name__} object at {hex(id(self))}>"
 
     def connect(self, **kwargs):
+        """Connect to a remote server with credential prompts."""
         try:
             keywords = (
                 dict(**kwargs)
@@ -80,8 +93,8 @@ class Connection:
         except Exception as e:
             raise e
 
-    def __enter__(self, **kwargs):
+    def __enter__(self, **kwargs):  # noqa: D105
         return self.connect()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: D105
         self.__c.close()

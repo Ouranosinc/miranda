@@ -1,0 +1,17 @@
+name: miranda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - sphinx >=7.1
+  - pandoc
+  - furo >=2023.07.26
+  - ipython
+  - ipykernel
+  - nbsphinx
+  - sphinx-autoapi
+  - sphinx-codeautolink
+  - sphinx-copybutton
+  - sphinx-intl
+  - sphinx-mdinclude
+  - sphinxcontrib-napoleon

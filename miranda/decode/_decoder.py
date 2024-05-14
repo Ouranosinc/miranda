@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import multiprocessing as mp
 import os
@@ -8,7 +10,6 @@ from logging import config
 from os import PathLike
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Optional, Union
 
 import netCDF4 as nc  # noqa
 import pandas as pd
@@ -26,7 +27,7 @@ from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderErro
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS
-    from miranda.validators import FACETS_SCHEMA
+    from miranda.validators import FACETS_SCHEMA  # noqa
 
 
 config.dictConfig(LOGGING_CONFIG)
@@ -37,7 +38,7 @@ __all__ = [
 ]
 
 
-def guess_project(file: Union[os.PathLike, str]) -> str:
+def guess_project(file: os.PathLike | str) -> str:
     """Guess the name of the project
 
     Parameters
@@ -66,17 +67,17 @@ class Decoder:
     guess = False
     _file_facets = dict()
 
-    def __init__(self, project: Optional[str]):
+    def __init__(self, project: str | None):
         self.project = project
 
     @staticmethod
     def _decoder(
-        d: Dict,
+        d: dict,
         fail_early: bool,
         proj: str,
         guess: bool,
         lock: mp.Lock,
-        file: Union[str, Path],
+        file: str | Path,
     ) -> None:
         if proj is None:
             if guess:
@@ -117,29 +118,33 @@ class Decoder:
 
     def decode(
         self,
-        files: Union[os.PathLike, str, List[Union[str, os.PathLike]], GeneratorType],
-        chunks: Optional[int] = None,
+        files: os.PathLike | str | list[str | os.PathLike] | GeneratorType,
+        chunks: int | None = None,
         raise_error: bool = False,
     ) -> None:
         """Decode facets from file or list of files.
 
         Parameters
         ----------
-        files: Union[str, Path, List[Union[str, Path]]]
-        chunks: int, optional
-        raise_error: bool
+        files : str or Path or list of str or Path or generator
+            The files to decode.
+        chunks : int, optional
+            The chunk size used when processing files. Not to be confused with xarray chunks for dimensions.
+        raise_error : bool
+            Whether to raise an error if a file cannot be decoded.
         """
         if isinstance(files, (str, os.PathLike)):
             files = [files]
 
-        if chunks is None:
-            if isinstance(files, list):
-                if len(files) >= 10:
-                    chunk_size = 10
-                else:
-                    chunk_size = len(files)
-            else:
+        if chunks is None and isinstance(files, list):
+            if len(files) >= 10:
                 chunk_size = 10
+            elif 1 <= len(files) < 10:
+                chunk_size = len(files)
+            else:
+                raise ValueError("No file entries found.")
+        elif isinstance(files, GeneratorType):
+            chunk_size = 10
         else:
             chunk_size = chunks
 
@@ -150,28 +155,28 @@ class Decoder:
         else:
             logging.info(f"Deciphering metadata with project = '{self.project}'")
 
-        manager = mp.Manager()
-        _file_facets = manager.dict()
-        lock = manager.Lock()
-        func = partial(
-            self._decoder, _file_facets, raise_error, self.project, self.guess, lock
-        )
+        with mp.Manager() as manager:
+            _file_facets = manager.dict()
+            lock = manager.Lock()
+            func = partial(
+                self._decoder, _file_facets, raise_error, self.project, self.guess, lock
+            )
 
-        with mp.Pool() as pool:
-            pool.imap(func, files, chunksize=chunk_size)
-            pool.close()
-            pool.join()
+            with mp.Pool() as pool:
+                pool.imap(func, files, chunksize=chunk_size)
+                pool.close()
+                pool.join()
 
-        self._file_facets.update(_file_facets)
+            self._file_facets.update(_file_facets)
 
     def facets_table(self):
         raise NotImplementedError()
 
-    def file_facets(self) -> Dict[os.PathLike, Dict]:
+    def file_facets(self) -> dict[os.PathLike, dict]:
         return self._file_facets
 
     @classmethod
-    def _from_dataset(cls, file: Union[Path, str]) -> (str, str, Dict):
+    def _from_dataset(cls, file: Path | str) -> (str, str, dict):
         file_name = Path(file).stem
 
         try:
@@ -243,9 +248,9 @@ class Decoder:
 
     @staticmethod
     def _decode_hour_of_day_info(
-        file: Union[PathLike, str],
+        file: PathLike | str,
     ) -> dict:
-        """
+        """Decode hour of day information.
 
         Parameters
         ----------
@@ -281,18 +286,18 @@ class Decoder:
             raise NotImplementedError()
 
     @staticmethod
-    def _decode_time_info(
-        file: Optional[Union[PathLike, str, List[str]]] = None,
-        data: Optional[Dict] = None,
-        term: Optional[str] = None,
+    def _decode_time_info(  # noqa: C901
+        file: PathLike | str | list[str] | None = None,
+        data: dict | None = None,
+        term: str | None = None,
         *,
         field: str = None,
-    ) -> Union[str, NaTType]:
-        """
+    ) -> str | NaTType:
+        """Decode time information.
 
         Parameters
         ----------
-        file : Union[os.PathLike, str], optional
+        file : os.PathLike or str, optional
         data : dict, optional
         term : str
         field : {"timedelta", "frequency"}
@@ -450,13 +455,13 @@ class Decoder:
         raise DecoderError(f"Time frequency indiscernible for file `{file}`.")
 
     @staticmethod
-    def _decode_version(file: Union[PathLike, str], data: Dict) -> dict:
-        """
+    def _decode_version(file: PathLike | str, data: dict) -> dict:
+        """Decode version information.
 
         Parameters
         ----------
-        file: Union[os.PathLike, str]
-        data: dict
+        file : os.PathLike or str
+        data : dict
 
         Returns
         -------
@@ -484,7 +489,17 @@ class Decoder:
         return version_info
 
     @classmethod
-    def decode_converted(cls, file: Union[PathLike, str]) -> dict:
+    def decode_converted(cls, file: PathLike | str) -> dict:
+        """Decode converted data.
+
+        Parameters
+        ----------
+        file : os.PathLike or str
+
+        Returns
+        -------
+        dict
+        """
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -526,19 +541,19 @@ class Decoder:
         return facets
 
     @staticmethod
-    def decode_eccc_obs(self, file: Union[PathLike, str]) -> Dict:
+    def decode_eccc_obs(self, file: PathLike | str) -> dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_ahccd_obs(self, file: Union[PathLike, str]) -> Dict:
+    def decode_ahccd_obs(self, file: PathLike | str) -> dict:
         raise NotImplementedError()
 
     @staticmethod
-    def decode_melcc_obs(self, file: Union[PathLike, str]) -> Dict:
+    def decode_melcc_obs(self, file: PathLike | str) -> dict:
         raise NotImplementedError()
 
     @classmethod
-    def decode_pcic_candcs_u6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_pcic_candcs_u6(cls, file: PathLike | str) -> dict:
         if "Derived" in Path(file).parents:
             raise NotImplementedError("Derived CanDCS-U6 variables are not supported.")
 
@@ -589,7 +604,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip6(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip6(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -628,7 +643,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cmip5(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cmip5(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -666,7 +681,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_cordex(cls, file: Union[PathLike, str]) -> dict:
+    def decode_cordex(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -800,7 +815,7 @@ class Decoder:
         return facets
 
     @classmethod
-    def decode_isimip_ft(cls, file: Union[PathLike, str]) -> dict:
+    def decode_isimip_ft(cls, file: PathLike | str) -> dict:
         facets = dict()
         try:
             variable, date, data = cls._from_dataset(file=file)
@@ -828,6 +843,126 @@ class Decoder:
 
         try:
             facets["frequency"] = cls._decode_time_info(data=data, field="frequency")
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderError:
+            pass
+
+        return facets
+
+    @classmethod
+    def decode_nex_gddp_cmip6(cls, file: PathLike | str) -> dict:
+        facets = dict()
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return facets
+
+        facets["experiment"] = data["scenario"]
+        facets["activity"] = (
+            "CMIP" if facets["experiment"] == "historical" else "ScenarioMIP"
+        )
+        facets["institution"] = data["cmip6_institution_id"]
+        facets["member"] = data["variant_label"]
+        facets["processing_level"] = "biasadjusted"
+        facets["bias_adjust_project"] = "NEX-GDDP-CMIP6"
+        facets["bias_adjust_institution"] = "NASA"
+        facets["mip_era"] = "CMIP6"
+        facets["source"] = data["cmip6_source_id"]
+        facets["type"] = "simulation"
+        facets["variable"] = variable
+        facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
+
+        try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderError:
+            pass
+
+        return facets
+
+    @classmethod
+    def decode_espo_g6_r2(cls, file: PathLike | str) -> dict:
+        facets = dict()
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return facets
+
+        facets["bias_adjust_project"] = "ESPO-G6-R2"
+        facets["processing_level"] = "biasadjusted"
+        facets["version"] = "1.0.0"
+        facets["domain"] = "NAM"
+        for f in [
+            "experiment",
+            "activity",
+            "institution",
+            "member",
+            "bias_adjust_institution",
+            "mip_era",
+            "source",
+            "type",
+        ]:
+            facets[f] = data[f"cat:{f}"]
+        facets["variable"] = variable
+        # facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
+
+        try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
+            facets["timedelta"] = cls._decode_time_info(
+                term=facets["frequency"], field="timedelta"
+            )
+            facets["date_start"] = date_parser(date)
+            facets["date_end"] = date_parser(date, end_of_period=True)
+        except DecoderError:
+            pass
+
+        return facets
+
+    @classmethod
+    def decode_espo_g6_e5l(cls, file: PathLike | str) -> dict:
+        facets = dict()
+        try:
+            variable, date, data = cls._from_dataset(file=file)
+        except DecoderError:
+            return facets
+
+        facets["bias_adjust_project"] = "ESPO-G6-E5L"
+        facets["processing_level"] = "biasadjusted"
+        facets["version"] = "1.0.0"
+        facets["domain"] = "NAM"
+        for f in [
+            "experiment",
+            "activity",
+            "institution",
+            "member",
+            "bias_adjust_institution",
+            "mip_era",
+            "source",
+            "type",
+        ]:
+            facets[f] = data[f"cat:{f}"]
+        facets["variable"] = variable
+        # facets.update(cls._decode_version(data=data, file=file))
+        facets.update(cls._decode_hour_of_day_info(file=file))
+
+        try:
+            facets["frequency"] = cls._decode_time_info(
+                data=data, file=file, field="frequency"
+            )
             facets["timedelta"] = cls._decode_time_info(
                 term=facets["frequency"], field="timedelta"
             )

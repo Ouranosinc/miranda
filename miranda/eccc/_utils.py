@@ -1,22 +1,22 @@
+from __future__ import annotations
+
 import logging.config
+from collections.abc import Mapping
 from datetime import datetime as dt
-from typing import Dict, List, Mapping, Tuple, Union
 
 from miranda.scripting import LOGGING_CONFIG
 
-__all__ = ["cf_station_metadata", "cf_ahccd_metadata"]
+__all__ = ["cf_ahccd_metadata", "cf_station_metadata"]
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-def cf_station_metadata(
-    variable_code: Union[int, str]
-) -> Mapping[str, Union[int, float, str]]:
-    """
+def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | str]:
+    """CF metadata for hourly station data.
 
     Parameters
     ----------
-    variable_code: Union[int, str]
+    variable_code: int or  str
 
     Returns
     -------
@@ -840,8 +840,8 @@ def cf_station_metadata(
 
 def cf_ahccd_metadata(
     code: str, gen: int
-) -> (Mapping[str, Union[int, float, str]], Dict, List[Tuple[int, int]], int):
-    """
+) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
+    """CF compliant metadata for ECCC Adjusted and Homogenized Climate Data (AHCCD).
 
     Parameters
     ----------
@@ -850,7 +850,7 @@ def cf_ahccd_metadata(
 
     Returns
     -------
-    Mapping[str, Union[str, float]], Dict, List[Tuple[int, int]], int
+    dict[str, int or str or float], dict, list[tuple[int, int]], int
     """
     generation = {1: "First", 2: "Second", 3: "Third"}.get(gen)
 

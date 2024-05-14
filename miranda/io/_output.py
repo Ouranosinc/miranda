@@ -1,9 +1,13 @@
+"""IO Output Operations module."""
+
+from __future__ import annotations
+
 import logging.config
 import os
 import shutil
 import time
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
 
 import dask
 import xarray as xr
@@ -13,37 +17,34 @@ from miranda.convert.utils import date_parser
 from miranda.scripting import LOGGING_CONFIG
 
 from ._input import discover_data
-from ._rechunk import fetch_chunk_config, translate_time_chunk
+from ._rechunk import fetch_chunk_config, prepare_chunks_for_ds, translate_time_chunk
 from .utils import delayed_write, get_global_attrs, name_output_file, sort_variables
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
 __all__ = [
-    "write_dataset",
-    "write_dataset_dict",
     "concat_rechunk_zarr",
     "merge_rechunk_zarrs",
+    "write_dataset",
+    "write_dataset_dict",
 ]
 
 
 def write_dataset(
-    ds: Union[xr.DataArray, xr.Dataset],
-    project: str,
-    output_path: Union[str, os.PathLike],
+    ds: xr.DataArray | xr.Dataset,
+    output_path: str | os.PathLike,
     output_format: str,
-    chunks: Optional[dict] = None,
+    chunks: dict | None = None,
     overwrite: bool = False,
     compute: bool = True,
-):
-    """
+) -> dict[str, Path]:
+    """Write xarray object to NetCDf or Zarr with appropriate chunking regime.
 
     Parameters
     ----------
     ds : xr.DataArray or xr.Dataset
-
-    project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
-        Project name for decoding/handling purposes.
+        Dataset or DatArray.
     output_path : str or os.PathLike
         Output folder path.
     output_format: {"netcdf", "zarr"}
@@ -59,12 +60,12 @@ def write_dataset(
 
     Returns
     -------
-
+    dict[str, Path]
     """
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    outfile = name_output_file(ds, project, output_format)
+    outfile = name_output_file(ds, output_format)
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():
@@ -74,13 +75,17 @@ def write_dataset(
         if outfile_path.is_file():
             outfile_path.unlink()
 
+    if chunks is None and "frequency" in ds.attrs:
+        freq = ds.attrs["frequency"]  # TOD0: check that this is really there
+        chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
+
     logging.info(f"Writing {outfile}.")
     write_object = delayed_write(
         ds,
         outfile_path,
         output_format,
         overwrite,
-        target_chunks=chunks,
+        target_chunks=prepare_chunks_for_ds(ds, chunks),
     )
     if compute:
         write_object.compute()
@@ -89,14 +94,31 @@ def write_dataset(
 
 
 def write_dataset_dict(
-    dataset_dict: Dict[str, xr.Dataset],
-    output_folder: Union[str, os.PathLike],
-    temp_folder: Union[str, os.PathLike],
+    dataset_dict: dict[str, xr.Dataset | None],
+    output_folder: str | os.PathLike,
+    temp_folder: str | os.PathLike,
+    *,
     output_format: str = "zarr",
     overwrite: bool = False,
-    chunks: Dict[str, int] = None,
+    chunks: dict[str, int],
     **dask_kwargs,
 ):
+    r"""Write dataset from Miranda-formatted dataset.
+
+    Parameters
+    ----------
+    dataset_dict : dict[str, xr.Dataset or None]
+    output_folder : str or os.PathLike
+    temp_folder : str or os.PathLike
+    output_format : {"netcdf", "zarr"}
+    overwrite : bool
+    chunks : dict[str, int]
+    \*\*dask_kwargs
+
+    Returns
+    -------
+    None
+    """
     if isinstance(output_folder, str):
         output_folder = Path(output_folder).expanduser()
     if isinstance(temp_folder, str):
@@ -111,8 +133,8 @@ def write_dataset_dict(
         if ds is None:
             continue
 
-        outfile = name_output_file(ds, ds.attrs["project"], output_format)
-        outpath = output_folder.joinpath(variable, outfile)
+        outfile = name_output_file(ds, output_format)
+        outpath = output_folder.joinpath(str(variable), outfile)
         if not outpath.exists() or overwrite:
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if outpath.exists():
@@ -142,27 +164,25 @@ def write_dataset_dict(
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
 def concat_rechunk_zarr(
-    project: str,
     freq: str,
-    input_folder: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
+    input_folder: str | os.PathLike,
+    output_folder: str | os.PathLike,
     overwrite: bool = False,
     **dask_kwargs,
-):
-    """
+) -> None:
+    r"""Concatenate and rechunk zarr files.
 
     Parameters
     ----------
-    project
-    freq
-    input_folder
-    output_folder
-    overwrite
-    dask_kwargs
+    freq : str
+    input_folder : str or os.PathLike
+    output_folder : str or os.PathLike
+    overwrite : bool
+    \*\*dask_kwargs
 
     Returns
     -------
-
+    None
     """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder).expanduser()
@@ -179,40 +199,46 @@ def concat_rechunk_zarr(
         list_zarr[-1].stem.split("_")[-1], output_type="datetime"
     ).year
 
-    outzarr = f"{out_stem.replace('rdrs-v21','RDRS_v21')}_{start_year}-{end_year}.zarr"
-    outzarr = output_folder.joinpath(outzarr)
+    out_zarr = output_folder.joinpath(f"{out_stem}_{start_year}_{end_year}.zarr")
 
-    if not outzarr.exists() or overwrite:
-        if outzarr.exists():
+    if not out_zarr.exists() or overwrite:
+        if out_zarr.exists():
             shutil.rmtree(outzarr)
-        chunks = fetch_chunk_config(project=project, freq=freq, priority="time")
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]
+        tmp_folder = out_zarr.parent.joinpath("tmp")
+        tmp_folder.mkdir(exist_ok=True)
+        chunks = dict()
         for year in years:
             list_zarr1 = sorted(
                 [
-                    zarrfile
-                    for zarrfile in list_zarr
-                    if int(zarrfile.stem.split("_")[-1].split("-")[0][0:4]) in year
+                    zarr_file
+                    for zarr_file in list_zarr
+                    if int(zarr_file.stem.split("_")[-1].split("-")[0][0:4]) in year
                 ]
             )
             # assert len(list_zarr1) / len(year) == 12
             ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
-            chunks = translate_time_chunk(
-                chunks=chunks, calendar=ds.time.dt.calendar, timesize=len(ds.time)
+            if not chunks:
+                chunk_config = fetch_chunk_config(
+                    priority="time", freq=freq, dims=ds.dims
+                )
+                chunks.update(
+                    translate_time_chunk(
+                        chunks=chunk_config,
+                        calendar=ds.time.dt.calendar,
+                        timesize=len(ds.time),
+                    )
+                )
+            tmp_zarr = tmp_folder.joinpath(
+                f"{out_zarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
             )
-            print(chunks)
-            tmpzarr = outzarr.parent.joinpath(
-                "tmp",
-                f"{outzarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
-            )
-            tmpzarr.parent.mkdir(exist_ok=True, parents=True)
-            logging.info(f"Writing year {year} to {tmpzarr.as_posix()}.")
+            logging.info(f"Writing year {year} to {tmp_zarr.as_posix()}.")
 
             job = delayed_write(
                 ds=ds,
-                outfile=tmpzarr,
+                outfile=tmp_zarr,
                 output_format="zarr",
                 target_chunks=chunks,
                 overwrite=True,
@@ -222,7 +248,7 @@ def concat_rechunk_zarr(
                 dask.compute(job)
 
         # write to final
-        tmpzarrlist = sorted(list(tmpzarr.parent.glob("*.zarr")))
+        tmpzarrlist = sorted(list(tmp_zarr.parent.glob("*.zarr")))
         del ds
         ds = xr.open_mfdataset(
             tmpzarrlist, engine="zarr", parallel=True, combine="by_coords"
@@ -230,7 +256,7 @@ def concat_rechunk_zarr(
         zarr_kwargs = None
         job = delayed_write(
             ds=ds,
-            outfile=outzarr,
+            outfile=out_zarr,
             output_format="zarr",
             target_chunks=chunks,
             overwrite=False,
@@ -239,66 +265,35 @@ def concat_rechunk_zarr(
         )
         with Client(**dask_kwargs):
             dask.compute(job)
-            # shutil.rmtree(tmpzarr)
-        shutil.rmtree(tmpzarr.parent)
-        # get tmp zarrs
-        # list_zarr = sorted(list(tmpzarr.parent.glob("*zarr")))
-
-        # for zarr in list_zarr:
-        #
-        #     if outzarr.exists():
-        #         zarr_kwargs = dict(append_dim='time', mode='a')
-        #     else:
-        #         zarr_kwargs = None
-        #     job = delayed_write(
-        #         ds=ds,
-        #         outfile=outzarr,
-        #         output_format="zarr",
-        #         target_chunks=chunks,
-        #         overwrite=False,
-        #         encode=False,
-        #         kwargs=zarr_kwargs
-        #     )
-        #     with Client(**dask_kwargs):
-        #         dask.compute(job)
-        # ds = xr.open_mfdataset(list_zarr, engine="zarr")
-        # # FIXME: Client is only needed for computation. Should be elsewhere.
-        # job = delayed_write(
-        #     ds=ds,
-        #     outfile=outzarr,
-        #     output_format="zarr",
-        #     target_chunks=chunks,
-        #     overwrite=overwrite,
-        #
-        # )  # kwargs=zarr_kwargs)
+        shutil.rmtree(tmp_folder)
 
 
 def merge_rechunk_zarrs(
-    input_folder: Union[str, os.PathLike],
-    output_folder: Union[str, os.PathLike],
-    project: Optional[str] = None,
-    target_chunks: Optional[Dict[str, int]] = None,
-    variables: Optional[Sequence[str]] = None,
-    freq: Optional[str] = None,
+    input_folder: str | os.PathLike,
+    output_folder: str | os.PathLike,
+    project: str | None = None,
+    target_chunks: dict[str, int] | None = None,
+    variables: Sequence[str] | None = None,
+    freq: str | None = None,
     suffix: str = "zarr",
     overwrite: bool = False,
-):
-    """
+) -> None:
+    """Merge and rechunk zarr files.
 
     Parameters
     ----------
-    input_folder
-    output_folder
-    project
-    target_chunks
-    variables
-    freq
-    suffix
-    overwrite
+    input_folder : str or os.PathLike
+    output_folder : str or os.PathLike
+    project : str, optional
+    target_chunks : dict[str, int], optional
+    variables : Sequence of str, optional
+    freq : str, optional
+    suffix : {"nc", "zarr"}
+    overwrite : bool
 
     Returns
     -------
-
+    None
     """
     chunk_defaults = {
         # Four months of hours
@@ -343,7 +338,7 @@ def merge_rechunk_zarrs(
 
         ds = xr.open_mfdataset(files_found, parallel=True, engine="zarr")
 
-        merged_zarr = name_output_file(ds, project, output_format="zarr")
+        merged_zarr = name_output_file(ds, output_format="zarr")
         out_zarr = output_folder.joinpath(merged_zarr)
 
         if overwrite:

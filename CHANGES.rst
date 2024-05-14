@@ -1,8 +1,40 @@
 .. :changelog:
 
-=======
-History
-=======
+=========
+Changelog
+=========
+
+v0.6.0 (unreleased)
+-------------------
+
+Announcements
+^^^^^^^^^^^^^
+* `miranda` boilerplate code is now versioned with `cruft <https://cruft.github.io/cruft>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
+
+v0.5.0 (2023-06-19)
+-------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
+
+New features
+^^^^^^^^^^^^
+* Added support for collecting and converting `ptype` ECMWF ERA5 variable.
+* A new ``"_frequency": true`` toggle for returning the output frequency of converted data.
+* Added a new JSON template for NEX-GDDP-CMIP6 datasets.
+* `miranda` is now `PEP 517 <https://peps.python.org/pep-0517/>`_ and `PEP 621 <https://peps.python.org/pep-0621/>`_ compliant, using the `flit <https://flit.pypa.io/en/stable/>`_ backend.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Various fixes to existing docstrings.
+* Time frequency checks are more resilient when converting Monthly time-step data.
+* Masking and regridding of datasets when running ``convert_dataset`` is now optional or automatic.
+* Updated templates to newest API.
+* Created a `gis` recipe for exclusively installing GIS libraries.
+* Removed many unneeded dependencies, cleaned up Makefile.
+* All public-facing functions now contain at least a minimal docstring for documentation generation.
 
 v0.4.0 (2023-03-30)
 -------------------

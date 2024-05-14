@@ -1,8 +1,10 @@
+"""Aggregation module."""
+
+from __future__ import annotations
+
 import logging.config
-from typing import Dict, Set
 
 import xarray as xr
-import xclim.core.options
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
@@ -10,7 +12,7 @@ from miranda.units import get_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-__all__ = ["aggregations_possible", "aggregate"]
+__all__ = ["aggregate", "aggregations_possible"]
 
 # There needs to be a better way (is there something in xclim?)
 _resampling_keys = dict()
@@ -20,7 +22,18 @@ _resampling_keys["month"] = "M"
 _resampling_keys["year"] = "A"
 
 
-def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[str]]:
+def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[str]]:
+    """Determine which aggregations are possible based on variables within a dataset.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+    freq : str
+
+    Returns
+    -------
+    dict[str, set[str]]
+    """
     logging.info("Determining potential upscaled climate variables.")
 
     offset, meaning = get_time_frequency(ds, minimum_continuous_period="1h")
@@ -70,7 +83,18 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> Dict[str, Set[st
     return aggregation_legend
 
 
-def aggregate(ds, freq: str = "day") -> Dict[str, xr.Dataset]:
+def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
+    """Aggregate a dataset to a specified frequency.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+    freq : str
+
+    Returns
+    -------
+    dict[str, xarray.Dataset]
+    """
     mappings = aggregations_possible(ds)
 
     try:

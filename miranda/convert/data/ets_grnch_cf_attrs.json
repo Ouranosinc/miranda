@@ -1,10 +1,10 @@
 {
   "Header": {
     "Conventions": "CF-1.9",
+    "_frequency": true,
     "_miranda_version": true,
     "contact": "Dr. Annie Poulin (annie.poulin@etsmtl.ca)",
     "creation_date": "2022-07-16T11:22:42Z",
-    "frequency": "day",
     "institution": "ETS",
     "institution_name": "École de Technologie Supérieure (ETS), Hydrology, Climate and Climate Change Laboratory (HC3)",
     "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",

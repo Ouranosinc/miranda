@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import logging
 import re
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -24,21 +26,21 @@ __all__ = [
 
 
 def group_by_length(
-    files: Union[GeneratorType, List[Union[str, Path]]],
+    files: GeneratorType | list[str | Path],
     size: int = 10,
     sort: bool = False,
-) -> List[List[Path]]:
+) -> list[list[Path]]:
     """Group files by an arbitrary number of file entries.
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
+    files: GeneratorType or list of str or pathlib.Path
     size: int
     sort: bool
 
     Returns
     -------
-    List[List[Path]]
+    list[list[pathlib.Path]]
     """
     logging.info(f"Creating groups of {size} files")
     if sort:
@@ -61,17 +63,17 @@ def group_by_length(
 
 
 def group_by_deciphered_date(
-    files: Union[GeneratorType, List[Union[str, Path]]]
-) -> Dict[str, List[Path]]:
+    files: GeneratorType | list[str | Path],
+) -> dict[str, list[Path]]:
     """Find a common date and groups files based on year and month.
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
+    files: GeneratorType or list of str or pathlib.Path
 
     Returns
     -------
-    Dict[str, List[Path]]
+    dict[str, list[pathlib.Path]]
     """
     logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
@@ -113,20 +115,19 @@ def group_by_deciphered_date(
 
 
 def group_by_size(
-    files: Union[GeneratorType, List[Union[str, Path]]], size: int = 10 * GiB
-) -> List[List[Path]]:
+    files: GeneratorType | list[str | Path], size: int = 10 * GiB
+) -> list[list[Path]]:
     """Group files up until a desired size and save it as a grouping within a list.
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
-    size: int
+    files : GeneratorType or list of str or pathlib.Path
+    size : int
 
     Returns
     -------
-    List[List[Path]]
+    list[list[pathlib.Path]]
     """
-
     logging.info(
         f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
     )
@@ -152,19 +153,18 @@ def group_by_size(
 
 
 def group_by_subdirectories(
-    files: Union[GeneratorType, List[Union[str, Path]]], within: Union[str, Path] = None
-) -> Dict[str, List[Path]]:
-    """
-    This function will group files based on the parent folder that they are located within.
+    files: GeneratorType | list[str | Path], within: str | Path = None
+) -> dict[str, list[Path]]:
+    """Group files based on the parent folder that they are located within.
 
     Parameters
     ----------
-    files: Union[GeneratorType, List[Union[str, Path]]]
-    within: Union[str, Path]
+    files : GeneratorType or list of str or pathlib.Path
+    within : str or pathlib.Path
 
     Returns
     -------
-    Dict[str, List[Path]]
+    dict[str, list[pathlib.Path]]
     """
     if not within:
         within = Path.cwd()

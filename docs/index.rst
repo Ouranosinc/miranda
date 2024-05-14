@@ -1,23 +1,24 @@
-.. include:: ../README.rst
-
-Contents:
-=========
+Welcome to miranda's documentation!
+===================================
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
+   readme
    installation
    usage
    contributing
    authors
-   history
+   changes
+   security
    license
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: All Modules
 
-   modules
+   apidoc/modules
 
 .. only:: html
 
@@ -30,8 +31,7 @@ Contents:
 Feedback
 ========
 
-If you have any suggestions or questions about **Miranda** feel free to email me
-at smith.trevorj@ouranos.ca.
+If you have any suggestions or questions about **Miranda**, feel free to email `smith.trevorj@ouranos.ca <mailto:smith.trevorj@ouranos.ca>`_.
 
-If you encounter any errors or problems with **Miranda**, please let me know!
-Open an Issue at the GitHub https://github.com/Ouranosinc/miranda main repository.
+If you encounter any errors or problems with **Miranda**, please let us know!
+Open an Issue at the `GitHub main repository <https://github.com/Ouranosinc/miranda>`_.
