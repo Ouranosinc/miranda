@@ -622,17 +622,17 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             raise ValueError(error_msg)
 
         logging.info(f"Resampling dataset with time frequency: {freq_found}.")
-        
+
         with xr.set_options(keep_attrs=True):
             d_out = d.assign_coords(
                 time=d.time.resample(time=freq_found).mean(dim="time").time
             )
-        
+
         if any(d_out.time != d.time):
             prev_history = d.attrs.get("history", "")
             history = f"Resampled time with `freq={freq_found}`. {prev_history}"
             d_out.attrs.update(dict(history=history))
-            
+
         return d_out
     return d
 
