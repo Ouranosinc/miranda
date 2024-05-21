@@ -267,7 +267,7 @@ def gather_rdrs(
             source=path.joinpath(vv),
             glob_pattern="{variable}_*_{name}_*.{suffix}",
             suffix=suffix,
-            recursive=True,
+            recursive=False,
         )
         files[name][vv] = tmp[name]
     return files

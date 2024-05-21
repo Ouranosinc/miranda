@@ -6,5 +6,4 @@ from . import deh, eccc, ecmwf, hq, melcc, utils
 from ._aggregation import *
 from ._data_corrections import *
 from ._data_definitions import *
-
-# from ._reconstruction import *
+from ._reconstruction import *

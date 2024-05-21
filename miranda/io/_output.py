@@ -138,7 +138,7 @@ def write_dataset_dict(
         if not outpath.exists() or overwrite:
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if outpath.exists():
-                shutil.rmtree(outfile)
+                shutil.rmtree(outpath)
 
             tmp_path = None
             if temp_folder:
@@ -202,6 +202,8 @@ def concat_rechunk_zarr(
     out_zarr = output_folder.joinpath(f"{out_stem}_{start_year}_{end_year}.zarr")
 
     if not out_zarr.exists() or overwrite:
+        if out_zarr.exists():
+            shutil.rmtree(out_zarr)
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]
@@ -232,7 +234,6 @@ def concat_rechunk_zarr(
             tmp_zarr = tmp_folder.joinpath(
                 f"{out_zarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
             )
-            tmp_zarr.parent.mkdir(exist_ok=True, parents=True)
             logging.info(f"Writing year {year} to {tmp_zarr.as_posix()}.")
 
             job = delayed_write(
@@ -246,17 +247,22 @@ def concat_rechunk_zarr(
             with Client(**dask_kwargs):
                 dask.compute(job)
 
-        # get tmp zarrs
-        list_zarr = sorted(list(tmp_folder.glob("*zarr")))
-        ds = xr.open_mfdataset(list_zarr, engine="zarr")
-        # FIXME: Client is only needed for computation. Should be elsewhere.
+        # write to final
+        tmpzarrlist = sorted(list(tmp_zarr.parent.glob("*.zarr")))
+        del ds
+        ds = xr.open_mfdataset(
+            tmpzarrlist, engine="zarr", parallel=True, combine="by_coords"
+        )
+        zarr_kwargs = None
         job = delayed_write(
             ds=ds,
             outfile=out_zarr,
             output_format="zarr",
             target_chunks=chunks,
-            overwrite=overwrite,
-        )  # kwargs=zarr_kwargs)
+            overwrite=False,
+            encode=False,
+            kwargs=zarr_kwargs,
+        )
         with Client(**dask_kwargs):
             dask.compute(job)
         shutil.rmtree(tmp_folder)

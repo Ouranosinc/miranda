@@ -409,17 +409,14 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 converted.append(vv)
             else:
                 raise NotImplementedError(f"Unknown transformation: {trans}")
+            prev_history = d.attrs.get("history", "")
+            history = f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif trans is False:
             logging.info(
                 f"No transformations needed for `{vv}` (Explicitly set to False)."
             )
             continue
-
-        prev_history = d.attrs.get("history", "")
-        history = (
-            f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
-        )
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -461,14 +458,14 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                 d_out[vv] = out
             converted.append(vv)
+            prev_history = d.attrs.get("history", "")
+            history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif offs is False:
             logging.info(
                 f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
             continue
-        prev_history = d.attrs.get("history", "")
-        history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -488,14 +485,14 @@ def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 out = d[vv]
                 d_out[out.name] = -out
             converted.append(vv)
+            prev_history = d.attrs.get("history", "")
+            history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif inv_sign is False:
             logging.info(
                 f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             )
             continue
-        prev_history = d.attrs.get("history", "")
-        history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -549,6 +546,9 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     out = d[vv]
                     d_out[out.name] = out.clip(min_value, max_value)
                 converted.append(vv)
+                prev_history = d.attrs.get("history", "")
+                history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
+                d_out.attrs.update(dict(history=history))
             elif clip_values is False:
                 logging.info(
                     f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
@@ -557,10 +557,6 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             else:
                 logging.info(f"No clipping of values needed for `{vv}` in `{p}`.")
                 continue
-
-            prev_history = d.attrs.get("history", "")
-            history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
-            d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -626,17 +622,18 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             raise ValueError(error_msg)
 
         logging.info(f"Resampling dataset with time frequency: {freq_found}.")
+
         with xr.set_options(keep_attrs=True):
             d_out = d.assign_coords(
                 time=d.time.resample(time=freq_found).mean(dim="time").time
             )
-            d_out.time.attrs.update(d.time.attrs)
 
-        prev_history = d.attrs.get("history", "")
-        history = f"Resampled time with `freq={freq_found}`. {prev_history}"
-        d_out.attrs.update(dict(history=history))
+        if any(d_out.time != d.time):
+            prev_history = d.attrs.get("history", "")
+            history = f"Resampled time with `freq={freq_found}`. {prev_history}"
+            d_out.attrs.update(dict(history=history))
+
         return d_out
-
     return d
 
 
@@ -665,7 +662,11 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             )
             if cf_name:
                 rename_dims[dim] = cf_name
-    d = d.rename(rename_dims)
+    if rename_dims:
+        d = d.rename(rename_dims)
+        prev_history = d.attrs.get("history", "")
+        history = f"Renamed dimensons ({'; '.join([f'{k} : {i}' for k, i in rename_dims.items()])}). {prev_history}"
+        d.attrs.update(dict(history=history))
     for new in ["lon", "lat"]:
         if new == "lon" and "lon" in d.coords:
             if np.any(d.lon > 180):
@@ -685,8 +686,14 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if "time" in d.dims and transpose_order:
         transpose_order.insert(0, "time")
         transpose_order.extend(list(set(d.dims) - set(transpose_order)))
+
     d = d.transpose(*transpose_order)
     d = d.sortby(transpose_order)
+    # add history only when we actually changed something
+    if any([list(d[v].dims) != transpose_order for v in d.data_vars]):
+        prev_history = d.attrs.get("history", "")
+        history = f"Transposed dimension order to {transpose_order}. {prev_history}"
+        d.attrs.update(dict(history=history))
 
     # Add dimension original name and update attrs
     dim_descriptions = m["dimensions"]
@@ -700,10 +707,6 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         for field in dim_descriptions[dim].keys():
             if not field.startswith("_"):
                 d[cf_name].attrs.update({field: dim_descriptions[dim][field]})
-
-    prev_history = d.attrs.get("history", "")
-    history = f"Transposed and renamed dimensions. {prev_history}"
-    d.attrs.update(dict(history=history))
 
     return d
 

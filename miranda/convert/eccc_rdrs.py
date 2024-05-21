@@ -38,6 +38,7 @@ def convert_rdrs(
     output_format: str = "zarr",
     working_folder: str | os.PathLike | None = None,
     overwrite: bool = False,
+    cfvariable_list: list | None = None,
     **dask_kwargs,
 ) -> None:
     r"""Convert RDRS dataset.
@@ -50,6 +51,7 @@ def convert_rdrs(
     output_format : {"netcdf", "zarr"}
     working_folder : str or os.PathLike, optional
     overwrite : bool
+    cfvariable_list : list, optional
     \*\*dask_kwargs
 
     Returns
@@ -58,6 +60,12 @@ def convert_rdrs(
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project=project)["variables"]
+    if cfvariable_list:
+        var_attrs = {
+            v: var_attrs[v]
+            for v in var_attrs
+            if var_attrs[v]["_cf_variable_name"] in cfvariable_list
+        }
     freq_dict = dict(h="hr", d="day")
 
     if isinstance(input_folder, str):
@@ -114,7 +122,7 @@ def convert_rdrs(
                         output_folder=output_folder.joinpath(out_freq),
                         temp_folder=working_folder,
                         output_format=output_format,
-                        overwrite=False,
+                        overwrite=overwrite,
                         chunks=chunks,
                         **dask_kwargs,
                     )

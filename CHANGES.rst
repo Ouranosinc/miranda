@@ -6,10 +6,20 @@ Changelog
 
 v0.6.0 (unreleased)
 -------------------
+Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `miranda` boilerplate code is now versioned with `cruft <https://cruft.github.io/cruft>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
+
+New features
+^^^^^^^^^^^^
+* Aggregation operations now support more variables (`hur`, `hurs`, `huss`, `rlds`, `ta`, `tdp`, `ua`, `uas`, `va`, `vas`)
+* `RDRDv21` has been added as a dataset to be converted.
+
+Bug fixes
+^^^^^^^^^
+* Transformation docstrings are now only updated when the transformation is actually applied.
 
 Internal changes
 ^^^^^^^^^^^^^^^^

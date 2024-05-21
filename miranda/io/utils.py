@@ -155,7 +155,9 @@ def delayed_write(
     outfile: str | os.PathLike,
     output_format: str,
     overwrite: bool,
+    encode: bool = True,
     target_chunks: dict | None = None,
+    kwargs: dict | None = None,
 ) -> dask.delayed:
     """Stage a Dataset writing job using `dask.delayed` objects.
 
@@ -166,13 +168,16 @@ def delayed_write(
     target_chunks : dict
     output_format : {"netcdf", "zarr"}
     overwrite : bool
+    encode : bool
+    kwargs : dict
 
     Returns
     -------
     dask.delayed.delayed
     """
     # Set correct chunks in encoding options
-    kwargs = dict()
+    if not kwargs:
+        kwargs = dict()
     kwargs["encoding"] = dict()
     try:
         for name, da in ds.data_vars.items():
@@ -194,15 +199,17 @@ def delayed_write(
                     kwargs["mode"] = "a"
             elif output_format == "zarr":
                 ds = ds.chunk(target_chunks)
-                kwargs["encoding"][name] = {
-                    "chunks": chunks,
-                    "compressor": zarr.Blosc(),
-                }
+                # if encode:
+                if "append_dim" not in kwargs.keys():
+                    kwargs["encoding"][name] = {
+                        "chunks": chunks,
+                    }
                 kwargs["compute"] = False
                 if overwrite:
                     kwargs["mode"] = "w"
         if kwargs["encoding"]:
-            kwargs["encoding"]["time"] = {"dtype": "int32"}
+            if "append_dim" not in kwargs.keys():
+                kwargs["encoding"]["time"] = {"dtype": "int32"}
 
     except KeyError:
         logging.error("Unable to encode chunks. Verify dataset.")
@@ -302,7 +309,8 @@ def get_chunks_on_disk(file: os.PathLike | str) -> dict:
             for v in ds.variables:
                 chunks[v] = dict()
                 for ii, dim in enumerate(ds[v].dimensions):
-                    chunks[v][dim] = ds[v].chunking()[ii]
+                    if ds[v].chunking():
+                        chunks[v][dim] = ds[v].chunking()[ii]
     elif file.suffix.lower() == "zarr" and file.is_dir():
         with zarr.open(file, "r") as ds:  # noqa
             for v in ds.arrays():

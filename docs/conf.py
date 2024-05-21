@@ -180,7 +180,6 @@ html_theme_options = {
     "navigation_with_keys": True,
     "source_branch": "main",
     "source_repository": "https://github.com/Ouranosinc/miranda/",
-    "top_of_page_button": "edit" if not on_rtd else None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
