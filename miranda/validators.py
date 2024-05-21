@@ -79,7 +79,7 @@ if VALIDATION_ENABLED:
             Optional("member"): str,
             Optional("variable"): str,
             Optional("timedelta"): Or(pd.Timedelta, NaTType, "NaT"),
-            Optional("date"): Or(Regex(BASIC_DT_VALIDATION, flags=re.I), "fx"),
+            Optional("date"): Or(Regex(BASIC_DT_VALIDATION, flags=int(re.I)), "fx"),
             Optional("date_start"): Or(
                 Regex(DATE_VALIDATION, flags=re.I), NaTType, "NaT"
             ),
