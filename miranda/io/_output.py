@@ -203,7 +203,7 @@ def concat_rechunk_zarr(
 
     if not out_zarr.exists() or overwrite:
         if out_zarr.exists():
-            shutil.rmtree(outzarr)
+            shutil.rmtree(out_zarr)
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]

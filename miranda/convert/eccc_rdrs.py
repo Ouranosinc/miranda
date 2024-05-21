@@ -38,7 +38,7 @@ def convert_rdrs(
     output_format: str = "zarr",
     working_folder: str | os.PathLike | None = None,
     overwrite: bool = False,
-    cfvariable_list: Optional[list] = None,
+    cfvariable_list: list | None = None,
     **dask_kwargs,
 ) -> None:
     r"""Convert RDRS dataset.

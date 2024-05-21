@@ -157,7 +157,7 @@ def delayed_write(
     overwrite: bool,
     encode: bool = True,
     target_chunks: dict | None = None,
-    kwargs: Optional[dict] = None,
+    kwargs: dict | None = None,
 ) -> dask.delayed:
     """Stage a Dataset writing job using `dask.delayed` objects.
 
