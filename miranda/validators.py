@@ -81,10 +81,10 @@ if VALIDATION_ENABLED:
             Optional("timedelta"): Or(pd.Timedelta, NaTType, "NaT"),
             Optional("date"): Or(Regex(BASIC_DT_VALIDATION, flags=int(re.I)), "fx"),
             Optional("date_start"): Or(
-                Regex(DATE_VALIDATION, flags=re.I), NaTType, "NaT"
+                Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"
             ),
             Optional("date_end"): Or(
-                Regex(DATE_VALIDATION, flags=re.I), NaTType, "NaT"
+                Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"
             ),
             Optional("processing_level"): Or(*PROCESSING_LEVELS),
             "format": Or("netcdf", "zarr"),
