@@ -55,7 +55,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/flake8: ## check style with flake8
-	ruff miranda tests
+	ruff check miranda tests
 	flake8 --config=.flake8 miranda tests
 
 lint/black: ## check style with black
