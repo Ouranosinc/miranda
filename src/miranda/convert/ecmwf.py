@@ -66,8 +66,9 @@ def tigge_convert(
                 output_folder.joinpath(infile.name.replace(".grib", ".nc")).as_posix(),
             )
 
-        except ValueError:
-            logging.error(f"error converting {infile.name} : File may be corrupted.")
+        except ValueError as err:
+            msg = f"error converting {infile.name} : File may be corrupted : {err}"
+            logging.error(msg)
 
     if source is None:
         source = Path().cwd().joinpath("downloaded")

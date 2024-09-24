@@ -30,7 +30,9 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-name_configurations = json.load(open(_data_folder / "ouranos_name_config.json"))
+name_configurations = json.load(
+    _data_folder.joinpath("ouranos_name_config.json").open("r", encoding="utf-8")
+)
 
 
 def name_output_file(
@@ -275,12 +277,10 @@ def sort_variables(
     if variables:
         logging.info("Sorting variables into groups. This could take some time.")
         for variable in variables:
-            var_group = []
-            for file in files:
-                if file.name.startswith(variable):
-                    var_group.append(file)
+            var_group = [file for file in files if file.name.startswith(variable)]
             if not var_group:
-                logging.warning(f"No files found for {variable}. Continuing...")
+                msg = f"No files found for {variable}. Continuing..."
+                logging.warning(msg)
                 continue
             variable_sorted[variable] = sorted(var_group)
     else:

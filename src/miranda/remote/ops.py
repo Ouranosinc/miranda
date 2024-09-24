@@ -44,7 +44,8 @@ def create_remote_directory(
     """
     if isinstance(directory, str):
         directory = Path(directory)
-    logging.info(f"Creating remote path: {directory}")
+    msg = f"Creating remote path: {directory}."
+    logging.info(msg)
 
     ownership = "0775"
     command = f"mkdir -p -m {ownership} '{directory.as_posix()}'"
@@ -100,9 +101,10 @@ def create_archive(
         with tarfile.open(archive_file, write) as tar:
             for name in source_files:
                 try:
-                    logging.info(f"Tarring {Path(name).name}")
+                    msg = f"Tarring {Path(name).name}."
+                    logging.info(msg)
                     tar.add(Path(name).relative_to(Path.cwd()), recursive=recursive)
-                except Exception as e:
+                except OSError as e:
                     msg = f'File "{Path(name).name}" failed to be tarred: {e}'
                     logging.warning(msg)
             tar.close()
@@ -134,20 +136,21 @@ def transfer_file(
 
     if transport:
         try:
-            logging.info(f"Beginning transfer of {source_file}")
+            msg = f"Beginning transfer of {source_file}."
+            logging.info(msg)
+
             transport.put(str(source_file), str(destination_file))
-            logging.info(
-                f"Transferred { Path(destination_file).name} to {Path(destination_file).parent}"
-            )
+
+            msg = f"Transferred { Path(destination_file).name} to {Path(destination_file).parent}."
+            logging.info(msg)
 
         except (OSError, SCPException, SSHException) as e:
             msg = f'File "{destination_file.name}" failed to be transferred: {e}.'
             logging.warning(msg)
             return False
 
-        logging.info(
-            f"Transferred {Path(destination_file).name} to {Path(destination_file).parent}"
-        )
+        msg = f"Transferred {Path(destination_file).name} to {Path(destination_file).parent}."
+        logging.info(msg)
 
     else:
         try:

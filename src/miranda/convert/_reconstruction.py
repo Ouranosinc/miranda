@@ -187,10 +187,11 @@ def reanalysis_processing(
                             freq = "MS"
 
                         if len(dataset) == 0:
-                            logging.warning(
+                            msg = (
                                 f"Daily aggregation methods for variable `{var}` are not supported. "
                                 "Continuing..."
                             )
+                            logging.warning(msg)
 
                         for key in dataset.keys():
                             ds = dataset[key]
@@ -205,7 +206,8 @@ def reanalysis_processing(
                                 f"{var}_", f"{out_variable}_"
                             )
 
-                            logging.info(f"Writing out fixed files for {file_name1}.")
+                            msg = f"Writing out fixed files for {file_name1}."
+                            logging.info(msg)
                             years, datasets = zip(*ds.resample(time=freq))
                             if freq == "MS":
                                 format_str = "%Y-%m"
@@ -261,4 +263,5 @@ def reanalysis_processing(
                                     logging.info(f"Writing out job chunk {iterations}.")
                                     compute(chunk)
                     else:
-                        logging.info(f"No files found for variable {var}.")
+                        msg = f"No files found for variable {var}."
+                        logging.info(msg)

@@ -69,7 +69,8 @@ def write_dataset(
     outfile_path = output_path.joinpath(outfile)
 
     if overwrite and outfile_path.exists():
-        logging.warning(f"Removing existing {output_format} files for {outfile}.")
+        msg = f"Removing existing {output_format} files for {outfile}."
+        logging.warning(msg)
         if outfile_path.is_dir():
             shutil.rmtree(outfile_path)
         if outfile_path.is_file():
@@ -79,7 +80,8 @@ def write_dataset(
         freq = ds.attrs["frequency"]  # TOD0: check that this is really there
         chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
 
-    logging.info(f"Writing {outfile}.")
+    msg = f"Writing {outfile}."
+    logging.info(msg)
     write_object = delayed_write(
         ds,
         outfile_path,
@@ -157,9 +159,8 @@ def write_dataset_dict(
                 shutil.rmtree(tmp_path)
 
         else:
-            logging.warning(
-                f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
-            )
+            msg = f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
+            logging.warning(msg)
 
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
@@ -329,7 +330,8 @@ def merge_rechunk_zarrs(
         try:
             target_chunks = chunk_defaults[freq]
         except KeyError:
-            raise NotImplementedError(f"Frequency not supported: `{freq}`.")
+            msg = f"Frequency not supported: `{freq}`."
+            raise NotImplementedError(msg)
 
     start = time.perf_counter()
 
@@ -343,10 +345,12 @@ def merge_rechunk_zarrs(
 
         if overwrite:
             if out_zarr.is_dir():
-                logging.warning(f"Removing existing zarr files for {out_zarr.name}.")
+                msg = f"Removing existing zarr files for {out_zarr.name}."
+                logging.warning(msg)
                 shutil.rmtree(out_zarr)
         else:
-            logging.info(f"Files exist: {out_zarr.name}")
+            msg = f"Files exist: {out_zarr.name}. Skipping..."
+            logging.info(msg)
             continue
 
         ds = ds.chunk(target_chunks)
@@ -354,7 +358,9 @@ def merge_rechunk_zarrs(
             del var.encoding["chunks"]
         ds.to_zarr(out_zarr, mode="w")
 
-        logging.info(
-            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h"
+        msg = (
+            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         )
-    logging.info(f"All variables rechunked in {time.perf_counter() - start:.2f} s")
+        logging.info(msg)
+    msg = f"All variables rechunked in {time.perf_counter() - start:.2f} s."
+    logging.info(msg)

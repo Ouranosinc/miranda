@@ -22,7 +22,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["open_csv"]
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "data" / "hq_cf_attrs.json"))["variables"]
+cmor = json.load(
+    Path(__file__).parent.joinpath("data").joinpath("hq_cf_attrs.json").open("r")
+)["variables"]
 
 fp = r"[-+]?\d*,\d+|\d+"
 
@@ -112,7 +114,7 @@ cf_attrs_names = {"x": "lon", "y": "lat", "z": "elevation", "nom": "site"}
 
 def extract_daily(path) -> tuple[dict, pd.DataFrame]:
     """Extract data and metadata from HQ meteo file."""
-    with open(path, encoding="latin1") as fh:
+    with Path(path).open("r", encoding="latin1") as fh:
         txt = fh.read()
         meta, data = re.split(data_header_pattern, txt, maxsplit=2)
 

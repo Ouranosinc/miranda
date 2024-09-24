@@ -290,7 +290,8 @@ def _request_direct_era(
 
     def __request(nc_name: str, p: str, rq_kwargs: dict[str, str], c: Any):
         if Path(nc_name).exists():
-            logging.info(f"Dataset {nc_name} already exists. Continuing...")
+            msg = f"Dataset {nc_name} already exists. Continuing..."
+            logging.info(msg)
             return
 
         if not dry_run:
@@ -397,10 +398,11 @@ def rename_era5_files(path: os.PathLike | str) -> None:
             freq_parts = get_time_frequency(ds)
             freq = f"{freq_parts[0]}{freq_parts[1]}"
         except ValueError:
-            logging.error(
+            msg = (
                 f"Unable to parse the time frequency for variable `{var_name}` "
                 f"in file `{f.name}`. Verify data integrity before retrying."
             )
+            logging.error(msg)
             continue
 
         names = file_name.split("_")
@@ -408,9 +410,8 @@ def rename_era5_files(path: os.PathLike | str) -> None:
         if len(projects) == 1:
             project = projects.pop()
         elif len(projects) > 1:
-            logging.warning(
-                f"More than one project identified for file {f.name}. Verify file naming."
-            )
+            msg = f"More than one project identified for file {f.name}. Verify file naming."
+            logging.warning(msg)
             continue
         else:
             logging.warning("No project string found in filename.")
@@ -428,6 +429,7 @@ def rename_era5_files(path: os.PathLike | str) -> None:
             date_found,
         ]
         new_name = f"{'_'.join(new_name_parts)}.nc"
-        logging.info(f"Moving {f.name} to {new_name}")
+        msg = f"Moving {f.name} to {new_name}"
+        logging.info(msg)
 
         shutil.move(f, Path(path).joinpath(new_name))

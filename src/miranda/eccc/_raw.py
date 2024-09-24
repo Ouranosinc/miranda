@@ -756,9 +756,9 @@ def _combine_years(
             f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
         )
     else:
-        logging.warning(
-            f"No readings found for station code {Path(station_folder).name}. Continuing..."
-        )
+        msg = f"No readings found for station code {Path(station_folder).name}. Continuing..."
+
+        logging.warning(msg)
         return
 
     # Remove range files if years are all present, otherwise default to range_file.
@@ -781,10 +781,8 @@ def _combine_years(
             break
     if years_parsed:
         if len(range_files_found) > 0:
-            logging.warning(
-                f"Overlapping single-year and multi-year files found for station code {station_folder}. "
-                "Removing overlaps."
-            )
+            msg = f"Overlapping single-year and multi-year files found for station code {station_folder}. Removing overlaps."
+            logging.warning(msg)
             for ranged_file, years in range_files_found.items():
                 if years.issubset(years_found.values()):
                     nc_files.remove(ranged_file)
@@ -792,17 +790,17 @@ def _combine_years(
                     for y in years:
                         try:
                             nc_files.remove(years_found[y])
-                        except (KeyError, ValueError):
+                        except (KeyError, ValueError) as err:
+                            logging.error(err)
                             continue
 
         year_range = min(years_found.keys()), max(years_found.keys())
-        logging.info(
-            "Year(s) covered: "
-            f"{year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
-        )
+        msg = f"Year(s) covered: {year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}."
+        logging.info(msg)
 
     if _verbose:
-        logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
+        msg = f"Opening: {', '.join([p.name for p in nc_files])}"
+        logging.info(msg)
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = Path(out_folder).joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
@@ -818,17 +816,15 @@ def _combine_years(
         meta = meta.assign_coords(station=[0])
     except ValueError:
         rejected.append(Path(station_folder).name)
-        logging.error(
-            f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
-        )
+        msg = f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
+        logging.error(msg)
         return
     if len(meta.indexes) > 1:
         raise ValueError("Found more than 1 station.")
     elif len(meta.indexes) == 0:
         rejected.append(Path(station_folder).name)
-        logging.warning(
-            f"No metadata found for station code {station_folder}. Continuing..."
-        )
+        msg = f"No metadata found for station code {station_folder}. Continuing..."
+        logging.warning(msg)
         return
 
     keep_coords = [
@@ -849,10 +845,11 @@ def _combine_years(
             ds[vv] = ds[vv].astype(str)
 
     if not outfile.exists():
-        logging.info(f"Merging to {outfile.name}")
+        msg = f"Merging to {outfile.name}"
+        logging.info(msg)
         comp = dict(zlib=True, complevel=5)
         encoding = {data_var: comp for data_var in ds.data_vars}
-        encoding["time"] = dict(dtype="single")
+        encoding["time"] = {"dtype": "single"}
         with ProgressBar():
             ds.to_netcdf(
                 outfile,
@@ -861,7 +858,8 @@ def _combine_years(
                 encoding=encoding,
             )
     else:
-        logging.info(f"Files exist for {outfile.name}. Continuing...")
+        msg = f"Files exist for {outfile.name}. Continuing..."
+        logging.info(msg)
 
 
 def merge_converted_variables(
@@ -900,8 +898,7 @@ def merge_converted_variables(
     if variables is not None:
         if not isinstance(variables, list):
             variables = [variables]
-        for var in variables:
-            selected_variables.append(cf_station_metadata(var))
+        selected_variables = [cf_station_metadata(var) for var in variables]
 
     variables_found = [x.name for x in source_files.iterdir() if x.is_dir()]
     if selected_variables:
@@ -912,11 +909,13 @@ def merge_converted_variables(
         ]
 
     for variable in variables_found:
-        logging.info(f"Merging files found for variable: `{variable}`.")
+        msg = f"Merging files found for variable: `{variable}`."
+        logging.info(msg)
         station_dirs = [
             x for x in source_files.joinpath(variable).iterdir() if x.is_dir()
         ]
-        logging.info(f"Number of stations found: {len(station_dirs)}.")
+        msg = f"Number of stations found: {len(station_dirs)}."
+        logging.info(msg)
 
         output_rep = output_folder.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
@@ -924,10 +923,11 @@ def merge_converted_variables(
         if (
             len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)
         ) and not overwrite:
-            logging.warning(
+            msg = (
                 f"Variable {variable} appears to have already been converted. Will be skipped. "
                 f"To force conversion of this variable, set `overwrite=True`."
             )
+            logging.warning(msg)
             continue
 
         manager = mp.Manager()
@@ -947,6 +947,5 @@ def merge_converted_variables(
             pool.join()
 
         if rejected_stations:
-            logging.warning(
-                f"Rejected station codes are the following: {', '.join(rejected_stations)}."
-            )
+            msg = f"Rejected station codes are the following: {', '.join(rejected_stations)}."
+            logging.warning(msg)

@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import logging
 import logging.config
-import os
 import subprocess
 from functools import reduce
 from pathlib import Path
@@ -324,7 +323,7 @@ def report_file_size(
     significant_digits : int
 
     """
-    _CONVERSIONS = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
+    conversions = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
     def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
         """Format byte size into an appropriate nomenclature for prettier printing."""
@@ -335,7 +334,7 @@ def report_file_size(
             return "0 B"
         multiple = math.trunc(math.log2(i) / math.log2(base))
         value = i / math.pow(base, multiple)
-        suffix = _CONVERSIONS[multiple].format("i" if binary else "")
+        suffix = conversions[multiple].format("i" if binary else "")
         return f"{value:.{precision}f} {suffix}"
 
     total = file_size(file_path_or_bytes_or_dict)

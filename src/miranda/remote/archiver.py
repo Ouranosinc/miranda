@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging.config
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 from miranda.archive import (
     group_by_deciphered_date,
@@ -97,9 +96,11 @@ def archive_database(
 
                             if transfer.is_file():
                                 if not overwrite:
-                                    logging.info(f"{transfer} exists. Skipping file.")
+                                    msg = f"{transfer} exists. Skipping file."
+                                    logging.info(msg)
                                     continue
-                                logging.info(f"{transfer} exists. Overwriting.")
+                                msg = f"{transfer} exists. Overwriting."
+                                logging.info(msg)
                             if not dry_run:
                                 if transfer_file(archive_file, transfer, transport=ctx):
                                     successful_transfers.append(archive_file)
@@ -122,11 +123,11 @@ def archive_database(
 
                             if transfer.is_file():
                                 if not overwrite:
-                                    logging.info(
-                                        f'File "{transfer}" exists. Skipping file.'
-                                    )
+                                    msg = f'File "{transfer}" exists. Skipping file.'
+                                    logging.info(msg)
                                     continue
-                                logging.info(f'File "{transfer}" exists. Overwriting.')
+                                msg = f'File "{transfer}" exists. Overwriting.'
+                                logging.info(msg)
 
                             with working_directory(source_path):
                                 if not dry_run:
@@ -143,11 +144,12 @@ def archive_database(
                     else:
                         raise FileNotFoundError("No files found in grouping.")
 
-        logging.info(
+        msg = (
             f"Transferred {len(successful_transfers)} "
             f"of { len([f for f in file_list])} files "
             f"totalling {report_file_size(successful_transfers)}."
         )
+        logging.info(msg)
 
     except Exception as e:
         msg = f"{e}: Failed to transfer files."

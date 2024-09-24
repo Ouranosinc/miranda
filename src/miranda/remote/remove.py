@@ -47,13 +47,13 @@ def file_emptier(*, file_list: list[str | Path] | GeneratorType) -> None:
     """
     file_list = sorted([Path(f) for f in file_list])
 
-    logging.info(
-        f"Found {len(file_list)} files totalling {report_file_size(file_list)}."
-    )
+    msg = f"Found {len(file_list)} files totalling {report_file_size(file_list)}."
+    logging.info(msg)
 
     for file in file_list:
-        logging.warning(f"Overwriting {file}")
-        open(file, "w").close()
+        msg = f"Overwriting {file}."
+        logging.warning(msg)
+        Path(file).open("w").close()
 
 
 def delete_by_date(
@@ -99,10 +99,10 @@ def delete_by_date(
     glob_pattern = pattern or "*.nc"
 
     nc_files = Path(source).rglob(glob_pattern)
-    nc_files = list(nc_files)
-    nc_files.sort()
+    nc_files = sorted(list(nc_files))
 
-    logging.info(f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}.")
+    msg = f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}."
+    logging.info(msg)
 
     context = None
     if server:
@@ -117,16 +117,16 @@ def delete_by_date(
     for file in nc_files:
         if creation_date(file) == date_selected:
             freed_space += Path(file).stat().st_size
-            logging.info(f"Deleting {file.name}")
+            msg = f"Deleting {file.name}."
+            logging.info(msg)
             if context:
                 context.remove(file)
             else:
                 file.unlink()
             deleted_files += 1
 
-    logging.info(
-        f"Removed {deleted_files} files totalling {report_file_size(freed_space)}"
-    )
+    msg = f"Removed {deleted_files} files totalling {report_file_size(freed_space)}."
+    logging.info(msg)
 
     if server:
         context.close()
@@ -168,20 +168,19 @@ def delete_duplicates(
         host=server, user=user, connect_kwargs=dict(password=password)
     )
 
-    nc_files_source = Path(source).rglob(glob_pattern)
-    nc_files_source = {f.stem for f in nc_files_source}
+    nc_files_source = {f.stem for f in Path(source).rglob(glob_pattern)}
     nc_files_target = Path(target).rglob(glob_pattern)
 
     nc_file_duplicates = []
     for f in nc_files_target:
         if f.name in nc_files_source:
-            logging.info(f"Duplicate found: {f.name}")
+            msg = f"Duplicate found: {f.name}."
+            logging.info(msg)
             nc_file_duplicates.append(f)
 
     nc_file_duplicates.sort()
-    logging.info(
-        f"Found {len(nc_file_duplicates)} files totalling {report_file_size(nc_file_duplicates)}"
-    )
+    msg = f"Found {len(nc_file_duplicates)} files totalling {report_file_size(nc_file_duplicates)}"
+    logging.info(msg)
 
     freed_space = 0
     deleted_files = 0
@@ -189,13 +188,13 @@ def delete_duplicates(
         with connection as context:
             for dup in nc_file_duplicates:
                 freed_space += Path(dup).stat().st_size
-                logging.info(f"Deleting {dup.name}")
+                msg = f"Deleting {dup.name}"
+                logging.info(msg)
                 context.remove(dup)
                 deleted_files += 1
 
-    logging.info(
-        f"Removed { deleted_files} files totalling {report_file_size(freed_space)}."
-    )
+    msg = f"Removed { deleted_files} files totalling {report_file_size(freed_space)}."
+    logging.info(msg)
     return
 
 
@@ -247,19 +246,18 @@ def delete_by_variable(
         else:
             found = Path(target).rglob(f"{var}*{glob_suffix}")
 
-        nc_files = [Path(f) for f in found]
-        nc_files.sort()
+        nc_files = sorted([Path(f) for f in found])
 
-        logging.info(
-            f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}"
-        )
+        msg = f"Found {len(nc_files)} files totalling {report_file_size(nc_files)}"
+        logging.info(msg)
 
         with connection as context:
             for file in nc_files:
                 freed_space += Path(file).stat().st_size
                 deleted_files += 1
                 if delete:
-                    logging.info(f"Deleting file {file.stem}")
+                    msg = f"Deleting file {file.stem}."
+                    logging.info(msg)
                     context.remove(file)
 
     msg = f"Removed {deleted_files} files totalling {report_file_size(freed_space)}"

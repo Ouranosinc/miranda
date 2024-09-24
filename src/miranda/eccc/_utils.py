@@ -833,7 +833,8 @@ def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | 
         variable["missing_values"] = {-9999, "#####"}
         variable["least_significant_digit"] = ""
     except KeyError:
-        logging.error(f"Hourly variable `{code}` not supported.")
+        msg = f"Hourly variable `{code}` not supported."
+        logging.error(msg)
         raise
     return variable
 

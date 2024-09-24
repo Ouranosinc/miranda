@@ -27,7 +27,9 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-chunk_configurations = json.load(open(_data_folder / "ouranos_chunk_config.json"))
+chunk_configurations = json.load(
+    _data_folder.joinpath("ouranos_chunk_config.json").open("r", encoding="utf-8")
+)
 
 
 def prepare_chunks_for_ds(
@@ -58,7 +60,8 @@ def prepare_chunks_for_ds(
     for dim, c in chunks.copy().items():
         length = ds.dims[dim]
         if c == -1 or c > length:
-            logging.info(f"Chunk was changed from {c} to {length} for dimension {dim}.")
+            msg = f"Chunk was changed from {c} to {length} for dimension {dim}."
+            logging.info(msg)
             chunks[dim] = length
 
     return chunks
@@ -79,10 +82,10 @@ def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
         elif k == "time" and v is not None:
             if isinstance(v, str) and v.endswith("years"):
                 n = int(str(chunks["time"]).strip("years").strip())
-                Nt = n * {"noleap": 365, "360_day": 360, "all_leap": 366}.get(
+                n_t = n * {"noleap": 365, "360_day": 360, "all_leap": 366}.get(
                     calendar, 365.25
                 )
-                chunks[k] = int(Nt)
+                chunks[k] = int(n_t)
             elif v == -1:
                 chunks[k] = timesize
     return chunks
@@ -203,7 +206,8 @@ def rechunk_files(
         if chunking_priority == "auto":
             chunking_priority = "time"
     else:
-        raise NotImplementedError(f"Output format: `{output_format}`.")
+        msg = f"Output format: `{output_format}`."
+        raise NotImplementedError(msg)
 
     files_found = discover_data(input_folder, suffix=suffix)
     variable_sorted = sort_variables(files_found, variables)
@@ -223,10 +227,12 @@ def rechunk_files(
             if out.is_dir() or out.is_file():
                 if overwrite:
                     if out.is_dir() and output_format == "zarr":
-                        logging.warning(f"Removing existing zarr files for {out.name}.")
+                        msg = f"Removing existing zarr files for {out.name}."
+                        logging.warning(msg)
                         shutil.rmtree(out)
                 else:
-                    logging.info(f"Files exist: {file.name}")
+                    msg = f"Files exist: {file.name}. Skipping..."
+                    logging.info(msg)
                     continue
 
             ds = xr.open_dataset(file, chunks={"time": -1})
@@ -246,23 +252,27 @@ def rechunk_files(
                 ).compute()
 
             except KeyError:
-                logging.warning(f"{file} has chunking errors. Verify data manually.")
+                msg = f"{file} has chunking errors. Verify data manually."
+                logging.warning(msg)
                 errored.append(file)
                 continue
 
-            logging.info(f"Done for {file.stem} in {time.perf_counter() - start:.2f} s")
+            msg = f"Done for {file.stem} in {time.perf_counter() - start:.2f} s."
+            logging.info(msg)
 
-            logging.info(f"Moving {file.name} to {output_folder}.")
+            msg = f"Moving {file.name} to {output_folder}."
+            logging.info(msg)
             shutil.move(out, output_folder)
 
-        logging.info(
-            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h"
+        msg = (
+            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         )
+        logging.info(msg)
         continue
 
-    logging.info(
-        f"All variables in {input_folder} rechunked in {time.perf_counter() - start_all}"
-    )
+    msg = f"All variables in {input_folder} rechunked in {time.perf_counter() - start_all}."
+    logging.info(msg)
     if errored:
         errored_filenames = "\n".join(map(str, errored))
-        logging.warning(f"Errored files are as follows: \n{errored_filenames}")
+        msg = f"Errored files are as follows: \n{errored_filenames}."
+        logging.warning(msg)

@@ -35,7 +35,7 @@ data_header_pattern = "Station Date Débit (m³/s) Remarque\n"
 
 def extract_daily(path: os.PathLike | str) -> tuple[dict, pd.DataFrame]:
     """Extract data and metadata from DEH (MELCC) stream flow file."""
-    with open(path, encoding="latin1") as fh:
+    with Path(path).open("r", encoding="latin1") as fh:
         txt = fh.read()
         txt = re.sub(" +", " ", txt)
         meta, data = txt.split(data_header_pattern)

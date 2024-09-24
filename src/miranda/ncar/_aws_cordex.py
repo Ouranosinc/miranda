@@ -79,7 +79,8 @@ def cordex_aws_calendar_correction(ds) -> xr.Dataset | None:
     orig_calendar = ds.attrs.get("original_calendar", "standard")
 
     if orig_calendar in ["365_day", "360_day"]:
-        logging.info(f"Converting calendar to {orig_calendar}")
+        msg = f"Converting calendar to {orig_calendar}."
+        logging.info(msg)
         ds = xcal.convert_calendar(ds, "noleap")  # drops Feb 29th
         if orig_calendar == "360_day":
             time = xcal.date_range_like(ds.time, calendar="360_day")
@@ -109,11 +110,11 @@ def cordex_aws_download(
             n, w, s, e = subsetting_domains(dom)
             return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
         except ModuleNotFoundError:
-            log_msg = (
+            msg = (
                 "This function requires the `clisops` library which is not installed. "
                 "Domain subsetting step will be skipped."
             )
-            warnings.warn(log_msg)
+            warnings.warn(msg)
             return d
 
     schema.Schema(_allowed_args).validate(search)
@@ -142,11 +143,13 @@ def cordex_aws_download(
         storage_options={"anon": True},
         **additional_kwargs,
     )
-    logging.info(f"\nDataset dictionary keys:\n {dsets.keys()}")
+    msg = f"\nDataset dictionary keys:\n {dsets.keys()}"
+    logging.info(msg)
 
     dds = list()
     for key in list(dsets.keys()):
-        logging.info(f"Adding {key} to the search criteria.")
+        msg = f"Adding {key} to the search criteria."
+        logging.info(msg)
         dds.append(dsets[key])
 
     with ProgressBar():
@@ -180,9 +183,8 @@ def cordex_aws_download(
                     try:
                         ds = cordex_aws_calendar_correction(ds)
                     except ValueError:
-                        logging.warning(
-                            f"Calendar failed to convert for {member.values} and variable {var_out}. Skipping..."
-                        )
+                        msg = f"Calendar failed to convert for {member.values} and variable {var_out}. Skipping..."
+                        logging.warning(msg)
                         continue
 
                 years, datasets = zip(*ds.isel(member_id=i).groupby("time.year"))
@@ -197,7 +199,8 @@ def cordex_aws_download(
                     f"{var_out}_{member.values}_day_{scen}_{grid}_{bias_correction}"
                 )
 
-                logging.info(f"Writing out files for {file_name_pattern}.")
+                msg = f"Writing out files for {file_name_pattern}."
+                logging.info()
                 paths = [
                     out_folder.joinpath(f"{file_name_pattern}_{y}.nc")
                     for y in years
@@ -211,12 +214,12 @@ def cordex_aws_download(
                 ]
 
                 if len(datasets) == 0:
-                    logging.warning(
-                        f"All files currently exist for {scen} and {member.name}. Continuing..."
-                    )
+                    msg = f"All files currently exist for {scen} and {member.name}. Continuing..."
+                    logging.warning(msg)
                     continue
 
-                logging.info(f"Final count of files: {len(datasets)}")
+                msg = f"Final count of files: {len(datasets)}"
+                logging.info(msg)
 
                 xr.save_mfdataset(
                     datasets, paths, engine="h5netcdf", format="NETCDF4_CLASSIC"
