@@ -60,13 +60,11 @@ class DataBase:
         self._files = self._scrape(source)
         self._is_server = False
 
-        self.successful_transfers = int(0)
+        self.successful_transfers = 0
 
     def __repr__(self):
         """Repl function."""
-        return "<{}.{} object at {}>".format(
-            self.__class__.__module__, self.__class__.__name__, hex(id(self))
-        )
+        return f"<{self.__class__.__module__}.{self.__class__.__name__} object at {hex(id(self))}>"
 
     def __str__(self):
         """String function."""

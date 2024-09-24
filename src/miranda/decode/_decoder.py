@@ -93,7 +93,7 @@ class Decoder:
             else:
                 proj = "converted"
 
-        decode_function_name = f"decode_{proj.lower().replace('-','_')}"
+        decode_function_name = f"decode_{proj.lower().replace('-', '_')}"
         try:
             with lock:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))

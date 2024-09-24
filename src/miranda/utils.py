@@ -176,9 +176,10 @@ def generic_extract_archive(
                     logging.warning(
                         "GZIP file found. Can only extract one expected file."
                     )
-                    with gzip.open(arch, "rb") as gf, open(
-                        Path(output_dir).joinpath(arch.stem), "w"
-                    ) as f_out:
+                    with (
+                        gzip.open(arch, "rb") as gf,
+                        open(Path(output_dir).joinpath(arch.stem), "w") as f_out,
+                    ):
                         f_out.write(gf.read().decode("utf-8"))
                         files.append(Path(output_dir).joinpath(arch.stem))
                 elif file.suffix == ".7z":
@@ -319,7 +320,7 @@ def publish_release_notes(
                     str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
                 )
                 search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
-                replacement = f"{'##' if level=='-' else '###'} {grouping[0]}"
+                replacement = f"{'##' if level == '-' else '###'} {grouping[0]}"
                 history = re.sub(search, replacement, history)
 
         link_expressions = r"[\`]{1}([\w\s]+)\s<(.+)>`\_"

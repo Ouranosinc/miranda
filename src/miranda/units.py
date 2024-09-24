@@ -89,7 +89,7 @@ def get_time_frequency(
 
                 for period, ds_part in zip(time_periods, datasets):
                     if len(ds_part) == 1:
-                        logging.info(f"Skipping {str(np.datetime_as_string(period))}.")
+                        logging.info(f"Skipping {np.datetime_as_string(period)!s}.")
                         # In the event that a deaccumulation/shift has created a period with one data value,
                         # we are safe in ignoring this.
                         continue

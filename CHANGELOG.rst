@@ -26,6 +26,8 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
 
+.. _changes_0.5.0:
+
 v0.5.0 (2023-06-19)
 -------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
@@ -46,6 +48,8 @@ Internal changes
 * Created a `gis` recipe for exclusively installing GIS libraries.
 * Removed many unneeded dependencies, cleaned up Makefile.
 * All public-facing functions now contain at least a minimal docstring for documentation generation.
+
+.. _changes_0.4.0:
 
 v0.4.0 (2023-03-30)
 -------------------
@@ -78,6 +82,8 @@ Internal changes
     - `gridded-obs` -> `reconstruction`
     - `bias-adjust-project` is used when present and not just when `level=="biasadjusted"`
 * CI now using `tox>=4.0` and `ubuntu-latest` virtual machine images.
+
+.. _changes_0.3.0:
 
 v0.3.0 (2022-11-24)
 -------------------

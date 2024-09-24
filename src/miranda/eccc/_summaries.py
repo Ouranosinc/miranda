@@ -190,7 +190,7 @@ def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
 
 # This
 def _read_multiple_daily_summaries(
-    files: list[str | Path] | Generator[Path, None, None],
+    files: list[str | Path] | Generator[Path],
     rm_flags: bool = False,
 ) -> dict:
     """Read multiple daily summary files.

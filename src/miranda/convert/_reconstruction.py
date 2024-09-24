@@ -79,10 +79,13 @@ def reanalysis_processing(
     else:
         raise NotImplementedError(f"`output_format`: '{output_format}")
 
-    with ProgressBar(), dask.config.set(
-        **{"array.slicing.split_large_chunks": False},
-        n_workers=n_workers,
-        **dask_kwargs,
+    with (
+        ProgressBar(),
+        dask.config.set(
+            **{"array.slicing.split_large_chunks": False},
+            n_workers=n_workers,
+            **dask_kwargs,
+        ),
     ):
         out_files = Path(output_folder)
         if isinstance(domains, str):
@@ -102,7 +105,7 @@ def reanalysis_processing(
 
             for project, in_files in data.items():
                 logging.info(
-                    f"Processing {project} data{f' for domain {domain}' if domain !='not_specified' else ''}."
+                    f"Processing {project} data{f' for domain {domain}' if domain != 'not_specified' else ''}."
                 )
                 for var in variables:
                     # Select only for variable of interest

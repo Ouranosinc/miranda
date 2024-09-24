@@ -22,7 +22,7 @@ if VALIDATION_ENABLED:
         WCRP_FREQUENCIES,
     )
 
-    __all__ = ["validation_schemas", "url_validate"]
+    __all__ = ["url_validate", "validation_schemas"]
 
     TYPE_NAMES = [
         "simulation",
