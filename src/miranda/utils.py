@@ -50,7 +50,7 @@ class HiddenPrints:
 
     def __enter__(self):  # noqa: D105
         self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, "w")
+        sys.stdout = Path(os.devnull).open("w")
 
     def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: D105
         sys.stdout.close()
@@ -69,7 +69,7 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
         chunk = list()
         try:
             for _ in range(chunk_size):
-                chunk.append(next(iterable))
+                chunk.append(next(iterable))  # noqa: PERF401
             yield chunk
         except StopIteration:
             if chunk:
@@ -92,7 +92,7 @@ def working_directory(directory: str | Path) -> None:
     -------
     None
     """
-    owd = os.getcwd()
+    owd = os.getcwd()  # noqa: PTH109
 
     if (2, 7) < sys.version_info < (3, 6):
         directory = str(directory)
@@ -178,7 +178,7 @@ def generic_extract_archive(
                     )
                     with (
                         gzip.open(arch, "rb") as gf,
-                        open(Path(output_dir).joinpath(arch.stem), "w") as f_out,
+                        Path(output_dir).joinpath(arch.stem).open("w") as f_out,
                     ):
                         f_out.write(gf.read().decode("utf-8"))
                         files.append(Path(output_dir).joinpath(arch.stem))
@@ -187,9 +187,10 @@ def generic_extract_archive(
                     logging.warning(msg)
                     warnings.warn(msg, UserWarning)
                 else:
-                    logging.debug('File extension "%s" unknown' % file)
-            except Exception as e:
-                logging.error(f"Failed to extract sub archive {arch}: {e}")
+                    logging.debug(f'File extension "{file}" unknown')
+            except OSError as e:
+                msg = f"Failed to extract sub archive {arch}: {e}"
+                logging.error(msg)
         else:
             logging.warning("No archives found. Continuing...")
             return resources
@@ -201,7 +202,7 @@ def generic_extract_archive(
 
 
 def list_paths_with_elements(
-    base_paths: str | list[str], elements: list[str]
+    base_paths: str | list[str] | os.PathLike[str], elements: list[str]
 ) -> list[dict]:
     """List a given path structure.
 
@@ -245,9 +246,9 @@ def list_paths_with_elements(
         except NotADirectoryError:
             continue
         path_content.sort()
-        next_base_paths = []
-        for path_item in path_content:
-            next_base_paths.append(base_path.joinpath(path_item))
+        next_base_paths = [
+            Path(base_path).joinpath(path_item) for path_item in path_content
+        ]
         next_pe = list_paths_with_elements(next_base_paths, elements[1:])
         if next_pe:
             for i, one_pe in enumerate(next_pe):
@@ -287,7 +288,7 @@ def publish_release_notes(
     if not history_file.exists():
         raise FileNotFoundError("History file not found in miranda file tree.")
 
-    with open(history_file) as hf:
+    with Path(history_file).open("r") as hf:
         history = hf.read()
 
     if style == "rst":

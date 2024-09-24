@@ -156,7 +156,7 @@ def convert_ahccd_fwf_files(
     ff: Path | str,
     metadata: pd.DataFrame,
     variable: str,
-    generation: int = None,
+    generation: int | None = None,
     cols_specs: list[tuple[int, int]] | None = None,
     attrs: dict | None = None,
 ) -> xr.Dataset:

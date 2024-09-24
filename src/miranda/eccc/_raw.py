@@ -26,6 +26,7 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
+from typing import Optional
 from urllib.error import HTTPError
 
 import dask.dataframe as dd
@@ -480,7 +481,7 @@ def convert_flat_files(
 def aggregate_stations(
     source_files: str | os.PathLike | None = None,
     output_folder: str | os.PathLike | None = None,
-    time_step: str = None,
+    time_step: str | None = None,
     variables: str | int | list[str | int] | None = None,
     include_flags: bool = True,
     groupings: int | None = None,

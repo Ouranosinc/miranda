@@ -142,7 +142,7 @@ def reanalysis_processing(
                             time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6like[parse_freq[1]]}"
 
                         institute = project_institutes[project]
-                        file_name = "_".join([var, time_freq, institute, project])
+                        file_name = f"{var}_{time_freq}_{institute}_{project}"
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
                         if not chunks:

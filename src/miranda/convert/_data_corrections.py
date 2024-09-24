@@ -957,7 +957,7 @@ def dataset_conversion(
 
         if len(files) == 1:
             ds = xr.open_dataset(files[0], **xr_kwargs)
-            for _, process in preprocess_kwargs.items():
+            for process in preprocess_kwargs.values():
                 ds = process(ds)
         else:
             ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)

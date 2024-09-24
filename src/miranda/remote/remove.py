@@ -8,6 +8,7 @@ from datetime import date
 from getpass import getpass
 from pathlib import Path
 from types import GeneratorType
+from typing import Optional
 
 from miranda.io.utils import creation_date
 from miranda.scripting import LOGGING_CONFIG
@@ -138,9 +139,9 @@ def delete_duplicates(
     source: str | Path,
     target: str | Path,
     server: str | Path | None = None,
-    user: str = None,
-    password: str = None,
-    pattern: str = None,
+    user: str | None = None,
+    password: str | None = None,
+    pattern: str | None = None,
     delete_target_duplicates: bool = False,
 ) -> None:
     """Delete duplicate files.
@@ -200,7 +201,7 @@ def delete_duplicates(
 
 def delete_by_variable(
     *,
-    target: str | Path | list[str | Path] | GeneratorType = None,
+    target: str | Path | list[str | Path] | GeneratorType | None = None,
     variables: list[str],
     server: str | Path | None = None,
     user: str | None = None,
@@ -261,7 +262,6 @@ def delete_by_variable(
                     logging.info(f"Deleting file {file.stem}")
                     context.remove(file)
 
-    logging.info(
-        f"Removed {deleted_files} files totalling {report_file_size(freed_space)}"
-    )
+    msg = f"Removed {deleted_files} files totalling {report_file_size(freed_space)}"
+    logging.info(msg)
     return

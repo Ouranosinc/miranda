@@ -5,7 +5,7 @@ import re
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -153,7 +153,7 @@ def group_by_size(
 
 
 def group_by_subdirectories(
-    files: GeneratorType | list[str | Path], within: str | Path = None
+    files: GeneratorType | list[str | Path], within: str | Path | None = None
 ) -> dict[str, list[Path]]:
     """Group files based on the parent folder that they are located within.
 

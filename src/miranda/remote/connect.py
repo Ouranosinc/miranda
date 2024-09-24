@@ -6,6 +6,7 @@ import logging.config
 import warnings
 from getpass import getpass
 from pathlib import Path
+from typing import Optional
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -30,8 +31,8 @@ class Connection:
 
     def __init__(
         self,
-        username: str | Path = None,
-        host: str | Path = None,
+        username: str | Path | None = None,
+        host: str | Path | None = None,
         protocol: str = "sftp",
         *args,
         **kwargs,

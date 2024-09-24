@@ -217,8 +217,7 @@ def size_division(
             flag_skip = 0
             for file_divided in division:
                 if check_name_repetition and (
-                    os.path.basename(file_divided.path)
-                    == os.path.basename(file_divide.path)
+                    Path(file_divided.path).name == Path(file_divide.path).name
                 ):
                     flag_skip = 1
                 size = size + file_divided.size
@@ -272,7 +271,7 @@ def file_size(
                 total = 0
         elif isinstance(file_path_or_bytes_or_dict, dict):
             total: int = 0
-            for key, val in file_path_or_bytes_or_dict.items():
+            for val in file_path_or_bytes_or_dict.values():
                 if isinstance(val, list):
                     try:
                         total += reduce(
@@ -280,6 +279,7 @@ def file_size(
                             map(lambda f: Path(f).stat().st_size, val),
                         )
                     except TypeError:
+                        logging.error("Unable to parse file size from list of files.")
                         continue
                 elif Path(val).is_file():
                     total += Path(val).stat().st_size
@@ -293,9 +293,8 @@ def file_size(
         else:
             raise FileNotFoundError
     except FileNotFoundError:
-        logging.error(
-            f"File Not Found: Unable to parse file size from {file_path_or_bytes_or_dict}"
-        )
+        msg = f"File Not Found: Unable to parse file size from {file_path_or_bytes_or_dict}"
+        logging.error(msg)
         raise
 
     return total

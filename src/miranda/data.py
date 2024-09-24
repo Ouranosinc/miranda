@@ -6,6 +6,7 @@ import logging.config
 import os
 from pathlib import Path
 from types import GeneratorType
+from typing import Optional
 
 from .io import find_filepaths
 from .scripting import LOGGING_CONFIG
@@ -27,7 +28,7 @@ class DataBase:
         destination: Path | str | None = None,
         common_path: Path | str | None = None,
         file_pattern: str | list[str] = "*.nc",
-        project_name: str = None,
+        project_name: str | None = None,
         recursive: bool = True,
     ):
         self._source = Path(source)
@@ -68,7 +69,9 @@ class DataBase:
 
     def __str__(self):
         """String function."""
-        prepr = "[%s]" % ", ".join([f'{k}: "{v}"' for k, v in self.__dict__.items()])
+        prepr = "[{}]".format(
+            ", ".join([f'{k}: "{v}"' for k, v in self.__dict__.items()])
+        )
         return f"{self.__class__.__name__}({prepr})"
 
     def __getitem__(self, key):
@@ -124,7 +127,7 @@ class DataBase:
     def group_by(
         self,
         *,
-        common_path: Path | str = None,
+        common_path: Path | str | None = None,
         subdirectories: bool = True,
         dates: bool = True,
         size: int = 10 * GiB,

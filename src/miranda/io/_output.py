@@ -333,7 +333,7 @@ def merge_rechunk_zarrs(
 
     start = time.perf_counter()
 
-    for variable, files in variable_sorted.items():
+    for variable in variable_sorted.keys():
         start_var = time.perf_counter()
 
         ds = xr.open_mfdataset(files_found, parallel=True, engine="zarr")

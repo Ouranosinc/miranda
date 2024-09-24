@@ -113,8 +113,8 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
                 if variable.startswith("_"):
                     if op == "mean":
                         var = variable.strip("_")
-                        min_var = "".join([var, "min"])
-                        max_var = "".join([var, "max"])
+                        min_var = f"{var}min"
+                        max_var = f"{var}max"
 
                         mean_variable = tas(
                             tasmin=ds[min_var], tasmax=ds[max_var]

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging.config
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 from miranda.archive import (
     group_by_deciphered_date,
@@ -29,9 +30,9 @@ def archive_database(
     common_path: Path | str,
     destination: Path | str,
     file_suffixes: str = ".nc",
-    server: str = None,
-    username: str = None,
-    project_name: str = None,
+    server: str | None = None,
+    username: str | None = None,
+    project_name: str | None = None,
     overwrite: bool = False,
     compression: bool = False,
     recursive: bool = False,
