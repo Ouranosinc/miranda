@@ -1,4 +1,6 @@
 # MIRANDA-specific
+templates/downloaded
+excluded
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
