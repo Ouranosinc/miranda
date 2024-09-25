@@ -235,7 +235,8 @@ def concat_rechunk_zarr(
             tmp_zarr = tmp_folder.joinpath(
                 f"{out_zarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
             )
-            logging.info(f"Writing year {year} to {tmp_zarr.as_posix()}.")
+            msg = f"Writing year {year} to {tmp_zarr.as_posix()}."
+            logging.info(msg)
 
             job = delayed_write(
                 ds=ds,

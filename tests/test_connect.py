@@ -27,16 +27,16 @@ class TestConnection:
 
     def test_connection_update(self):
         self.c = Connection(username="qwerty", host="localhost")
-        self.c.update(password="12345")
+        self.c.update(password="12345")  # noqa: S106
         with self.c as context:
             assert context.is_connected is False
 
     def test_connection_context_pass(self):
         self.c = Connection(username="qwerty", host="localhost")
-        with self.c(password="12345") as context:
+        with self.c(password="12345") as context:  # noqa: S106
             assert context.is_connected is False
 
     def test_connection(self):
         self.c = Connection(username="qwerty", host="localhost")
-        c = self.c.connect(password="12345")
+        c = self.c.connect(password="12345")  # noqa: S106
         assert c.is_connected is False

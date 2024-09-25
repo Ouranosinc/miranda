@@ -33,10 +33,11 @@ def find_version_hash(file: os.PathLike | str) -> dict:
 
     def _get_hash(f):
         hash_sha256_writer = hashlib.sha256()
-        with open(f, "rb") as f_opened:
+        with Path(f).open("rb", encoding="utf-8") as f_opened:
             hash_sha256_writer.update(f_opened.read())
         sha256sum = hash_sha256_writer.hexdigest()
-        logging.info(f"Calculated sha256sum (starting: {sha256sum[:6]})")
+        msg = f"Calculated sha256sum (starting: {sha256sum[:6]})"
+        logging.info(msg)
         del hash_sha256_writer
         return sha256sum
 
@@ -56,6 +57,8 @@ def find_version_hash(file: os.PathLike | str) -> dict:
                     version_info["version"] = found_version.group()
                     version_info["sha256sum"] = int(sig.open().read())
                 except ValueError:
+                    msg = "Unable to read version hash file. Calculating sha256sum."
+                    logging.error(msg)
                     continue
                 break
         else:
@@ -116,7 +119,7 @@ def date_parser(
                 s = pd.to_datetime(d, format=fmt)
                 match = fmt
                 break
-            except ValueError:
+            except ValueError:  # noqa: S110
                 pass
         else:
             raise ValueError(
@@ -145,7 +148,9 @@ def date_parser(
         for n in range(3):
             try:
                 date = pd.Timestamp.fromisoformat((date - pd.Timedelta(n)).isoformat())
-            except ValueError:  # We are NOT catching OutOfBoundsDatetime.
+            except (  # noqa: PERF203,S110  # We are NOT catching OutOfBoundsDatetime.
+                ValueError
+            ):
                 pass
             else:
                 break

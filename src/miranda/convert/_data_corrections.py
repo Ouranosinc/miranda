@@ -53,33 +53,56 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
     data_folder = Path(__file__).resolve().parent / "data"
 
     if project.startswith("era5"):
-        metadata_definition = json.load(open(data_folder / "ecmwf_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("ecmwf_cf_attrs.json").open("r")
+        )
     elif project in ["rdrs-v21"]:
-        metadata_definition = json.load(open(data_folder / "eccc_rdrs_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r")
+        )
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
-        metadata_definition = json.load(open(data_folder / "nasa_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("nasa_cf_attrs.json").open("r")
+        )
     elif project in ["cordex", "cmip5", "cmip6"]:
-        metadata_definition = json.load(open(data_folder / "cmip_ouranos_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("cmip_ouranos_attrs.json").open("r")
+        )
     elif project == "ets-grnch":
-        metadata_definition = json.load(open(data_folder / "ets_grnch_cf_attrs.json"))
-    elif project == "nrcan-gridded-10km":
-        raise NotImplementedError()
+        metadata_definition = json.load(
+            data_folder.joinpath("ets_grnch_cf_attrs.json").open("r")
+        )
     elif project == "wfdei-gem-capa":
-        metadata_definition = json.load(open(data_folder / "usask_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("usask_cf_attrs.json").open("r")
+        )
     elif project.startswith("melcc"):
-        metadata_definition = json.load(open(data_folder / "melcc_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("melcc_cf_attrs.json").open("r")
+        )
     elif project.startswith("ec"):
-        metadata_definition = json.load(open(data_folder / "eccc_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("eccc_cf_attrs.json").open("r")
+        )
     elif project in ["NEX-GDDP-CMIP6"]:
-        metadata_definition = json.load(open(data_folder / "nex-gddp-cmip6_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("nex-gddp-cmip6_attrs.json").open("r")
+        )
     elif project in ["ESPO-G6-R2"]:
-        metadata_definition = json.load(open(data_folder / "espo-g6-r2_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("espo-g6-r2_attrs.json").open("r")
+        )
     elif project in ["ESPO-G6-E5L"]:
-        metadata_definition = json.load(open(data_folder / "espo-g6-e5l_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("espo-g6-e5l_attrs.json").open("r")
+        )
     elif project in ["EMDNA"]:
-        metadata_definition = json.load(open(data_folder / "emdna_cf_attrs.json"))
+        metadata_definition = json.load(
+            data_folder.joinpath("emdna_cf_attrs.json").open("r")
+        )
     else:
-        raise NotImplementedError()
+        msg = f"Project `{project}` not supported."
+        raise NotImplementedError(msg)
 
     return metadata_definition
 
@@ -138,9 +161,9 @@ def conservative_regrid(
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
 
-    logging.info(
-        f"Performing regridding and masking with `xesmf` using method: {method}."
-    )
+    msg = f"Performing regridding and masking with `xesmf` using method: {method}."
+
+    logging.info(msg)
 
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
@@ -360,7 +383,8 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         )
                         raise
 
-                logging.info(f"De-accumulating units for variable `{vv}`.")
+                msg = f"De-accumulating units for variable `{vv}`."
+                logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv].diff(dim="time")
                     out = d[vv].where(
@@ -373,9 +397,9 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             elif trans == "amount2rate":
                 # NOTE: This treatment is no longer needed in xclim v0.43.0+ but is kept for backwards compatibility
                 # frequency-based totals to time-based flux
-                logging.info(
-                    f"Performing amount-to-rate units conversion for variable `{vv}`."
-                )
+                msg = f"Performing amount-to-rate units conversion for variable `{vv}`."
+
+                logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(
                         d[vv],
@@ -408,14 +432,15 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                             )
                 converted.append(vv)
             else:
-                raise NotImplementedError(f"Unknown transformation: {trans}")
+                msg = f"Unknown transformation: {trans}"
+                raise NotImplementedError(msg)
             prev_history = d.attrs.get("history", "")
             history = f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
             d_out.attrs.update(dict(history=history))
         elif trans is False:
-            logging.info(
-                f"No transformations needed for `{vv}` (Explicitly set to False)."
-            )
+            msg = f"No transformations needed for `{vv}` (Explicitly set to False)."
+
+            logging.info(msg)
             continue
 
     # Copy unconverted variables
@@ -450,9 +475,9 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     )
                     raise
 
-            logging.info(
-                f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-            )
+            msg = f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+
+            logging.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
@@ -462,9 +487,9 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
             d_out.attrs.update(dict(history=history))
         elif offs is False:
-            logging.info(
-                f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
-            )
+            msg = f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+
+            logging.info(msg)
             continue
 
     # Copy unconverted variables
@@ -480,7 +505,8 @@ def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     converted = []
     for vv, inv_sign in _iter_entry_key(d, m, "variables", key, p):
         if inv_sign:
-            logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
+            msg = f"Inverting sign for `{vv}` (switching direction of values)."
+            logging.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = -out
@@ -489,9 +515,9 @@ def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
             d_out.attrs.update(dict(history=history))
         elif inv_sign is False:
-            logging.info(
-                f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
-            )
+            msg = f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
+
+            logging.info(msg)
             continue
 
     # Copy unconverted variables
@@ -539,9 +565,8 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         max_value = xclim.core.units.convert_units_to(
                             value, d[vv], context
                         )
-                logging.info(
-                    f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
-                )
+                msg = f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
+                logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv]
                     d_out[out.name] = out.clip(min_value, max_value)
@@ -550,12 +575,12 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
                 d_out.attrs.update(dict(history=history))
             elif clip_values is False:
-                logging.info(
-                    f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
-                )
+                msg = f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
+                logging.info(msg)
                 continue
             else:
-                logging.info(f"No clipping of values needed for `{vv}` in `{p}`.")
+                msg = f"No clipping of values needed for `{vv}` in `{p}`."
+                logging.info(msg)
                 continue
 
     # Copy unconverted variables
@@ -571,15 +596,17 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     strict_time = "_strict_time"
 
     if "time" not in m["dimensions"].keys():
-        logging.warning(f"No time corrections listed for project `{p}`. Continuing...")
+        msg = f"No time corrections listed for project `{p}`. Continuing..."
+        logging.warning(msg)
         return d
 
     if "time" not in list(d.variables.keys()):
-        logging.info(
+        msg = (
             "No time dimension among data variables: "
             f"{' ,'.join([str(v) for v in d.variables.keys()])}. "
             "Continuing..."
         )
+        logging.info(msg)
         return d
 
     if key in m["dimensions"]["time"].keys():
@@ -592,7 +619,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 if m["dimensions"]["time"].get(strict_time):
                     raise ValueError(msg)
                 else:
-                    logging.warning(f"{msg} Continuing...")
+                    msg = f"{msg} Continuing..."
+                    logging.warning(msg)
                     return d
 
         correct_time_entry = m["dimensions"]["time"][key]
@@ -603,7 +631,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if isinstance(correct_times, list):
                 correct_times = [parse_offset(t)[1] for t in correct_times]
             if correct_times is None:
-                logging.warning(f"No expected times set for specified project `{p}`.")
+                msg = f"No expected times set for specified project `{p}`."
+                logging.warning(msg)
         elif isinstance(correct_time_entry, list):
             correct_times = correct_time_entry
         else:
@@ -621,7 +650,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 error_msg = f"{error_msg}."
             raise ValueError(error_msg)
 
-        logging.info(f"Resampling dataset with time frequency: {freq_found}.")
+        msg = f"Resampling dataset with time frequency: {freq_found}."
+        logging.info(msg)
 
         with xr.set_options(keep_attrs=True):
             d_out = d.assign_coords(
@@ -783,9 +813,9 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if p in miranda_version.keys():
                 header["miranda_version"] = __miranda_version__
         else:
-            logging.warning(
-                f"`_miranda_version` not set for project `{p}`. Not appending."
-            )
+            msg = f"`_miranda_version` not set for project `{p}`. Not appending."
+
+            logging.warning(msg)
     if "_miranda_version" in header:
         del header["_miranda_version"]
 
@@ -807,9 +837,9 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if p in header[field]:
                 attr_treatment = header[field][p]
             else:
-                logging.warning(
-                    f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
-                )
+                msg = f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
+
+                logging.warning(msg)
                 continue
         elif isinstance(header[field], dict):
             attr_treatment = header[field]
@@ -827,9 +857,9 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 del d.attrs[ff]
         else:
             if field[1:] in d.attrs:
-                logging.warning(
-                    f"Overwriting `{field[1:]}` based on JSON configuration."
-                )
+                msg = f"Overwriting `{field[1:]}` based on JSON configuration."
+
+                logging.warning(msg)
             header[field[1:]] = attr_treatment
 
         del header[field]

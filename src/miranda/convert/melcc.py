@@ -6,12 +6,13 @@ import datetime as dt
 import logging.config
 import os
 import re
+import subprocess  # noqa: S404
 import warnings
 from argparse import ArgumentParser
+from collections import defaultdict
 from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
-from subprocess import run
 from typing import Any
 
 import numpy as np
@@ -84,9 +85,27 @@ def parse_var_code(vcode: str) -> dict[str, Any]:
     }
 
 
+def _validate_db_file(db_file) -> list[str]:
+    """Validate the database file and ensure that input is trustworthy."""
+    if len(db_file) > 1:
+        raise ValueError("Only one database file can be processed at a time.")
+    if not Path(db_file).is_file():
+        raise FileNotFoundError(f"File {db_file} not found.")
+    return db_file
+
+
 def list_tables(db_file):
     """List the tables of an MDB file."""
-    res = run(["mdb-tables", db_file], capture_output=True, encoding="utf-8")
+    try:
+        res = subprocess.run(  # noqa: S603
+            ["mdb-tables", _validate_db_file(db_file)],
+            capture_output=True,
+            encoding="utf-8",
+        )
+    except subprocess.CalledProcessError as e:
+        raise ValueError(
+            f"Calling mdb-tables on {db_file} failed with code {e.returncode}: {e.stderr}"
+        )
     if res.returncode != 0:
         raise ValueError(
             f"Calling mdb-tables on {db_file} failed with code {res.returncode}: {res.stderr}"
@@ -106,12 +125,22 @@ def read_table(db_file: str | os.PathLike, tab: str | os.PathLike) -> xarray.Dat
     -------
     xarray.Dataset
     """
-    res = run(
-        ["mdb-export", "-T", "%Y-%m-%dT%H:%M:%S", db_file, tab.upper()],
-        capture_output=True,
-        encoding="utf-8",
-        check=True,
-    )
+    try:
+        res = subprocess.run(  # noqa: S603
+            [
+                "mdb-export",
+                "-T",
+                "%Y-%m-%dT%H:%M:%S",
+                _validate_db_file(db_file),
+                tab.upper(),
+            ],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
+        raise ValueError(msg)
     df = (
         pd.read_csv(
             StringIO(res.stdout),
@@ -130,11 +159,11 @@ def read_table(db_file: str | os.PathLike, tab: str | os.PathLike) -> xarray.Dat
         .drop(columns=["STATUT_APPROBATION"])  # I don't know what this is...
         .set_index(["station", "time"])
     )
-    NaT = df.index.get_level_values("time").isnull().sum()
-    if NaT > 0:
-        logger.warning(
-            f"{NaT} values dropped because of unparseable timestamps (probably data from before 1900)."
-        )
+    nat = df.index.get_level_values("time").isnull().sum()
+    if nat > 0:
+        msg = f"{nat} values dropped because of unparseable timestamps (probably data from before 1900)."
+
+        logger.warning(msg)
         df = df[df.index.get_level_values("time").notnull()]
     return df[~df.index.duplicated()].to_xarray()
 
@@ -150,12 +179,22 @@ def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
     -------
     pandas.DataFrame
     """
-    res = run(
-        ["mdb-export", "-T", "%Y-%m-%dT%H:%M:%S", db_file, "STATIONs"],
-        capture_output=True,
-        encoding="utf-8",
-        check=True,
-    )
+    try:
+        res = subprocess.run(  # noqa: S603
+            [
+                "mdb-export",
+                "-T",
+                "%Y-%m-%dT%H:%M:%S",
+                _validate_db_file(db_file),
+                "STATIONs",
+            ],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
+        raise ValueError(msg)
     df = pd.read_csv(
         StringIO(res.stdout),
         parse_dates=["Date_Ouverture", "Date_Fermeture"],
@@ -190,23 +229,27 @@ def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
     return da.isel(station=~da.indexes["station"].duplicated())
 
 
-def read_definitions(dbfile: str):
+def read_definitions(db_file: str):
     """Read variable definition file using mdbtools.
 
     Parameters
     ----------
-    dbfile: str
+    db_file: str
 
     Returns
     -------
     pandas.DataFrame
     """
-    res = run(
-        ["mdb-export", dbfile, "DDs"],
-        capture_output=True,
-        encoding="utf-8",
-        check=True,
-    )
+    try:
+        res = subprocess.run(  # noqa: S603
+            ["mdb-export", _validate_db_file(db_file), "DDs"],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
+        raise ValueError(msg)
     definitions = (
         pd.read_csv(StringIO(res.stdout))
         .rename(
@@ -252,7 +295,8 @@ def convert_mdb(
     for tab in tables:
         if table.startswith("gdb") or tab.startswith("~"):
             continue
-        logger.info(f"Parsing {database}:{tab}.")
+        msg = f"Parsing {database}:{tab}."
+        logger.info(msg)
         meta = parse_var_code(tab)
         code = meta["melcc_code"]
         existing = list(output.glob(f"*_{code}_MELCC_{meta['freq']}_*.nc"))
@@ -261,7 +305,8 @@ def convert_mdb(
                 raise ValueError(f"Found more than one existing file for table {code}!")
             file = existing[0]
             vname = file.stem.split(code)[0][:-1]
-            logger.info(f"File already exists {file}, skipping.")
+            msg = f"File already exists {file}, skipping."
+            logger.info(msg)
             outs[(vname, code)] = file
             continue
         raw = read_table(database, tab)
@@ -295,9 +340,9 @@ def convert_mdb(
             stat = stations.sel(station=raw.station)
         except KeyError:
             extra_stations = set(raw.station.values) - set(stations.station.values)
-            logger.error(
-                f"The following station number were not found in the station list : {sorted(list(extra_stations))}"
-            )
+            msg = f"The following station number were not found in the station list : {sorted(list(extra_stations))}"
+
+            logger.error(msg)
             raw = xr.merge([raw, xr.Dataset().assign(station=stations)]).sel(
                 station=raw.station
             )
@@ -368,7 +413,8 @@ def concat(
     """
     *vv, _, melcc, freq, _ = Path(files[0]).stem.split("_")
     vv = "_".join(vv)
-    logger.info(f"Concatening variables from {len(files)} files ({vv}).")
+    msg = f"Concatenating variables from {len(files)} files ({vv})."
+    logger.info(msg)
     # Magic one-liner to parse all date_start and date_end entries from the file names.
     dates_start, dates_end = list(
         zip(*[map(int, Path(file).stem.split("_")[-1].split("-")) for file in files])
@@ -378,7 +424,8 @@ def concat(
         / f"{vv}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
     )
     if outpath.is_file() and not overwrite:
-        logger.info(f"Already done in {outpath}. Skipping.")
+        msg = f"Already done in {outpath}. Skipping."
+        logger.info(msg)
         return outpath
 
     dss = dict()
@@ -623,12 +670,12 @@ if __name__ == "__main__":
     )
 
     if args.concat:
-        new_vars = {}
+        new_vars = defaultdict(list)
         for (new_var, table), path in outputs.items():
-            new_vars.setdefault(new_var, []).append(path)
+            new_vars[new_var].append(path)
 
         for new_var, fichiers in new_vars.items():
             try:
                 concat(fichiers, args.output, overwrite=not args.skip_existing)
-            except Exception as err:
+            except Exception as err:  # noqa: PERF203,BLE001
                 logger.error(err)

@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import logging
 import logging.config
-import subprocess
+import subprocess  # noqa: S404
 from functools import reduce
+from multiprocessing.managers import Value
 from pathlib import Path
 from types import GeneratorType
 
@@ -110,6 +111,12 @@ class StorageState:
 
         """
         # Make sure we have the full base path
+        if len(base_path) > 1:
+            raise ValueError("Only one base path is allowed.")
+        if not Path(base_path).is_dir():
+            msg = f"{base_path} is not a directory."
+            raise FileNotFoundError(msg)
+
         self.base_path = Path(base_path).absolute()
 
         # Get attributes from 'df' function if they are not specified
@@ -117,33 +124,37 @@ class StorageState:
             raise DiskSpaceError(f"Cannot analyze {self.base_path}.")
         if not Path("/bin/df").exists():
             raise DiskSpaceError("/bin/df does not exist.")
-        df_output = subprocess.run(
-            ["/bin/df", "-P", base_path, "|", "tail", "-1"], capture_output=True
-        )
+        try:
+            df_output = subprocess.run(  # noqa: S603
+                ["/bin/df", "-P", base_path, "|", "tail", "-1"], capture_output=True
+            )
+        except subprocess.CalledProcessError as e:
+            msg = f"df command failed for {base_path}: {e.stderr.strip()}"
+            raise DiskSpaceError(msg) from e
+        except OSError as e:
+            msg = f"OS error when running df: {e.strerror}"
+            raise DiskSpaceError(msg) from e
         if not df_output.stdout:
-            raise DiskSpaceError("/bin/df call failed.")
-        df_output_split = df_output.stdout.split()
-        if -1 == capacity:
-            try:
-                self.capacity = int(df_output_split[1]) * 1000
-            except Exception as e:
-                raise DiskSpaceError("/bin/df output not as expected.") from e
-        else:
-            self.capacity = capacity
-        if -1 == used_space:
-            try:
-                self.used_space = int(df_output_split[2]) * 1000
-            except Exception as e:
-                raise DiskSpaceError("/bin/df output not as expected.") from e
-        else:
-            self.used_space = used_space
-        if -1 == free_space:
-            try:
-                self.free_space = int(df_output_split[3]) * 1000
-            except Exception as e:
-                raise DiskSpaceError("/bin/df output not as expected.") from e
-        else:
-            self.free_space = free_space
+            raise DiskSpaceError("df command returned no output.")
+
+        # Split the output and handle potential IndexError
+        df_output_split = df_output.stdout.splitlines()[-1].split()
+        if len(df_output_split) < 4:
+            raise DiskSpaceError("df output not in expected format.")
+
+        # Parse the df output, handling possible conversion errors
+        try:
+            self.capacity = (
+                int(df_output_split[1]) * 1000 if capacity == -1 else capacity
+            )
+            self.used_space = (
+                int(df_output_split[2]) * 1000 if used_space == -1 else used_space
+            )
+            self.free_space = (
+                int(df_output_split[3]) * 1000 if free_space == -1 else free_space
+            )
+        except (ValueError, IndexError) as e:
+            raise DiskSpaceError("df output could not be parsed as expected.") from e
 
 
 def size_evaluation(file_list: list[str | FileMeta | Path]) -> int:

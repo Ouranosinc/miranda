@@ -162,13 +162,13 @@ def generic_extract_archive(
                     files.append(Path(output_dir.join(arch)))
                 elif file.suffix == ".tar":
                     with tarfile.open(arch, mode="r") as tar:
-                        tar.extractall(path=output_dir)
+                        safe_extract(tar, path=output_dir)
                         files.extend(
                             [Path(output_dir).joinpath(f) for f in tar.getnames()]
                         )
                 elif file.suffix == ".zip":
                     with zipfile.ZipFile(arch, mode="r") as zf:
-                        zf.extractall(path=output_dir)
+                        safe_extract(zf, path=output_dir)
                         files.extend(
                             [Path(output_dir).joinpath(f) for f in zf.namelist()]
                         )
@@ -187,7 +187,8 @@ def generic_extract_archive(
                     logging.warning(msg)
                     warnings.warn(msg, UserWarning)
                 else:
-                    logging.debug(f'File extension "{file}" unknown')
+                    msg = f'File extension "{file}") unknown'
+                    logging.debug(msg)
             except OSError as e:
                 msg = f"Failed to extract sub archive {arch}: {e}"
                 logging.error(msg)
@@ -244,6 +245,8 @@ def list_paths_with_elements(
         try:
             path_content = [f for f in Path(base_path).iterdir()]
         except NotADirectoryError:
+            msg = "Not a directory. Skipping..."
+            logging.debug(msg)
             continue
         path_content.sort()
         next_base_paths = [
@@ -368,3 +371,43 @@ def read_privileges(location: str | Path, strict: bool = False) -> bool:
         if strict:
             raise
         return False
+
+
+# Function addressing exploit CVE-2007-4559
+def is_within_directory(
+    directory: str | os.PathLike, target: str | os.PathLike
+) -> bool:
+    abs_directory = Path(directory).resolve()
+    abs_target = Path(target).resolve()
+
+    prefix = os.path.commonprefix([abs_directory, abs_target])
+    return prefix == abs_directory
+
+
+# Function addressing exploit CVE-2007-4559 for both tar and zip files
+def safe_extract(
+    archive: tarfile.TarFile | zipfile.ZipFile,
+    path: str = ".",
+    members=None,
+    *,
+    numeric_owner=False,
+) -> None:
+    # Handle tarfile extraction
+    if isinstance(archive, tarfile.TarFile):
+        for member in archive.getmembers():
+            member_path = Path(path).joinpath(member.name)
+            if not is_within_directory(path, member_path):
+                raise Exception("Attempted Path Traversal in Tar File")
+        archive.extractall(  # noqa: S202
+            path, members=members, numeric_owner=numeric_owner
+        )
+
+    # Handle zipfile extraction
+    elif isinstance(archive, zipfile.ZipFile):
+        for member in archive.namelist():
+            member_path = Path(path).joinpath(member)
+            if not is_within_directory(path, member_path):
+                raise Exception("Attempted Path Traversal in Zip File")
+        archive.extractall(path, members=members)  # noqa: S202
+    else:
+        raise TypeError("Archive must be a TarFile or ZipFile object.")

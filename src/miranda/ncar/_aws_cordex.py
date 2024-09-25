@@ -171,7 +171,7 @@ def cordex_aws_download(
                         mapped = json.loads(vals)
                         if isinstance(mapped, dict):
                             new_attrs[key] = mapped.get(str(member.values), "")
-                    except JSONDecodeError:
+                    except JSONDecodeError:  # noqa: PERF203
                         new_attrs[key] = vals
                     except TypeError:
                         if len(vals) == 1:

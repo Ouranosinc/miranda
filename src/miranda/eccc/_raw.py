@@ -79,10 +79,11 @@ def load_station_metadata(meta: str | os.PathLike) -> xr.Dataset:
 
 def _remove_duplicates(ds):
     if any(ds.get_index("time").duplicated()):
-        logging.info(
+        msg = (
             f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
             f"for station {ds.station_id.values}. Assuming first value."
         )
+        logging.info(msg)
     return ds.sel(time=~ds.get_index("time").duplicated())
 
 
@@ -122,23 +123,24 @@ def _convert_station_file(
             data_files = generic_extract_archive(fichier, output_dir=temp_folder)
         else:
             data_files = [fichier]
-        logging.info(f"Processing file: {fichier}.")
+        msg = f"Processing file: {fichier}."
+        logging.info(msg)
 
         size_limit = 1 * GiB
 
         for data in data_files:
             if file_size(data) > size_limit and "dask" in sys.modules:
-                logging.info(
-                    f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
-                )
+                msg = f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
+
+                logging.info(msg)
                 pandas_reader = dd
                 using_dask_array = True
                 chunks = dict(blocksize=200 * MiB)
                 client = ProgressBar
             else:
-                logging.info(
-                    f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
-                )
+                msg = f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
+
+                logging.info(msg)
                 pandas_reader = pd
                 chunks = dict()
                 using_dask_array = False
@@ -162,15 +164,17 @@ def _convert_station_file(
                         df = c.persist(df)
 
                 except FileNotFoundError:
-                    logging.error(f"File {data} was not found.")
+                    msg = f"File {data} was not found."
+                    logging.error(msg)
                     errored_files.append(data)
                     return
 
-                except UnicodeDecodeError as e:
-                    logging.error(
+                except UnicodeDecodeError:
+                    msg = (
                         f"File {data.name} was unable to be read. "
-                        f"This is probably an issue with the file: {e}"
+                        f"This is probably an issue with the file."
                     )
+                    logging.error(msg)
                     errored_files.append(data)
                     return
 
@@ -189,13 +193,14 @@ def _convert_station_file(
                             df_code["code_var"] == variable_code
                         ).any()
                     if not has_variable_codes:
-                        logging.info(
-                            f"Variable `{nc_name}` not found for station code: {code} in file {data}. Continuing..."
-                        )
+                        msg = f"Variable `{nc_name}` not found for station code: {code} in file {data}. Continuing..."
+
+                        logging.info(msg)
                         continue
 
                     # Perform the data treatment
-                    logging.info(f"Converting `{nc_name}` for station code: {code}")
+                    msg = f"Converting `{nc_name}` for station code: {code}."
+                    logging.info(msg)
 
                     # Dump the data into a DataFrame
                     df_var = df_code[df_code["code_var"] == variable_code].copy()
@@ -218,12 +223,14 @@ def _convert_station_file(
                     try:
                         val = np.asarray(dfd.values, float)
                     except ValueError as e:
-                        logging.error(f"{e} raised from {dfd}, continuing...")
+                        msg = f"Issues with {dfd}. Continuing..."
+                        logging.error(msg)
                         continue
                     try:
                         flag = np.asarray(dff.values, str)
-                    except ValueError as e:
-                        logging.error(f"{e} raised from {dff}, continuing...")
+                    except ValueError:
+                        msg = f"Issues with {dff}. Continuing..."
+                        logging.error(msg)
                         continue
                     mask = np.isin(flag, missing_flags)
                     val[mask] = np.nan
@@ -322,7 +329,8 @@ def _convert_station_file(
                     )
 
                     if station_folder.joinpath(f_nc).exists():
-                        logging.warning(f"File `{f_nc}` already exists. Continuing...")
+                        msg = f"File `{f_nc}` already exists. Continuing..."
+                        logging.warning(msg)
 
                     history = (
                         f"{dt.now().strftime('%Y-%m-%d %X')} converted from flat station file "
@@ -365,7 +373,8 @@ def _convert_station_file(
                     )
                     ds.attrs.update(global_attrs)
 
-                    logging.info(f"Exporting to: {station_folder.joinpath(f_nc)}")
+                    msg = f"Exporting to: {station_folder.joinpath(f_nc)}"
+                    logging.info(msg)
                     ds.to_netcdf(station_folder.joinpath(f_nc))
                     del ds
                     del val
@@ -440,10 +449,11 @@ def convert_flat_files(
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
-        logging.info(
+        msg = (
             f"Collecting files for variable '{metadata['standard_name']}' "
             f"(filenames containing '{metadata['_table_name']}')."
         )
+        logging.info(msg)
         list_files = list()
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
@@ -471,11 +481,12 @@ def convert_flat_files(
             pool.join()
 
         if errored_files:
-            logging.warning(
-                "Some files failed to be properly parsed:\n", ", ".join(errored_files)
-            )
+            msg = "Some files failed to be properly parsed:\n", ", ".join(errored_files)
 
-    logging.warning(f"Process completed in {time.time() - func_time:.2f} seconds")
+            logging.warning(msg)
+
+    msg = f"Process completed in {time.time() - func_time:.2f} seconds"
+    logging.warning()
 
 
 def aggregate_stations(
@@ -551,7 +562,8 @@ def aggregate_stations(
     for variable_code in variables:
         info = cf_station_metadata(variable_code)
         variable_name = info["nc_name"]
-        logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
+        msg = f"Merging `{variable_name}` using `{time_step}` time step."
+        logging.info(msg)
 
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
@@ -576,9 +588,9 @@ def aggregate_stations(
                     pool.join()
 
                 zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
-                logging.info(
-                    f"Found {len(zarrs_found)} intermediary aggregation files."
-                )
+                msg = f"Found {len(zarrs_found)} intermediary aggregation files."
+
+                logging.info(msg)
 
                 ds = xr.open_mfdataset(
                     zarrs_found,
@@ -623,18 +635,19 @@ def aggregate_stations(
                 valid_stations = list(sorted(ds.station_id.values))
                 valid_stations_count = len(valid_stations)
 
-                logging.info(f"Processing stations for variable `{variable_name}`.")
+                msg = f"Processing stations for variable `{variable_name}`."
+                logging.info(msg)
 
                 if len(station_file_codes) == 0:
-                    logging.error(
-                        f"No stations were found containing variable filename `{variable_name}`. Exiting."
-                    )
+                    msg = f"No stations were found containing variable filename `{variable_name}`. Exiting."
+                    logging.error(msg)
                     return
 
-                logging.info(
+                msg = (
                     f"Files exist for {len(station_file_codes)} ECCC stations. "
                     f"Metadata found for {valid_stations_count} stations. "
                 )
+                logging.info(msg)
 
                 # FIXME: Is this still needed?
                 # logging.info("Preparing the NetCDF time period.")
@@ -684,7 +697,8 @@ def aggregate_stations(
                 del ds
 
         else:
-            logging.info(f"No files found for variable: `{variable_name}`.")
+            msg = f"No files found for variable: `{variable_name}`."
+            logging.info(msg)
 
     runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
     logging.warning(runtime)
@@ -710,10 +724,11 @@ def _tmp_zarr(
     tempdir: str | os.PathLike,
     group: int | None = None,
 ) -> None:
-    logging.info(
+    msg = (
         f"Processing batch of files {iterable + 1}"
         f"{' of ' + str(group) if group is not None else ''}."
     )
+    logging.info(msg)
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     try:
@@ -722,9 +737,9 @@ def _tmp_zarr(
         )
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])
-        logging.error(
-            f"Issues found with the following files: [{errored_nc_files}]: {e}"
-        )
+        msg = f"Issues found with the following files: [{errored_nc_files}]: {e}"
+
+        logging.error(msg)
         return
 
     ds = ds.assign_coords(
@@ -752,9 +767,11 @@ def _combine_years(
 ) -> None:
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
     if len(nc_files):
-        logging.info(
+        msg = (
             f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
         )
+
+        logging.info(msg)
     else:
         msg = f"No readings found for station code {Path(station_folder).name}. Continuing..."
 
@@ -790,7 +807,7 @@ def _combine_years(
                     for y in years:
                         try:
                             nc_files.remove(years_found[y])
-                        except (KeyError, ValueError) as err:
+                        except (KeyError, ValueError) as err:  # noqa: PERF203
                             logging.error(err)
                             continue
 

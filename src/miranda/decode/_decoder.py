@@ -154,7 +154,8 @@ class Decoder:
                 "The decoder 'project' is not set; Decoding step will be much slower."
             )
         else:
-            logging.info(f"Deciphering metadata with project = '{self.project}'")
+            msg = f"Deciphering metadata with project = '{self.project}'"
+            logging.info(msg)
 
         with mp.Manager() as manager:
             _file_facets = manager.dict()
@@ -183,7 +184,8 @@ class Decoder:
         try:
             variable_name = cls._decode_primary_variable(file)
         except DecoderError:
-            logging.error(f"Unable to open dataset: {file.name}")
+            msg = f"Unable to open dataset: {file.name}"
+            logging.error(msg)
             raise
 
         datetimes = file_name.split("_")[-1]
@@ -331,12 +333,13 @@ class Decoder:
                     time_units = data["time"].units
                     potential_time = time_units.split()[0]
                 else:
-                    logging.warning(
-                        f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
-                    )
+                    msg = f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
+
+                    logging.warning(msg)
                     potential_time = "fx"
             if potential_time in ["ymon", "yseas", "fixed", "fx"]:
-                logging.warning(f"Found `{potential_time}`. Frequency is likely `fx`.")
+                msg = f"Found `{potential_time}`. Frequency is likely `fx`."
+                logging.warning(msg)
                 if field == "frequency":
                     return "fx"
                 if field == "timedelta":
@@ -382,14 +385,14 @@ class Decoder:
                         time_units = data["time"].units
                         potential_time = time_units.split()[0]
                     else:
-                        logging.warning(
-                            f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
-                        )
+                        msg = f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
+
+                        logging.warning(msg)
                         potential_time = "fx"
                 if potential_time in ["ymon", "yseas", "fixed", "fx"]:
-                    logging.warning(
-                        f"Found `{potential_time}`. Frequency is likely `fx`."
-                    )
+                    msg = f"Found `{potential_time}`. Frequency is likely `fx`."
+
+                    logging.warning(msg)
                     if "fx" in file_parts or "fixed" in file_parts:
                         if field == "frequency":
                             return "fx"
@@ -402,10 +405,11 @@ class Decoder:
                 elif potential_times:
                     break
 
-            logging.warning(
+            msg = (
                 f"Frequency from metadata (`{potential_time}`) not found in filename (`{Path(file).name}`): "
                 "Performing more rigorous frequency checks."
             )
+            logging.warning(msg)
             if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
                 engine = "netcdf4"
             elif Path(file).is_dir() and Path(file).suffix == ".zarr":
@@ -433,25 +437,25 @@ class Decoder:
                 _, found_freq = get_time_frequency(_ds.time)
 
             if found_freq in potential_times:
-                logging.warning(
+                msg = (
                     "Time frequency found in dataset on analysis was found in filename. "
                     f"Metadata for `{Path(file).name} is probably incorrect. "
                     f"Basing fields on `{found_freq}`."
                 )
+                logging.warning(msg)
                 return time_dictionary[found_freq]
             elif found_freq in ["month", "mon"]:
                 for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
                     if f in potential_times:
-                        logging.warning(
-                            "Month-like time frequency found in dataset on analysis was found in filename. "
-                            f"Basing fields on `{f}`."
-                        )
+                        msg = f"Month-like time frequency found in dataset on analysis was found in filename. Basing fields on `{f}`."
+                        logging.warning(msg)
                         return time_dictionary[f]
             else:
-                logging.warning(
+                msg = (
                     "Time frequency found in dataset on analysis was not found in filename. "
                     f"Basing fields on `{found_freq}`."
                 )
+                logging.warning(msg)
                 return time_dictionary[found_freq]
         raise DecoderError(f"Time frequency indiscernible for file `{file}`.")
 
@@ -536,7 +540,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -599,7 +603,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -638,7 +642,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -676,7 +680,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -793,7 +797,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         try:
@@ -849,7 +853,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -887,7 +891,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -928,7 +932,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets
@@ -969,7 +973,7 @@ class Decoder:
             )
             facets["date_start"] = date_parser(date)
             facets["date_end"] = date_parser(date, end_of_period=True)
-        except DecoderError:
+        except DecoderError:  # noqa: S110
             pass
 
         return facets

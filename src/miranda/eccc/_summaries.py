@@ -276,7 +276,7 @@ def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
     tuple[dict, pd.DataFrame]
     """
     # Read the whole file
-    with open(file, encoding="utf-8-sig") as fi:
+    with Path(file).open("r", encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
     # Find each element in the header

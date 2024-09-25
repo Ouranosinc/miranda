@@ -47,7 +47,8 @@ def select_by_date_modified(
     selected_files = list()
     for file in files:
         if creation_date(file) == date_selected:
-            logging.info(f"Selecting {file}.")
+            msg = f"Selecting {file}."
+            logging.info(msg)
             selected_files.append(file)
 
     return selected_files

@@ -321,7 +321,8 @@ ignore = [
   "COM", # commas
   "D205", # blank-line-after-summary
   "D400", # ends-in-period
-  "D401" # non-imperative-mood
+  "D401", # non-imperative-mood
+  "S607" # start-process-with-partial-path
 ]
 preview = true
 select = [

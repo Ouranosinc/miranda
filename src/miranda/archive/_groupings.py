@@ -42,7 +42,8 @@ def group_by_length(
     -------
     list[list[pathlib.Path]]
     """
-    logging.info(f"Creating groups of {size} files")
+    msg = f"Creating groups of {size} files"
+    logging.info(msg)
     if sort:
         files = [Path(f) for f in files]
         files.sort()
@@ -58,7 +59,8 @@ def group_by_length(
         pass
     else:
         grouped_list.append(group.copy())
-    logging.info(f"Divided files into {len(grouped_list)} groups.")
+    msg = f"Divided files into {len(grouped_list)} groups."
+    logging.info(msg)
     return grouped_list
 
 
@@ -100,9 +102,9 @@ def group_by_deciphered_date(
             continue
 
     if dates and total == len(files):
-        logging.info(
-            f"All files have been grouped by date. {len(dates)} groups created."
-        )
+        msg = f"All files have been grouped by date. {len(dates)} groups created."
+
+        logging.info(msg)
         return dict(dates)
 
     if dates and total != len(files):
@@ -128,9 +130,9 @@ def group_by_size(
     -------
     list[list[pathlib.Path]]
     """
-    logging.info(
-        f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
-    )
+    msg = f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
+
+    logging.info(msg)
 
     files = [Path(f) for f in files]
     files.sort()
@@ -176,7 +178,7 @@ def group_by_subdirectories(
         group_name = Path(f).relative_to(within).parent
         groups.setdefault(group_name, list()).append(f)
 
-    logging.info(
-        f"File subdirectories found. Proceeding with: `{', '.join([str(key) for key in groups.keys()])}`."
-    )
+    msg = f"File subdirectories found. Proceeding with: `{', '.join([str(key) for key in groups.keys()])}`."
+
+    logging.info(msg)
     return groups

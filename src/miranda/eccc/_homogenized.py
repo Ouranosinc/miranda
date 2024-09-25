@@ -96,9 +96,9 @@ def convert_ahccd(
 
                 ds_out.to_netcdf(outfile, engine="h5netcdf")
             else:
-                logger.warning(
-                    f"metadata info for station {ff.name} not found : skipping"
-                )
+                msg = f"metadata info for station {ff.name} not found : skipping"
+
+                logger.warning(msg)
 
     # merge individual stations to single .nc file
     # variable

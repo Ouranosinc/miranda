@@ -56,7 +56,8 @@ def tigge_convert(
             tf = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
 
             with ProgressBar():
-                logging.info(f"converting: {infile.name}")
+                msg = f"Converting `{infile.name}`."
+                logging.info(msg)
                 ds.to_netcdf(
                     tf.name, format="NETCDF4", engine="netcdf4", encoding=encoding
                 )

@@ -104,7 +104,7 @@ def create_archive(
                     msg = f"Tarring {Path(name).name}."
                     logging.info(msg)
                     tar.add(Path(name).relative_to(Path.cwd()), recursive=recursive)
-                except OSError as e:
+                except OSError as e:  # noqa: PERF203
                     msg = f'File "{Path(name).name}" failed to be tarred: {e}'
                     logging.warning(msg)
             tar.close()
