@@ -39,7 +39,8 @@ ISO_8601 = (
 
 
 class HiddenPrints:
-    """Special context manager for hiding print statements.
+    """
+    Special context manager for hiding print statements.
 
     Notes
     -----
@@ -346,8 +347,9 @@ def read_privileges(location: str | Path, strict: bool = False) -> bool:
 
     Parameters
     ----------
-    location: str or Path
-    strict: bool
+    location : str or Path
+
+    strict : bool
 
     Returns
     -------
@@ -373,10 +375,28 @@ def read_privileges(location: str | Path, strict: bool = False) -> bool:
         return False
 
 
-# Function addressing exploit CVE-2007-4559
-def is_within_directory(
+def _is_within_directory(
     directory: str | os.PathLike, target: str | os.PathLike
 ) -> bool:
+    """
+    Check if a target path is within a directory.
+
+    Parameters
+    ----------
+    directory : str or os.PathLike
+        The directory to check.
+    target : str or os.PathLike
+        The target path to check.
+
+    Returns
+    -------
+    bool
+        Whether the target path is within the directory.
+
+    Notes
+    -----
+    Function addressing exploit CVE-2007-4559 for both tar and zip files.
+    """
     abs_directory = Path(directory).resolve()
     abs_target = Path(target).resolve()
 
@@ -384,29 +404,44 @@ def is_within_directory(
     return prefix == abs_directory
 
 
-# Function addressing exploit CVE-2007-4559 for both tar and zip files
 def safe_extract(
     archive: tarfile.TarFile | zipfile.ZipFile,
     path: str = ".",
-    members=None,
+    members: list[str] | None = None,
     *,
-    numeric_owner=False,
+    numeric_owner: bool = False,
 ) -> None:
-    # Handle tarfile extraction
+    """
+    Extract all members from the archive to the current working directory or directory path.
+
+    Parameters
+    ----------
+    archive : TarFile or ZipFile
+        The archive to extract.
+    path : str, optional
+        The path to extract the archive to.
+    members : list of str, optional
+        The members to extract.
+    numeric_owner : bool
+        Whether to extract the archive with numeric owner. Default: False.
+
+    Notes
+    -----
+    Function addressing exploit CVE-2007-4559 for both tar and zip files.
+    """
     if isinstance(archive, tarfile.TarFile):
         for member in archive.getmembers():
             member_path = Path(path).joinpath(member.name)
-            if not is_within_directory(path, member_path):
+            if not _is_within_directory(path, member_path):
                 raise Exception("Attempted Path Traversal in Tar File")
         archive.extractall(  # noqa: S202
             path, members=members, numeric_owner=numeric_owner
         )
 
-    # Handle zipfile extraction
     elif isinstance(archive, zipfile.ZipFile):
         for member in archive.namelist():
             member_path = Path(path).joinpath(member)
-            if not is_within_directory(path, member_path):
+            if not _is_within_directory(path, member_path):
                 raise Exception("Attempted Path Traversal in Zip File")
         archive.extractall(path, members=members)  # noqa: S202
     else:

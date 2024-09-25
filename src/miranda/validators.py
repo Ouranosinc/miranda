@@ -151,11 +151,18 @@ if VALIDATION_ENABLED:
 
 
 def url_validate(target: str) -> typing.Match[str] | None:
-    """Validate whether a supplied URL is reliably written.
+    """
+    Validate whether a supplied URL is reliably written.
 
     Parameters
     ----------
     target : str
+        The URL to validate.
+
+    Returns
+    -------
+    typing.Match[str], optional
+        The match object if the URL is valid.
 
     References
     ----------
