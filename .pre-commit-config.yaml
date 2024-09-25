@@ -67,7 +67,7 @@ repos:
     rev: v1.8.0
     hooks:
       - id: numpydoc-validation
-        exclude: ^docs/|^tests/|^templates/
+        exclude: ^docs/|^tests/|^templates/|.*\/_.*\.py$
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
