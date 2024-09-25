@@ -12,7 +12,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/Zeitsperre/miranda/issues.
+Report bugs at https://github.com/Ouranosinc/miranda/issues.
 
 If you are reporting a bug, please include:
 
@@ -38,7 +38,7 @@ miranda could always use more documentation, whether as part of the official mir
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/Zeitsperre/miranda/issues.
+The best way to send feedback is to file an issue at https://github.com/Ouranosinc/miranda/issues.
 
 If you are proposing a feature:
 
@@ -80,7 +80,7 @@ Ready to contribute? Here's how to set up ``miranda`` for local development.
 
         .. code-block:: console
 
-            git clone git@github.com:Zeitsperre/miranda.git
+            git clone git@github.com:Ouranosinc/miranda.git
 
 #. Install your local copy into a development environment. You can create a new Anaconda development environment with:
 
@@ -237,5 +237,5 @@ This will create or update the French translation files in the `docs/locales/fr/
 Code of Conduct
 ---------------
 
-Please note that this project is released with a `Contributor Code of Conduct <https://github.com/Zeitsperre/miranda/blob/main/CODE_OF_CONDUCT.md>`_.
+Please note that this project is released with a `Contributor Code of Conduct <https://github.com/Ouranosinc/miranda/blob/main/CODE_OF_CONDUCT.md>`_.
 By participating in this project you agree to abide by its terms.

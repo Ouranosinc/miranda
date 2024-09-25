@@ -12,11 +12,6 @@ Installation
             conda install -n base conda-libmamba-solver
             conda config --set solver libmamba
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
-
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
-
 Stable release
 --------------
 
@@ -41,8 +36,7 @@ For better RAM usage when converting datasets, some additional/optional GIS libr
 
         python -m pip install miranda[gis]
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
+If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
 
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: https://docs.python-guide.org/starting/installation/
@@ -110,8 +104,7 @@ The sources for miranda can be downloaded from the `Github repo`_.
 
     These commands should work most of the time, but if big changes are made to the repository, you might need to remove the environment and create it again.
 
-
-.. _Github repo: https://github.com/Zeitsperre/miranda
+.. _Github repo: https://github.com/Ouranosinc/miranda
 
 Creating a Conda environment
 ----------------------------
