@@ -1,4 +1,5 @@
 """Select files by the date on which they were last modified."""
+
 from __future__ import annotations
 
 import logging

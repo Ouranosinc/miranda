@@ -59,7 +59,20 @@ class HiddenPrints:
 
 
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
-    """Generate lists of `chunk_size` elements from `iterable`.
+    """
+    Generate lists of `chunk_size` elements from `iterable`.
+
+    Parameters
+    ----------
+    iterable : Sequence
+        The iterable to chunk.
+    chunk_size : int
+        The size of the chunks.
+
+    Yields
+    ------
+    Iterable
+        The chunked iterable.
 
     Notes
     -----
@@ -78,9 +91,11 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
             break
 
 
+# FIXME: The following function could probably be replaced or at least placed closer to its usages.
 @contextmanager
 def working_directory(directory: str | Path) -> None:
-    """Change the working directory within a context object.
+    """
+    Change the working directory within a context object.
 
     This function momentarily changes the working directory within the context and reverts to the file working directory
     when the code block it is acting upon exits
@@ -88,10 +103,7 @@ def working_directory(directory: str | Path) -> None:
     Parameters
     ----------
     directory : str or pathlib.Path
-
-    Returns
-    -------
-    None
+        The directory to temporarily change to.
     """
     owd = os.getcwd()  # noqa: PTH109
 
@@ -105,19 +117,22 @@ def working_directory(directory: str | Path) -> None:
         os.chdir(owd)
 
 
+# FIXME: The following function could probably be replaced or at least placed closer to its usages.
 def single_item_list(iterable: Iterable) -> bool:
-    """Ascertain whether a list has exactly one entry.
+    """
+    Ascertain whether a list has exactly one entry.
 
     See: https://stackoverflow.com/a/16801605/7322852
 
     Parameters
     ----------
     iterable : Iterable
+        The list to check.
 
     Returns
     -------
     bool
-
+        Whether the list is a single item.
     """
     iterator = iter(iterable)
     has_true = any(iterator)  # consume from "i" until first true or it's exhausted
@@ -131,19 +146,20 @@ def generic_extract_archive(
     resources: str | Path | list[bytes | str | Path],
     output_dir: str | Path | None = None,
 ) -> list[Path]:
-    """Extract archives (tar/zip) to a working directory.
+    """
+    Extract archives (tar/zip) to a working directory.
 
     Parameters
     ----------
     resources : str or Path or list of bytes or str or Path
-        list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
+        List of archive files (if netCDF files are in list, they are passed and returned as well in the return).
     output_dir : str or Path, optional
-        string or Path to a working location (default: temporary folder).
+        String or Path to a working location (default: temporary folder).
 
     Returns
     -------
     list
-        List of original or of extracted files
+        The list of original or of extracted files.
     """
     archive_types = [".gz", ".tar", ".zip", ".7z"]
     output_dir = output_dir or tempfile.gettempdir()
@@ -206,7 +222,8 @@ def generic_extract_archive(
 def list_paths_with_elements(
     base_paths: str | list[str] | os.PathLike[str], elements: list[str]
 ) -> list[dict]:
-    """List a given path structure.
+    """
+    List a given path structure.
 
     Parameters
     ----------
@@ -269,7 +286,8 @@ def list_paths_with_elements(
 def publish_release_notes(
     style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
 ) -> str | None:
-    """Format release history in Markdown or ReStructuredText.
+    """
+    Format release history in Markdown or ReStructuredText.
 
     Parameters
     ----------
@@ -282,6 +300,7 @@ def publish_release_notes(
     Returns
     -------
     str, optional
+        The formatted string if a file object is not provided.
 
     Notes
     -----
@@ -343,18 +362,20 @@ def publish_release_notes(
 
 
 def read_privileges(location: str | Path, strict: bool = False) -> bool:
-    """Determine whether a user has read privileges to a specific file.
+    """
+    Determine whether a user has read privileges to a specific file.
 
     Parameters
     ----------
     location : str or Path
-
+        The location to be assessed.
     strict : bool
+        Whether to raise an exception if the user does not have read privileges. Default: False.
 
     Returns
     -------
     bool
-        Whether the current user shell has read privileges
+        Whether the current user shell has read privileges.
     """
     msg = ""
     try:

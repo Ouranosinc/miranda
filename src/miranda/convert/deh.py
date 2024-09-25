@@ -19,7 +19,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["open_txt"]
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "data" / "deh_cf_attrs.json"))[  # noqa
+cmor = json.load(
+    Path(__file__).parent.joinpath("data").joinpath("deh_cf_attrs.json").open()
+)[  # noqa
     "variable_entry"
 ]
 
@@ -34,7 +36,19 @@ data_header_pattern = "Station Date Débit (m³/s) Remarque\n"
 
 
 def extract_daily(path: os.PathLike | str) -> tuple[dict, pd.DataFrame]:
-    """Extract data and metadata from DEH (MELCC) stream flow file."""
+    """
+    Extract data and metadata from DEH (MELCCFP) stream flow file.
+
+    Parameters
+    ----------
+    path : os.PathLike or str
+        The path to the file.
+
+    Returns
+    -------
+    tuple[dict, pd.DataFrame]
+        The metadata and the data.
+    """
     with Path(path).open("r", encoding="latin1") as fh:
         txt = fh.read()
         txt = re.sub(" +", " ", txt)
@@ -70,7 +84,23 @@ def extract_daily(path: os.PathLike | str) -> tuple[dict, pd.DataFrame]:
 
 
 def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
-    """Return CF-compliant metadata."""
+    """
+    Return CF-compliant metadata.
+
+    Parameters
+    ----------
+    meta : dict
+        The metadata dictionary.
+    data : pd.DataFrame
+        The data DataFrame.
+    cf_table : dict
+        The CF table dictionary.
+
+    Returns
+    -------
+    xr.Dataset
+        The CF-compliant dataset.
+    """
     ds = xr.Dataset()
 
     ds["q"] = xr.DataArray(data["Débit"], attrs=cf_table["q"])
@@ -122,6 +152,20 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
 
 
 def open_txt(path: str | Path, cf_table: dict | None = cmor) -> xr.Dataset:
-    """Extract daily HQ meteorological data and convert to xr.DataArray with CF-Convention attributes."""
+    """
+    Extract daily HQ meteorological data and convert to xr.DataArray with CF-Convention attributes.
+
+    Parameters
+    ----------
+    path : str or Path
+        The path to the file.
+    cf_table : dict, optional
+        The CF table dictionary.
+
+    Returns
+    -------
+    xr.Dataset
+        The CF-compliant dataset.
+    """
     meta, data = extract_daily(path)
     return to_cf(meta, data, cf_table)
