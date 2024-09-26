@@ -36,7 +36,8 @@ def find_version_hash(file: str | os.PathLike[str]) -> dict[str, Any]:
     """
 
     def _get_hash(f: str) -> str:
-        """Calculate the sha256sum of a file.
+        """
+        Calculate the sha256sum of a file.
 
         Parameters
         ----------
@@ -92,7 +93,7 @@ def date_parser(
     strftime_format: str = "%Y-%m-%d",
 ) -> str | pd.Timestamp | NaTType:
     """
-    Parses datetime objects from a string representation of a date or both a start and end date.
+    Parse datetime objects from a string representation of a date or both a start and end date.
 
     Parameters
     ----------

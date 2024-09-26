@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging.config
+import os
 import warnings
 from datetime import date
 from getpass import getpass
@@ -39,7 +40,7 @@ def file_emptier(*, file_list: list[str | Path] | GeneratorType) -> None:
     Parameters
     ----------
     file_list : list of str or Path, or GeneratorType
-        List of files to be overwritten
+        List of files to be overwritten.
     """
     file_list = sorted([Path(f) for f in file_list])
 
@@ -55,7 +56,7 @@ def file_emptier(*, file_list: list[str | Path] | GeneratorType) -> None:
 # FIXME: This function is terribly insecure. It should be refactored to use a more secure method of authentication.
 def delete_by_date(
     *,
-    source: str | Path,
+    source: str | Path | os.PathLike[str],
     year: int | None = None,
     month: int | None = None,
     day: int | None = None,
@@ -70,15 +71,29 @@ def delete_by_date(
 
     Parameters
     ----------
-    source : str or Path
+    source : str or Path or os.PathLike
+        The source directory to search.
     year : int, optional
+        The year to search for.
     month : int, optional
+        The month to search for.
     day : int, optional
+        The day to search for.
     pattern : str, optional
+        The file pattern to search for.
     server : str or Path, optional
+        The server address.
     user : str, optional
+        The username.
     password : str, optional
+        The password.
     date_object : date, optional
+        The date object to search for.
+
+    Raises
+    ------
+    ValueError
+        If no date is provided.
     """
     user = user or input("Username:")
     password = password or getpass("Password:")
@@ -150,11 +165,11 @@ def delete_duplicates(
         The target directory to compare against.
     server : str or Path, optional
         The server address.
-    user: str
+    user : str
         The username.
     password : str
         The password.
-    pattern: str
+    pattern : str
         The file pattern to search for.
     delete_target_duplicates : bool
         Whether to delete the duplicates in the target directory.
@@ -212,7 +227,7 @@ def delete_by_variable(
     Delete according to variable name.
 
     Given target location(s), a list of variables and a server address, perform a glob search
-    and delete file names starting with the variables identified
+    and delete file names starting with the variables identified.
 
     Parameters
     ----------
@@ -229,7 +244,7 @@ def delete_by_variable(
     file_suffix : str, optional
         The file suffix to search for.
     delete : bool
-        Whether to delete the files
+        Whether to delete the files.
     """
     user = user or input("Username:")
     password = password or getpass("Password:")
