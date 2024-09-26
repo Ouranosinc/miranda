@@ -114,7 +114,20 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
         attrs={"long_name": "drainage area", "units": "km2"},
     )
 
-    def parse_dms(coord):
+    def _parse_dms(coord: str) -> float:
+        """
+        Parse dimensions.
+
+        Parameters
+        ----------
+        coord : str
+            The coordinate string.
+
+        Returns
+        -------
+        float
+            The parsed coordinate.
+        """
         deg, minutes, seconds, _ = re.split("[°'\"]", coord)
         if float(deg) > 0:
             return round(
@@ -124,7 +137,7 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
 
     coords = meta["coords"].split(" // ")
     ds["lat"] = xr.DataArray(
-        parse_dms(coords[0]),
+        _parse_dms(coords[0]),
         attrs={
             "standard_name": "latitude",
             "long_name": "latitude",
@@ -132,7 +145,7 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
         },
     )
     ds["lon"] = xr.DataArray(
-        parse_dms(coords[1]),
+        _parse_dms(coords[1]),
         attrs={
             "standard_name": "longitude",
             "long_name": "longitude",

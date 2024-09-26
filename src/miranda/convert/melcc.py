@@ -59,15 +59,18 @@ __all__ = [
 
 
 def parse_var_code(vcode: str) -> dict[str, Any]:
-    """Parse variable code to generate metadata
+    """
+    Parse variable code to generate metadata.
 
     Parameters
     ----------
-    vcode: str
+    vcode : str
+        The variable code.
 
     Returns
     -------
     dict[str, Any]
+        The metadata dictionary.
     """
     match = re.match(r"(\D*)(\d*)([abcfhqz])", vcode)
     if match is None:
@@ -85,8 +88,20 @@ def parse_var_code(vcode: str) -> dict[str, Any]:
     }
 
 
-def _validate_db_file(db_file) -> list[str]:
-    """Validate the database file and ensure that input is trustworthy."""
+def _validate_db_file(db_file: str) -> str:
+    """
+    Validate the database file and ensure that input is trustworthy.
+
+    Parameters
+    ----------
+    db_file : str
+        The database file.
+
+    Returns
+    -------
+    str
+        The database file.
+    """
     if len(db_file) > 1:
         raise ValueError("Only one database file can be processed at a time.")
     if not Path(db_file).is_file():
@@ -94,8 +109,20 @@ def _validate_db_file(db_file) -> list[str]:
     return db_file
 
 
-def list_tables(db_file):
-    """List the tables of an MDB file."""
+def list_tables(db_file: str | os.PathLike[str]) -> list[str]:
+    """
+    List the tables of an MDB file.
+
+    Parameters
+    ----------
+    db_file : str or os.PathLike
+        The database file.
+
+    Returns
+    -------
+    list of str
+        The list of tables.
+    """
     try:
         res = subprocess.run(  # noqa: S603
             ["mdb-tables", _validate_db_file(db_file)],
@@ -113,17 +140,23 @@ def list_tables(db_file):
     return res.stdout.lower().strip().split()
 
 
-def read_table(db_file: str | os.PathLike, tab: str | os.PathLike) -> xarray.Dataset:
-    """Read a MySQL table into an xarray object.
+def read_table(
+    db_file: str | os.PathLike[str], tab: str | os.PathLike
+) -> xarray.Dataset:
+    """
+    Read a MySQL table into an xarray object.
 
     Parameters
     ----------
-    db_file: str or os.PathLike
+    db_file : str or os.PathLike
+        The database file.
     tab : str or os.PathLike
+        The table to read.
 
     Returns
     -------
     xarray.Dataset
+        An xarray Dataset with the table data.
     """
     try:
         res = subprocess.run(  # noqa: S603
@@ -169,15 +202,18 @@ def read_table(db_file: str | os.PathLike, tab: str | os.PathLike) -> xarray.Dat
 
 
 def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
-    """Read station file using mdbtools.
+    """
+    Read station file using mdbtools.
 
     Parameters
     ----------
-    db_file: str or os.PathLike
+    db_file : str or os.PathLike
+        The database file.
 
     Returns
     -------
     pandas.DataFrame
+        A Pandas DataFrame with the station information.
     """
     try:
         res = subprocess.run(  # noqa: S603
@@ -195,6 +231,7 @@ def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
     except subprocess.CalledProcessError as e:
         msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
         raise ValueError(msg)
+
     df = pd.read_csv(
         StringIO(res.stdout),
         parse_dates=["Date_Ouverture", "Date_Fermeture"],
@@ -226,19 +263,23 @@ def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
     da["station_type"] = da["station_type"].astype(str)
     da.station_opening.attrs.update(description="Date of station creation.")
     da.station_closing.attrs.update(description="Date of station closure.")
+
     return da.isel(station=~da.indexes["station"].duplicated())
 
 
-def read_definitions(db_file: str):
-    """Read variable definition file using mdbtools.
+def read_definitions(db_file: str) -> pd.DataFrame:
+    """
+    Read variable definition file using mdbtools.
 
     Parameters
     ----------
-    db_file: str
+    db_file : str
+        The database file.
 
     Returns
     -------
     pandas.DataFrame
+        The variable definitions.
     """
     try:
         res = subprocess.run(  # noqa: S603
@@ -276,21 +317,28 @@ def convert_mdb(
     output: str | Path,
     overwrite: bool = True,
 ) -> dict[tuple[str, str], Path]:
-    """Convert microsoft databases of MELCC observation data to xarray objects.
+    """
+    Convert microsoft databases of MELCCFP observation data to xarray objects.
 
     Parameters
     ----------
-    database: str or Path
-    stations
-    definitions
-    output
-    overwrite
+    database : str or Path
+        The database file.
+    stations : xr.Dataset
+        The station list.
+    definitions : xr.Dataset
+        The variable definitions.
+    output : str or Path
+        The output folder.
+    overwrite : bool
+        Whether to overwrite existing files. Default: True.
 
     Returns
     -------
     dict[tuple[str, str], Path]
+        The converted files.
     """
-    outs = dict()
+    outs = {}
     tables = list_tables(database)
     for tab in tables:
         if table.startswith("gdb") or tab.startswith("~"):
@@ -370,18 +418,24 @@ def convert_melcc_obs(
     output: str | Path | None = None,
     overwrite: bool = True,
 ) -> dict[tuple[str, str], Path]:
-    """Convert MELCC observation data to xarray data objects, returning paths.
+    """
+    Convert MELCCFP observation data to xarray data objects, returning paths.
 
     Parameters
     ----------
-    metafile: str or Path
-    folder: str or Path
-    output: str or Path, optional
-    overwrite: bool
+    metafile : str or Path
+        The metadata file.
+    folder : str or Path
+        The folder containing the MDB files.
+    output : str or Path, optional
+        The output folder. Default: None.
+    overwrite : bool
+        Whether to overwrite existing files. Default: True.
 
     Returns
     -------
-    dict[str, Path]
+    dict[(str, str), Path]
+        The converted files.
     """
     output = Path(output or ".")
 
@@ -397,19 +451,26 @@ def convert_melcc_obs(
 
 
 def concat(
-    files: Sequence[str | Path], output_folder: str | Path, overwrite: bool = True
+    files: Sequence[str | os.PathLike[str]],
+    output_folder: str | os.PathLike[str],
+    overwrite: bool = True,
 ) -> Path:
-    """Concatenate converted weather station files.
+    """
+    Concatenate converted weather station files.
 
     Parameters
     ----------
-    files: sequence of str or Path
-    output_folder: str or Path
-    overwrite: bool
+    files : Sequence of str or os.PathLike
+        The files to concatenate.
+    output_folder : str or os.PathLike
+        The output folder.
+    overwrite : bool
+        Whether to overwrite existing files. Default: True.
 
     Returns
     -------
     Path
+        The output path.
     """
     *vv, _, melcc, freq, _ = Path(files[0]).stem.split("_")
     vv = "_".join(vv)
@@ -479,17 +540,20 @@ def concat(
     return outpath
 
 
-def convert_snow_table(file: str | Path, output: str | Path):
-    """Convert snow data given through an Excel file.
+def convert_snow_table(
+    file: str | os.PathLike[str] | Path, output: str | os.PathLike[str] | Path
+) -> None:
+    """
+    Convert snow data given through an Excel file.
 
     This private data is not included in the MDB files.
 
     Parameters
     ----------
-    file : path
-      The excel file with sheets:  "Stations", "Périodes standards" and "Données"
-    output : path
-      Folder where to put the netCDF files (one for each of snd, sd and snw).
+    file : str or os.PathLike or Path
+        The Excel file with sheets: "Stations", "Périodes standards", and "Données".
+    output : str or os.PathLike or Path
+        Folder where to put the netCDF files (one for each of snd, sd and snw).
     """
     logging.info("Parsing stations.")
     stations = pd.read_excel(file, sheet_name="Stations")

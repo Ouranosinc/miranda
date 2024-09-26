@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging.config
 import os
 from pathlib import Path
+from typing import Any
 
 import xarray as xr
 from numpy import unique
@@ -26,37 +27,57 @@ __all__ = ["convert_rdrs", "rdrs_to_daily"]
 # FIXME: Can we use `name_output_file` instead? We already have a better version of this function.
 
 
-def _get_drop_vars(file: str | os.PathLike, *, keep_vars: list[str] | set[str]):
+def _get_drop_vars(file: str | os.PathLike[str], *, keep_vars: list[str] | set[str]):
+    """
+    Determine dropped variables.
+
+    Parameters
+    ----------
+    file : str or os.PathLike
+        The file to check.
+    keep_vars : list or set of str
+        The variables to keep.
+
+    Returns
+    -------
+    list
+        The dropped variables.
+    """
     drop_vars = list(xr.open_dataset(file).data_vars)
     return list(set(drop_vars) - set(keep_vars))
 
 
 def convert_rdrs(
     project: str,
-    input_folder: str | os.PathLike,
-    output_folder: str | os.PathLike,
+    input_folder: str | os.PathLike[str],
+    output_folder: str | os.PathLike[str],
     output_format: str = "zarr",
-    working_folder: str | os.PathLike | None = None,
+    working_folder: str | os.PathLike[str] | None = None,
     overwrite: bool = False,
     cfvariable_list: list | None = None,
-    **dask_kwargs,
+    **dask_kwargs: dict[str, Any],
 ) -> None:
-    r"""Convert RDRS dataset.
+    r"""
+    Convert RDRS dataset.
 
     Parameters
     ----------
     project : str
+        The project name.
     input_folder : str or os.PathLike
+        The input folder.
     output_folder : str or os.PathLike
+        The output folder.
     output_format : {"netcdf", "zarr"}
+        The output format.
     working_folder : str or os.PathLike, optional
+        The working folder.
     overwrite : bool
+        Whether to overwrite existing files. Default: False.
     cfvariable_list : list, optional
-    \*\*dask_kwargs
-
-    Returns
-    -------
-    None
+        The CF variable list.
+    \*\*dask_kwargs : dict
+        Additional keyword arguments passed to the Dask scheduler.
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project=project)["variables"]
@@ -76,7 +97,6 @@ def convert_rdrs(
         working_folder = Path(working_folder).expanduser()
 
     # FIXME: Do we want to collect everything? Maybe return a dictionary with years and associated files?
-
     out_freq = None
     gathered = gather_raw_rdrs_by_years(input_folder)
     for year, ncfiles in gathered[project].items():
@@ -139,26 +159,36 @@ def rdrs_to_daily(
     year_start: int | None = None,
     year_end: int | None = None,
     process_variables: list[str] | None = None,
-    **dask_kwargs,
+    **dask_kwargs: dict[str, Any],
 ) -> None:
-    r"""Write out RDRS files to daily-timestep files.
+    r"""
+    Write out RDRS files to daily-timestep files.
 
     Parameters
     ----------
     project : str
+        The project name.
     input_folder : str or os.PathLike
+        The input folder.
     output_folder : str or os.PathLike
+        The output folder.
     working_folder : str or os.PathLike
+        The working folder.
     overwrite : bool
+        Whether to overwrite existing files. Default: False.
     output_format : {"netcdf", "zarr"}
+        The output format.
     year_start : int, optional
+        The start year.
+        If not provided, the minimum year in the dataset will be used.
     year_end : int, optional
+        The end year.
+        If not provided, the maximum year in the dataset will be used.
     process_variables : list of str, optional
-    \*\*dask_kwargs
-
-    Returns
-    -------
-    None
+        The variables to process.
+        If not provided, all variables will be processed.
+    \*\*dask_kwargs : dict
+        Additional keyword arguments passed to the Dask scheduler.
     """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder).expanduser()
@@ -187,6 +217,7 @@ def rdrs_to_daily(
             out_variables = aggregate(
                 xr.open_mfdataset(infiles, engine="zarr"), freq="day"
             )
+            # FIXME: Fetch chunk config has been modified to accept different arguments.
             chunks = fetch_chunk_config(project=project, freq="day")
             chunks["time"] = len(out_variables[list(out_variables.keys())[0]].time)
             write_dataset_dict(
