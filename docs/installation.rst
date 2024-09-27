@@ -12,11 +12,6 @@ Installation
             conda install -n base conda-libmamba-solver
             conda config --set solver libmamba
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
-
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
-
 Stable release
 --------------
 
@@ -110,14 +105,4 @@ The sources for miranda can be downloaded from the `Github repo`_.
 
     These commands should work most of the time, but if big changes are made to the repository, you might need to remove the environment and create it again.
 
-
 .. _Github repo: https://github.com/Zeitsperre/miranda
-
-Creating a Conda environment
-----------------------------
-
-To create a conda development environment including all miranda dependencies, enter the following command from within your cloned repo::
-
-    $ conda create -n my_miranda_env python=3.9 --file=environment.yml
-    $ conda activate my_miranda_env
-    $ pip install -e .[dev]
