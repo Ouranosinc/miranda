@@ -146,11 +146,11 @@ serialize = [
 filename = "CHANGELOG.rst"
 include_bumps = ["release"]
 search = """\
-`Unreleased <https://github.com/Zeitsperre/miranda>`_ (latest)
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
 --------------------------------------------------------------
 """
 replace = """\
-`Unreleased <https://github.com/Zeitsperre/miranda>`_ (latest)
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
 --------------------------------------------------------------
 
 Contributors:
@@ -165,7 +165,7 @@ Fixes
 
 .. _changes_{new_version}:
 
-`v{new_version} <https://github.com/Zeitsperre/miranda/tree/{new_version}>`_
+`v{new_version} <https://github.com/Ouransoinc/miranda/tree/{new_version}>`_
 ------------------------------------------------------------------------
 """
 
