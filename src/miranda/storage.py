@@ -1,19 +1,14 @@
 """
-=====================
-Disk space management
-=====================
+Disk space management.
 
 Classes:
-
  * DiskSpaceError - the exception raised on failure.
  * :py:class:`FileMeta` - file and its size.
  * :py:class:`StorageState` - storage capacity and availability of a medium.
 
 Functions:
-
  * :py:func:`total_size` - get total size of a list of files.
  * :py:func:`size_division` - divide files based on number and size restrictions.
-
 """
 
 from __future__ import annotations
@@ -22,7 +17,6 @@ import logging
 import logging.config
 import subprocess  # noqa: S404
 from functools import reduce
-from multiprocessing.managers import Value
 from pathlib import Path
 from types import GeneratorType
 
@@ -49,66 +43,80 @@ class DiskSpaceError(Exception):
 
 
 class FileMeta:
-    """File path and size."""
+    """
+    File path and size.
 
-    django = {
-        "path": ["CharField", "max_length=512"],
-        "size": ["IntegerField", "null=True", "blank=True"],
-    }
+    Parameters
+    ----------
+    path : str
+        The full path of the file.
+    size : int
+        The size of file in bytes.
+    """
 
     def __init__(self, path: str, size: int = -1):
-        """Initialize file meta.
+        """
+        Initialize file meta.
 
         Parameters
         ----------
         path : str
-            full path of the file.
+            The full path of the file.
         size : int
-            size of file in bytes (default: will obtain from os.path.getsize
-            if file exists, set to 0 otherwise).
-
+            The size of file in bytes.
+            Will obtain from os.path.getsize if file exists, set to 0 otherwise.
         """
         # Make sure we have the full path of the file
-        self.path = Path(path).absolute()
+        self._path = Path(path).absolute()
 
         # Get size of file if it is not specified
-        if (-1 == size) and self.path.exists():
+        if (-1 == size) and self._path.exists():
             try:
-                self.size = self.path.stat().st_size
+                self.size = self._path.stat().st_size
             except OSError:
-                raise DiskSpaceError(f"Cannot get size of {self.path.name}.")
+                raise DiskSpaceError(f"Cannot get size of {self._path.name}.")
         elif -1 == size:
             self.size = 0
         else:
             self.size = size
 
     def __eq__(self, other):  # noqa: D105
-        if self.path == other.path:
+        if self._path == other._path:  # noqa
             return True
         else:
             return False
 
 
 class StorageState:
-    """Information regarding the storage capacity of a disk."""
+    """
+    Information regarding the storage capacity of a disk.
+
+    Parameters
+    ----------
+    base_path : Path
+        The base path of the storage medium.
+    capacity : int
+        Capacity of medium in bytes.
+    used_space : int
+        Space currently used on the medium.
+    free_space : int
+        Space available on the medium.
+    """
 
     def __init__(self, base_path, capacity=-1, used_space=-1, free_space=-1):
-        """Initialize storage state.
+        """
+        Initialize storage state.
 
         Parameters
         ----------
         base_path : str
-            base path of the storage medium.
+            The base path of the storage medium.
         capacity : int
-            capacity of medium in bytes (default: will obtain from system
-            call to 'df').
+            Capacity of medium in bytes (default: will obtain from system call to 'df').
         used_space : int
-            space currently used on the medium (default: will obtain from
-            system call to 'df').
+            Space currently used on the medium (default: will obtain from system call to 'df').
         free_space : int
-            space available on the medium (default: will obtain from system
-            call to 'df').
-
+            Space available on the medium (default: will obtain from system call to 'df').
         """
         # Make sure we have the full base path
         if len(base_path) > 1:
@@ -158,17 +166,18 @@ class StorageState:
 
 
 def size_evaluation(file_list: list[str | FileMeta | Path]) -> int:
-    """Total size of files.
+    """
+    Total size of files.
 
     Parameters
     ----------
     file_list : list of str or Path or FileMeta
+        List of files to evaluate.
 
     Returns
     -------
     int
-      total size of files in bytes.
-
+        The total size of files in bytes.
     """
     if file_list:
         size = 0
@@ -192,11 +201,12 @@ def size_division(
     check_name_repetition: bool = False,
     preserve_order: bool = False,
 ) -> list[list]:
-    """Divide files according to size and number limits.
+    """
+    Divide files according to size and number limits.
 
     Parameters
     ----------
-    files_to_divide : list of str or Path, FileMeta, Path
+    files_to_divide : list of str or Path or FileMeta
         Files to be sorted.
     size_limit : int
         Size limit of divisions in bytes. Default: 0 (no limit).
@@ -210,7 +220,7 @@ def size_division(
     Returns
     -------
     list[list]
-        list of divisions (each division is a list of FileMeta objects).
+        The list of divisions (each division is a list of FileMeta objects).
     """
     divisions = list()
     for file_divide in files_to_divide:
@@ -227,7 +237,7 @@ def size_division(
             flag_skip = 0
             for file_divided in division:
                 if check_name_repetition and (
-                    Path(file_divided.path).name == Path(file_divide.path).name
+                    Path(file_divided._path).name == Path(file_divide._path).name
                 ):
                     flag_skip = 1
                 size = size + file_divided.size
@@ -258,15 +268,18 @@ def file_size(
         | dict[str, Path | list[Path]]
     )
 ) -> int:
-    """Return size of object in bytes.
+    """
+    Return size of object in bytes.
 
     Parameters
     ----------
     file_path_or_bytes_or_dict : Path or str or int, list of str or Path, GeneratorType, or dict[str, Path or list of Path]
+        The file or object to be evaluated.
 
     Returns
     -------
     int
+        The size of the file or object in bytes.
     """
     try:
         if isinstance(file_path_or_bytes_or_dict, int):
@@ -322,7 +335,8 @@ def report_file_size(
     use_binary: bool = True,
     significant_digits: int = 2,
 ) -> str:
-    """Report file size in a human-readable format.
+    """
+    Report file size in a human-readable format.
 
     This function will parse the contents of a list or generator of files and return the
     size in bytes of a file or a list of files in pretty formatted text.
@@ -330,14 +344,37 @@ def report_file_size(
     Parameters
     ----------
     file_path_or_bytes_or_dict : Path or str or int, list of str or Path, GeneratorType, or dict[str, Path or list of Path]
+        The file or object to be evaluated.
     use_binary : bool
+        Flag to use binary conversion (default: True).
     significant_digits : int
+        Number of significant digits to display (default: 2).
 
+    Returns
+    -------
+    str
+        The file size in a human-readable format.
     """
     conversions = ["B", "k{}B", "M{}B", "G{}B", "T{}B", "P{}B", "E{}B", "Z{}B", "Y{}B"]
 
     def _size_formatter(i: int, binary: bool = True, precision: int = 2) -> str:
-        """Format byte size into an appropriate nomenclature for prettier printing."""
+        """
+        Format byte size into an appropriate nomenclature for prettier printing.
+
+        Parameters
+        ----------
+        i : int
+            The size in bytes.
+        binary : bool
+            Flag to use binary conversion (default: True).
+        precision : int
+            Number of significant digits to display (default: 2).
+
+        Returns
+        -------
+        str
+            The formatted byte size.
+        """
         import math
 
         base = 1024 if binary else 1000

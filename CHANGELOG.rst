@@ -25,6 +25,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
+* `miranda` now applies the `numpydoc` documentation style to all publicly-exposed docstrings.
 
 .. _changes_0.5.0:
 

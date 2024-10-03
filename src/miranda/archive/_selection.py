@@ -1,3 +1,5 @@
+"""Select files by the date on which they were last modified."""
+
 from __future__ import annotations
 
 import logging
@@ -20,22 +22,30 @@ def select_by_date_modified(
     day: int | None,
     *,
     suffixes: str = "nc",
-    date: datetime,
+    date: datetime.date,
 ) -> list[Path]:
-    """Select files by the date on which they were last modified.
+    """
+    Select files by the date on which they were last modified.
 
     Parameters
     ----------
     source : str or Path
+        The directory to search for files.
     year : int
+        The year of the date to select.
     month : int
+        The month of the date to select
     day : int
+        The day of the date to select.
     suffixes : str
-    date : datetime.date
+        The file suffixes to search.
+    date : date
+        The date to select.
 
     Returns
     -------
     list of Path
+        The selected files.
     """
     if date:
         date_selected = date

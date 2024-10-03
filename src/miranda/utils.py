@@ -39,7 +39,8 @@ ISO_8601 = (
 
 
 class HiddenPrints:
-    """Special context manager for hiding print statements.
+    """
+    Special context manager for hiding print statements.
 
     Notes
     -----
@@ -58,7 +59,20 @@ class HiddenPrints:
 
 
 def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
-    """Generate lists of `chunk_size` elements from `iterable`.
+    """
+    Generate lists of `chunk_size` elements from `iterable`.
+
+    Parameters
+    ----------
+    iterable : Sequence
+        The iterable to chunk.
+    chunk_size : int
+        The size of the chunks.
+
+    Yields
+    ------
+    Iterable
+        The chunked iterable.
 
     Notes
     -----
@@ -77,9 +91,11 @@ def chunk_iterables(iterable: Sequence, chunk_size: int) -> Iterable:
             break
 
 
+# FIXME: The following function could probably be replaced or at least placed closer to its usages.
 @contextmanager
 def working_directory(directory: str | Path) -> None:
-    """Change the working directory within a context object.
+    """
+    Change the working directory within a context object.
 
     This function momentarily changes the working directory within the context and reverts to the file working directory
     when the code block it is acting upon exits
@@ -87,10 +103,7 @@ def working_directory(directory: str | Path) -> None:
     Parameters
     ----------
     directory : str or pathlib.Path
-
-    Returns
-    -------
-    None
+        The directory to temporarily change to.
     """
     owd = os.getcwd()  # noqa: PTH109
 
@@ -104,19 +117,22 @@ def working_directory(directory: str | Path) -> None:
         os.chdir(owd)
 
 
+# FIXME: The following function could probably be replaced or at least placed closer to its usages.
 def single_item_list(iterable: Iterable) -> bool:
-    """Ascertain whether a list has exactly one entry.
+    """
+    Ascertain whether a list has exactly one entry.
 
     See: https://stackoverflow.com/a/16801605/7322852
 
     Parameters
     ----------
     iterable : Iterable
+        The list to check.
 
     Returns
     -------
     bool
-
+        Whether the list is a single item.
     """
     iterator = iter(iterable)
     has_true = any(iterator)  # consume from "i" until first true or it's exhausted
@@ -130,19 +146,20 @@ def generic_extract_archive(
     resources: str | Path | list[bytes | str | Path],
     output_dir: str | Path | None = None,
 ) -> list[Path]:
-    """Extract archives (tar/zip) to a working directory.
+    """
+    Extract archives (tar/zip) to a working directory.
 
     Parameters
     ----------
     resources : str or Path or list of bytes or str or Path
-        list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
+        List of archive files (if netCDF files are in list, they are passed and returned as well in the return).
     output_dir : str or Path, optional
-        string or Path to a working location (default: temporary folder).
+        String or Path to a working location (default: temporary folder).
 
     Returns
     -------
     list
-        List of original or of extracted files
+        The list of original or of extracted files.
     """
     archive_types = [".gz", ".tar", ".zip", ".7z"]
     output_dir = output_dir or tempfile.gettempdir()
@@ -205,7 +222,8 @@ def generic_extract_archive(
 def list_paths_with_elements(
     base_paths: str | list[str] | os.PathLike[str], elements: list[str]
 ) -> list[dict]:
-    """List a given path structure.
+    """
+    List a given path structure.
 
     Parameters
     ----------
@@ -268,7 +286,8 @@ def list_paths_with_elements(
 def publish_release_notes(
     style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
 ) -> str | None:
-    """Format release history in Markdown or ReStructuredText.
+    """
+    Format release history in Markdown or ReStructuredText.
 
     Parameters
     ----------
@@ -281,6 +300,7 @@ def publish_release_notes(
     Returns
     -------
     str, optional
+        The formatted string if a file object is not provided.
 
     Notes
     -----
@@ -342,17 +362,20 @@ def publish_release_notes(
 
 
 def read_privileges(location: str | Path, strict: bool = False) -> bool:
-    """Determine whether a user has read privileges to a specific file.
+    """
+    Determine whether a user has read privileges to a specific file.
 
     Parameters
     ----------
-    location: str or Path
-    strict: bool
+    location : str or Path
+        The location to be assessed.
+    strict : bool
+        Whether to raise an exception if the user does not have read privileges. Default: False.
 
     Returns
     -------
     bool
-        Whether the current user shell has read privileges
+        Whether the current user shell has read privileges.
     """
     msg = ""
     try:
@@ -373,10 +396,28 @@ def read_privileges(location: str | Path, strict: bool = False) -> bool:
         return False
 
 
-# Function addressing exploit CVE-2007-4559
-def is_within_directory(
+def _is_within_directory(
     directory: str | os.PathLike, target: str | os.PathLike
 ) -> bool:
+    """
+    Check if a target path is within a directory.
+
+    Parameters
+    ----------
+    directory : str or os.PathLike
+        The directory to check.
+    target : str or os.PathLike
+        The target path to check.
+
+    Returns
+    -------
+    bool
+        Whether the target path is within the directory.
+
+    Notes
+    -----
+    Function addressing exploit CVE-2007-4559 for both tar and zip files.
+    """
     abs_directory = Path(directory).resolve()
     abs_target = Path(target).resolve()
 
@@ -384,29 +425,44 @@ def is_within_directory(
     return prefix == abs_directory
 
 
-# Function addressing exploit CVE-2007-4559 for both tar and zip files
 def safe_extract(
     archive: tarfile.TarFile | zipfile.ZipFile,
     path: str = ".",
-    members=None,
+    members: list[str] | None = None,
     *,
-    numeric_owner=False,
+    numeric_owner: bool = False,
 ) -> None:
-    # Handle tarfile extraction
+    """
+    Extract all members from the archive to the current working directory or directory path.
+
+    Parameters
+    ----------
+    archive : TarFile or ZipFile
+        The archive to extract.
+    path : str, optional
+        The path to extract the archive to.
+    members : list of str, optional
+        The members to extract.
+    numeric_owner : bool
+        Whether to extract the archive with numeric owner. Default: False.
+
+    Notes
+    -----
+    Function addressing exploit CVE-2007-4559 for both tar and zip files.
+    """
     if isinstance(archive, tarfile.TarFile):
         for member in archive.getmembers():
             member_path = Path(path).joinpath(member.name)
-            if not is_within_directory(path, member_path):
+            if not _is_within_directory(path, member_path):
                 raise Exception("Attempted Path Traversal in Tar File")
         archive.extractall(  # noqa: S202
             path, members=members, numeric_owner=numeric_owner
         )
 
-    # Handle zipfile extraction
     elif isinstance(archive, zipfile.ZipFile):
         for member in archive.namelist():
             member_path = Path(path).joinpath(member)
-            if not is_within_directory(path, member_path):
+            if not _is_within_directory(path, member_path):
                 raise Exception("Attempted Path Traversal in Zip File")
         archive.extractall(path, members=members)  # noqa: S202
     else:

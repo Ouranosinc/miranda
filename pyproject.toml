@@ -277,6 +277,9 @@ checks = [
 exclude = [
   # don't report on objects that match any of these regex
   '\.undocumented_method$',
+  '\.__enter__$',
+  '\.__eq__$',
+  '\.__exit__$',
   '\.__repr__$'
 ]
 override_SS05 = [

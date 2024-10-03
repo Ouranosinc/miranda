@@ -20,26 +20,34 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["tigge_convert"]
 
 
+# FIXME: Is this function still pertinent?
 def tigge_convert(
     source: os.PathLike | None = None,
     target: os.PathLike | None = None,
     processes: int = 8,
 ) -> None:
-    """Convert grib2 file to netCDF format.
+    """
+    Convert TIGGE grib2 file to netCDF format.
 
     Parameters
     ----------
     source : os.PathLike, optional
+        The source directory containing the TIGGE files.
     target : os.PathLike, optional
+        The target directory to save the converted files.
     processes : int
-
-    Returns
-    -------
-    None
+        The number of processes to use for the conversion.
     """
 
     def _tigge_convert(fn):
-        """Launch reformatting function."""
+        """
+        Launch reformatting function.
+
+        Parameters
+        ----------
+        fn : tuple
+            The file and output folder.
+        """
         infile, output_folder = fn
         try:
             for f in Path(infile.parent).glob(infile.name.replace(".grib", "*.idx")):

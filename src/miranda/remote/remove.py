@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging.config
+import os
 import warnings
 from datetime import date
 from getpass import getpass
 from pathlib import Path
 from types import GeneratorType
-from typing import Optional
 
 from miranda.io.utils import creation_date
 from miranda.scripting import LOGGING_CONFIG
@@ -34,16 +34,13 @@ __all__ = [
 
 
 def file_emptier(*, file_list: list[str | Path] | GeneratorType) -> None:
-    """Open and overwrite a list of file paths in order to delete data while preserving the file name.
+    """
+    Open and overwrite a list of file paths in order to delete data while preserving the file name.
 
     Parameters
     ----------
     file_list : list of str or Path, or GeneratorType
-        List of files to be overwritten
-
-    Returns
-    -------
-    None
+        List of files to be overwritten.
     """
     file_list = sorted([Path(f) for f in file_list])
 
@@ -56,9 +53,10 @@ def file_emptier(*, file_list: list[str | Path] | GeneratorType) -> None:
         Path(file).open("w").close()
 
 
+# FIXME: This function is terribly insecure. It should be refactored to use a more secure method of authentication.
 def delete_by_date(
     *,
-    source: str | Path,
+    source: str | Path | os.PathLike[str],
     year: int | None = None,
     month: int | None = None,
     day: int | None = None,
@@ -68,23 +66,34 @@ def delete_by_date(
     password: str | None = None,
     date_object: date | None = None,
 ) -> None:
-    """Remove a selection of files based on a given date of last modification.
+    """
+    Remove a selection of files based on a given date of last modification.
 
     Parameters
     ----------
-    source: str or Path
-    year: int, optional
-    month: int, optional
-    day: int, optional
-    pattern: str, optional
-    server: str or Path, optional
-    user: str, optional
-    password: str, optional
-    date_object: date, optional
+    source : str or Path or os.PathLike
+        The source directory to search.
+    year : int, optional
+        The year to search for.
+    month : int, optional
+        The month to search for.
+    day : int, optional
+        The day to search for.
+    pattern : str, optional
+        The file pattern to search for.
+    server : str or Path, optional
+        The server address.
+    user : str, optional
+        The username.
+    password : str, optional
+        The password.
+    date_object : date, optional
+        The date object to search for.
 
-    Returns
-    -------
-    None
+    Raises
+    ------
+    ValueError
+        If no date is provided.
     """
     user = user or input("Username:")
     password = password or getpass("Password:")
@@ -134,6 +143,7 @@ def delete_by_date(
     return
 
 
+# FIXME: This function is terribly insecure. It should be refactored to use a more secure method of authentication.
 def delete_duplicates(
     *,
     source: str | Path,
@@ -144,21 +154,25 @@ def delete_duplicates(
     pattern: str | None = None,
     delete_target_duplicates: bool = False,
 ) -> None:
-    """Delete duplicate files.
+    """
+    Delete duplicate files.
 
     Parameters
     ----------
     source : str or Path
+        The source directory to compare against.
     target : str or Path
+        The target directory to compare against.
     server : str or Path, optional
-    user: str
+        The server address.
+    user : str
+        The username.
     password : str
-    pattern: str
+        The password.
+    pattern : str
+        The file pattern to search for.
     delete_target_duplicates : bool
-
-    Returns
-    -------
-    None
+        Whether to delete the duplicates in the target directory.
     """
     user = user or input("Username:")
     password = password or getpass("Password:")
@@ -198,6 +212,7 @@ def delete_duplicates(
     return
 
 
+# FIXME: This function is terribly insecure. It should be refactored to use a more secure method of authentication.
 def delete_by_variable(
     *,
     target: str | Path | list[str | Path] | GeneratorType | None = None,
@@ -208,24 +223,28 @@ def delete_by_variable(
     file_suffix: str | None = None,
     delete: bool = False,
 ) -> None:
-    """Delete according to variable name.
+    """
+    Delete according to variable name.
 
     Given target location(s), a list of variables and a server address, perform a glob search
-    and delete file names starting with the variables identified
+    and delete file names starting with the variables identified.
 
     Parameters
     ----------
-    target : str, Path, list of str or Path, or GeneratorType]
+    target : str, Path, list of str or Path, or GeneratorType
+        The target location(s).
     variables : list of str
+        The variables to search for.
     server : str or Path, optional
+        The server address.
     user : str, optional
+        The username.
     password : str, optional
+        The password.
     file_suffix : str, optional
+        The file suffix to search for.
     delete : bool
-
-    Returns
-    -------
-    None
+        Whether to delete the files.
     """
     user = user or input("Username:")
     password = password or getpass("Password:")
