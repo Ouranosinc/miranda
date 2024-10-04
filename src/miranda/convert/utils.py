@@ -50,7 +50,7 @@ def find_version_hash(file: str | os.PathLike[str]) -> dict[str, Any]:
             The hash.
         """
         hash_sha256_writer = hashlib.sha256()
-        with Path(f).open("rb", encoding="utf-8") as f_opened:
+        with Path(f).open("rb") as f_opened:
             hash_sha256_writer.update(f_opened.read())
         sha256sum = hash_sha256_writer.hexdigest()
         _msg = f"Calculated sha256sum (starting: {sha256sum[:6]})"

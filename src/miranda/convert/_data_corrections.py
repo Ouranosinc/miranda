@@ -842,7 +842,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 logging.warning(msg)
                 continue
         elif isinstance(header[field], dict):
-            attr_treatment = header[field]
+            attr_treatment = header[field][p]
         else:
             raise AttributeError(
                 f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
