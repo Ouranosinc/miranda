@@ -9,8 +9,9 @@ Welcome to miranda's documentation!
    installation
    usage
    contributing
+   releasing
    authors
-   changes
+   changelog
    security
    license
 

@@ -2,29 +2,41 @@
 Installation
 ============
 
+..
+    We strongly recommend installing miranda in an Anaconda Python environment.
+    Furthermore, due to the complexity of some packages, the default dependency solver can take a long time to resolve the environment.
+    If `mamba` is not already your default solver, consider running the following commands in order to speed up the process:
+
+        .. code-block:: console
+
+            conda install -n base conda-libmamba-solver
+            conda config --set solver libmamba
 
 Stable release
 --------------
 
 To install miranda, run this command in your terminal:
 
-.. code-block:: console
+    .. code-block:: console
 
-    $ python -m pip install miranda
+        python -m pip install miranda
 
 This is the preferred method to install miranda, as it will always install the most recent stable release.
 
 To make use of remote operations (`miranda.remote`) and some dataset downloading functions (`miranda.ncar` `miranda.ecmwf`), additional libraries are needed.
-They can can be installed with the following::
+They can can be installed with the following:
 
-    $ pip install miranda[remote]
+    .. code-block:: console
 
-For better RAM usage when converting datasets, some additional/optional GIS libraries can be installed as well::
+        python -m pip install miranda[remote]
 
-    $ pip install miranda[gis]
+For better RAM usage when converting datasets, some additional/optional GIS libraries can be installed as well:
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
+    .. code-block:: console
+
+        python -m pip install miranda[gis]
+
+If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
 
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: https://docs.python-guide.org/starting/installation/
@@ -34,34 +46,62 @@ From sources
 
 The sources for miranda can be downloaded from the `Github repo`_.
 
-You can either clone the public repository:
+#. Download the source code from the `Github repo`_ using one of the following methods:
 
-.. code-block:: console
+    * Clone the public repository:
 
-    $ git clone git@github.com:Zeitsperre/miranda
+        .. code-block:: console
 
-Or download the `tarball`_:
+            git clone git@github.com:Zeitsperre/miranda.git
 
-.. code-block:: console
+    * Download the `tarball <https://github.com/Ouranosinc/miranda/tarball/main>`_:
 
-    $ curl -OJL https://github.com/Zeitsperre/miranda/tarball/main
+        .. code-block:: console
 
-Once you have a copy of the source, you can install it with:
-
-.. code-block:: console
-
-    $ python -m pip install .
+            curl -OJL https://github.com/Ouranosinc/miranda/tarball/main
 
 
-.. _Github repo: https://github.com/Zeitsperre/miranda
-.. _tarball: https://github.com/Zeitsperre/miranda/tarball/main
+#. Once you have a copy of the source, you can install it with:
 
+    .. code-block:: console
 
-Creating a Conda environment
-----------------------------
+        python -m pip install .
 
-To create a conda development environment including all miranda dependencies, enter the following command from within your cloned repo::
+    ..
+        .. code-block:: console
 
-    $ conda create -n my_miranda_env python=3.8 --file=environment.yml
-    $ conda activate my_miranda_env
-    $ pip install -e .[dev]
+            conda env create -f environment-dev.yml
+            conda activate miranda-dev
+            make dev
+
+        If you are on Windows, replace the ``make dev`` command with the following:
+
+        .. code-block:: console
+
+            python -m pip install -e .[dev]
+
+        Even if you do not intend to contribute to `miranda`, we favor using `environment-dev.yml` over `environment.yml` because it includes additional packages that are used to run all the examples provided in the documentation.
+        If for some reason you wish to install the `PyPI` version of `miranda` into an existing Anaconda environment (*not recommended if requirements are not met*), only run the last command above.
+
+#. When new changes are made to the `Github repo`_, if using a clone, you can update your local copy using the following commands from the root of the repository:
+
+    .. code-block:: console
+
+        git fetch
+        git checkout main
+        git pull origin main
+        python -m pip install .
+
+    ..
+        .. code-block:: console
+
+            git fetch
+            git checkout main
+            git pull origin main
+            conda env update -n miranda-dev -f environment-dev.yml
+            conda activate miranda-dev
+            make dev
+
+    These commands should work most of the time, but if big changes are made to the repository, you might need to remove the environment and create it again.
+
+.. _Github repo: https://github.com/Ouranosinc/miranda

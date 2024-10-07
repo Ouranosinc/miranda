@@ -93,7 +93,8 @@ autodoc_default_options = {
 templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = [".rst", ".ipynb"]
+# You can specify multiple suffix as a dictionary of suffix: filetype
+source_suffix = {'.rst': 'restructuredtext', '.ipynb': 'jupyter_notebook'}
 
 # The master toctree document.
 master_doc = "index"
@@ -204,7 +205,9 @@ html_logo = "_static/images/miranda-logo.png"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ["_static"]
+if not os.path.exists("_static"):
+    os.makedirs("_static")
+html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

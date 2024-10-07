@@ -78,15 +78,13 @@ class TestEnvCanVariables:
 
 
 class TestCreationDate:
-    def test_newly_created_file(self):
-        filename = "testfile.txt"
-        testfile = Path.cwd().joinpath(filename)
+    def test_newly_created_file(self, tmp_path):
+        file = tmp_path.joinpath("new_file.txt")
 
-        with open(testfile.name, "w") as f:
-            f.write(filename)
+        with file.open("w") as f:
+            f.write("Hello, world!")
 
-        assert miranda.io.utils.creation_date(testfile) == date.today()
-        testfile.unlink()
+        assert miranda.io.utils.creation_date(file) == date.today()
 
 
 class TestReadPrivileges:
