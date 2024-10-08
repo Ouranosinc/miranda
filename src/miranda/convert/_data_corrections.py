@@ -342,6 +342,14 @@ def preprocessing_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     return ds
 
 
+def _correct_standard_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_corrected_standard_name"
+    for var, val in _iter_entry_key(d, m, "variables", key, p):
+        if val:
+            d[var].attrs["standard_name"] = val
+    return d
+
+
 def _correct_units_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_corrected_units"
     for var, val in _iter_entry_key(d, m, "variables", key, p):
@@ -888,6 +896,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     metadata_definition = load_json_data_mappings(project)
 
     ds = _correct_units_names(ds, project, metadata_definition)
+    ds = _correct_standard_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
