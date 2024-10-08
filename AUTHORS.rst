@@ -17,3 +17,4 @@ Contributors
 * Sébastien Biner <biner.sebastien@hydroquebec.com> `@sbiner <https://github.com/sbiner>`_
 * David Huard <huard.david@ouranos.ca> `@huard <https://github.com/huard>`_
 * Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca> `@RondeauG <https://github.com/RondeauG>`_
+* Asli Bese <bese.asli@ouranos.ca> `@aslibese <https://github.com/aslibese>`_
