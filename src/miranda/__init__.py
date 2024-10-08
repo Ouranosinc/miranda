@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __author__ = """Trevor James Smith"""
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.6.0-dev.4"
+__version__ = "0.6.0-dev.5"
 
 
 from . import (
@@ -37,5 +37,4 @@ from . import (
     utils,
     validators,
 )
-from .data import DataBase
 from .storage import FileMeta, StorageState

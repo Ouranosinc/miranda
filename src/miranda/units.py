@@ -19,7 +19,8 @@ def get_time_frequency(
     expected_period: str | None = None,
     minimum_continuous_period: str = "1M",
 ) -> tuple[list[int | str], str]:
-    """Try to understand the Dataset frequency.
+    """
+    Try to understand the Dataset frequency.
 
     If it can't be inferred with :py:func:`xarray.infer_freq` it tries to:
     - look for a "freq" attrs in the global or time variable attributes.
@@ -45,10 +46,9 @@ def get_time_frequency(
     Returns
     -------
     offset : list of int or str
-        The offset a list of (multiplier, base)
+        The offset a list of (multiplier, base).
     offset_meaning : str
-        The offset meaning (single word)
-
+        The offset meaning (single word).
     """
     if expected_period is not None:
         if not [expected_period.endswith(end) for end in ["H", "D", "M", "A"]]:

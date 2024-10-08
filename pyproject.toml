@@ -130,7 +130,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.6.0-dev.4"
+current_version = "0.6.0-dev.5"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -277,6 +277,9 @@ checks = [
 exclude = [
   # don't report on objects that match any of these regex
   '\.undocumented_method$',
+  '\.__enter__$',
+  '\.__eq__$',
+  '\.__exit__$',
   '\.__repr__$'
 ]
 override_SS05 = [

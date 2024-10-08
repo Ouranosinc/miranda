@@ -105,12 +105,3 @@ The sources for miranda can be downloaded from the `Github repo`_.
     These commands should work most of the time, but if big changes are made to the repository, you might need to remove the environment and create it again.
 
 .. _Github repo: https://github.com/Ouranosinc/miranda
-
-Creating a Conda environment
-----------------------------
-
-To create a conda development environment including all miranda dependencies, enter the following command from within your cloned repo::
-
-    $ conda create -n my_miranda_env python=3.9 --file=environment.yml
-    $ conda activate my_miranda_env
-    $ pip install -e .[dev]
