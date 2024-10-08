@@ -516,7 +516,7 @@
     },
     "siconc": {
       "_cf_variable_name": "siconc",
-      "_corrected_units": false,
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_offset_time": false,
       "_transformation": false,
@@ -524,7 +524,7 @@
       "description": "This parameter is the fraction of a grid box which is covered by sea ice. Sea ice can only occur in a grid box which includes ocean or inland water according to the land-sea mask and lake cover, at the resolution being used.",
       "long_name": "Sea ice area fraction",
       "standard_name": "sea_ice_area_fraction",
-      "units": "(0 - 1)"
+      "units": "1"
     }
   }
 }
