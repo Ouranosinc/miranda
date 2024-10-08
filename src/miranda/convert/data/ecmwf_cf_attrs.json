@@ -504,6 +504,30 @@
       "long_name": "Geopotential",
       "standard_name": "geopotential",
       "units": "m2 s-2"
+    },
+    "sst": {
+      "_cf_variable_name": "tos",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter (SST) is the temperature of sea water near the surface. In ERA5, this parameter is a foundation SST, which means there are no variations due to the daily cycle of the sun (diurnal variations).",
+      "long_name": "Sea surface temperature",
+      "standard_name": "sea_surface_temperature",
+      "units": "K"
+    },
+    "siconc": {
+      "_cf_variable_name": "siconc",
+      "_corrected_units": "1",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter is the fraction of a grid box which is covered by sea ice. Sea ice can only occur in a grid box which includes ocean or inland water according to the land-sea mask and lake cover, at the resolution being used.",
+      "long_name": "Sea ice area fraction",
+      "standard_name": "sea_ice_area_fraction",
+      "units": "1"
     }
   }
 }
