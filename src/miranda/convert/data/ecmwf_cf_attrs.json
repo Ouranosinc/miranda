@@ -103,7 +103,7 @@
     "pev": {
       "_cf_variable_name": "evspsblpot",
       "_corrected_units": false,
-      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
+      "_corrected_standard_name": "lwe_thickness_of_water_evaporation_amount",
       "_invert_sign": {
         "era5-land": true,
         "era5-single-levels": true,
