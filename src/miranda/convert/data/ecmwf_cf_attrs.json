@@ -528,6 +528,18 @@
       "long_name": "Sea ice area percentage",
       "standard_name": "sea_ice_area_fraction",
       "units": "%"
+    },
+    "lsm": {
+      "_cf_variable_name": "sftlf",
+      "_corrected_units": "1",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter is the proportion of land, as opposed to ocean or inland waters (lakes, reservoirs, rivers and coastal waters), in a grid box.",
+      "long_name": "Land Area Fraction",
+      "standard_name": "land_area_fraction",
+      "units": "%"
     }
   }
 }
