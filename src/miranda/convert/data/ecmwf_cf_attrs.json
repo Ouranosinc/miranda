@@ -411,7 +411,6 @@
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
-        "era5-single-levels-monthly-means": "amount2rate",
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
