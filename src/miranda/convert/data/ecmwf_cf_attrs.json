@@ -403,7 +403,9 @@
           "min": "0 kg m-2 s-1"
         }
       },
-      "_corrected_units": {"era5-single-levels-monthly-means":"m d-1"},
+      "_corrected_units": {
+        "era5-single-levels-monthly-means": "m d-1"
+      },
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_invert_sign": false,
       "_transformation": {
