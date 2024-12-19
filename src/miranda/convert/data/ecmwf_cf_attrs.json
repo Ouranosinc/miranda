@@ -497,11 +497,11 @@
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
-      "description": "Convective precipitation thickness converted to mass flux using a water density of 1000 kg/m³.", 
+      "description": "Convective precipitation thickness converted to mass flux using a water density of 1000 kg/m³.",
       "long_name": "Convective precipitation",
       "standard_name": "convective_precipitation_flux",
       "units": "kg m-2 s-1"
-    }, 
+    },
     "cape": {
       "_cf_variable_name": "CAPE",
       "_corrected_units": false,
@@ -512,7 +512,7 @@
       "long_name": "Convective available potential energy",
       "standard_name": "atmosphere_convective_available_potential_energy_wrt_surface",
       "units": "J kg-1"
-    }, 
+    },
     "u": {
       "_cf_variable_name": "ua",
       "_corrected_units": false,
