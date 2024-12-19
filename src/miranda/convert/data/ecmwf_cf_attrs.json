@@ -478,17 +478,66 @@
       "standard_name": "sea_ice_area_fraction",
       "units": "%"
     },
-    "lsm": {
-      "_cf_variable_name": "sftlf",
-      "_corrected_units": "1",
+    "cp": {
+      "_cf_variable_name": "prc",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_corrected_units": {
+        "era5-single-levels-monthly-means": "m d-1"
+      },
+      "_corrected_standard_name": "lwe_thickness_of_convective_precipitation_amount",
       "_invert_sign": false,
-      "_offset_time": false,
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "Convective precipitation thickness converted to mass flux using a water density of 1000 kg/m³.", 
+      "long_name": "Convective precipitation",
+      "standard_name": "convective_precipitation_flux",
+      "units": "kg m-2 s-1"
+    }, 
+    "cape": {
+      "_cf_variable_name": "CAPE",
+      "_corrected_units": false,
+      "_invert_sign": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "description": "This parameter is the proportion of land, as opposed to ocean or inland waters (lakes, reservoirs, rivers and coastal waters), in a grid box.",
-      "long_name": "Land Area Fraction",
-      "standard_name": "land_area_fraction",
-      "units": "%"
+      "description": "This is an indication of the instability (or stability) of the atmosphere and can be used to assess the potential for the development of convection, which can lead to heavy rainfall, thunderstorms and other severe weather. ",
+      "long_name": "Convective available potential energy",
+      "standard_name": "atmosphere_convective_available_potential_energy_wrt_surface",
+      "units": "J kg-1"
+    }, 
+    "u": {
+      "_cf_variable_name": "ua",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "comments": "Care should be taken when comparing model parameters with observations, because observations are often local to a particular point in space and time, rather than representing averages over a model grid box.",
+      "description": "This parameter is the eastward component of the wind at specified pressure levels. It is the horizontal speed of air moving towards the east, in metres per second.",
+      "long_name": "Eastward wind",
+      "original_long_name": "U component of wind",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
+    "v": {
+      "_cf_variable_name": "va",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "comments": "Care should be taken when comparing model parameters with observations, because observations are often local to a particular point in space and time, rather than representing averages over a model grid box.",
+      "description": "This parameter is the northward component of the wind at specified pressure levels. It is the horizontal speed of air moving towards the north, in metres per second.",
+      "long_name": "Northward wind",
+      "original_long_name": "V component of wind",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
     }
   }
 }
