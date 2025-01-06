@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import datetime
 import pathlib
+from collections.abc import Iterator, Sequence
 from functools import partial
-from typing import Callable, Iterator, Sequence
+from typing import Callable
 
 import xarray as xr
 
