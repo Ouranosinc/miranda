@@ -7,14 +7,13 @@ import re
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List, Optional
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 
 dictConfig(LOGGING_CONFIG)
-Nested_List = List[List[Path]]
-PathDict = Dict[str, List[Path]]
+Nested_List = list[list[Path]]
+PathDict = dict[str, list[Path]]
 
 
 GiB = int(pow(2, 30))

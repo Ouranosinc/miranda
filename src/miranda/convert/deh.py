@@ -25,7 +25,8 @@ cmor = json.load(
     "variable_entry"
 ]
 
-# TODO: Some potentially useful attributes were skipped, because they would be complicated to include in a dataset since they vary per station
+# TODO: Some potentially useful attributes were skipped
+# because they would be complicated to include in a dataset since they vary per station
 meta_patterns = {
     "Station: ": "name",
     "Bassin versant: ": "bv",

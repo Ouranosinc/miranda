@@ -56,7 +56,7 @@ jobs:
             github.com:443
             pypi.org:443
       - name: Checkout Repository (no persist-credentials)
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -68,23 +68,20 @@ jobs:
         run: |
           git config --local user.email "bumpversion[bot]@ouranos.ca"
           git config --local user.name "bumpversion[bot]"
-      - name: Current Version
-        run: |
-          CURRENT_VERSION="$(grep -E '__version__' src/miranda/__init__.py | cut -d ' ' -f3)"
-          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Conditional Bump Version
         run: |
-          if [[ ${{ env.CURRENT_VERSION }} =~ -dev(\.\d+)? ]]; then
+          CURRENT_VERSION=$(bump-my-version show current_version)
+          if [[ ${CURRENT_VERSION} =~ -dev(\.\d+)? ]]; then
             echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
             bump-my-version bump build
           else
             echo "Version is stable, bumping 'patch' version"
             bump-my-version bump patch
           fi
-          bump-my-version show-bump
+          echo "new_version=$(bump-my-version show current_version)"
       - name: Push Changes
         uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
         with:

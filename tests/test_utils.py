@@ -4,9 +4,9 @@ import os
 from datetime import date
 from pathlib import Path
 
-import pytest  # noqa
+import pytest
 
-import miranda.eccc._utils as eccc_utils  # noqa
+import miranda.preprocess._metadata as metadata
 import miranda.utils
 
 
@@ -28,12 +28,13 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = eccc_utils.cf_station_metadata(key)
-            codes.append(variables[key]["standard_name"])
-            if variables[key]["standard_name"] == "dry_bulb_temperature":
-                assert variables[key]["raw_units"] == "degC"
-                assert variables[key]["units"] == "K"
-            assert variables[key]["missing_flags"] == "M"
+            variables[key] = metadata.eccc_variable_metadata(key, "eccc-obs")
+            var_name = next(iter(variables[key]["metadata"]))
+            var_metadata = variables[key]["metadata"][var_name]
+            codes.append(var_metadata["standard_name"])
+            if var_metadata["standard_name"] == "dry_bulb_temperature":
+                assert var_metadata["units"] == "degC"
+            assert var_metadata["missing_flags"] == "M"
 
         assert set(codes) == {
             "wind_speed_u2a",
@@ -57,15 +58,17 @@ class TestEnvCanVariables:
         codes = list()
         variables = dict()
         for key in keys:
-            variables[key] = eccc_utils.cf_station_metadata(key)
-            codes.append(variables[key]["standard_name"])
-            if variables[key]["standard_name"].startswith("air_temperature"):
-                assert variables[key]["raw_units"] == "degC"
-                assert variables[key]["units"] == "K"
-            elif variables[key]["standard_name"].endswith("precipitation_amount"):
-                assert variables[key]["raw_units"] in ["cm", "mm"]
-                assert variables[key]["units"] == "m"
-            assert variables[key]["missing_flags"] == "M"
+            variables[key] = metadata.eccc_variable_metadata(key, "eccc-obs")
+
+            var_name = next(iter(variables[key]["metadata"]))
+            var_metadata = variables[key]["metadata"][var_name]
+            codes.append(var_metadata["standard_name"])
+
+            if var_name.startswith("air_temperature"):
+                assert var_metadata["units"] == "degC"
+            elif var_name.endswith("precipitation_amount"):
+                assert var_metadata["units"] in ["cm", "mm"]
+            assert var_metadata["missing_flags"] == "M"
 
         assert set(codes) == {
             "air_temperature",
