@@ -13,7 +13,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.7.0"
+requires-python = ">=3.9.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -52,39 +52,37 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "pip >=24.2.0",
-  "bump-my-version >=0.26.0",
-  "watchdog >=4.0.0",
+  "black ==24.10.0",
+  "blackdoc ==0.3.9",
+  "bump-my-version >=0.28.0",
+  "coverage >=7.5.0",
+  "coveralls >=4.0.1",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
   "flit >=3.9.0,<4.0",
-  "tox >=4.18.0",
-  "coverage >=7.5.0",
-  "coveralls >=4.0.1",
+  "isort ==5.13.2",
   "mypy",
   "numpydoc >=1.8.0",
+  "pip >=24.3.1",
+  "pre-commit >=3.5.0",
   "pytest >=8.3.2",
   "pytest-cov >=5.0.0",
-  "black ==24.8.0",
-  "blackdoc ==0.3.9",
-  "isort ==5.13.2",
-  "ruff >=0.5.7",
-  "pre-commit >=3.5.0"
+  "ruff >=0.8.2",
+  "tox >=4.23.2",
+  "watchdog >=4.0.0"
 ]
 docs = [
   # Documentation and examples
+  "furo >=2023.07.26",
+  "ipykernel",
+  "ipython",
+  "jupyter_client",
+  "nbsphinx",
   "sphinx >=7.0.0",
-  "sphinx_codeautolink",
-  "sphinx_copybutton",
   "sphinx-intl",
   "sphinx-mdinclude",
-  "sphinxcontrib-napoleon",
-  "nbsphinx",
-  "pandoc",
-  "ipython",
-  "ipykernel",
-  "jupyter_client",
-  "furo >=2023.07.26"
+  "sphinx_codeautolink",
+  "sphinx_copybutton"
 ]
 gis = [
   # GIS library support
@@ -234,6 +232,7 @@ exclude = [
   ".pre-commit-config.yaml",
   ".readthedocs.yml",
   ".yamllint.yaml",
+  ".zizmor.yml",
   "docs/_*",
   "docs/apidoc/modules.rst",
   "docs/apidoc/miranda*.rst",
