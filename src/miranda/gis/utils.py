@@ -16,7 +16,19 @@ __all__ = [
 
 
 def _simple_fix_dims(d: xr.Dataset | xr.DataArray) -> xr.Dataset | xr.DataArray:
-    """Adjust dimensions found in a file so that it can be used for regridding purposes."""
+    """
+    Adjust dimensions found in a file so that it can be used for regridding purposes.
+
+    Parameters
+    ----------
+    d : xr.Dataset or xr.DataArray
+        The dataset to adjust.
+
+    Returns
+    -------
+    xr.Dataset or xr.DataArray
+        The adjusted dataset.
+    """
     if "lon" not in d.dims or "lat" not in d.dims:
         dim_rename = dict()
         for dim in d.dims:
@@ -39,7 +51,21 @@ def _simple_fix_dims(d: xr.Dataset | xr.DataArray) -> xr.Dataset | xr.DataArray:
 def conservative_regrid(
     ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | xr.Dataset
 ) -> xr.DataArray | xr.Dataset:
-    """Perform a conservative_normed regridding"""
+    """
+    Perform a conservative_normed regridding.
+
+    Parameters
+    ----------
+    ds : xr.DataArray or xr.Dataset
+        The dataset to regrid.
+    ref_grid : xr.DataArray or xr.Dataset
+        The reference grid.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        The regridded dataset.
+    """
     try:
         import xesmf as xe  # noqa
     except ModuleNotFoundError:
@@ -51,9 +77,8 @@ def conservative_regrid(
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
 
-    logging.info(
-        f"Performing regridding and masking with `xesmf` using method: {method}."
-    )
+    msg = f"Performing regridding and masking with `xesmf` using method: {method}."
+    logging.info(msg)
 
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
@@ -72,17 +97,22 @@ def threshold_mask(
     mask: xr.Dataset | xr.DataArray,
     mask_cutoff: float | bool = False,
 ) -> xr.Dataset | xr.DataArray:
-    """Land-Sea mask operations.
+    """
+    Land-Sea mask operations.
 
     Parameters
     ----------
     ds : xr.Dataset or str or os.PathLike
+        The dataset to be masked.
     mask : xr.Dataset or xr.DataArray
+        The land-sea mask.
     mask_cutoff : float or bool
+        The mask cutoff value.
 
     Returns
     -------
     xr.Dataset or xr.DataArray
+        The masked dataset.
     """
     mask = _simple_fix_dims(mask)
 

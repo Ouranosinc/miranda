@@ -10,7 +10,19 @@ import xarray as xr
 
 
 def load_station_metadata(meta: str | os.PathLike | None) -> xr.Dataset:
-    """Method to load station metadata from a file or URL."""
+    """
+    Method to load station metadata from a file or URL.
+
+    Parameters
+    ----------
+    meta : str or os.PathLike or None
+        The path to the file or URL.
+
+    Returns
+    -------
+    xr.Dataset
+        The station metadata.
+    """
     if meta:
         df_inv = pd.read_csv(meta, header=0)
     else:

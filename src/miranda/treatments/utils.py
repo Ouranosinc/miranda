@@ -12,7 +12,30 @@ __all__ = [
 ]
 
 
-def _get_section_entry_key(meta, entry, var, key, project):
+def _get_section_entry_key(
+    meta: dict, entry: str, var: str, key: str, project: str
+) -> Any:
+    """
+    Get a specific key from a section of the metadata.
+
+    Parameters
+    ----------
+    meta : dict
+        The metadata dictionary.
+    entry : str
+        The entry to look for.
+    var : str
+        The variable to look for.
+    key : str
+        The key to look for.
+    project : str
+        The project name.
+
+    Returns
+    -------
+    Any
+        The value of the key.
+    """
     var_meta = meta[entry].get(var, {})
     if key in var_meta:
         if isinstance(var_meta[key], dict):
@@ -24,7 +47,28 @@ def _get_section_entry_key(meta, entry, var, key, project):
     return None
 
 
-def _iter_entry_key(ds, meta, entry, key, project):
+def _iter_entry_key(ds, meta, entry, key, project) -> tuple[str, Any]:
+    """
+    Iterate through entry keys.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset.
+    meta : dict
+        The metadata dictionary.
+    entry : str
+        The entry to look for.
+    key : str
+        The key to look for.
+    project : str
+        The project name.
+
+    Yields
+    ------
+    tuple[str, Any]
+        The variable and value.
+    """
     for vv in set(ds.data_vars).intersection(meta[entry]):
         val = _get_section_entry_key(meta, entry, vv, key, project)
         yield vv, val
@@ -33,16 +77,21 @@ def _iter_entry_key(ds, meta, entry, key, project):
 def load_json_data_mappings(
     project: str, configurations: dict[str, Path] | None = None
 ) -> dict[str, Any]:
-    """Load JSON mappings for supported dataset conversions.
+    """
+    Load JSON mappings for supported dataset conversions.
 
     Parameters
     ----------
     project : str
-    configurations: dict, optional
+        The project name.
+    configurations : dict, optional
+        Configuration files for the project.
+        If not provided, the function will try to find the configuration files in the `configs` folder.
 
     Returns
     -------
     dict[str, Any]
+        The metadata definition.
     """
     if configurations is None:
         calling_frame = inspect.currentframe().f_back

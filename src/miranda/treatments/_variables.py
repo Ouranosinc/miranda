@@ -63,7 +63,8 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         )
                         raise
 
-                logging.info(f"De-accumulating units for variable `{vv}`.")
+                msg = f"De-accumulating units for variable `{vv}`."
+                logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv].diff(dim="time")
                     out = d[vv].where(
@@ -76,9 +77,8 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             elif trans == "amount2rate":
                 # NOTE: This treatment is no longer needed in xclim v0.43.0+ but is kept for backwards compatibility
                 # frequency-based totals to time-based flux
-                logging.info(
-                    f"Performing amount-to-rate units conversion for variable `{vv}`."
-                )
+                msg = f"Performing amount-to-rate units conversion for variable `{vv}`."
+                logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(
                         d[vv],
@@ -113,9 +113,8 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             else:
                 raise NotImplementedError(f"Unknown transformation: {trans}")
         elif trans is False:
-            logging.info(
-                f"No transformations needed for `{vv}` (Explicitly set to False)."
-            )
+            msg = f"No transformations needed for `{vv}` (Explicitly set to False)."
+            logging.info(msg)
             continue
 
         prev_history = d.attrs.get("history", "")
@@ -138,15 +137,15 @@ def invert_value_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     converted = []
     for vv, inv_sign in _iter_entry_key(d, m, "variables", key, p):
         if inv_sign:
-            logging.info(f"Inverting sign for `{vv}` (switching direction of values).")
+            msg = f"Inverting sign for `{vv}` (switching direction of values)."
+            logging.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = -out
             converted.append(vv)
         elif inv_sign is False:
-            logging.info(
-                f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
-            )
+            msg = f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
+            logging.info(msg)
             continue
         prev_history = d.attrs.get("history", "")
         history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
@@ -199,20 +198,19 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         max_value = xclim.core.units.convert_units_to(
                             value, d[vv], context
                         )
-                logging.info(
-                    f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
-                )
+                msg = f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
+                logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv]
                     d_out[out.name] = out.clip(min_value, max_value)
                 converted.append(vv)
             elif clip_values is False:
-                logging.info(
-                    f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
-                )
+                msg = f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
+                logging.info(msg)
                 continue
             else:
-                logging.info(f"No clipping of values needed for `{vv}` in `{p}`.")
+                msg = f"Unknown clipping values for `{vv}` in `{p}`."
+                logging.info(msg)
                 continue
 
             prev_history = d.attrs.get("history", "")

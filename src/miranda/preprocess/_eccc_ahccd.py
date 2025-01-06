@@ -248,11 +248,11 @@ def convert_ahccd(
                     compute=True,
                 )
             else:
-                logger.warning(
-                    f"metadata info for station {ff.name} not found : skipping"
-                )
+                msg = f"Metadata info for station {ff.name} not found: Skipping..."
+                logger.warning(msg)
         else:
-            logger.info(f"{output_name} already exists: Skipping...")
+            msg = f"{output_name} already exists: Skipping..."
+            logger.info(msg)
     if merge:
         merge_ahccd(data_source, output_dir, variable)
     return
@@ -296,21 +296,23 @@ def merge_ahccd(
         try:
             variables_found.add(find_project_variable_codes(str(v), configuration))
         except NotImplementedError:
+            msg = f"Variable {v} not found in metadata."
+            logging.info(msg)
             pass
 
     # Name output file
     ds_ahccd.attrs["variable"] = ", ".join(variables_found)
     if len(variables_found) > 1:
         variables = "-".join(variables_found)
-        logger.info(
-            f"Many variables found. Merging station and variables files in {data_source}."
-        )
+        msg = f"Many variables found. Merging station and variables files in {data_source}."
+        logger.info(msg)
     else:
         variables = variables_found.pop()
     output_name = name_output_file(ds_ahccd, "netcdf", variables)
 
     try:
-        logger.info(f"Writing merged file to: {output_dir}.")
+        msg = f"Writing merged file to: {output_dir}."
+        logger.info(msg)
         write_dataset(
             ds_ahccd,
             output_dir,

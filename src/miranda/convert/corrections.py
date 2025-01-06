@@ -26,7 +26,7 @@ from miranda.treatments import (
 )
 from miranda.treatments.utils import load_json_data_mappings
 
-CONFIG_FOLDER = pathlib.Path(__file__).parent / "configs"
+CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
 CONFIG_FILES = {
     "EMDNA": "emdna_cf_attrs.json",
     "ESPO-G6-E5L": "espo-g6-e5l_attrs.json",
@@ -59,7 +59,21 @@ for k, v in CONFIG_FILES.items():
 
 
 def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
-    """Convert variables to CF-compliant format"""
+    """
+    Convert variables to CF-compliant format.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Data to be converted.
+    project : str
+        Project name for decoding/handling purposes.
+
+    Returns
+    -------
+    xr.Dataset
+        The corrected dataset.
+    """
     metadata_definition = load_json_data_mappings(project, CONFIG_FILES)
 
     ds = correct_unit_names(ds, project, metadata_definition)
@@ -102,7 +116,8 @@ def dataset_conversion(
     preprocess: Callable | str | None = "auto",
     **xr_kwargs,
 ) -> xr.Dataset | xr.DataArray:
-    r"""Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
+    r"""
+    Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
     ----------
@@ -111,7 +126,7 @@ def dataset_conversion(
         If sent a list or GeneratorType, will open with :py:func:`xarray.open_mfdataset` and concatenate files.
     project : {"cordex", "cmip5", "cmip6", "ets-grnch", "isimip-ft", "pcic-candcs-u6", "converted"}
         Project name for decoding/handling purposes.
-    domain: {"global", "nam", "can", "qc", "mtl"}, optional
+    domain : {"global", "nam", "can", "qc", "mtl"}, optional
         Domain to perform subsetting for. Default: None.
     mask : Optional[Union[xr.Dataset, xr.DataArray]]
         DataArray or single data_variable dataset containing mask.
@@ -125,12 +140,13 @@ def dataset_conversion(
         Preprocessing functions to perform over each Dataset.
         Default: "auto" - Run preprocessing fixes based on supplied fields from metadata definition.
         Callable - Runs function over Dataset (single) or supplied to `preprocess` (multifile dataset).
-    \*\*xr_kwargs
+    \*\*xr_kwargs : Any
         Arguments passed directly to xarray.
 
     Returns
     -------
     xr.Dataset or xr.DataArray
+        The corrected dataset.
     """
     if isinstance(input_files, xr.Dataset):
         ds = input_files
@@ -162,7 +178,7 @@ def dataset_conversion(
 
         if len(files) == 1:
             ds = xr.open_dataset(files[0], **xr_kwargs)
-            for _, process in preprocess_kwargs.items():
+            for process in preprocess_kwargs.values():
                 ds = process(ds)
         else:
             ds = xr.open_mfdataset(files, **xr_kwargs, **preprocess_kwargs)

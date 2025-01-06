@@ -48,9 +48,8 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
             if p in miranda_version.keys():
                 header["miranda_version"] = __miranda_version__
         else:
-            logging.warning(
-                f"`_miranda_version` not set for project `{p}`. Not appending."
-            )
+            msg = f"`_miranda_version` not set for project `{p}`. Not appending."
+            logging.warning(msg)
     if "_miranda_version" in header:
         del header["_miranda_version"]
 
@@ -72,19 +71,18 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
             if p in header[field]:
                 attr_treatments = header[field][p]
             else:
-                logging.warning(
-                    f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
-                )
+                msg = f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
+                logging.warning(msg)
                 continue
         elif isinstance(header[field], dict):
             attr_treatments = header[field]
         else:
-            raise AttributeError(
-                f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
-            )
+            msg = f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
+            raise AttributeError(msg)
 
         if field[1:] in d.attrs:
-            logging.warning(f"Overwriting `{field[1:]}` based on JSON configuration.")
+            msg = f"Overwriting `{field[1:]}` based on JSON configuration."
+            logging.warning(msg)
         if field == "_map_attrs":
             for attribute, mapping in attr_treatments.items():
                 header[mapping] = d.attrs[attribute]

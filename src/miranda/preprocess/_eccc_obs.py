@@ -44,10 +44,11 @@ TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 def _remove_duplicates(ds):
     if any(ds.get_index("time").duplicated()):
-        logging.info(
+        msg = (
             f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
             f"for station {ds.station_id.values}. Assuming first value."
         )
+        logging.info(msg)
     return ds.sel(time=~ds.get_index("time").duplicated())
 
 
@@ -77,14 +78,16 @@ def convert_observation(
     if isinstance(data_source, list) or Path(data_source).is_file():
         archives.append(data_source)
     else:
-        tables = []
-        for repository in obs_vocabularies:
-            if code in repository.values():
-                tables.append(str(repository.keys()))
-        logging.info(
+        tables = [
+            str(repository.keys())
+            for repository in obs_vocabularies
+            if code in repository.values()
+        ]
+        msg = (
             f"Collecting files for variable '{variable}'. "
             f"Filename patterns containing variable code '{code}: {', '.join(tables)}'."
         )
+        logging.info(msg)
         for table in tables:
             archives.extend([f for f in Path(data_source).rglob(f"{table}*.gz")])
 
@@ -99,9 +102,8 @@ def convert_observation(
         pass
 
     if errored_files:
-        logging.warning(
-            "Some files failed to be properly parsed:\n", ", ".join(errored_files)
-        )
+        msg = "Some files failed to be properly parsed:\n", ", ".join(errored_files)
+        logging.warning(msg)
 
 
 def convert_station(
@@ -170,9 +172,8 @@ def convert_station(
         else:
             has_variable_codes = (df_code["code_var"] == variable_code).any()
         if not has_variable_codes:
-            logging.info(
-                f"Variable `{variable}` not found for station code: {code} in file {data}. Continuing..."
-            )
+            msg = f"Variable `{variable}` not found for station code: {code} in file {data}. Continuing..."
+            logging.info(msg)
             continue
 
         # # Perform the data treatment
@@ -354,7 +355,8 @@ def convert_station(
 def merge_stations(
     source_files: str | os.PathLike | None = None,
     output_folder: str | os.PathLike | None = None,
-    time_step: str = None,
+    *,
+    time_step: str,
     variables: str | int | list[str | int] | None = None,
     include_flags: bool = True,
     groupings: int | None = None,
@@ -425,7 +427,8 @@ def merge_stations(
     for variable_code in variables:
         info = load_json_data_mappings("eccc-obs")["variables"][variable_code]
         variable_name = info["cf_variable_name"]
-        logging.info(f"Merging `{variable_name}` using `{time_step}` time step.")
+        msg = f"Merging `{variable_name}` using `{time_step}` time step."
+        logging.info(msg)
 
         # Only perform aggregation on available data with corresponding metadata
         logging.info("Performing glob and sort.")
@@ -450,9 +453,8 @@ def merge_stations(
                     pool.join()
 
                 zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
-                logging.info(
-                    f"Found {len(zarrs_found)} intermediary aggregation files."
-                )
+                msg = f"Found {len(zarrs_found)} intermediary aggregation files."
+                logging.info(msg)
 
                 ds = xr.open_mfdataset(
                     zarrs_found,
@@ -497,18 +499,19 @@ def merge_stations(
                 valid_stations = list(sorted(ds.station_id.values))
                 valid_stations_count = len(valid_stations)
 
-                logging.info(f"Processing stations for variable `{variable_name}`.")
+                msg = f"Processing stations for variable `{variable_name}`."
+                logging.info(msg)
 
                 if len(station_file_codes) == 0:
-                    logging.error(
-                        f"No stations were found containing variable filename `{variable_name}`. Exiting."
-                    )
+                    msg = f"No stations were found containing variable filename `{variable_name}`. Exiting."
+                    logging.error(msg)
                     return
 
-                logging.info(
+                msg = (
                     f"Files exist for {len(station_file_codes)} ECCC stations. "
                     f"Metadata found for {valid_stations_count} stations. "
                 )
+                logging.info(msg)
 
                 # FIXME: Is this still needed?
                 # logging.info("Preparing the NetCDF time period.")
@@ -558,9 +561,10 @@ def merge_stations(
                 del ds
 
         else:
-            logging.info(f"No files found for variable: `{variable_name}`.")
+            msg = f"No files found for variable: `{variable_name}`."
+            logging.info(msg)
 
-    runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
+    runtime = f"Process completed in {time.time() - func_time:.2f} seconds."
     logging.warning(runtime)
 
 
@@ -584,10 +588,11 @@ def _tmp_zarr(
     tempdir: str | os.PathLike,
     group: int | None = None,
 ) -> None:
-    logging.info(
+    msg = (
         f"Processing batch of files {iterable + 1}"
         f"{' of ' + str(group) if group is not None else ''}."
     )
+    logging.info(msg)
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     try:
@@ -596,9 +601,8 @@ def _tmp_zarr(
         )
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])
-        logging.error(
-            f"Issues found with the following files: [{errored_nc_files}]: {e}"
-        )
+        msg = f"Issues found with the following files: [{errored_nc_files}]: {e}"
+        logging.error(msg)
         return
 
     ds = ds.assign_coords(
@@ -626,13 +630,13 @@ def _combine_years(
 ) -> None:
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
     if len(nc_files):
-        logging.info(
+        msg = (
             f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
         )
+        logging.info(msg)
     else:
-        logging.warning(
-            f"No readings found for station code {Path(station_folder).name}. Continuing..."
-        )
+        msg = f"No readings found for station code {Path(station_folder).name}. Continuing..."
+        logging.warning(msg)
         return
 
     # Remove range files if years are all present, otherwise default to range_file.
@@ -648,35 +652,42 @@ def _combine_years(
             year_start, year_end = int(groups[0].strip("_")), int(groups[1].strip("_"))
             range_files_found[f] = set(range(year_start, year_end))
         else:
-            logging.warning(
-                "Years unable to be effectively parsed from series. Continuing with xarray solver..."
-            )
+            msg = "Years unable to be effectively parsed from series. Continuing with xarray solver..."
+            logging.warning(msg)
             years_parsed = False
             break
     if years_parsed:
         if len(range_files_found) > 0:
-            logging.warning(
+            msg = (
                 f"Overlapping single-year and multi-year files found for station code {station_folder}. "
                 "Removing overlaps."
             )
+            logging.warning(msg)
             for ranged_file, years in range_files_found.items():
                 if years.issubset(years_found.values()):
                     nc_files.remove(ranged_file)
                 else:
+                    missing_years = []
                     for y in years:
                         try:
                             nc_files.remove(years_found[y])
-                        except (KeyError, ValueError):
+                        except (KeyError, ValueError):  # noqa: PERF203
+                            missing_years.append(str(y))
                             continue
+                        if missing_years:
+                            msg = f"Missing years {', '.join(missing_years)} from multi-year file {ranged_file}. "
+                            logging.warning(msg)
 
         year_range = min(years_found.keys()), max(years_found.keys())
-        logging.info(
+        msg = (
             "Year(s) covered: "
             f"{year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
         )
+        logging.info(msg)
 
     if _verbose:
-        logging.info(f"Opening: {', '.join([p.name for p in nc_files])}")
+        msg = f"Opening: {', '.join([p.name for p in nc_files])}"
+        logging.info(msg)
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim="time")
     outfile = Path(out_folder).joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
@@ -692,17 +703,15 @@ def _combine_years(
         meta = meta.assign_coords(station=[0])
     except ValueError:
         rejected.append(Path(station_folder).name)
-        logging.error(
-            f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
-        )
+        msg = f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
+        logging.error(msg)
         return
     if len(meta.indexes) > 1:
         raise ValueError("Found more than 1 station.")
     elif len(meta.indexes) == 0:
         rejected.append(Path(station_folder).name)
-        logging.warning(
-            f"No metadata found for station code {station_folder}. Continuing..."
-        )
+        msg = f"No metadata found for station code {station_folder}. Continuing..."
+        logging.warning(msg)
         return
 
     keep_coords = [
@@ -723,10 +732,11 @@ def _combine_years(
             ds[vv] = ds[vv].astype(str)
 
     if not outfile.exists():
-        logging.info(f"Merging to {outfile.name}")
+        msg = f"Merging to {outfile.name}."
+        logging.info(msg)
         comp = dict(zlib=True, complevel=5)
         encoding = {data_var: comp for data_var in ds.data_vars}
-        encoding["time"] = dict(dtype="single")
+        encoding["time"] = {"dtype": "single"}
         with ProgressBar():
             ds.to_netcdf(
                 outfile,
@@ -735,7 +745,8 @@ def _combine_years(
                 encoding=encoding,
             )
     else:
-        logging.info(f"Files exist for {outfile.name}. Continuing...")
+        msg = f"Files exist for {outfile.name}. Continuing..."
+        logging.info(msg)
 
 
 def merge_converted_variables(
@@ -772,8 +783,7 @@ def merge_converted_variables(
     if variables is not None:
         if not isinstance(variables, list):
             variables = [variables]
-        for var in variables:
-            selected_variables.append(meta[var])
+        selected_variables.extend(meta[var] for var in variables)
 
     variables_found = [x.name for x in source_files.iterdir() if x.is_dir()]
     if selected_variables:
@@ -784,11 +794,13 @@ def merge_converted_variables(
         ]
 
     for variable in variables_found:
-        logging.info(f"Merging files found for variable: `{variable}`.")
+        msg = f"Merging files found for variable: `{variable}`."
+        logging.info(msg)
         station_dirs = [
             x for x in source_files.joinpath(variable).iterdir() if x.is_dir()
         ]
-        logging.info(f"Number of stations found: {len(station_dirs)}.")
+        msg = f"Number of stations found: {len(station_dirs)}."
+        logging.info(msg)
 
         output_rep = output_folder.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
@@ -796,10 +808,11 @@ def merge_converted_variables(
         if (
             len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)
         ) and not overwrite:
-            logging.warning(
+            msg = (
                 f"Variable {variable} appears to have already been converted. Will be skipped. "
                 f"To force conversion of this variable, set `overwrite=True`."
             )
+            logging.warning(msg)
             continue
 
         manager = mp.Manager()
@@ -819,6 +832,5 @@ def merge_converted_variables(
             pool.join()
 
         if rejected_stations:
-            logging.warning(
-                f"Rejected station codes are the following: {', '.join(rejected_stations)}."
-            )
+            msg = f"Rejected station codes are the following: {', '.join(rejected_stations)}."
+            logging.warning(msg)

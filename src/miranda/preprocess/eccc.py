@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import contextlib
 import logging.config
-import os
+
+# import os
 import tempfile
 from pathlib import Path
 from typing import Callable
@@ -27,7 +28,19 @@ def _run_func_on_archive_with_optional_dask(
     errored_files: list[Path],
     **dask_kwargs,
 ) -> None:
-    r"""Run a function on a file archive, extracting it if necessary.
+    r"""
+    Run a function on a file archive, extracting it if necessary.
+
+    Parameters
+    ----------
+    file : Path
+        File archive to process.
+    function : Callable
+        Function to run on the file.
+    errored_files : list[Path]
+        List of files that errored during processing.
+    \*\*dask_kwargs : Any
+        Keyword arguments to pass to dask.distributed.Client.
 
     Notes
     -----
@@ -36,28 +49,14 @@ def _run_func_on_archive_with_optional_dask(
     - file: Path
     - using_dask: bool
     - client: dask.distributed.Client
-
-    Parameters
-    ----------
-    file: Path
-        File archive to process.
-    function: Callable
-        Function to run on the file.
-    errored_files: list[Path]
-        List of files that errored during processing.
-    \*\*dask_kwargs
-        Keyword arguments to pass to dask.distributed.Client.
-
-    Returns
-    -------
-    None
     """
     with tempfile.TemporaryDirectory() as temp_folder:
         if file.suffix in [".gz", ".tar", ".zip", ".7z"]:
             data_files = generic_extract_archive(file, output_dir=temp_folder)
         else:
             data_files = [file]
-        logging.info(f"Processing file: {file}.")
+        msg = f"Processing file: {file}."
+        logging.info(msg)
 
         # 1 GiB
         size_limit = 2**30
@@ -68,15 +67,13 @@ def _run_func_on_archive_with_optional_dask(
                 if dask_kwargs:
                     logging.info("`dask_kwargs` provided - Using dask.dataframes.")
                 elif size > size_limit:
-                    logging.info(
-                        f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
-                    )
+                    msg = f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
+                    logging.info(msg)
                 client = ProgressBar
                 using_dask = True
             else:
-                logging.info(
-                    f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
-                )
+                msg = f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
+                logging.info(msg)
                 client = contextlib.nullcontext
                 using_dask = False
 
@@ -86,7 +83,7 @@ def _run_func_on_archive_with_optional_dask(
                 except FileNotFoundError:
                     errored_files.append(data)
 
-        if os.listdir(temp_folder):
+        if Path(temp_folder).iterdir():
             for temporary_file in Path(temp_folder).glob("*"):
                 if temporary_file in data_files:
                     temporary_file.unlink()
