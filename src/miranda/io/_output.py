@@ -76,7 +76,8 @@ def write_dataset(
     outfile_path = output_path.joinpath(output_name)
 
     if overwrite and outfile_path.exists():
-        logging.warning(f"Removing existing {output_format} files for {output_name}.")
+        msg = f"Removing existing {output_format} files for {outfile}."
+        logging.warning(msg)
         if outfile_path.is_dir():
             shutil.rmtree(outfile_path)
         if outfile_path.is_file():
@@ -93,7 +94,8 @@ def write_dataset(
         elif "lat" not in ds.dims and "lon" not in ds.dims:
             chunks = fetch_chunk_config(priority="stations", freq=freq, dims=ds.dims)
 
-    logging.info(f"Writing {output_name}.")
+    msg = f"Writing {outfile}."
+    logging.info(msg)
     write_object = delayed_write(
         ds,
         outfile_path,
@@ -152,7 +154,7 @@ def write_dataset_dict(
         if not outpath.exists() or overwrite:
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if outpath.exists():
-                shutil.rmtree(outfile)
+                shutil.rmtree(outpath)
 
             tmp_path = None
             if temp_folder:
@@ -171,9 +173,8 @@ def write_dataset_dict(
                 shutil.rmtree(tmp_path)
 
         else:
-            logging.warning(
-                f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
-            )
+            msg = f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
+            logging.warning(msg)
 
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
@@ -216,6 +217,8 @@ def concat_rechunk_zarr(
     out_zarr = output_folder.joinpath(f"{out_stem}_{start_year}_{end_year}.zarr")
 
     if not out_zarr.exists() or overwrite:
+        if out_zarr.exists():
+            shutil.rmtree(out_zarr)
         # maketemp files 1 zarr per 4 years
         years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]
@@ -246,8 +249,8 @@ def concat_rechunk_zarr(
             tmp_zarr = tmp_folder.joinpath(
                 f"{out_zarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
             )
-            tmp_zarr.parent.mkdir(exist_ok=True, parents=True)
-            logging.info(f"Writing year {year} to {tmp_zarr.as_posix()}.")
+            msg = f"Writing year {year} to {tmp_zarr.as_posix()}."
+            logging.info(msg)
 
             job = delayed_write(
                 ds=ds,
@@ -260,17 +263,22 @@ def concat_rechunk_zarr(
             with Client(**dask_kwargs):
                 dask.compute(job)
 
-        # get tmp zarrs
-        list_zarr = sorted(list(tmp_folder.glob("*zarr")))
-        ds = xr.open_mfdataset(list_zarr, engine="zarr")
-        # FIXME: Client is only needed for computation. Should be elsewhere.
+        # write to final
+        tmpzarrlist = sorted(list(tmp_zarr.parent.glob("*.zarr")))
+        del ds
+        ds = xr.open_mfdataset(
+            tmpzarrlist, engine="zarr", parallel=True, combine="by_coords"
+        )
+        zarr_kwargs = None
         job = delayed_write(
             ds=ds,
             outfile=out_zarr,
             output_format="zarr",
             target_chunks=chunks,
-            overwrite=overwrite,
-        )  # kwargs=zarr_kwargs)
+            overwrite=False,
+            encode=False,
+            kwargs=zarr_kwargs,
+        )
         with Client(**dask_kwargs):
             dask.compute(job)
         shutil.rmtree(tmp_folder)
@@ -337,11 +345,12 @@ def merge_rechunk_zarrs(
         try:
             target_chunks = chunk_defaults[freq]
         except KeyError:
-            raise NotImplementedError(f"Frequency not supported: `{freq}`.")
+            msg = f"Frequency not supported: `{freq}`."
+            raise NotImplementedError(msg)
 
     start = time.perf_counter()
 
-    for variable, files in variable_sorted.items():
+    for variable in variable_sorted.keys():
         start_var = time.perf_counter()
 
         ds = xr.open_mfdataset(files_found, parallel=True, engine="zarr")
@@ -351,10 +360,12 @@ def merge_rechunk_zarrs(
 
         if overwrite:
             if out_zarr.is_dir():
-                logging.warning(f"Removing existing zarr files for {out_zarr.name}.")
+                msg = f"Removing existing zarr files for {out_zarr.name}."
+                logging.warning(msg)
                 shutil.rmtree(out_zarr)
         else:
-            logging.info(f"Files exist: {out_zarr.name}")
+            msg = f"Files exist: {out_zarr.name}. Skipping..."
+            logging.info(msg)
             continue
 
         ds = ds.chunk(target_chunks)
@@ -362,7 +373,9 @@ def merge_rechunk_zarrs(
             del var.encoding["chunks"]
         ds.to_zarr(out_zarr, mode="w")
 
-        logging.info(
-            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h"
+        msg = (
+            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         )
-    logging.info(f"All variables rechunked in {time.perf_counter() - start:.2f} s")
+        logging.info(msg)
+    msg = f"All variables rechunked in {time.perf_counter() - start:.2f} s."
+    logging.info(msg)

@@ -55,13 +55,14 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/flake8: ## check style with flake8
-	ruff miranda tests
-	flake8 --config=.flake8 miranda tests
+	python -m ruff check src/miranda tests
+	python -m flake8 --config=.flake8 src/miranda tests
+	python -m numpydoc lint src/miranda/**.py
 
 lint/black: ## check style with black
-	black --check miranda tests
-	blackdoc --check miranda docs
-	isort --check miranda tests
+	python -m black --check src/miranda tests
+	python -m blackdoc --check src/miranda docs
+	python -m isort --check src/miranda tests
 
 lint: lint/flake8 lint/black ## check style
 
@@ -69,19 +70,19 @@ test: ## run tests quickly with the default Python
 	python -m pytest
 
 test-all: ## run tests on every Python version with tox
-	tox
+	python -m tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source miranda -m pytest
-	coverage report -m
-	coverage html
+	python -m coverage run --source src/miranda -m pytest
+	python -m coverage report -m
+	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 initialize-translations: clean-docs ## initialize translations, ignoring autodoc-generated files
 	${MAKE} -C docs gettext
 	sphinx-intl update -p docs/_build/gettext -d docs/locales -l fr
 
 autodoc: clean-docs ## create sphinx-apidoc files:
-	sphinx-apidoc -o docs/apidoc --private --module-first miranda
+	sphinx-apidoc -o docs/apidoc --private --module-first src/miranda
 
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
@@ -107,7 +108,8 @@ release: dist ## package and upload a release
 	python -m flit publish dist/*
 
 install: clean ## install the package to the active Python's site-packages
-	python -m flit install
+	python -m pip install .
 
 dev: clean ## install the package to the active Python's site-packages
-	python -m flit install --symlink
+	python -m pip install --editable .[all]
+	pre-commit install

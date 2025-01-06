@@ -31,17 +31,18 @@ __all__ = [
 
 def _verify(hash_value: str, hash_file: os.PathLike) -> None:
     try:
-        with open(hash_file) as f:
+        with Path(hash_file).open("r") as f:
             found_sha256sum = f.read()
 
         if hash_value != found_sha256sum:
             raise ValueError()
     except ValueError:
-        logging.error(
+        msg = (
             f"Found sha256sum (starting: {found_sha256sum[:6]}) "
             f"does not match current value (starting: {hash_value[:6]}) "
             f"for file `{Path(hash_file).name}."
         )
+        logging.error(msg)
 
 
 def generate_hash_file(
@@ -49,7 +50,7 @@ def generate_hash_file(
 ) -> None:
     if not Path(out_file).exists():
         hash_sha256_writer = hashlib.sha256()
-        with open(in_file, "rb") as f:
+        with Path(in_file).open("rb") as f:
             hash_sha256_writer.update(f.read())
         sha256sum = hash_sha256_writer.hexdigest()
 
@@ -57,7 +58,7 @@ def generate_hash_file(
             f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {Path(out_file).name}"
         )
         try:
-            with open(out_file, "w") as f:
+            with Path(out_file).open("w") as f:
                 f.write(sha256sum)
         except PermissionError:
             logging.error("Unable to write file. Ensure access privileges.")
@@ -66,7 +67,7 @@ def generate_hash_file(
         del sha256sum
     elif verify:
         hash_sha256_writer = hashlib.sha256()
-        with open(in_file, "rb") as f:
+        with Path(in_file).open("rb") as f:
             hash_sha256_writer.update(f.read())
         calculated_sha256sum = hash_sha256_writer.hexdigest()
 
@@ -89,7 +90,7 @@ def generate_hash_metadata(
 
     if not Path(hash_file).exists():
         hash_sha256_writer = hashlib.sha256()
-        with open(in_file, "rb") as f:
+        with Path(in_file).open("rb") as f:
             hash_sha256_writer.update(f.read())
         sha256sum = hash_sha256_writer.hexdigest()
 
@@ -100,7 +101,7 @@ def generate_hash_metadata(
 
     else:
         hash_sha256_writer = hashlib.sha256()
-        with open(in_file, "rb") as f:
+        with Path(in_file).open("rb") as f:
             hash_sha256_writer.update(f.read())
         calculated_sha256sum = hash_sha256_writer.hexdigest()
 
@@ -316,13 +317,15 @@ def build_path_from_schema(
             try:
                 validation_schemas[facets[branch]].validate(facets)
             except SchemaError as e:
-                logging.error(
-                    f"Validation issues found for file matching schema: {facets}: {e}"
-                )
+                msg = f"Validation issues found for file matching schema: {facets}: {e}"
+                logging.error(msg)
                 return
         elif facets[branch] not in validation_schemas.keys():
-            logging.error(
+            msg = (
                 f"No appropriate data schemas found for file matching schema: {facets}",
+            )
+            logging.error(
+                msg,
                 DecoderError,
             )
             return
@@ -331,10 +334,8 @@ def build_path_from_schema(
             "Facets validation requires pyessv-archive source files. Skipping validation checks."
         )
 
-    file_location = list()
-    for facet in tree:
-        # Remove spaces in folder paths
-        file_location.append(str(facets[facet]).replace(" ", "-"))
+    # Remove spaces in folder paths
+    file_location = [str(facets[facet]).replace(" ", "-") for facet in tree]
     return Path(output_folder).joinpath("/".join(file_location))
 
 
@@ -427,13 +428,13 @@ def structure_datasets(
 
     if errored_files:
         if len(errored_files) < 10:
-            logging.warning(
+            msg = (
                 f"Some files were unable to be structured: [{', '.join(errored_files)}]"
             )
+            logging.warning(msg)
         else:
-            logging.warning(
-                f"Many files were unable to be structured (n={len(errored_files)})"
-            )
+            msg = f"Many files were unable to be structured (n={len(errored_files)})"
+            logging.warning(msg)
 
     if make_dirs:
         for new_paths in set(all_file_paths.values()):

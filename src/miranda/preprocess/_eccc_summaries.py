@@ -31,7 +31,11 @@ config.dictConfig(LOGGING_CONFIG)
 __all__ = ["daily_summaries_to_netcdf", "extract_daily_summaries"]
 
 eccc_metadata = json.load(
-    open(Path(__file__).resolve().parent / "configs" / "eccc-obs-summary_attrs.json")
+    Path(__file__)
+    .resolve()
+    .parent.joinpath("configs")
+    .joinpath("eccc-obs-summary_attrs.json")
+    .open()
 )["variable_entry"]
 
 
@@ -90,11 +94,8 @@ def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
     time = time.astype("timedelta64[s]").astype(float) / 86400
 
     # we use expand_dims twice to 'add' longitude and latitude dimensions to the station data
-    logging.info(
-        "Reading data for station {} (ID: {}) now.".format(
-            station["name"], station["ID"]
-        )
-    )
+    msg = f"Reading data for station {station['name']} (ID: {station['ID']}) now."
+    logging.info(msg)
 
     ds = None
 
@@ -190,7 +191,7 @@ def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
 
 # This
 def _read_multiple_daily_summaries(
-    files: list[str | Path] | Generator[Path, None, None],
+    files: list[str | Path] | Generator[Path],
     rm_flags: bool = False,
 ) -> dict:
     """Read multiple daily summary files.
@@ -277,7 +278,7 @@ def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
     tuple[dict, pd.DataFrame]
     """
     # Read the whole file
-    with open(file, encoding="utf-8-sig") as fi:
+    with Path(file).open("r", encoding="utf-8-sig") as fi:
         lines = fi.readlines()
 
     # Find each element in the header
@@ -326,8 +327,7 @@ def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
     data = pd.read_csv(file, header=search_header[8] - 2)
     # Makes sure that the data starts on Jan 1st
     if data.values[0, 2] != 1 | data.values[0, 3] != 1:
-        logging.warning(
-            f"Data for file {file.name} is not starting on January 1st. Make sure this is what you want!"
-        )
+        msg = f"Data for file {file.name} is not starting on January 1st. Make sure this is what you want!"
+        logging.warning(msg)
 
     return station_meta, data

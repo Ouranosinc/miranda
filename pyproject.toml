@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.8,<4"]
+requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -8,6 +8,7 @@ authors = [
   {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
 ]
 maintainers = [
+  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"},
   {name = "Travis Logan", email = "logan.travis@ouranos.ca"},
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
@@ -23,12 +24,11 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  # "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Scientific/Engineering :: Atmospheric Science"
 ]
@@ -52,30 +52,32 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "pip >=23.3.0",
-  "bump-my-version >=0.18.3",
-  "watchdog >=3.0.0",
-  "flake8 >=6.1.0",
-  "flake8-alphabetize >=0.0.21",
+  "pip >=24.2.0",
+  "bump-my-version >=0.26.0",
+  "watchdog >=4.0.0",
+  "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
-  "flit >=3.9.0",
-  "tox >=4.5.1",
-  "coverage >=6.2.2,<7.0.0",
-  "coveralls >=3.3.1",
-  "pytest >=7.3.1",
-  "pytest-cov >=4.0.0",
-  "black ==24.3.0",
+  "flit >=3.9.0,<4.0",
+  "tox >=4.18.0",
+  "coverage >=7.5.0",
+  "coveralls >=4.0.1",
+  "mypy",
+  "numpydoc >=1.8.0",
+  "pytest >=8.3.2",
+  "pytest-cov >=5.0.0",
+  "black ==24.8.0",
   "blackdoc ==0.3.9",
   "isort ==5.13.2",
-  "ruff >=0.2.0",
-  "pre-commit >=3.3.2"
+  "ruff >=0.5.7",
+  "pre-commit >=3.5.0"
 ]
 docs = [
   # Documentation and examples
-  "sphinx >=7.1",
+  "sphinx >=7.0.0",
   "sphinx_codeautolink",
   "sphinx_copybutton",
   "sphinx-intl",
+  "sphinx-mdinclude",
   "sphinxcontrib-napoleon",
   "nbsphinx",
   "pandoc",
@@ -102,33 +104,38 @@ remote = [
   "s3fs",
   "scp"
 ]
+all = [
+  "miranda[dev]",
+  "miranda[docs]",
+  "miranda[gis]",
+  "miranda[remote]"
+]
 
 [project.urls]
 "Homepage" = "https://miranda.readthedocs.io/"
-"Changelog" = "https://miranda.readthedocs.io/en/stable/changes.html"
-"About Ouranos" = "https://www.ouranos.ca/en/"
-"Source" = "https://github.com/Ouranosinc/miranda/"
+"Changelog" = "https://miranda.readthedocs.io/en/stable/changelog.html"
+"About Ouranos" = "https://ouranos.ca/en/"
 "Issue tracker" = "https://github.com/Ouranosinc/miranda/issues"
+"Source" = "https://github.com/Ouranosinc/miranda/"
 
 [tool]
 
 [tool.black]
 target-version = [
-  "py37",
-  "py38",
   "py39",
   "py310",
   "py311",
-  "py312"
+  "py312",
+  "py313"
 ]
 
 [tool.bumpversion]
-current_version = "0.6.0-dev.1"
+current_version = "0.6.0-dev.5"
 commit = true
 commit_args = "--no-verify"
 tag = false
 tag_name = "v{new_version}"
-allow_dirty = false
+allow_dirty = true
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\.(?P<build>\\d+)))?"
 serialize = [
   "{major}.{minor}.{patch}-{release}.{build}",
@@ -136,7 +143,34 @@ serialize = [
 ]
 
 [[tool.bumpversion.files]]
-filename = "miranda/__init__.py"
+filename = "CHANGELOG.rst"
+include_bumps = ["release"]
+search = """\
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+--------------------------------------------------------------
+"""
+replace = """\
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+--------------------------------------------------------------
+
+Contributors:
+
+Changes
+^^^^^^^
+* No change.
+
+Fixes
+^^^^^
+* No change.
+
+.. _changes_{new_version}:
+
+`v{new_version} <https://github.com/Ouransoinc/miranda/tree/{new_version}>`_
+------------------------------------------------------------------------
+"""
+
+[[tool.bumpversion.files]]
+filename = "src/miranda/__init__.py"
 search = "__version__ = \"{current_version}\""
 replace = "__version__ = \"{new_version}\""
 
@@ -160,16 +194,19 @@ values = [
   "release"
 ]
 
+[tool.coverage.paths]
+source = ["src/miranda/", "*/site-packages/miranda/"]
+
 [tool.coverage.run]
-relative_files = true
-include = ["miranda/*"]
 omit = ["tests/*.py"]
+relative_files = true
+source = ["miranda"]
 
 [tool.flit.sdist]
 include = [
   ".zenodo.json",
   "AUTHORS.rst",
-  "CHANGES.rst",
+  "CHANGELOG.rst",
   "CONTRIBUTING.rst",
   "LICENSE",
   "Makefile",
@@ -183,12 +220,9 @@ include = [
   "docs/Makefile",
   "docs/conf.py",
   "docs/make.bat",
+  "src/miranda",
   "tests/*.py",
-  "tox.ini",
-  "src/miranda/convert/configs/*.json",
-  "src/miranda/preprocess/configs/*.csv",
-  "src/miranda/preprocess/configs/*.json",
-  "src/miranda/structure/data/*.yml"
+  "tox.ini"
 ]
 exclude = [
   "*.py[co]",
@@ -208,20 +242,52 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 37
+py_version = 39
 append_only = true
 add_imports = "from __future__ import annotations"
 skip = ["templates", "docs/conf.py"]
 
 [tool.mypy]
-python_version = 3.7
+files = "."
+python_version = 3.9
 show_error_codes = true
+strict = true
+warn_no_return = true
 warn_return_any = true
+warn_unreachable = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = []
+module = [
+  # Don't require test functions to include types
+  "tests.*"
+]
+allow_untyped_defs = true
+disable_error_code = "attr-defined"
 ignore_missing_imports = true
+
+[tool.numpydoc_validation]
+checks = [
+  "all", # report on all checks, except the below
+  "EX01",
+  "SA01",
+  "ES01"
+]
+# remember to use single quotes for regex in TOML
+exclude = [
+  # don't report on objects that match any of these regex
+  '\.undocumented_method$',
+  '\.__enter__$',
+  '\.__eq__$',
+  '\.__exit__$',
+  '\.__repr__$'
+]
+override_SS05 = [
+  # override SS05 to allow docstrings starting with these words
+  '^Process ',
+  '^Assess ',
+  '^Access '
+]
 
 [tool.pytest.ini_options]
 addopts = [
@@ -236,7 +302,6 @@ testpaths = "tests"
 [tool.ruff]
 src = ["miranda"]
 line-length = 150
-target-version = "py37"
 exclude = [
   ".eggs",
   ".git",
@@ -246,20 +311,38 @@ exclude = [
 ]
 
 [tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint]
-ignore = [
-  "D205",
-  "D400",
-  "D401"
+extend-select = [
+  "RUF022" # unsorted-dunder-all
 ]
+ignore = [
+  "COM", # commas
+  "D205", # blank-line-after-summary
+  "D400", # ends-in-period
+  "D401", # non-imperative-mood
+  "S607" # start-process-with-partial-path
+]
+preview = true
 select = [
-  "C9",
-  "D",
-  "E",
-  "F",
-  "W"
+  "BLE", # blind-except
+  "C90", # mccabe-complexity
+  "D", # docstrings
+  "E", # pycodestyle errors
+  "FLY002", # static-join-to-fstring
+  "G", # logging-format
+  "N", # naming conventions
+  "PERF", # iterator performance
+  "PTH", # pathlib
+  "RUF010", # explicit-f-string-type-conversion
+  "RUF013", # implicit-optional
+  "S", # bandit
+  "UP", # python version conventions
+  "W" # pycodestyle warnings
 ]
 
 [tool.ruff.lint.flake8-bandit]
@@ -269,15 +352,16 @@ check-typed-exception = true
 known-first-party = ["miranda"]
 case-sensitive = true
 detect-same-package = false
-lines-after-imports = 1
+lines-after-imports = 2
 no-lines-before = ["future", "standard-library"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 30
 
 [tool.ruff.lint.per-file-ignores]
+"docs/**" = ["E402"]
 "src/miranda/**/__init__.py" = ["F401", "F403"]
-"tests/**/*.py" = ["D100", "D101", "D102"]
+"tests/**" = ["D100", "D101", "D102", "D103", "S101"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 180

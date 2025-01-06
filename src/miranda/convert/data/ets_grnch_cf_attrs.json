@@ -1,0 +1,98 @@
+{
+  "Header": {
+    "Conventions": "CF-1.9",
+    "_frequency": true,
+    "_miranda_version": true,
+    "contact": "Dr. Annie Poulin (annie.poulin@etsmtl.ca)",
+    "creation_date": "2022-07-16T11:22:42Z",
+    "institution": "ETS",
+    "institution_name": "École de Technologie Supérieure (ETS), Hydrology, Climate and Climate Change Laboratory (HC3)",
+    "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+    "license_type": "OSI approved",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "processing_level": "raw",
+    "project": "Info-CRUE",
+    "realm": "atmos",
+    "source": "GRNCH-QC",
+    "table_date": "2022-12-21",
+    "table_id": "ets_grnch",
+    "title": "Gridded North American Climate from the HC3 Laboratory (Québec Version)",
+    "type": "reconstruction",
+    "version": "v1.2"
+  },
+  "_preprocess": {
+    "_time": {
+      "field": "Time",
+      "location": -1,
+      "split": "_"
+    },
+    "_variable_name": {
+      "location": 0,
+      "split": "_"
+    }
+  },
+  "dimensions": {
+    "Latitude": {
+      "_cf_dimension_name": "lat",
+      "_precision": 4,
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "Longitude": {
+      "_cf_dimension_name": "lon",
+      "_precision": 4,
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "Time": {
+      "_cf_dimension_name": "time",
+      "_ensure_correct_time": "1D",
+      "_strict_time": false,
+      "axis": "T",
+      "long_name": "Time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "P": {
+      "_cf_variable_name": "pr",
+      "_corrected_units": "mm d-1",
+      "_transformation": false,
+      "cell_methods": "area: mean time: mean",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "T": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC",
+      "_transformation": false,
+      "cell_methods": "area: mean time: mean",
+      "long_name": "Daily Mean Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "Tmax": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC",
+      "_transformation": false,
+      "cell_methods": "area: mean time: maximum",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "Tmin": {
+      "_cf_variable_name": "tasmin",
+      "_corrected_units": "degC",
+      "_transformation": false,
+      "cell_methods": "area: mean time: minimum",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    }
+  }
+}

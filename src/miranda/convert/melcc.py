@@ -6,12 +6,13 @@ import datetime as dt
 import logging.config
 import os
 import re
+import subprocess  # noqa: S404
 import warnings
 from argparse import ArgumentParser
+from collections import defaultdict
 from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
-from subprocess import run
 from typing import Any
 
 import numpy as np
@@ -55,15 +56,18 @@ __all__ = [
 
 
 def parse_var_code(vcode: str) -> dict[str, Any]:
-    """Parse variable code to generate metadata
+    """
+    Parse variable code to generate metadata.
 
     Parameters
     ----------
-    vcode: str
+    vcode : str
+        The variable code.
 
     Returns
     -------
     dict[str, Any]
+        The metadata dictionary.
     """
     match = re.match(r"(\D*)(\d*)([abcfhqz])", vcode)
     if match is None:
@@ -81,9 +85,51 @@ def parse_var_code(vcode: str) -> dict[str, Any]:
     }
 
 
-def list_tables(db_file):
-    """List the tables of an MDB file."""
-    res = run(["mdb-tables", db_file], capture_output=True, encoding="utf-8")
+def _validate_db_file(db_file: str) -> str:
+    """
+    Validate the database file and ensure that input is trustworthy.
+
+    Parameters
+    ----------
+    db_file : str
+        The database file.
+
+    Returns
+    -------
+    str
+        The database file.
+    """
+    if len(db_file) > 1:
+        raise ValueError("Only one database file can be processed at a time.")
+    if not Path(db_file).is_file():
+        raise FileNotFoundError(f"File {db_file} not found.")
+    return db_file
+
+
+def list_tables(db_file: str | os.PathLike[str]) -> list[str]:
+    """
+    List the tables of an MDB file.
+
+    Parameters
+    ----------
+    db_file : str or os.PathLike
+        The database file.
+
+    Returns
+    -------
+    list of str
+        The list of tables.
+    """
+    try:
+        res = subprocess.run(  # noqa: S603
+            ["mdb-tables", _validate_db_file(db_file)],
+            capture_output=True,
+            encoding="utf-8",
+        )
+    except subprocess.CalledProcessError as e:
+        raise ValueError(
+            f"Calling mdb-tables on {db_file} failed with code {e.returncode}: {e.stderr}"
+        )
     if res.returncode != 0:
         raise ValueError(
             f"Calling mdb-tables on {db_file} failed with code {res.returncode}: {res.stderr}"
@@ -91,24 +137,40 @@ def list_tables(db_file):
     return res.stdout.lower().strip().split()
 
 
-def read_table(db_file: str | os.PathLike, tab: str | os.PathLike) -> xarray.Dataset:
-    """Read a MySQL table into an xarray object.
+def read_table(
+    db_file: str | os.PathLike[str], tab: str | os.PathLike
+) -> xarray.Dataset:
+    """
+    Read a MySQL table into an xarray object.
 
     Parameters
     ----------
-    db_file: str or os.PathLike
+    db_file : str or os.PathLike
+        The database file.
     tab : str or os.PathLike
+        The table to read.
 
     Returns
     -------
     xarray.Dataset
+        An xarray Dataset with the table data.
     """
-    res = run(
-        ["mdb-export", "-T", "%Y-%m-%dT%H:%M:%S", db_file, tab.upper()],
-        capture_output=True,
-        encoding="utf-8",
-        check=True,
-    )
+    try:
+        res = subprocess.run(  # noqa: S603
+            [
+                "mdb-export",
+                "-T",
+                "%Y-%m-%dT%H:%M:%S",
+                _validate_db_file(db_file),
+                tab.upper(),
+            ],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
+        raise ValueError(msg)
     df = (
         pd.read_csv(
             StringIO(res.stdout),
@@ -127,32 +189,46 @@ def read_table(db_file: str | os.PathLike, tab: str | os.PathLike) -> xarray.Dat
         .drop(columns=["STATUT_APPROBATION"])  # I don't know what this is...
         .set_index(["station", "time"])
     )
-    NaT = df.index.get_level_values("time").isnull().sum()
-    if NaT > 0:
-        logger.warning(
-            f"{NaT} values dropped because of unparseable timestamps (probably data from before 1900)."
-        )
+    nat = df.index.get_level_values("time").isnull().sum()
+    if nat > 0:
+        msg = f"{nat} values dropped because of unparseable timestamps (probably data from before 1900)."
+
+        logger.warning(msg)
         df = df[df.index.get_level_values("time").notnull()]
     return df[~df.index.duplicated()].to_xarray()
 
 
 def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
-    """Read station file using mdbtools.
+    """
+    Read station file using mdbtools.
 
     Parameters
     ----------
-    db_file: str or os.PathLike
+    db_file : str or os.PathLike
+        The database file.
 
     Returns
     -------
     pandas.DataFrame
+        A Pandas DataFrame with the station information.
     """
-    res = run(
-        ["mdb-export", "-T", "%Y-%m-%dT%H:%M:%S", db_file, "STATIONs"],
-        capture_output=True,
-        encoding="utf-8",
-        check=True,
-    )
+    try:
+        res = subprocess.run(  # noqa: S603
+            [
+                "mdb-export",
+                "-T",
+                "%Y-%m-%dT%H:%M:%S",
+                _validate_db_file(db_file),
+                "STATIONs",
+            ],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
+        raise ValueError(msg)
+
     df = pd.read_csv(
         StringIO(res.stdout),
         parse_dates=["Date_Ouverture", "Date_Fermeture"],
@@ -184,26 +260,34 @@ def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
     da["station_type"] = da["station_type"].astype(str)
     da.station_opening.attrs.update(description="Date of station creation.")
     da.station_closing.attrs.update(description="Date of station closure.")
+
     return da.isel(station=~da.indexes["station"].duplicated())
 
 
-def read_definitions(dbfile: str):
-    """Read variable definition file using mdbtools.
+def read_definitions(db_file: str) -> pd.DataFrame:
+    """
+    Read variable definition file using mdbtools.
 
     Parameters
     ----------
-    dbfile: str
+    db_file : str
+        The database file.
 
     Returns
     -------
     pandas.DataFrame
+        The variable definitions.
     """
-    res = run(
-        ["mdb-export", dbfile, "DDs"],
-        capture_output=True,
-        encoding="utf-8",
-        check=True,
-    )
+    try:
+        res = subprocess.run(  # noqa: S603
+            ["mdb-export", _validate_db_file(db_file), "DDs"],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
+        raise ValueError(msg)
     definitions = (
         pd.read_csv(StringIO(res.stdout))
         .rename(
@@ -230,26 +314,34 @@ def convert_mdb(
     output: str | Path,
     overwrite: bool = True,
 ) -> dict[tuple[str, str], Path]:
-    """Convert microsoft databases of MELCC observation data to xarray objects.
+    """
+    Convert microsoft databases of MELCCFP observation data to xarray objects.
 
     Parameters
     ----------
-    database: str or Path
-    stations
-    definitions
-    output
-    overwrite
+    database : str or Path
+        The database file.
+    stations : xr.Dataset
+        The station list.
+    definitions : xr.Dataset
+        The variable definitions.
+    output : str or Path
+        The output folder.
+    overwrite : bool
+        Whether to overwrite existing files. Default: True.
 
     Returns
     -------
     dict[tuple[str, str], Path]
+        The converted files.
     """
-    outs = dict()
+    outs = {}
     tables = list_tables(database)
     for tab in tables:
         if table.startswith("gdb") or tab.startswith("~"):
             continue
-        logger.info(f"Parsing {database}:{tab}.")
+        msg = f"Parsing {database}:{tab}."
+        logger.info(msg)
         meta = parse_var_code(tab)
         code = meta["melcc_code"]
         existing = list(output.glob(f"*_{code}_MELCC_{meta['freq']}_*.nc"))
@@ -258,7 +350,8 @@ def convert_mdb(
                 raise ValueError(f"Found more than one existing file for table {code}!")
             file = existing[0]
             vname = file.stem.split(code)[0][:-1]
-            logger.info(f"File already exists {file}, skipping.")
+            msg = f"File already exists {file}, skipping."
+            logger.info(msg)
             outs[(vname, code)] = file
             continue
         raw = read_table(database, tab)
@@ -292,9 +385,9 @@ def convert_mdb(
             stat = stations.sel(station=raw.station)
         except KeyError:
             extra_stations = set(raw.station.values) - set(stations.station.values)
-            logger.error(
-                f"The following station number were not found in the station list : {sorted(list(extra_stations))}"
-            )
+            msg = f"The following station number were not found in the station list : {sorted(list(extra_stations))}"
+
+            logger.error(msg)
             raw = xr.merge([raw, xr.Dataset().assign(station=stations)]).sel(
                 station=raw.station
             )
@@ -322,18 +415,24 @@ def convert_melcc_obs(
     output: str | Path | None = None,
     overwrite: bool = True,
 ) -> dict[tuple[str, str], Path]:
-    """Convert MELCC observation data to xarray data objects, returning paths.
+    """
+    Convert MELCCFP observation data to xarray data objects, returning paths.
 
     Parameters
     ----------
-    metafile: str or Path
-    folder: str or Path
-    output: str or Path, optional
-    overwrite: bool
+    metafile : str or Path
+        The metadata file.
+    folder : str or Path
+        The folder containing the MDB files.
+    output : str or Path, optional
+        The output folder. Default: None.
+    overwrite : bool
+        Whether to overwrite existing files. Default: True.
 
     Returns
     -------
-    dict[str, Path]
+    dict[(str, str), Path]
+        The converted files.
     """
     output = Path(output or ".")
 
@@ -349,23 +448,31 @@ def convert_melcc_obs(
 
 
 def concat(
-    files: Sequence[str | Path], output_folder: str | Path, overwrite: bool = True
+    files: Sequence[str | os.PathLike[str]],
+    output_folder: str | os.PathLike[str],
+    overwrite: bool = True,
 ) -> Path:
-    """Concatenate converted weather station files.
+    """
+    Concatenate converted weather station files.
 
     Parameters
     ----------
-    files: sequence of str or Path
-    output_folder: str or Path
-    overwrite: bool
+    files : Sequence of str or os.PathLike
+        The files to concatenate.
+    output_folder : str or os.PathLike
+        The output folder.
+    overwrite : bool
+        Whether to overwrite existing files. Default: True.
 
     Returns
     -------
     Path
+        The output path.
     """
     *vv, _, melcc, freq, _ = Path(files[0]).stem.split("_")
     vv = "_".join(vv)
-    logger.info(f"Concatening variables from {len(files)} files ({vv}).")
+    msg = f"Concatenating variables from {len(files)} files ({vv})."
+    logger.info(msg)
     # Magic one-liner to parse all date_start and date_end entries from the file names.
     dates_start, dates_end = list(
         zip(*[map(int, Path(file).stem.split("_")[-1].split("-")) for file in files])
@@ -375,7 +482,8 @@ def concat(
         / f"{vv}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
     )
     if outpath.is_file() and not overwrite:
-        logger.info(f"Already done in {outpath}. Skipping.")
+        msg = f"Already done in {outpath}. Skipping."
+        logger.info(msg)
         return outpath
 
     dss = dict()
@@ -429,17 +537,20 @@ def concat(
     return outpath
 
 
-def convert_snow_table(file: str | Path, output: str | Path):
-    """Convert snow data given through an Excel file.
+def convert_snow_table(
+    file: str | os.PathLike[str] | Path, output: str | os.PathLike[str] | Path
+) -> None:
+    """
+    Convert snow data given through an Excel file.
 
     This private data is not included in the MDB files.
 
     Parameters
     ----------
-    file : path
-      The excel file with sheets:  "Stations", "Périodes standards" and "Données"
-    output : path
-      Folder where to put the netCDF files (one for each of snd, sd and snw).
+    file : str or os.PathLike or Path
+        The Excel file with sheets: "Stations", "Périodes standards", and "Données".
+    output : str or os.PathLike or Path
+        Folder where to put the netCDF files (one for each of snd, sd and snw).
     """
     logging.info("Parsing stations.")
     stations = pd.read_excel(file, sheet_name="Stations")
@@ -620,12 +731,12 @@ if __name__ == "__main__":
     )
 
     if args.concat:
-        new_vars = {}
+        new_vars = defaultdict(list)
         for (new_var, table), path in outputs.items():
-            new_vars.setdefault(new_var, []).append(path)
+            new_vars[new_var].append(path)
 
         for new_var, fichiers in new_vars.items():
             try:
                 concat(fichiers, args.output, overwrite=not args.skip_existing)
-            except Exception as err:
+            except Exception as err:  # noqa: PERF203,BLE001
                 logger.error(err)

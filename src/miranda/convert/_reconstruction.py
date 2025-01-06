@@ -79,10 +79,13 @@ def reanalysis_processing(
     else:
         raise NotImplementedError(f"`output_format`: '{output_format}")
 
-    with ProgressBar(), dask.config.set(
-        **{"array.slicing.split_large_chunks": False},
-        n_workers=n_workers,
-        **dask_kwargs,
+    with (
+        ProgressBar(),
+        dask.config.set(
+            **{"array.slicing.split_large_chunks": False},
+            n_workers=n_workers,
+            **dask_kwargs,
+        ),
     ):
         out_files = Path(output_folder)
         if isinstance(domains, str):
@@ -101,9 +104,9 @@ def reanalysis_processing(
             output_folder.mkdir(exist_ok=True)
 
             for project, in_files in data.items():
-                logging.info(
-                    f"Processing {project} data{f' for domain {domain}' if domain !='not_specified' else ''}."
-                )
+                msg = f"Processing {project} data{f' for domain {domain}' if domain != 'not_specified' else ''}."
+                logging.info(msg)
+
                 for var in variables:
                     # Select only for variable of interest
                     multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
@@ -121,14 +124,13 @@ def reanalysis_processing(
                                 else:
                                     output_chunks[k] = v
 
-                            logging.warning(
-                                "No `target_chunks` set. "
-                                f"Proceeding with following found chunks: {output_chunks}."
-                            )
+                            msg = f"No `target_chunks` set. Proceeding with following found chunks: {output_chunks}."
+                            logging.warning(msg)
                         else:
                             output_chunks = target_chunks
 
-                        logging.info(f"Resampling variable `{var}`.")
+                        msg = f"Resampling variable `{var}`."
+                        logging.info(msg)
 
                         if aggregate:
                             time_freq = aggregate
@@ -139,10 +141,12 @@ def reanalysis_processing(
                             time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6like[parse_freq[1]]}"
 
                         institute = project_institutes[project]
-                        file_name = "_".join([var, time_freq, institute, project])
+                        file_name = f"{var}_{time_freq}_{institute}_{project}"
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
-
+                        if not chunks:
+                            chunks = dict(time=24 * 10, lon=50, lat=50)
+                            print(chunks)
                         xr_kwargs = dict(
                             chunks=chunks,
                             engine=engine,
@@ -182,10 +186,11 @@ def reanalysis_processing(
                             freq = "MS"
 
                         if len(dataset) == 0:
-                            logging.warning(
+                            msg = (
                                 f"Daily aggregation methods for variable `{var}` are not supported. "
                                 "Continuing..."
                             )
+                            logging.warning(msg)
 
                         for key in dataset.keys():
                             ds = dataset[key]
@@ -200,7 +205,8 @@ def reanalysis_processing(
                                 f"{var}_", f"{out_variable}_"
                             )
 
-                            logging.info(f"Writing out fixed files for {file_name1}.")
+                            msg = f"Writing out fixed files for {file_name1}."
+                            logging.info(msg)
                             years, datasets = zip(*ds.resample(time=freq))
                             if freq == "MS":
                                 format_str = "%Y-%m"
@@ -218,9 +224,9 @@ def reanalysis_processing(
 
                             jobs = list()
                             if output_format != "zarr" and overwrite:
-                                logging.warning(
-                                    f"Removing existing {output_format} files for {var}."
-                                )
+                                msg = f"Removing existing {output_format} files for {var}."
+
+                                logging.warning(msg)
                             for i, d in enumerate(datasets):
                                 if (
                                     out_filenames[i].exists()
@@ -243,17 +249,21 @@ def reanalysis_processing(
                                     )
 
                             if len(jobs) == 0:
-                                logging.warning(
+                                msg = (
                                     f"All output files for `{var}` currently exist."
                                     " To overwrite them, set `overwrite=True`. Continuing..."
                                 )
+                                logging.warning(msg)
                             else:
                                 chunked_jobs = chunk_iterables(jobs, iterable_chunks)
-                                logging.info(f"Processing jobs for variable `{var}`.")
+                                msg = f"Writing out job chunk {iterations}."
+                                logging.info(msg)
                                 iterations = 0
                                 for chunk in chunked_jobs:
                                     iterations += 1
-                                    logging.info(f"Writing out job chunk {iterations}.")
+                                    msg = f"Processing iteration {iterations} for variable `{var}`."
+                                    logging.info(msg)
                                     compute(chunk)
                     else:
-                        logging.info(f"No files found for variable {var}.")
+                        msg = f"No files found for variable {var}."
+                        logging.info(msg)

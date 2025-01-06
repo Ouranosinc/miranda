@@ -1,0 +1,101 @@
+{
+  "Header": {
+    "Conventions": "CF-1.9",
+    "_miranda_version": true,
+    "contact": "elvis.asong@usask.ca",
+    "doi": "https://doi.org/10.20383/101.0111",
+    "institution": "USASK",
+    "institution_name": "University of Saskatchewan",
+    "license_type": "OSI approved",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "processing_level": "raw",
+    "project": "WFDEI-GEM-CaPa",
+    "realm": "atmos",
+    "table_date": "2023-01-17",
+    "table_id": "USASK",
+    "type": "reconstruction",
+    "version": "v1.0"
+  },
+  "variables": {
+    "d2m": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "tdps"
+      },
+      "cell_methods": "time: mean",
+      "long_name": "2 metre dewpoint temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "pev": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "evspsbl"
+      },
+      "cell_methods": "time: mean",
+      "comments": "Converted from Potential Evaporation using a density of 1000 kg/m³.",
+      "long_name": "Potential evapotranspiration",
+      "original_long_name": "Potential Evaporation",
+      "standard_name": "water_evapotranspiration_flux",
+      "units": "kg m-2 s-1"
+    },
+    "sde": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "snd"
+      },
+      "cell_methods": "time: mean",
+      "long_name": "Snow depth",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "sf": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "prsn"
+      },
+      "cell_methods": "time: mean",
+      "comments": "Converted from Snowfall (water equivalent) using a density of 1000 kg/m³.",
+      "long_name": "Snowfall flux",
+      "original_long_name": "Snowfall",
+      "standard_name": "snowfall_flux",
+      "units": "kg m-2 s-1"
+    },
+    "t2m": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "tas"
+      },
+      "cell_methods": "time: mean",
+      "long_name": "2 metre temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tp": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "pr"
+      },
+      "cell_methods": "time: mean",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "original_long_name": "Total Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "u10": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "uas"
+      },
+      "cell_methods": "time: mean",
+      "comments": "Converted from 10 metre U wind component.",
+      "long_name": "Snow Depth",
+      "standard_name": "surface_snow_thickness",
+      "units": "m s-1"
+    },
+    "v10": {
+      "_cf_variable_name": {
+        "wfdei-gem-capa": "vas"
+      },
+      "cell_methods": "time: mean",
+      "comments": "Converted from 10 metre V wind component.",
+      "long_name": "Snow Depth",
+      "standard_name": "surface_snow_thickness",
+      "units": "m s-1"
+    }
+  }
+}

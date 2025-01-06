@@ -1,0 +1,429 @@
+{
+  "Header": {
+    "Conventions": "CF-1.9",
+    "_miranda_version": true,
+    "cmor_version": "3.5",
+    "contact": "info-climat@environnement.gouv.qc.ca",
+    "institution": "GouvQc",
+    "license": "https://projets.ouranos.ca/attachments/download/3682/Conditions%20utilisation%20donn%C3%A9es%20m%C3%A9t%C3%A9o%20MDDEELCC%20recherche%20universitaire%20(1).pdf",
+    "license_type": "private",
+    "organisation": "MELCC",
+    "processing_level": "raw",
+    "realm": "atmos",
+    "source": "info-climat",
+    "table_date": "2022-11-15",
+    "table_id": "MELCC",
+    "title": "Station observations of the MELCC",
+    "title_fr": "Observations aux stations du MELCC",
+    "type": "station-obs",
+    "version": "v2021"
+  },
+  "variables": {
+    "GI": {
+      "_cf_variable_name": "sleet_mask",
+      "long_name": "Sleet",
+      "long_name_fr": "Giboulée"
+    },
+    "GI_flag": {
+      "_cf_variable_name": "sleet_mask_flag"
+    },
+    "GR": {
+      "_cf_variable_name": "hail_mask",
+      "long_name": "Hail",
+      "long_name_fr": "Grêle"
+    },
+    "GR_flag": {
+      "_cf_variable_name": "hail_mask_flag"
+    },
+    "HAx": {
+      "_cf_variable_name": "hursmax",
+      "cell_methods": "time: max",
+      "long_name": "Maximal relative humidity",
+      "long_name_fr": "Humidité relative maximale",
+      "units": "1"
+    },
+    "HAx_flag": {
+      "_cf_variable_name": "hursmax_flag"
+    },
+    "NE": {
+      "_cf_variable_name": "prsn_thickness",
+      "cell_methods": "time: sum",
+      "long_name": "Snowfall",
+      "long_name_fr": "Neige",
+      "standard_name": "thickness_of_snowfall_amount",
+      "units": "m"
+    },
+    "NE_flag": {
+      "_cf_variable_name": "prsn_thickness_flag"
+    },
+    "NEq": {
+      "_cf_variable_name": "prsn",
+      "_transformation": "op / attrs.sampling",
+      "cell_methods": "time: mean",
+      "long_name": "Snow water-equivalent precipitation",
+      "long_name_fr": "Équivalent en eau des précipitations nivales",
+      "standard_name": "snowfall_flux",
+      "units": "kg m-2 s-1"
+    },
+    "NEq_flag": {
+      "_cf_variable_name": "prsn_flag"
+    },
+    "NS": {
+      "_cf_variable_name": "snd",
+      "cell_methods": "time: mean",
+      "long_name": "Snow depth",
+      "long_name_fr": "Épaisseur de la neige au sol",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "NS_flag": {
+      "_cf_variable_name": "snd_flag"
+    },
+    "NSi": {
+      "_cf_variable_name": "snd_i",
+      "cell_methods": "time: point",
+      "long_name": "Instantaneous snow depth",
+      "long_name_fr": "Épaisseur de la neige au sol instantanée",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "NSi_flag": {
+      "_cf_variable_name": "snd_i_flag"
+    },
+    "NSm": {
+      "_cf_variable_name": "snd",
+      "cell_methods": "time: mean",
+      "long_name": "Snow depth",
+      "long_name_fr": "Épaisseur de la neige au sol",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "NSm_flag": {
+      "_cf_variable_name": "snd_flag"
+    },
+    "NSn": {
+      "_cf_variable_name": "sndmin",
+      "cell_methods": "time: min",
+      "long_name": "Minimum snow depth",
+      "long_name_fr": "Épaisseur de la neige au sol minimale",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "NSn_flag": {
+      "_cf_variable_name": "sndmin_flag"
+    },
+    "NSx": {
+      "_cf_variable_name": "sndmax",
+      "cell_methods": "time: max",
+      "long_name": "Maximum snow depth",
+      "long_name_fr": "Épaisseur de la neige au sol maximale",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "NSx_flag": {
+      "_cf_variable_name": "sndmax_flag"
+    },
+    "PI007": {
+      "_cf_variable_name": "RX5min",
+      "_transformation": "op * 0.2 min-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 5 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 5 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI007_flag": {
+      "_cf_variable_name": "RX5min_flag"
+    },
+    "PI008": {
+      "_cf_variable_name": "RX5min",
+      "_transformation": "op * 0.2 min-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 5 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 5 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI008_flag": {
+      "_cf_variable_name": "RX5min_flag"
+    },
+    "PI012": {
+      "_cf_variable_name": "RX10min",
+      "_transformation": "op * 0.1 min-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 10 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 10 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI012_flag": {
+      "_cf_variable_name": "RX10min_flag"
+    },
+    "PI013": {
+      "_cf_variable_name": "RX10min",
+      "_transformation": "op * 0.1 min-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 10 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 10 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI013_flag": {
+      "_cf_variable_name": "RX10min_flag"
+    },
+    "PI017": {
+      "_cf_variable_name": "RX15min",
+      "_transformation": "op * 4 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 15 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 15 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI017_flag": {
+      "_cf_variable_name": "RX15min_flag"
+    },
+    "PI018": {
+      "_cf_variable_name": "RX15min",
+      "_transformation": "op * 4 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 15 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 15 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI018_flag": {
+      "_cf_variable_name": "RX15min_flag"
+    },
+    "PI032": {
+      "_cf_variable_name": "RX30min",
+      "_transformation": "op * 2 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 30 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 30 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI032_flag": {
+      "_cf_variable_name": "RX30min_flag"
+    },
+    "PI033": {
+      "_cf_variable_name": "RX30min",
+      "_transformation": "op * 2 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 30 minutes.",
+      "long_name_fr": "Intensité maximale de la pluie sur 30 minutes.",
+      "units": "kg m-2 s-1"
+    },
+    "PI033_flag": {
+      "_cf_variable_name": "RX30min_flag"
+    },
+    "PI062": {
+      "_cf_variable_name": "RX1hr",
+      "_transformation": "op * 1 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 1 hour.",
+      "long_name_fr": "Intensité maximale de la pluie sur 1 heure.",
+      "units": "kg m-2 s-1"
+    },
+    "PI062_flag": {
+      "_cf_variable_name": "RX1hr_flag"
+    },
+    "PI063": {
+      "_cf_variable_name": "RX1hr",
+      "_transformation": "op * 1 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 1 hour.",
+      "long_name_fr": "Intensité maximale de la pluie sur 1 heure.",
+      "units": "kg m-2 s-1"
+    },
+    "PI063_flag": {
+      "_cf_variable_name": "RX1hr_flag"
+    },
+    "PI122": {
+      "_cf_variable_name": "RX2hr",
+      "_transformation": "op * 0.5 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 2 hours.",
+      "long_name_fr": "Intensité maximale de la pluie sur 2 heures.",
+      "units": "kg m-2 s-1"
+    },
+    "PI122_flag": {
+      "_cf_variable_name": "RX2hr_flag"
+    },
+    "PI123": {
+      "_cf_variable_name": "RX2hr",
+      "_transformation": "op * 0.5 h-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 2 hours.",
+      "long_name_fr": "Intensité maximale de la pluie sur 2 heures.",
+      "units": "kg m-2 s-1"
+    },
+    "PI123_flag": {
+      "_cf_variable_name": "RX2hr_flag"
+    },
+    "PI362": {
+      "_cf_variable_name": "RX6hr",
+      "_transformation": "op * 0.25 d-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 6 hours.",
+      "long_name_fr": "Intensité maximale de la pluie sur 6 heures.",
+      "units": "kg m-2 s-1"
+    },
+    "PI362_flag": {
+      "_cf_variable_name": "RX6hr_flag"
+    },
+    "PI363": {
+      "_cf_variable_name": "RX6hr",
+      "_transformation": "op * 0.25 d-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 6 hours.",
+      "long_name_fr": "Intensité maximale de la pluie sur 6 heures.",
+      "units": "kg m-2 s-1"
+    },
+    "PI363_flag": {
+      "_cf_variable_name": "RX6hr_flag"
+    },
+    "PI722": {
+      "_cf_variable_name": "RX12hr",
+      "_transformation": "op * 0.5 d-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 12 hours.",
+      "long_name_fr": "Intensité maximale de la pluie sur 12 heures.",
+      "units": "kg m-2 s-1"
+    },
+    "PI722_flag": {
+      "_cf_variable_name": "RX12hr_flag"
+    },
+    "PI723": {
+      "_cf_variable_name": "RX12hr",
+      "_transformation": "op * 0.5 d-1",
+      "cell_methods": "time: mean time: max",
+      "long_name": "Maximal rain intensity over 12 hours.",
+      "long_name_fr": "Intensité maximale de la pluie sur 12 heures.",
+      "units": "kg m-2 s-1"
+    },
+    "PI723_flag": {
+      "_cf_variable_name": "RX12hr_flag"
+    },
+    "PL": {
+      "_cf_variable_name": "prlp",
+      "_transformation": "op / attrs.sampling",
+      "cell_methods": "time: mean",
+      "long_name": "Rainfall",
+      "long_name_fr": "Pluie",
+      "standard_name": "rainfall_flux",
+      "units": "kg m-2 s-1"
+    },
+    "PL_flag": {
+      "_cf_variable_name": "prlp_flag"
+    },
+    "PT": {
+      "_cf_variable_name": "pr",
+      "_transformation": "op / attrs.sampling",
+      "cell_methods": "time: mean",
+      "description": "Total precipitation flux assuming snow has a 0.1 g/cm³ density.",
+      "long_name": "Total precipitation",
+      "long_name_fr": "Précipitation totale",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "PT_flag": {
+      "_cf_variable_name": "pr_flag"
+    },
+    "TAi": {
+      "_cf_variable_name": "tas_i",
+      "cell_methods": "time: point",
+      "long_name": "Instantaneous temperature",
+      "long_name_fr": "Température instantanée",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "TAi_flag": {
+      "_cf_variable_name": "tas_i_flag"
+    },
+    "TAm": {
+      "_cf_variable_name": "tas",
+      "cell_methods": "time: mean",
+      "long_name": "Mean temperature",
+      "long_name_fr": "Température moyenne",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "TAm_flag": {
+      "_cf_variable_name": "tas_flag"
+    },
+    "TAn": {
+      "_cf_variable_name": "tasmin",
+      "cell_methods": "time: min",
+      "long_name": "Minimum temperature",
+      "long_name_fr": "Température minimale",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "TAn_flag": {
+      "_cf_variable_name": "tasmin_flag"
+    },
+    "TAx": {
+      "_cf_variable_name": "tasmax",
+      "cell_methods": "time: max",
+      "long_name": "Maximum temperature",
+      "long_name_fr": "Température maximale",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "TAx_flag": {
+      "_cf_variable_name": "tasmax_flag"
+    },
+    "VDi": {
+      "_cf_variable_name": "sfcWindfromdir_i",
+      "cell_methods": "time: point",
+      "long_name": "Instantaneous wind direction",
+      "long_name_fr": "Direction du vent instantanée",
+      "standard_name": "wind_from_direction"
+    },
+    "VDi_flag": {
+      "_cf_variable_name": "sfcWindfromdir_i_flag"
+    },
+    "VDm": {
+      "_cf_variable_name": "sfcWindfromdir",
+      "cell_methods": "time: mean",
+      "long_name": "Mean wind direction",
+      "long_name_fr": "Direction du vent moyenne",
+      "standard_name": "wind_from_direction"
+    },
+    "VDm_flag": {
+      "_cf_variable_name": "sfcWindfromdir_flag"
+    },
+    "VDs": {
+      "_cf_variable_name": "sfcWindfromdir_sigma",
+      "cell_methods": "time: mean",
+      "long_name": "Wind direction standard deviation",
+      "long_name_fr": "Écart-type de la direction du vent"
+    },
+    "VDs_flag": {
+      "_cf_variable_name": "sfcWindfromdir_sigma_flag"
+    },
+    "VDsi": {
+      "_cf_variable_name": "sfcWindfromdir_sigma_i",
+      "cell_methods": "time: point",
+      "long_name": "Instantaneous wind direction standard deviation on the last two minutes",
+      "long_name_fr": "Écart-type de la direction du vent sur les deux dernières minutes"
+    },
+    "VDsi_flag": {
+      "_cf_variable_name": "sfcWindfromdir_sigma_i_flag"
+    },
+    "VE": {
+      "_cf_variable_name": "freezing_rain_mask",
+      "long_name": "Freezing rain",
+      "long_name_fr": "Verglas"
+    },
+    "VE_flag": {
+      "_cf_variable_name": "freezing_rain_mask_flag"
+    },
+    "VVxi": {
+      "_cf_variable_name": "wsgmax",
+      "cell_methods": "time: point",
+      "long_name": "Wind speed of gust",
+      "long_name_fr": "Vitesse de la pointe de vent",
+      "standard_name": "wind_speed_of_gust",
+      "units": "m s-1"
+    },
+    "VVxi_flag": {
+      "_cf_variable_name": "wsgmax_flag"
+    }
+  }
+}

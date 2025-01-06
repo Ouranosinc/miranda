@@ -9,10 +9,10 @@ from miranda.scripting import LOGGING_CONFIG
 logging.config.dictConfig(LOGGING_CONFIG)  # noqa
 
 __all__ = [
-    "DecoderError",
     "FREQUENCY_TO_POTENTIAL_TIME_UNITS",
     "TIME_UNITS_TO_FREQUENCY",
     "TIME_UNITS_TO_TIMEDELTA",
+    "DecoderError",
 ]
 
 TIME_UNITS_TO_FREQUENCY = {

@@ -7,6 +7,7 @@ import logging.config
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 import cftime
 import pandas as pd
@@ -19,24 +20,41 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["date_parser", "find_version_hash"]
 
 
-def find_version_hash(file: os.PathLike | str) -> dict:
-    """Check for an existing version hash file and, if one cannot be found, generate one from file.
+def find_version_hash(file: str | os.PathLike[str]) -> dict[str, Any]:
+    """
+    Check for an existing version hash file and, if one cannot be found, generate one from file.
 
     Parameters
     ----------
     file : str or os.PathLike
+        The file to check.
 
     Returns
     -------
     dict
+        The version and hash.
     """
 
-    def _get_hash(f):
+    def _get_hash(f: str) -> str:
+        """
+        Calculate the sha256sum of a file.
+
+        Parameters
+        ----------
+        f : str or os.PathLike
+            The file to hash.
+
+        Returns
+        -------
+        str
+            The hash.
+        """
         hash_sha256_writer = hashlib.sha256()
-        with open(f, "rb") as f_opened:
+        with Path(f).open("rb") as f_opened:
             hash_sha256_writer.update(f_opened.read())
         sha256sum = hash_sha256_writer.hexdigest()
-        logging.info(f"Calculated sha256sum (starting: {sha256sum[:6]})")
+        _msg = f"Calculated sha256sum (starting: {sha256sum[:6]})"
+        logging.info(_msg)
         del hash_sha256_writer
         return sha256sum
 
@@ -56,6 +74,8 @@ def find_version_hash(file: os.PathLike | str) -> dict:
                     version_info["version"] = found_version.group()
                     version_info["sha256sum"] = int(sig.open().read())
                 except ValueError:
+                    msg = "Unable to read version hash file. Calculating sha256sum."
+                    logging.error(msg)
                     continue
                 break
         else:
@@ -72,7 +92,8 @@ def date_parser(
     output_type: str = "str",
     strftime_format: str = "%Y-%m-%d",
 ) -> str | pd.Timestamp | NaTType:
-    """Parses datetime objects from a string representation of a date or both a start and end date.
+    """
+    Parse datetime objects from a string representation of a date or both a start and end date.
 
     Parameters
     ----------
@@ -92,7 +113,7 @@ def date_parser(
 
     Notes
     -----
-    Adapted from code written by Gabriel Rondeau-Genesse (@RondeauG)
+    Adapted from code written by Gabriel Rondeau-Genesse (@RondeauG).
     """
     # Formats, ordered depending on string length
     formats = {
@@ -110,13 +131,28 @@ def date_parser(
     }
     end_date_found = False
 
-    def _parse_date(d, fmts):
+    def _parse_date(d: str, fmts: list[str]) -> tuple[pd.Timestamp, str]:
+        """
+        Parse the date.
+
+        Parameters
+        ----------
+        d : str
+            The date string.
+        fmts : list
+            The list of formats to try.
+
+        Returns
+        -------
+        pd.Timestamp
+            The parsed date.
+        """
         for fmt in fmts:
             try:
                 s = pd.to_datetime(d, format=fmt)
                 match = fmt
                 break
-            except ValueError:
+            except ValueError:  # noqa: S110
                 pass
         else:
             raise ValueError(
@@ -145,7 +181,9 @@ def date_parser(
         for n in range(3):
             try:
                 date = pd.Timestamp.fromisoformat((date - pd.Timedelta(n)).isoformat())
-            except ValueError:  # We are NOT catching OutOfBoundsDatetime.
+            except (  # noqa: PERF203,S110  # We are NOT catching OutOfBoundsDatetime.
+                ValueError
+            ):
                 pass
             else:
                 break

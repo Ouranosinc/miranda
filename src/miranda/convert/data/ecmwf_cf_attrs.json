@@ -203,6 +203,12 @@
     },
     "sf": {
       "_cf_variable_name": "prsn",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
       "_corrected_units": "m",
       "_invert_sign": false,
       "_offset_time": {
@@ -438,6 +444,12 @@
     },
     "tp": {
       "_cf_variable_name": "pr",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
       "_corrected_units": false,
       "_invert_sign": false,
       "_offset_time": true,

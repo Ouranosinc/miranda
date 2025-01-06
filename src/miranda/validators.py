@@ -22,7 +22,7 @@ if VALIDATION_ENABLED:
         WCRP_FREQUENCIES,
     )
 
-    __all__ = ["validation_schemas", "url_validate"]
+    __all__ = ["url_validate", "validation_schemas"]
 
     TYPE_NAMES = [
         "simulation",
@@ -79,12 +79,12 @@ if VALIDATION_ENABLED:
             Optional("member"): str,
             Optional("variable"): str,
             Optional("timedelta"): Or(pd.Timedelta, NaTType, "NaT"),
-            Optional("date"): Or(Regex(BASIC_DT_VALIDATION, flags=re.I), "fx"),
+            Optional("date"): Or(Regex(BASIC_DT_VALIDATION, flags=int(re.I)), "fx"),
             Optional("date_start"): Or(
-                Regex(DATE_VALIDATION, flags=re.I), NaTType, "NaT"
+                Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"
             ),
             Optional("date_end"): Or(
-                Regex(DATE_VALIDATION, flags=re.I), NaTType, "NaT"
+                Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"
             ),
             Optional("processing_level"): Or(*PROCESSING_LEVELS),
             "format": Or("netcdf", "zarr"),
@@ -151,11 +151,18 @@ if VALIDATION_ENABLED:
 
 
 def url_validate(target: str) -> typing.Match[str] | None:
-    """Validate whether a supplied URL is reliably written.
+    """
+    Validate whether a supplied URL is reliably written.
 
     Parameters
     ----------
     target : str
+        The URL to validate.
+
+    Returns
+    -------
+    typing.Match[str], optional
+        The match object if the URL is valid.
 
     References
     ----------

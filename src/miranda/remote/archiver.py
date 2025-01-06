@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging.config
+import os
 from collections import defaultdict
 from pathlib import Path
 
@@ -25,13 +26,13 @@ __all__ = ["archive_database"]
 
 
 def archive_database(
-    source: Path | str | list,
-    common_path: Path | str,
-    destination: Path | str,
+    source: Path | str | os.PathLike[str] | list[str | os.PathLike[str] | Path],
+    common_path: Path | str | os.PathLike[str],
+    destination: Path | str | os.PathLike[str],
     file_suffixes: str = ".nc",
-    server: str = None,
-    username: str = None,
-    project_name: str = None,
+    server: str | None = None,
+    username: str | None = None,
+    project_name: str | None = None,
     overwrite: bool = False,
     compression: bool = False,
     recursive: bool = False,
@@ -40,8 +41,44 @@ def archive_database(
     dry_run: bool = False,
 ) -> None:
     """
+    Archive database files to a remote server.
+
     Given a source, destination, and dependent on file size limit, create tarfile archives and transfer
-     files to another server for backup purposes
+    files to another server for backup purposes.
+
+    Parameters
+    ----------
+    source : Path or str or os.PathLike or list
+        The source directory containing the files to archive.
+    common_path : Path or str or os.PathLike
+        The common path to use for grouping files.
+    destination : Path or str or os.PathLike
+        The destination directory to save the files.
+    file_suffixes : str
+        The file suffix to use for filtering files.
+    server : str, optional
+        The server to connect to.
+    username : str, optional
+        The username to use for the connection.
+    project_name : str, optional
+        The project name to use for the files.
+    overwrite : bool, optional
+        Whether to overwrite existing files.
+    compression : bool, optional
+        Whether to compress the files.
+    recursive : bool, optional
+        Whether to search for files recursively.
+    use_grouping : bool, optional
+        Whether to group files by date.
+    use_subdirectories : bool, optional
+        Whether to use subdirectories for grouping.
+    dry_run : bool, optional
+        Whether to run in dry-run mode.
+
+    Raises
+    ------
+    RuntimeError
+        If the transfer fails.
     """
     project = "{project_name}_{group_name}_{common_date}{part}.{suffix}"
 
@@ -96,9 +133,11 @@ def archive_database(
 
                             if transfer.is_file():
                                 if not overwrite:
-                                    logging.info(f"{transfer} exists. Skipping file.")
+                                    msg = f"{transfer} exists. Skipping file."
+                                    logging.info(msg)
                                     continue
-                                logging.info(f"{transfer} exists. Overwriting.")
+                                msg = f"{transfer} exists. Overwriting."
+                                logging.info(msg)
                             if not dry_run:
                                 if transfer_file(archive_file, transfer, transport=ctx):
                                     successful_transfers.append(archive_file)
@@ -121,11 +160,11 @@ def archive_database(
 
                             if transfer.is_file():
                                 if not overwrite:
-                                    logging.info(
-                                        f'File "{transfer}" exists. Skipping file.'
-                                    )
+                                    msg = f'File "{transfer}" exists. Skipping file.'
+                                    logging.info(msg)
                                     continue
-                                logging.info(f'File "{transfer}" exists. Overwriting.')
+                                msg = f'File "{transfer}" exists. Overwriting.'
+                                logging.info(msg)
 
                             with working_directory(source_path):
                                 if not dry_run:
@@ -142,11 +181,12 @@ def archive_database(
                     else:
                         raise FileNotFoundError("No files found in grouping.")
 
-        logging.info(
+        msg = (
             f"Transferred {len(successful_transfers)} "
-            f"of { len([f for f in file_list])} files "
+            f"of {len([f for f in file_list])} files "
             f"totalling {report_file_size(successful_transfers)}."
         )
+        logging.info(msg)
 
     except Exception as e:
         msg = f"{e}: Failed to transfer files."
