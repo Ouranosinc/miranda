@@ -4,8 +4,6 @@ import logging
 from typing import Any
 
 from miranda import __version__ as __miranda_version__
-
-# from miranda.treatments import find_project_variable_codes
 from miranda.treatments.utils import load_json_data_mappings
 
 __all__ = [
@@ -79,9 +77,8 @@ def eccc_variable_metadata(
             if project in miranda_version.keys():
                 header["miranda_version"] = __miranda_version__
         else:
-            logging.warning(
-                f"`_miranda_version` not set for project `{project}`. Not appending."
-            )
+            msg = f"`_miranda_version` not properly configured for project `{project}`. Not appending."
+            logging.warning(msg)
     if "_miranda_version" in header:
         del header["_miranda_version"]
 
