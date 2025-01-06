@@ -108,3 +108,6 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+# Manually excluded folders
+excluded/
