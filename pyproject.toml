@@ -185,11 +185,10 @@ include = [
   "docs/make.bat",
   "tests/*.py",
   "tox.ini",
-  "miranda",
-  "miranda/convert/configs/*.json",
-  "miranda/preprocess/configs/*.csv",
-  "miranda/preprocess/configs/*.json",
-  "miranda/structure/data/*.yml"
+  "src/miranda/convert/configs/*.json",
+  "src/miranda/preprocess/configs/*.csv",
+  "src/miranda/preprocess/configs/*.json",
+  "src/miranda/structure/data/*.yml"
 ]
 exclude = [
   "*.py[co]",
@@ -277,7 +276,7 @@ no-lines-before = ["future", "standard-library"]
 max-complexity = 30
 
 [tool.ruff.lint.per-file-ignores]
-"miranda/**/__init__.py" = ["F401", "F403"]
+"src/miranda/**/__init__.py" = ["F401", "F403"]
 "tests/**/*.py" = ["D100", "D101", "D102"]
 
 [tool.ruff.lint.pycodestyle]

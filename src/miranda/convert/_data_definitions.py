@@ -50,12 +50,12 @@ eccc_rdrs_variables["cf"] = [
     ].values()
 ]
 
-era5_variables = json.load(open(_config_folder / "era5|era5-land_cf_attrs.json"))[
+era5_variables = json.load(open(_config_folder / "era5_era5-land_cf_attrs.json"))[
     "variables"
 ].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(open(_config_folder / "agcfsr|agmerra2_cf_attrs.json"))[
+nasa_ag_variables = json.load(open(_config_folder / "agcfsr_agmerra2_cf_attrs.json"))[
     "variables"
 ].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
@@ -86,6 +86,7 @@ project_institutes = {
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
 xarray_frequencies_to_cmip6like = {
+    "h": "hr",
     "H": "hr",
     "D": "day",
     "W": "sem",
