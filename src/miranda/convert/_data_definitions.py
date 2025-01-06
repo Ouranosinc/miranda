@@ -33,7 +33,7 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-_data_folder = Path(__file__).resolve().parent / "configs"
+_data_folder = Path(__file__).resolve().parent / "data"
 
 
 eccc_rdrs_variables = {}

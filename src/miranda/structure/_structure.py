@@ -12,10 +12,10 @@ from types import GeneratorType
 import yaml
 from schema import SchemaError
 
+from miranda.cv import VALIDATION_ENABLED
 from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.io import discover_data
 from miranda.scripting import LOGGING_CONFIG
-from miranda.vocabularies.esgf import VALIDATION_ENABLED
 
 if VALIDATION_ENABLED:
     from miranda.validators import validation_schemas
