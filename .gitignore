@@ -111,3 +111,4 @@ ENV/
 
 # Manually excluded folders
 excluded/
+templates/downloaded/
