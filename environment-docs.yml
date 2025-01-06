@@ -3,12 +3,13 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - sphinx >=7.1
-  - pandoc
+  - python >=3.9,<3.13
   - furo >=2023.07.26
-  - ipython
   - ipykernel
+  - ipython
   - nbsphinx
+  - pandoc
+  - sphinx >=7.1
   - sphinx-autoapi
   - sphinx-codeautolink
   - sphinx-copybutton
