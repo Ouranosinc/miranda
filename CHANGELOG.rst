@@ -15,8 +15,9 @@ Announcements
 
 New features
 ^^^^^^^^^^^^
+* weather station GHCN-D dataset conversion is now supported. 
 * Aggregation operations now support more variables (`hur`, `hurs`, `huss`, `rlds`, `ta`, `tdp`, `ua`, `uas`, `va`, `vas`)
-* `RDRDv21` has been added as a dataset to be converted.
+* `RDRSv21` has been added as a dataset to be converted.
 * Minimum values of `0 kg m2 s-1` has been set for both `tp` and `sf` variables in ERA5 and ERA5-Land projects.
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.

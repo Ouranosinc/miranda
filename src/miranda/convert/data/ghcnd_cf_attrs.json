@@ -91,12 +91,10 @@
     },
     "awnd": {
       "_cf_variable_name": "sfcWind",
-      "cell_methods": "time: point",
       "long_name": "Near-Surface Wind Speed",
       "_corrected_units": "m s-1",
       "_multiplier": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
-      "long_name": "Average Daily Wind Speed",
       "standard_name": "wind_speed",
       "units": "m s-1"
     },
