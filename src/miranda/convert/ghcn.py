@@ -203,7 +203,10 @@ def convert_ghcn_bychunks(
     prj_dict = dict(ghcnd="daily", ghcnh="hourly")
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
-
+    working_folder.mkdir(parents=True, exist_ok=True)
+    working_folder.joinpath("raw").mkdir(exist_ok=True)
+    working_folder.joinpath("zarr").mkdir(exist_ok=True)
+    
     bbox = None
     if lon_bnds and lat_bnds:
         bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1]) & station_df[
@@ -225,8 +228,10 @@ def convert_ghcn_bychunks(
 
     if update_raw:
         for folder in working_folder.joinpath("raw").iterdir():
+            logging.info(f"deleting {folder}")
             shutil.rmtree(folder)
         for folder in working_folder.joinpath("zarr").iterdir():
+            logging.info(f"deleting {folder}")
             shutil.rmtree(folder)
 
     for ii, ss in enumerate(station_list):
