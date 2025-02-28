@@ -222,6 +222,13 @@ def convert_ghcn_bychunks(
     station_ids = station_df["station_id"].tolist()
     station_list = sorted(list(chunk_list(station_ids, nstations)))
     treated = []
+
+    if update_raw:
+        for folder in working_folder.joinpath("raw").iterdir():
+            shutil.rmtree(folder)
+        for folder in working_folder.joinpath("zarr").iterdir():
+            shutil.rmtree(folder)
+
     for ii, ss in enumerate(station_list):
 
         ntry = 5
