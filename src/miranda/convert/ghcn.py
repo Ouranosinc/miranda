@@ -53,7 +53,7 @@ def get_ghcn_raw(
         if stationtype == "daily":
             # url = f"https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{station_id}.csv"
             url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
-            
+
             outfile = outfolder / f"{station_id}.csv"
             if outfile.exists() and not update_raw:
                 continue
