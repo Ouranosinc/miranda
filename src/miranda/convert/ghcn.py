@@ -35,6 +35,7 @@ def get_ghcn_raw(
     stationtype: str = None,
     outfolder: Path = None,
     timeout: int = None,
+    update_raw: bool = False,
 ) -> None:
     """Download raw GHCN data."""
     if station_ids is None:
@@ -54,7 +55,7 @@ def get_ghcn_raw(
             url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
             print(url)
             outfile = outfolder / f"{station_id}.csv"
-            if outfile.exists():
+            if outfile.exists() and not update_raw:
                 continue
             try:
 
@@ -141,6 +142,7 @@ def convert_ghcn_bychunks(
     end_year: int | None = None,
     n_workers: int = 4,
     nstations: int = 100,
+    update_raw: bool = False,
     delete_raw: bool = False,
 ) -> None:
 
@@ -227,7 +229,8 @@ def convert_ghcn_bychunks(
             errors = get_ghcn_raw(
                 station_ids=ss,
                 stationtype=prj_dict[project],
-                outfolder=working_folder.joinpath("raw", str(ii)),
+                outfolder=working_folder.joinpath("raw", str(ii)), 
+                update_raw=update_raw
             )
             if len(errors) == 0:
                 break
