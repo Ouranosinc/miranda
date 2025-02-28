@@ -229,8 +229,8 @@ def convert_ghcn_bychunks(
             errors = get_ghcn_raw(
                 station_ids=ss,
                 stationtype=prj_dict[project],
-                outfolder=working_folder.joinpath("raw", str(ii)), 
-                update_raw=update_raw
+                outfolder=working_folder.joinpath("raw", str(ii)),
+                update_raw=update_raw,
             )
             if len(errors) == 0:
                 break
