@@ -206,7 +206,7 @@ def convert_ghcn_bychunks(
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("raw").mkdir(exist_ok=True)
     working_folder.joinpath("zarr").mkdir(exist_ok=True)
-    
+
     bbox = None
     if lon_bnds and lat_bnds:
         bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1]) & station_df[
