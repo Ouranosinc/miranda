@@ -53,12 +53,12 @@ def get_ghcn_raw(
         if stationtype == "daily":
             # url = f"https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{station_id}.csv"
             url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
-            print(url)
+            
             outfile = outfolder / f"{station_id}.csv"
             if outfile.exists() and not update_raw:
                 continue
             try:
-
+                logging.info(f"downloading {url}")
                 with requests.get(url, timeout=(5, timeout)) as r:
                     r.raise_for_status()
                     with open(outfile.with_suffix(".tmp.csv"), "wb") as f:
@@ -66,7 +66,7 @@ def get_ghcn_raw(
                 shutil.move(outfile.with_suffix(".tmp.csv"), outfile)
             except:
                 errors.append(station_id)
-                print(f"Failed to download {url}")
+                logging.info(f"Failed to download {url} .. continuing")
                 continue
     return errors
 
@@ -76,7 +76,7 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
     data = []
     statmeta
     for station_id in sorted(list(infolder.glob("*.csv"))):
-        print(station_id.name)
+        logging.info(f"reading {station_id.name}")
         df = pd.read_csv(station_id)
         df.columns = df.columns.str.lower()
         df.element = df.element.str.lower()
@@ -197,7 +197,7 @@ def convert_ghcn_bychunks(
             )
 
     elif project == "ghcnh":
-        print("ghcnh not implemented yet")
+        logging.info("ghcnh not implemented yet")
         exit()
 
     prj_dict = dict(ghcnd="daily", ghcnh="hourly")
@@ -237,7 +237,7 @@ def convert_ghcn_bychunks(
             else:
                 ss = errors
                 ntry -= 1
-                print(f"Retrying ntry={ntry}")
+                logging.info(f"Retrying ntry={ntry}")
 
         infolders = [
             i
