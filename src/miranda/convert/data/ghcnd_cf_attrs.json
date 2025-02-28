@@ -1,10 +1,14 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
-    "_title": {"ghcnd":"GHCN-Daily"},
-    "summary": {"ghcnd":"Global Historical Climatology Network - Daily (GHCN-Daily) is a dataset that contains daily climate records from thousands of land surface stations across the globe."},
+    "_title": {
+      "ghcnd": "GHCN-Daily"
+    },
+    "summary": {
+      "ghcnd": "Global Historical Climatology Network - Daily (GHCN-Daily) is a dataset that contains daily climate records from thousands of land surface stations across the globe."
+    },
     "keywords": "atmosphere, climatology, meteorology, precipitation, temperature, wind",
-    "id":  "ghcn-daily",
+    "id": "ghcn-daily",
     "naming_authority": "gov.noaa.ncdc",
     "source": "GHCNd",
     "institution": "NOAA",
@@ -98,7 +102,7 @@
       "standard_name": "wind_speed",
       "units": "m s-1"
     },
-    "awdr":{
+    "awdr": {
       "_cf_variable_name": "winddir",
       "_corrected_units": "degrees",
       "cell_methods": "time: mean (interval: 1 day)",
@@ -114,8 +118,8 @@
       "long_name": "Sea Level Pressure",
       "standard_name": "air_pressure_at_sea_level",
       "units": "Pa"
-      },
-    "astp":{
+    },
+    "astp": {
       "_cf_variable_name": "ps",
       "_corrected_units": "hPa",
       "_multiplier": 0.1,
@@ -123,7 +127,6 @@
       "long_name": "Surface Air Pressure",
       "standard_name": "surface_air_pressure",
       "units": "Pa"
-      }    
     }
-
+  }
 }

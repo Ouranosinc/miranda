@@ -52,7 +52,7 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
     """
     data_folder = Path(__file__).resolve().parent / "data"
 
-    if project=="ghcnd":
+    if project == "ghcnd":
         metadata_definition = json.load(
             data_folder.joinpath("ghcnd_cf_attrs.json").open("r")
         )
@@ -405,9 +405,8 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
                 logging.info(msg)
                 with xr.set_options(keep_attrs=True):
-                    out = units.amount2rate(
-                        d[vv])
-                    
+                    out = units.amount2rate(d[vv])
+
                     d_out[vv] = out
                 converted.append(vv)
             elif isinstance(trans, str):
@@ -885,6 +884,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     return d
 
+
 def _multiplier(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_multiplier"
     for var, val in _iter_entry_key(d, m, "variables", key, p):
@@ -892,8 +892,9 @@ def _multiplier(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d[var] = d[var] * val
             prev_history = d.attrs.get("history", "")
             history = f"Multiplied raw value `{var}` by `{val}`. {prev_history}"
-            d.attrs.update(dict(history=history))   
+            d.attrs.update(dict(history=history))
     return d
+
 
 def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
