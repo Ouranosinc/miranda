@@ -33,6 +33,7 @@ Internal changes
 * `miranda` now applies the `numpydoc` documentation style to all publicly-exposed docstrings.
 * GitHub Workflows now use commit hashes for both running GitHub Actions and installing Python dependencies from PyPI.
 * `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
+* Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
 
 .. _changes_0.5.0:
 

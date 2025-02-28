@@ -10,6 +10,7 @@ dependencies:
   - ipython
   - ipykernel
   - nbsphinx
+  - pygments <2.19 # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
   - sphinx-autoapi
   - sphinx-codeautolink
   - sphinx-copybutton
