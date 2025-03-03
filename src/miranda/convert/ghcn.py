@@ -83,6 +83,7 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
         inull = df["q_flag"].isnull()
         df["q_flag"] = df["q_flag"].astype(str)
         df.loc[inull, "q_flag"] = ""
+        df.loc[df["q_flag"] == "nan", "q_flag"] = ""
         varlist = [k for k in varmeta.keys() if k in df.element.unique()]
         if varlist:
 
