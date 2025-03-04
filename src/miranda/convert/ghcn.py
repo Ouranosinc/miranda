@@ -129,10 +129,6 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
                         ds[vv] = ds[vv].where(ds[vv] != nn, "")
 
             data.append(ds)
-            for vv in ds.data_vars:
-                if "flag" in vv:
-                    print(vv)
-                    print(np.unique(ds[vv].values))
     if len(data) == 0:
         return None
     return xr.concat(data, dim="station")
