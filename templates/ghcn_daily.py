@@ -47,6 +47,9 @@ def main():
             ds[c].encoding = {}
         for c in ds.data_vars:
             ds[c].encoding = {}
+        for vv in ds.data_vars:
+            if 'flag' in vv:
+                ds[vv] = ds[vv].fillna("").astype("str")
 
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(
