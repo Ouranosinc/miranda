@@ -13,7 +13,7 @@ import pandas as pd
 import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from numpy import unique
+from numpy import unique, inf, nan
 
 from miranda.convert._data_corrections import (
     dataset_conversion,
@@ -22,6 +22,25 @@ from miranda.convert._data_corrections import (
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+q_flag_dict = {
+                'ghcnd':{
+                    "D":"failed duplicate check",
+                    "G":"failed gap check",
+                    "I":"failed internal consistency check",
+                    "K":"failed streak/frequent-value check",
+                    "L":"failed check on length of multiday period",
+                    "M":"failed megaconsistency check",
+                    "N":"failed naught check",
+                    "O":"failed climatological outlier check",
+                    "R":"failed lagged range check",
+                    "S":"failed spatial consistency check",
+                    "T":"failed temporal consistency check",
+                    "W":"temperature too warm for snow",
+                    "X":"failed bounds check",
+                    "Z":"flagged as a result of an official Datzilla investigation"
+                }
+            }
 
 
 def chunk_list(lst, n):
@@ -80,10 +99,9 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
         df = pd.read_csv(station_id)
         df.columns = df.columns.str.lower()
         df.element = df.element.str.lower()
-        inull = df["q_flag"].isnull()
-        df["q_flag"] = df["q_flag"].astype(str)
-        df.loc[inull, "q_flag"] = ""
-        df.loc[df["q_flag"] == "nan", "q_flag"] = ""
+        #inull = df["q_flag"].isnull()
+        #df["q_flag"] = df["q_flag"].astype(str)
+        
         varlist = [k for k in varmeta.keys() if k in df.element.unique()]
         if varlist:
 
@@ -99,6 +117,7 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
             dslist = []
             for var in varlist:
                 ds1 = df.loc[df.element == var].to_xarray()
+                
                 ds1 = ds1.rename({"data_value": var, "id": "station"})
                 drop_vars = [
                     v for v in ds1.data_vars if v not in varlist and v not in ["q_flag"]
@@ -107,8 +126,10 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
                 ds1 = ds1.rename(
                     {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
                 )
+               
                 dslist.append(ds1)
             ds = xr.merge(dslist)
+            
             del dslist
             df_stat = statmeta[statmeta.station_id == station_id.stem]
             if len(df_stat) != 1:
@@ -124,9 +145,10 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
                 if ds[vv].dtype == "float64":
                     ds[vv] = ds[vv].astype("float32")
                 if "flag" in vv:
-                    ds[vv] = ds[vv].astype("str")
-                    for nn in ["nan", "inf"]:
-                        ds[vv] = ds[vv].where(ds[vv] != nn, "")
+                    for tt in [inf, -inf]:
+                        ds[vv] = ds[vv].where(ds[vv] != tt, nan)
+                    ds[vv] = ds[vv].fillna("").astype("str")
+                    
 
             data.append(ds)
     if len(data) == 0:
@@ -304,12 +326,26 @@ def convert_ghcn_bychunks(
                             overwrite=overwrite,
                         )
                         ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
+                        for vv in ds_corr.data_vars:
+                            if ds_corr[vv].dtype == "float64":
+                                ds_corr[vv] = ds_corr[vv].astype("float32")
+                            if "flag" in vv:
+                                for tt in [inf, -inf]:
+                                    ds_corr[vv] = ds_corr[vv].where(ds_corr[vv] != tt, nan)
+                                ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
+                        
+                        
                         ds_corr[f"{cf_var}_q_flag"].attrs[
                             "long_name"
                         ] = f"Quality flag for {cf_var}"
+                        
+                        desc_str = '; '.join([f"{k}:{v}" for k,v in q_flag_dict[project].items()])
+                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                        
                         ds_corr[f"{cf_var}_q_flag"].attrs[
                             "description"
-                        ] = f"See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                        ] = desc_str
+                        
                         jobs.append((ds_corr, outzarr, outchunks))
                         if len(jobs) >= n_workers:
                             pool = mp.Pool(n_workers)
