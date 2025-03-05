@@ -48,7 +48,7 @@ def main():
         for c in ds.data_vars:
             ds[c].encoding = {}
         for vv in ds.data_vars:
-            if 'flag' in vv:
+            if "flag" in vv:
                 ds[vv] = ds[vv].fillna("").astype("str")
 
         with ProgressBar():
