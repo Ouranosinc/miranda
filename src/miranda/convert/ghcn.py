@@ -387,17 +387,3 @@ def write_zarr(
         with ProgressBar():
             ds.chunk(chunks).to_zarr(outzarr.with_suffix(".tmp.zarr"), mode="w")
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
-
-        # jobs = []
-        # for vv, meta in var_attrs.items():
-        #     meta_var = {v[0]:v[1] for v in NoaaGhcnMetadata[prj_dict[project]].data[vv]}
-        #     meta_var1 = {}
-        #     for new_key, old_key in {'long_name':'name', 'units':'unit','ghcn_name':'name_original'}.items():
-        #         meta_var1[new_key] = meta_var[old_key]
-        #     del meta_var
-        #     meta_var = meta_var1
-        #     del meta_var1
-
-        #     #jobs.append((request, ss, Path("/exec/logan/test/"), ii))
-
-        #     create_ghcn_xarray(request=request, station_ids=ss, varmeta = meta_var, outfolder=Path("/exec/logan/test/"), izarr=ii)
