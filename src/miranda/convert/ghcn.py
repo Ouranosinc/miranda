@@ -340,7 +340,7 @@ def convert_ghcn_bychunks(
                                         mask = ds_corr[vv] == kk
                                     else:
                                         mask = (mask) | (ds_corr[vv] == kk)
-                                ds_corr[vv] = ds_corr[vv].where(mask, '')
+                                ds_corr[vv] = ds_corr[vv].where(mask, "")
 
                         ds_corr[f"{cf_var}_q_flag"].attrs[
                             "long_name"
