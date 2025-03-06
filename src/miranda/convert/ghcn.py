@@ -335,7 +335,7 @@ def convert_ghcn_bychunks(
                                     )
                                 ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
                                 mask = None
-                                for kk in q_flag_dict['ghcnd'].keys():
+                                for kk in q_flag_dict[project].keys():
                                     if mask is None:
                                         mask = ds_corr[vv] == kk
                                     else:
