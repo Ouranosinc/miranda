@@ -334,6 +334,13 @@ def convert_ghcn_bychunks(
                                         ds_corr[vv] != tt, nan
                                     )
                                 ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
+                                mask = None
+                                for kk in q_flag_dict['ghcnd'].keys():
+                                    if mask is None:
+                                        mask = ds_corr[vv] == kk
+                                    else:
+                                        mask = (mask) | (ds_corr[vv] == kk)
+                                ds_corr[vv] = ds_corr[vv].where(mask, '')
 
                         ds_corr[f"{cf_var}_q_flag"].attrs[
                             "long_name"
