@@ -90,7 +90,9 @@ def get_ghcn_raw(
     return errors
 
 
-def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame, project:str) -> None:
+def create_ghcn_xarray(
+    infolder: Path, varmeta: dict, statmeta: pd.DataFrame, project: str
+) -> None:
     """Create a Zarr dump of DWD climate summary data."""
     data = []
     statmeta
@@ -100,7 +102,7 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame, pr
         df.columns = df.columns.str.lower()
         df.element = df.element.str.lower()
         imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
-        df.loc[imask, 'q_flag'] = nan
+        df.loc[imask, "q_flag"] = nan
         varlist = [k for k in varmeta.keys() if k in df.element.unique()]
         if varlist:
             df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
@@ -138,7 +140,7 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame, pr
                 # if "flag" in vv:
                 #     for tt in [inf, -inf]:
                 #         ds[vv] = ds[vv].where(ds[vv] != tt, nan)
-                    # ds[vv] = ds[vv].fillna("").astype("str")
+                # ds[vv] = ds[vv].fillna("").astype("str")
 
             data.append(ds)
     if len(data) == 0:
@@ -286,7 +288,10 @@ def convert_ghcn_bychunks(
                         var_attrs_new[vv] = meta
                 if var_attrs_new:
                     dsall_vars = create_ghcn_xarray(
-                        infolder=infolder, varmeta=var_attrs_new, statmeta=station_df, project=project
+                        infolder=infolder,
+                        varmeta=var_attrs_new,
+                        statmeta=station_df,
+                        project=project,
                     )
                     if dsall_vars is None:
                         continue
