@@ -90,7 +90,7 @@ def get_ghcn_raw(
     return errors
 
 
-def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) -> None:
+def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame, project:str) -> None:
     """Create a Zarr dump of DWD climate summary data."""
     data = []
     statmeta
@@ -99,19 +99,10 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
         df = pd.read_csv(station_id)
         df.columns = df.columns.str.lower()
         df.element = df.element.str.lower()
-        # inull = df["q_flag"].isnull()
-        # df["q_flag"] = df["q_flag"].astype(str)
-
+        imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
+        df.loc[imask, 'q_flag'] = nan
         varlist = [k for k in varmeta.keys() if k in df.element.unique()]
         if varlist:
-
-            # cntryid = [x[1].split(' ')[-1] for x in df['name'].str.split(', ')]
-            # stateid = [x[1].split(' ')[0] for x in df['name'].str.split(', ')]
-            # stat_name = [x[0] for x in df['name'].str.split(', ')]
-            # df['stateid'] = stateid
-            # df['cntryid'] = cntryid
-            # df['station_name'] = stat_name
-
             df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
             df = df.set_index(["id", "time"])
             dslist = []
@@ -144,10 +135,10 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
             for vv in ds.data_vars:
                 if ds[vv].dtype == "float64":
                     ds[vv] = ds[vv].astype("float32")
-                if "flag" in vv:
-                    for tt in [inf, -inf]:
-                        ds[vv] = ds[vv].where(ds[vv] != tt, nan)
-                    ds[vv] = ds[vv].fillna("").astype("str")
+                # if "flag" in vv:
+                #     for tt in [inf, -inf]:
+                #         ds[vv] = ds[vv].where(ds[vv] != tt, nan)
+                    # ds[vv] = ds[vv].fillna("").astype("str")
 
             data.append(ds)
     if len(data) == 0:
@@ -295,7 +286,7 @@ def convert_ghcn_bychunks(
                         var_attrs_new[vv] = meta
                 if var_attrs_new:
                     dsall_vars = create_ghcn_xarray(
-                        infolder=infolder, varmeta=var_attrs_new, statmeta=station_df
+                        infolder=infolder, varmeta=var_attrs_new, statmeta=station_df, project=project
                     )
                     if dsall_vars is None:
                         continue
@@ -328,19 +319,19 @@ def convert_ghcn_bychunks(
                         for vv in ds_corr.data_vars:
                             if ds_corr[vv].dtype == "float64":
                                 ds_corr[vv] = ds_corr[vv].astype("float32")
-                            if "flag" in vv:
-                                for tt in [inf, -inf]:
-                                    ds_corr[vv] = ds_corr[vv].where(
-                                        ds_corr[vv] != tt, nan
-                                    )
-                                ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
-                                mask = None
-                                for kk in q_flag_dict[project].keys():
-                                    if mask is None:
-                                        mask = ds_corr[vv] == kk
-                                    else:
-                                        mask = (mask) | (ds_corr[vv] == kk)
-                                ds_corr[vv] = ds_corr[vv].where(mask, "")
+                            # if "flag" in vv:
+                            #     for tt in [inf, -inf]:
+                            #         ds_corr[vv] = ds_corr[vv].where(
+                            #             ds_corr[vv] != tt, nan
+                            #         )
+                            #     ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
+                            #     mask = None
+                            #     for kk in q_flag_dict[project].keys():
+                            #         if mask is None:
+                            #             mask = ds_corr[vv] == kk
+                            #         else:
+                            #             mask = (mask) | (ds_corr[vv] == kk)
+                            #     ds_corr[vv] = ds_corr[vv].where(mask, "")
 
                         ds_corr[f"{cf_var}_q_flag"].attrs[
                             "long_name"
