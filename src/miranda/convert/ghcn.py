@@ -13,7 +13,7 @@ import pandas as pd
 import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from numpy import unique
+from numpy import inf, nan, unique
 
 from miranda.convert._data_corrections import (
     dataset_conversion,
@@ -22,6 +22,25 @@ from miranda.convert._data_corrections import (
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+q_flag_dict = {
+    "ghcnd": {
+        "D": "failed duplicate check",
+        "G": "failed gap check",
+        "I": "failed internal consistency check",
+        "K": "failed streak/frequent-value check",
+        "L": "failed check on length of multiday period",
+        "M": "failed megaconsistency check",
+        "N": "failed naught check",
+        "O": "failed climatological outlier check",
+        "R": "failed lagged range check",
+        "S": "failed spatial consistency check",
+        "T": "failed temporal consistency check",
+        "W": "temperature too warm for snow",
+        "X": "failed bounds check",
+        "Z": "flagged as a result of an official Datzilla investigation",
+    }
+}
 
 
 def chunk_list(lst, n):
@@ -71,7 +90,9 @@ def get_ghcn_raw(
     return errors
 
 
-def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) -> None:
+def create_ghcn_xarray(
+    infolder: Path, varmeta: dict, statmeta: pd.DataFrame, project: str
+) -> None:
     """Create a Zarr dump of DWD climate summary data."""
     data = []
     statmeta
@@ -80,25 +101,16 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
         df = pd.read_csv(station_id)
         df.columns = df.columns.str.lower()
         df.element = df.element.str.lower()
-        inull = df["q_flag"].isnull()
-        df["q_flag"] = df["q_flag"].astype(str)
-        df.loc[inull, "q_flag"] = ""
-        df.loc[df["q_flag"] == "nan", "q_flag"] = ""
+        imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
+        df.loc[imask, "q_flag"] = nan
         varlist = [k for k in varmeta.keys() if k in df.element.unique()]
         if varlist:
-
-            # cntryid = [x[1].split(' ')[-1] for x in df['name'].str.split(', ')]
-            # stateid = [x[1].split(' ')[0] for x in df['name'].str.split(', ')]
-            # stat_name = [x[0] for x in df['name'].str.split(', ')]
-            # df['stateid'] = stateid
-            # df['cntryid'] = cntryid
-            # df['station_name'] = stat_name
-
             df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
             df = df.set_index(["id", "time"])
             dslist = []
             for var in varlist:
                 ds1 = df.loc[df.element == var].to_xarray()
+
                 ds1 = ds1.rename({"data_value": var, "id": "station"})
                 drop_vars = [
                     v for v in ds1.data_vars if v not in varlist and v not in ["q_flag"]
@@ -107,8 +119,10 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
                 ds1 = ds1.rename(
                     {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
                 )
+
                 dslist.append(ds1)
             ds = xr.merge(dslist)
+
             del dslist
             df_stat = statmeta[statmeta.station_id == station_id.stem]
             if len(df_stat) != 1:
@@ -123,12 +137,11 @@ def create_ghcn_xarray(infolder: Path, varmeta: dict, statmeta: pd.DataFrame) ->
             for vv in ds.data_vars:
                 if ds[vv].dtype == "float64":
                     ds[vv] = ds[vv].astype("float32")
-                if "flag" in vv:
-                    ds[vv] = ds[vv].astype("str")
-                    for nn in ['nan', 'inf']:
-                        ds[vv] = ds[vv].where(ds[vv] != nn, '')
-                    
-                    
+                # if "flag" in vv:
+                #     for tt in [inf, -inf]:
+                #         ds[vv] = ds[vv].where(ds[vv] != tt, nan)
+                # ds[vv] = ds[vv].fillna("").astype("str")
+
             data.append(ds)
     if len(data) == 0:
         return None
@@ -275,7 +288,10 @@ def convert_ghcn_bychunks(
                         var_attrs_new[vv] = meta
                 if var_attrs_new:
                     dsall_vars = create_ghcn_xarray(
-                        infolder=infolder, varmeta=var_attrs_new, statmeta=station_df
+                        infolder=infolder,
+                        varmeta=var_attrs_new,
+                        statmeta=station_df,
+                        project=project,
                     )
                     if dsall_vars is None:
                         continue
@@ -305,12 +321,34 @@ def convert_ghcn_bychunks(
                             overwrite=overwrite,
                         )
                         ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
+                        for vv in ds_corr.data_vars:
+                            if ds_corr[vv].dtype == "float64":
+                                ds_corr[vv] = ds_corr[vv].astype("float32")
+                            # if "flag" in vv:
+                            #     for tt in [inf, -inf]:
+                            #         ds_corr[vv] = ds_corr[vv].where(
+                            #             ds_corr[vv] != tt, nan
+                            #         )
+                            #     ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
+                            #     mask = None
+                            #     for kk in q_flag_dict[project].keys():
+                            #         if mask is None:
+                            #             mask = ds_corr[vv] == kk
+                            #         else:
+                            #             mask = (mask) | (ds_corr[vv] == kk)
+                            #     ds_corr[vv] = ds_corr[vv].where(mask, "")
+
                         ds_corr[f"{cf_var}_q_flag"].attrs[
                             "long_name"
                         ] = f"Quality flag for {cf_var}"
-                        ds_corr[f"{cf_var}_q_flag"].attrs[
-                            "description"
-                        ] = f"See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+
+                        desc_str = "; ".join(
+                            [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
+                        )
+                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+
+                        ds_corr[f"{cf_var}_q_flag"].attrs["description"] = desc_str
+
                         jobs.append((ds_corr, outzarr, outchunks))
                         if len(jobs) >= n_workers:
                             pool = mp.Pool(n_workers)
@@ -352,17 +390,3 @@ def write_zarr(
         with ProgressBar():
             ds.chunk(chunks).to_zarr(outzarr.with_suffix(".tmp.zarr"), mode="w")
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
-
-        # jobs = []
-        # for vv, meta in var_attrs.items():
-        #     meta_var = {v[0]:v[1] for v in NoaaGhcnMetadata[prj_dict[project]].data[vv]}
-        #     meta_var1 = {}
-        #     for new_key, old_key in {'long_name':'name', 'units':'unit','ghcn_name':'name_original'}.items():
-        #         meta_var1[new_key] = meta_var[old_key]
-        #     del meta_var
-        #     meta_var = meta_var1
-        #     del meta_var1
-
-        #     #jobs.append((request, ss, Path("/exec/logan/test/"), ii))
-
-        #     create_ghcn_xarray(request=request, station_ids=ss, varmeta = meta_var, outfolder=Path("/exec/logan/test/"), izarr=ii)
