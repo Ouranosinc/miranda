@@ -5,6 +5,7 @@ import json
 import logging.config
 import os
 from pathlib import Path
+import re
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
@@ -43,10 +44,11 @@ eccc_rdrs_variables["raw"] = [
     )["variables"].keys()
 ]
 eccc_rdrs_variables["cf"] = [
-    attrs["_cf_variable_name"]
+    attrs["_cf_variable_name"] 
     for attrs in json.load(
         _data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8")
     )["variables"].values()
+    if "_cf_variable_name" in attrs 
 ]
 
 era5_variables = json.load(
@@ -276,12 +278,14 @@ def gather_rdrs(
 
 def gather_raw_rdrs_by_years(
     path: str | os.PathLike,
+    project: str,
 ) -> dict[str, dict[str, list[Path]]]:
     """Gather raw RDRS files for preprocessing.
 
     Parameters
     ----------
     path: str or os.PathLike
+    project: str
 
     Returns
     -------
@@ -291,13 +295,33 @@ def gather_raw_rdrs_by_years(
     # Need full year plus previous december in order to easily produce complete hourly frequency monthly files
     path = Path(path)
     year_sets = dict()
-    for year in range(1950, datetime.datetime.now().year + 1):
-        files = sorted(list(path.glob(f"{year - 1}12*.nc")))
-        if files:
-            files = [files[-1]]
-        files.extend(sorted(list(path.glob(f"{year}*.nc"))))
+    for year in range(1950, datetime.datetime.now().year + 1): 
+
+        dec_prev_year_files = []
+        this_year_files = []
+
+        for file in path.glob(f"*.nc"):
+            match = re.search(r"(\d{10})", file.name) # search for 10 digits (YYYYMMDDHH)
+            if match:
+                date_str = match.group(1)
+                dt = datetime.datetime.strptime(date_str, "%Y%m%d%H")
+                if dt.year == year - 1 and dt.month == 12:
+                    dec_prev_year_files.append(file)
+                elif dt.year == year:
+                    this_year_files.append(file)
+        
+        # if there are files from the previous December, get the last one
+        dec_prev_year_files.sort()
+        if dec_prev_year_files:
+            files = [dec_prev_year_files[-1]]
+        else:   
+            files = []
+
+        this_year_files.sort()
+        files.extend(this_year_files)
         year_sets[str(year)] = files
-    return {"rdrs-v21": year_sets}
+
+    return {project: year_sets}
 
 
 def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
