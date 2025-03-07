@@ -536,6 +536,11 @@
       },
       "_corrected_standard_name": "lwe_thickness_of_convective_precipitation_amount",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
