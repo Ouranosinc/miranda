@@ -473,7 +473,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
+    for vv, offs in _iter_entry_key(d, m, "variables", key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
