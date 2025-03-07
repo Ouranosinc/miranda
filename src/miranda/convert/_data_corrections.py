@@ -629,7 +629,6 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     if key in m["dimensions"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
-        freq_found = '1H' if freq_found == 'h' else freq_found
         if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
                 msg = (
