@@ -100,6 +100,14 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(
             data_folder.joinpath("emdna_cf_attrs.json").open("r")
         )
+    elif project in ["ORRC"]:
+        metadata_definition = json.load(
+            data_folder.joinpath("ouranos_orrc_cf_attrs.json").open("r")
+        )
+    elif project in ["casr-v31"]:
+        metadata_definition = json.load(
+            data_folder.joinpath("eccc_casr_cf_attrs.json").open("r")
+        )
     else:
         msg = f"Project `{project}` not supported."
         raise NotImplementedError(msg)
@@ -460,53 +468,53 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
 # TODO: Determine if this function is still needed
 
-# def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-#     key = "_offset_time"
-#     d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
-#     converted = []
-#     offset, offset_meaning = None, None
-#
-#     time_freq = dict()
-#     expected_period = _get_section_entry_key(
-#         m, "dimensions", "time", "_ensure_correct_time", p
-#     )
-#     if isinstance(expected_period, str):
-#         time_freq["expected_period"] = expected_period
-#
-#     for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
-#         if offs:
-#             # Offset time by value of one time-step
-#             if offset is None and offset_meaning is None:
-#                 try:
-#                     offset, offset_meaning = get_time_frequency(d, **time_freq)
-#                 except TypeError:
-#                     logging.error(
-#                         "Unable to parse the time frequency. Verify data integrity before retrying."
-#                     )
-#                     raise
-#
-#             msg = f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-#
-#             logging.info(msg)
-#             with xr.set_options(keep_attrs=True):
-#                 out = d[vv]
-#                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
-#                 d_out[vv] = out
-#             converted.append(vv)
-#             prev_history = d.attrs.get("history", "")
-#             history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
-#             d_out.attrs.update(dict(history=history))
-#         elif offs is False:
-#             msg = f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
-#
-#             logging.info(msg)
-#             continue
-#
-#     # Copy unconverted variables
-#     for vv in d.data_vars:
-#         if vv not in converted:
-#             d_out[vv] = d[vv]
-#     return d_out
+def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_offset_time"
+    d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+    converted = []
+    offset, offset_meaning = None, None
+
+    time_freq = dict()
+    expected_period = _get_section_entry_key(
+        m, "dimensions", "time", "_ensure_correct_time", p
+    )
+    if isinstance(expected_period, str):
+        time_freq["expected_period"] = expected_period
+
+    for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
+        if offs:
+            # Offset time by value of one time-step
+            if offset is None and offset_meaning is None:
+                try:
+                    offset, offset_meaning = get_time_frequency(d, **time_freq)
+                except TypeError:
+                    logging.error(
+                        "Unable to parse the time frequency. Verify data integrity before retrying."
+                    )
+                    raise
+
+            msg = f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+
+            logging.info(msg)
+            with xr.set_options(keep_attrs=True):
+                out = d[vv]
+                out["time"] = out.time - np.timedelta64(offset[0], offset[1])
+                d_out[vv] = out
+            converted.append(vv)
+            prev_history = d.attrs.get("history", "")
+            history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"
+            d_out.attrs.update(dict(history=history))
+        elif offs is False:
+            msg = f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+
+            logging.info(msg)
+            continue
+
+    # Copy unconverted variables
+    for vv in d.data_vars:
+        if vv not in converted:
+            d_out[vv] = d[vv]
+    return d_out
 
 
 def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
@@ -546,7 +554,7 @@ def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit)
+                d[vv] = units.convert_units_to(d[vv], unit) 
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))
@@ -621,6 +629,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     if key in m["dimensions"]["time"].keys():
         freq_found = xr.infer_freq(d.time)
+        freq_found = '1H' if freq_found == 'h' else freq_found
         if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
                 msg = (
@@ -864,7 +873,8 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 del d.attrs[attribute]
         elif field == "_remove_attrs":
             for ff in attr_treatment:
-                del d.attrs[ff]
+                if ff:
+                    del d.attrs[ff]
         else:
             if field[1:] in d.attrs:
                 msg = f"Overwriting `{field[1:]}` based on JSON configuration."
@@ -907,7 +917,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
     # TODO validate this is needed
-    # ds = _offset_time(ds, project, metadata_definition)
+    ds = _offset_time(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
     ds = metadata_conversion(ds, project, metadata_definition)
 
