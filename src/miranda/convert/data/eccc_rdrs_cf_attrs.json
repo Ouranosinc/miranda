@@ -1,7 +1,8 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
-    "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product RDRS_v2 contains two variables for precipitation: 'RDRS_v2_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'RDRS_v2_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
+    "_Remarks": {
+      "rdrs-v21": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product RDRS_v2 contains two variables for precipitation: 'RDRS_v2_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'RDRS_v2_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period."    },
     "_contact": {
       "rdrs-v21": ""
     },
@@ -27,9 +28,9 @@
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "2023-03-23",
+    "table_date": "2025-02-13",
     "table_id": "eccc",
-    "terms_of_use": "RDRS v2.1 data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
+    "terms_of_use": "Canadian Surface Reanalysis data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
     "type": "reconstruction"
   },
   "dimensions": {
@@ -43,9 +44,19 @@
       "standard_name": "time"
     }
   },
+  "_prefix": {
+    "rdrs-v21": "RDRS_v2.1_"
+  },
   "variables": {
-    "RDRS_v2.1_A_PR0_SFC": {
+    "A_PR0_SFC": {
       "_cf_variable_name": "pr",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_transformation": {
         "rdrs-v21": "amount2rate"
       },
@@ -55,35 +66,35 @@
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
-    "RDRS_v2.1_P_FB_SFC": {
+    "P_FB_SFC": {
       "_cf_variable_name": "rsds",
       "cell_methods": "time: mean (interval: 1 hour)",
       "long_name": "Surface Downwelling Shortwave Radiation",
       "standard_name": "surface_downwelling_shortwave_flux_in_air",
       "units": "W m-2"
     },
-    "RDRS_v2.1_P_FI_SFC": {
+    "P_FI_SFC": {
       "_cf_variable_name": "rlds",
       "cell_methods": "time: mean (interval: 1 hour)",
       "long_name": "Surface Downwelling Longwave Radiation",
       "standard_name": "surface_downwelling_longwave_flux_in_air",
       "units": "W m-2"
     },
-    "RDRS_v2.1_P_GZ_09944": {
+    "P_GZ_09944": {
       "_cf_variable_name": "zcrd09944",
       "cell_methods": "time: point",
       "description": "Corresponding coordinate (09944) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
       "long_name": "Model vertical grid coordinate",
       "units": "m"
     },
-    "RDRS_v2.1_P_GZ_SFC": {
+    "P_GZ_SFC": {
       "_cf_variable_name": "zcrd10000",
       "cell_methods": "time: point",
       "description": "Surface coordinate (10000) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
       "long_name": "Model vertical grid coordinate at the surface",
       "units": "m"
     },
-    "RDRS_v2.1_P_HR_09944": {
+    "P_HR_09944": {
       "_cf_variable_name": "hur",
       "cell_methods": "time: point",
       "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
@@ -91,14 +102,14 @@
       "standard_name": "relative_humidity",
       "units": "%"
     },
-    "RDRS_v2.1_P_HR_1.5m": {
+    "P_HR_1.5m": {
       "_cf_variable_name": "hurs",
       "cell_methods": "time: point",
       "long_name": "Near-Surface Relative Humidity (1.5m)",
       "standard_name": "relative_humidity",
       "units": "%"
     },
-    "RDRS_v2.1_P_HU_09944": {
+    "P_HU_09944": {
       "_cf_variable_name": "hus",
       "_corrected_units": {
         "rdrs-v21": "1"
@@ -109,7 +120,7 @@
       "standard_name": "specific_humidity",
       "units": "1"
     },
-    "RDRS_v2.1_P_HU_1.5m": {
+    "P_HU_1.5m": {
       "_cf_variable_name": "huss",
       "_corrected_units": {
         "rdrs-v21": "1"
@@ -119,7 +130,7 @@
       "standard_name": "specific_humidity",
       "units": "1"
     },
-    "RDRS_v2.1_P_P0_SFC": {
+    "P_P0_SFC": {
       "_cf_variable_name": "ps",
       "_corrected_units": {
         "rdrs-v21": "mbar"
@@ -129,18 +140,25 @@
       "standard_name": "surface_air_pressure",
       "units": "Pa"
     },
-    "RDRS_v2.1_P_PN_SFC": {
+    "P_PN_SFC": {
       "_cf_variable_name": "psl",
       "cell_methods": "time: point",
-      "corrected_units": {
+      "_corrected_units": {
         "rdrs-v21": "mbar"
       },
       "long_name": "Sea Level Pressure",
       "standard_name": "air_pressure_at_sea_level",
       "units": "Pa"
     },
-    "RDRS_v2.1_P_PR0_SFC": {
+    "P_PR0_SFC": {
       "_cf_variable_name": "prmod",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_transformation": {
         "rdrs-v21": "amount2rate"
       },
@@ -151,7 +169,7 @@
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1"
     },
-    "RDRS_v2.1_P_TD_09944": {
+    "P_TD_09944": {
       "_cf_variable_name": "tdp",
       "_corrected_units": {
         "rdrs-v21": "degC"
@@ -162,7 +180,7 @@
       "standard_name": "dew_point_temperature",
       "units": "K"
     },
-    "RDRS_v2.1_P_TD_1.5m": {
+    "P_TD_1.5m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {
         "rdrs-v21": "degC"
@@ -172,7 +190,7 @@
       "standard_name": "dew_point_temperature",
       "units": "K"
     },
-    "RDRS_v2.1_P_TT_09944": {
+    "P_TT_09944": {
       "_cf_variable_name": "ta",
       "_corrected_units": {
         "rdrs-v21": "degC"
@@ -183,7 +201,7 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
-    "RDRS_v2.1_P_TT_1.5m": {
+    "P_TT_1.5m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {
         "rdrs-v21": "degC"
@@ -193,7 +211,7 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
-    "RDRS_v2.1_P_UUC_09944": {
+    "P_UUC_09944": {
       "_cf_variable_name": "ua",
       "cell_methods": "time: point",
       "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
@@ -201,14 +219,14 @@
       "standard_name": "eastward_wind",
       "units": "m s-1"
     },
-    "RDRS_v2.1_P_UUC_10m": {
+    "P_UUC_10m": {
       "_cf_variable_name": "uas",
       "cell_methods": "time: point",
       "long_name": "Eastward Near-Surface Wind (10m)",
       "standard_name": "eastward_wind",
       "units": "m s-1"
     },
-    "RDRS_v2.1_P_UVC_09944": {
+    "P_UVC_09944": {
       "_cf_variable_name": "40mWind",
       "cell_methods": "time: point",
       "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
@@ -216,14 +234,14 @@
       "standard_name": "wind_speed",
       "units": "m s-1"
     },
-    "RDRS_v2.1_P_UVC_10m": {
+    "P_UVC_10m": {
       "_cf_variable_name": "sfcWind",
       "cell_methods": "time: point",
       "long_name": "Near-Surface Wind Speed (10m)",
       "standard_name": "wind_speed",
       "units": "m s-1"
     },
-    "RDRS_v2.1_P_VVC_09944": {
+    "P_VVC_09944": {
       "_cf_variable_name": "va",
       "cell_methods": "time: point",
       "description": "The approximate 40 metre level is more specifically 99.44% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09944 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
@@ -231,14 +249,14 @@
       "standard_name": "northward_wind",
       "units": "m s-1"
     },
-    "RDRS_v2.1_P_VVC_10m": {
+    "P_VVC_10m": {
       "_cf_variable_name": "vas",
       "cell_methods": "time: point",
       "long_name": "Northward Near-Surface Wind (10m)",
       "standard_name": "northward_wind",
       "units": "m s-1"
     },
-    "RDRS_v2.1_P_WDC_10m": {
+    "P_WDC_10m": {
       "_cf_variable_name": "winddir",
       "cell_methods": "time: point",
       "long_name": "Near-Surface Meteorological Wind Direction (10m)",
