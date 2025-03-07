@@ -640,6 +640,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             correct_times = correct_time_entry.get(p)
             if isinstance(correct_times, list):
                 correct_times = [parse_offset(t)[1] for t in correct_times]
+            elif isinstance(correct_times, str):
+                correct_times = [parse_offset(correct_times)[1]]
             if correct_times is None:
                 msg = f"No expected times set for specified project `{p}`."
                 logging.warning(msg)
