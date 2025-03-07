@@ -481,7 +481,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
+    for vv, offs in _iter_entry_key(d, m, "variables", key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
@@ -649,6 +649,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             correct_times = correct_time_entry.get(p)
             if isinstance(correct_times, list):
                 correct_times = [parse_offset(t)[1] for t in correct_times]
+            elif isinstance(correct_times, str):
+                correct_times = [parse_offset(correct_times)[1]]
             if correct_times is None:
                 msg = f"No expected times set for specified project `{p}`."
                 logging.warning(msg)
@@ -917,6 +919,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
     # TODO validate this is needed
+    ds = _offset_time(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
     ds = metadata_conversion(ds, project, metadata_definition)
