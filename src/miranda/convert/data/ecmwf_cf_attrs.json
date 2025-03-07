@@ -108,6 +108,11 @@
         "era5-single-levels-monthly-means": true,
         "era5-single-levels-preliminary-back-extension": true
       },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -200,6 +205,11 @@
       "_corrected_units": "m",
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -217,6 +227,11 @@
       "_cf_variable_name": "hfls",
       "_corrected_units": "J m-2",
       "_invert_sign": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_offset_time": {
         "era5-land": true,
         "era5-single-levels": true,
         "era5-single-levels-preliminary-back-extension": true
@@ -252,6 +267,11 @@
         "era5-single-levels": true,
         "era5-single-levels-preliminary-back-extension": true
       },
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -268,6 +288,11 @@
       "_cf_variable_name": "rss",
       "_corrected_units": "J m-2",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -290,6 +315,11 @@
       },
       "_corrected_units": "J m-2",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -306,6 +336,11 @@
       "_cf_variable_name": "rls",
       "_corrected_units": "J m-2",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -328,6 +363,11 @@
       },
       "_corrected_units": "J m-2",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -408,6 +448,11 @@
       },
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
