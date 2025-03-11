@@ -160,16 +160,15 @@ def download_ghcn(
     n_workers: int = 4,
     nstations: int = 100,
     update_raw: bool = False,
-
 ) -> None:
-    
+
     station_df = _get_ghcn_stations(project)
 
 
 def _get_ghcn_stations(
     project: str,
-    ):
-    if project == 'ghcnd':
+):
+    if project == "ghcnd":
         station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
         dtypes = {
             "station_id": str,
@@ -204,6 +203,7 @@ def _get_ghcn_stations(
     else:
         raise ValueError(f"unknown project values {project}")
     return station_df
+
 
 def convert_ghcn_bychunks(
     project: str,
