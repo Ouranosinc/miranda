@@ -148,6 +148,63 @@ def create_ghcn_xarray(
     return xr.concat(data, dim="station")
 
 
+def download_ghcn(
+    project: str,
+    working_folder: str | os.PathLike[str] | None = None,
+    overwrite: bool = False,
+    cfvariable_list: list | None = None,
+    lon_bnds: list[float] | None = None,
+    lat_bnds: list[float] | None = None,
+    start_year: int | None = None,
+    end_year: int | None = None,
+    n_workers: int = 4,
+    nstations: int = 100,
+    update_raw: bool = False,
+
+) -> None:
+    
+    station_df = _get_ghcn_stations(project)
+
+
+def _get_ghcn_stations(
+    project: str,
+    ):
+    if project == 'ghcnd':
+        station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
+        dtypes = {
+            "station_id": str,
+            "lat": float,
+            "lon": float,
+            "elevation": float,
+            "state": str,
+            "station_name": str,
+            "gsn_flag": str,
+            "hcn_flag": str,
+            "wmo_id": str,
+        }
+        try:
+            station_df = pd.read_fwf(
+                station_url,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+        except:
+            statfile = Path(__file__).parent.joinpath("data/ghcnd-stations.txt")
+            station_df = pd.read_fwf(
+                statfile,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+
+    elif project == "ghcnh":
+        logging.info("ghcnh not implemented yet")
+        exit()
+    else:
+        raise ValueError(f"unknown project values {project}")
+    return station_df
+
 def convert_ghcn_bychunks(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
@@ -176,42 +233,43 @@ def convert_ghcn_bychunks(
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
-        ctry_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-countries.txt"
-        try:
-            ctry_df = pd.read_fwf(ctry_url, widths=[2, 50])
-        except:
-            ctry_file = Path(__file__).parent.joinpath("data/ghcnd-countries.txt")
-            ctry_df = pd.read_fwf(ctry_file, widths=[2, 50])
+        station_df = _get_ghcn_stations(project=project)
+        # ctry_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-countries.txt"
+        # try:
+        #     ctry_df = pd.read_fwf(ctry_url, widths=[2, 50])
+        # except:
+        #     ctry_file = Path(__file__).parent.joinpath("data/ghcnd-countries.txt")
+        #     ctry_df = pd.read_fwf(ctry_file, widths=[2, 50])
 
-        ctry_df.columns = ["code", "name"]
-        ctry_df = ctry_df.set_index("code")
-        station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
-        dtypes = {
-            "station_id": str,
-            "lat": float,
-            "lon": float,
-            "elevation": float,
-            "state": str,
-            "station_name": str,
-            "gsn_flag": str,
-            "hcn_flag": str,
-            "wmo_id": str,
-        }
-        try:
-            station_df = pd.read_fwf(
-                station_url,
-                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
-                converters=dtypes,
-            )
-        except:
-            statfile = Path(__file__).parent.joinpath("data/ghcnd-stations.txt")
-            station_df = pd.read_fwf(
-                statfile,
-                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
-                converters=dtypes,
-            )
+        # ctry_df.columns = ["code", "name"]
+        # ctry_df = ctry_df.set_index("code")
+        # station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
+        # dtypes = {
+        #     "station_id": str,
+        #     "lat": float,
+        #     "lon": float,
+        #     "elevation": float,
+        #     "state": str,
+        #     "station_name": str,
+        #     "gsn_flag": str,
+        #     "hcn_flag": str,
+        #     "wmo_id": str,
+        # }
+        # try:
+        #     station_df = pd.read_fwf(
+        #         station_url,
+        #         widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+        #         names=[d for d in dtypes.keys()],
+        #         converters=dtypes,
+        #     )
+        # except:
+        #     statfile = Path(__file__).parent.joinpath("data/ghcnd-stations.txt")
+        #     station_df = pd.read_fwf(
+        #         statfile,
+        #         widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+        #         names=[d for d in dtypes.keys()],
+        #         converters=dtypes,
+        #     )
 
     elif project == "ghcnh":
         logging.info("ghcnh not implemented yet")
