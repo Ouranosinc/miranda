@@ -156,9 +156,8 @@ def download_ghcn(
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
     update_raw: bool = False,
-
 ) -> None:
-    
+
     station_df = _get_ghcn_stations(project)
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
@@ -198,8 +197,8 @@ def download_ghcn(
 
 def _get_ghcn_stations(
     project: str,
-    ):
-    if project == 'ghcnd':
+):
+    if project == "ghcnd":
         station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
         dtypes = {
             "station_id": str,
@@ -234,6 +233,7 @@ def _get_ghcn_stations(
     else:
         raise ValueError(f"unknown project values {project}")
     return station_df
+
 
 def convert_ghcn_bychunks(
     project: str,
