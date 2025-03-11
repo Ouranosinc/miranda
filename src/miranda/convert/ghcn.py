@@ -159,6 +159,7 @@ def download_ghcn(
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
     update_raw: bool = False,
+    timeout: int = None
 ) -> None:
 
     station_df = _get_ghcn_stations(project)
@@ -186,6 +187,7 @@ def download_ghcn(
             stationtype=prj_dict[project]["freq"],
             outfolder=working_folder.joinpath("raw"),
             update_raw=update_raw,
+            timeout=timeout
         )
         if len(errors) == 0:
             break
