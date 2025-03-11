@@ -16,22 +16,22 @@ def main():
     start_year = 1981
     end_year = 2020
 
-    lon_bnds=[-76, -74]
-    lat_bnds=[44, 46]
+    lon_bnds = [-76, -74]
+    lat_bnds = [44, 46]
 
     nstations = 100
     update_raw = True
 
-
     # download station data
-    download_ghcn(project="ghcnd",
+    download_ghcn(
+        project="ghcnd",
         working_folder=working_folder,
         lon_bnds=lon_bnds,
         lat_bnds=lat_bnds,
         update_raw=update_raw,
     )
-    
-    #convert ghcn data by chunks of nstations
+
+    # convert ghcn data by chunks of nstations
     convert_ghcn_bychunks(
         project="ghcnd",
         working_folder=working_folder,
@@ -63,7 +63,7 @@ def main():
             ds[c].encoding = {}
             if "flag" in c:
                 mask = ds[c].isin(list(q_flag_dict.keys()))
-                ds[c] = ds[c].where(mask,'')
+                ds[c] = ds[c].where(mask, "")
                 ds[c] = ds[c].astype(str)
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(

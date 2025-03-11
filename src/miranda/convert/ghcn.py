@@ -42,8 +42,11 @@ q_flag_dict = {
     }
 }
 
-prj_dict = dict(ghcnd=dict(freq="daily", filetype='.csv'),
-                ghcnh=dict(freq="hourly", filetype='.psv'))
+prj_dict = dict(
+    ghcnd=dict(freq="daily", filetype=".csv"),
+    ghcnh=dict(freq="hourly", filetype=".psv"),
+)
+
 
 def chunk_list(lst, n):
     """Split list into chunks of size n."""
@@ -175,12 +178,12 @@ def download_ghcn(
     station_df = station_df[bbx_mask]
     station_ids = station_df["station_id"].tolist()
     # station_list = sorted(list(chunk_list(station_ids, nstations)))
-    #for ii, ss in enumerate(station_list):
+    # for ii, ss in enumerate(station_list):
     ntry = 5
     while ntry > 0:
         errors = get_ghcn_raw(
             station_ids=station_ids,
-            stationtype=prj_dict[project]['freq'],
+            stationtype=prj_dict[project]["freq"],
             outfolder=working_folder.joinpath("raw"),
             update_raw=update_raw,
         )
@@ -190,9 +193,6 @@ def download_ghcn(
             station_ids = errors
             ntry -= 1
             logging.info(f"Retrying ntry={ntry}")
-
-
-    
 
 
 def _get_ghcn_stations(
@@ -260,30 +260,31 @@ def convert_ghcn_bychunks(
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
         station_df = _get_ghcn_stations(project=project)
-        
+
     elif project == "ghcnh":
         logging.info("ghcnh not implemented yet")
         exit()
 
-    
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("zarr").mkdir(exist_ok=True)
-    
+
     if end_year is not None:
         end_date = dt.datetime(end_year, 12, 31, 23, 59, 59, tzinfo=ZoneInfo("UTC"))
     else:
         end_date = dt.datetime.now().astimezone(ZoneInfo("UTC"))
     start_date = dt.datetime(start_year, 1, 1, 0, 0, 0, tzinfo=ZoneInfo("UTC"))
-    
+
     if update_from_raw:
         for folder in working_folder.joinpath("zarr").iterdir():
             logging.info(f"deleting {folder}")
             shutil.rmtree(folder)
 
     treated = []
-    file_list =  sorted(list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}")))
+    file_list = sorted(
+        list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}"))
+    )
     jobs = []
     for ii, ss in enumerate(chunk_list(file_list, nstations)):
         print(ii)
@@ -297,7 +298,6 @@ def convert_ghcn_bychunks(
                 if not outzarr.exists() or update_from_raw:
                     var_attrs_new[vv] = meta
 
-       
             if var_attrs_new:
                 dsall_vars = create_ghcn_xarray(
                     infiles=ss,
@@ -320,11 +320,9 @@ def convert_ghcn_bychunks(
                     dsout = dsall_vars.drop_vars(
                         [v for v in dsall_vars.data_vars if not v.startswith(kk)]
                     )
-                    allnull_stat = dsout[kk].isnull().sum(dim="time") == len(
-                        dsout.time
-                    )
+                    allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
-                    dsout = make_monotonous_time(dsout, freq=prj_dict[project]['freq'])
+                    dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
 
                     ds_corr = dataset_conversion(
                         dsout,
@@ -336,7 +334,7 @@ def convert_ghcn_bychunks(
                     for vv in ds_corr.data_vars:
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
-      
+
                     desc_str = "; ".join(
                         [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
                     )
