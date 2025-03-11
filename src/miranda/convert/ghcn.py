@@ -338,19 +338,19 @@ def convert_ghcn_bychunks(
                             #             mask = (mask) | (ds_corr[vv] == kk)
                             #     ds_corr[vv] = ds_corr[vv].where(mask, "")
 
-                        #ds_corr[f"{cf_var}_q_flag"]
+                        # ds_corr[f"{cf_var}_q_flag"]
                         desc_str = "; ".join(
                             [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
                         )
                         desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
-                        attrs={
-                                "flag_values": [c for c in q_flag_dict[project].keys()],
-                                "flag_meanings": [c for c in q_flag_dict[project].values()],
-                                "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
-                                "long_name": f"Quality flag for {cf_var}",
-                                "description": desc_str,
-                            }
-                        
+                        attrs = {
+                            "flag_values": [c for c in q_flag_dict[project].keys()],
+                            "flag_meanings": [c for c in q_flag_dict[project].values()],
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}",
+                            "description": desc_str,
+                        }
+
                         ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
                         jobs.append((ds_corr, outzarr, outchunks))
