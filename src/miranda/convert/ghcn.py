@@ -287,7 +287,6 @@ def convert_ghcn_bychunks(
     )
     jobs = []
     for ii, ss in enumerate(chunk_list(file_list, nstations)):
-        print(ii)
         if ii not in treated:
             var_attrs_new = {}
             for vv, meta in var_attrs.items():
