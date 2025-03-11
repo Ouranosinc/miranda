@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 import shutil
 from dask.diagnostics import ProgressBar
-from miranda.convert.ghcn import convert_ghcn_bychunks
+from miranda.convert.ghcn import convert_ghcn_bychunks, download_ghcn, q_flag_dict
 from miranda.convert.ghcn import chunk_list
 import xarray as xr
 from tempfile import TemporaryDirectory
@@ -16,17 +16,29 @@ def main():
     start_year = 1981
     end_year = 2020
 
-    # download and convert ghcn data by chunks of nstations
+    lon_bnds=[-76, -74]
+    lat_bnds=[44, 46]
+
+    nstations = 100
+    update_raw = True
+
+
+    # download station data
+    download_ghcn(project="ghcnd",
+        working_folder=working_folder,
+        lon_bnds=lon_bnds,
+        lat_bnds=lat_bnds,
+        update_raw=update_raw,
+    )
+    
+    #convert ghcn data by chunks of nstations
     convert_ghcn_bychunks(
         project="ghcnd",
         working_folder=working_folder,
-        lon_bnds=[-76, -74],
-        lat_bnds=[44, 46],
         start_year=start_year,
         end_year=end_year,
-        overwrite=False,
-        delete_raw=False,
-        nstations=100,
+        update_from_raw=update_raw,
+        nstations=nstations,
         n_workers=6,
     )
 
@@ -34,6 +46,8 @@ def main():
     for var1 in [v for v in working_folder.joinpath("zarr").iterdir() if v.is_dir()]:
         outfolder = working_folder.joinpath(f"final/{var1.name}")
         outfolder.mkdir(parents=True, exist_ok=True)
+        if outfolder.exists():
+            shutil.rmtree(outfolder)
         inzarrs = sorted(var1.glob("*.zarr"))
         ds = xr.concat(
             [xr.open_zarr(z, decode_timedelta=False) for z in inzarrs], dim="station"
@@ -47,6 +61,10 @@ def main():
             ds[c].encoding = {}
         for c in ds.data_vars:
             ds[c].encoding = {}
+            if "flag" in c:
+                mask = ds[c].isin(list(q_flag_dict.keys()))
+                ds[c] = ds[c].where(mask,'')
+                ds[c] = ds[c].astype(str)
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(
                 outzarr.with_suffix(".tmp.zarr"), mode="w"

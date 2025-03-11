@@ -42,6 +42,8 @@ q_flag_dict = {
     }
 }
 
+prj_dict = dict(ghcnd=dict(freq="daily", filetype='.csv'),
+                ghcnh=dict(freq="hourly", filetype='.psv'))
 
 def chunk_list(lst, n):
     """Split list into chunks of size n."""
@@ -91,12 +93,12 @@ def get_ghcn_raw(
 
 
 def create_ghcn_xarray(
-    infolder: Path, varmeta: dict, statmeta: pd.DataFrame, project: str
+    infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
 ) -> None:
     """Create a Zarr dump of DWD climate summary data."""
     data = []
     statmeta
-    for station_id in sorted(list(infolder.glob("*.csv"))):
+    for station_id in sorted(list(infiles)):
         logging.info(f"reading {station_id.name}")
         df = pd.read_csv(station_id)
         df.columns = df.columns.str.lower()
@@ -151,19 +153,47 @@ def create_ghcn_xarray(
 def download_ghcn(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
-    overwrite: bool = False,
-    cfvariable_list: list | None = None,
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
-    start_year: int | None = None,
-    end_year: int | None = None,
-    n_workers: int = 4,
-    nstations: int = 100,
     update_raw: bool = False,
 
 ) -> None:
     
     station_df = _get_ghcn_stations(project)
+    if update_raw and working_folder.joinpath("raw").exists():
+        shutil.rmtree(working_folder.joinpath("raw"))
+    working_folder.mkdir(parents=True, exist_ok=True)
+    working_folder.joinpath("raw").mkdir(exist_ok=True)
+    bbox = None
+    if lon_bnds and lat_bnds:
+        bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1]) & station_df[
+            "lon"
+        ].between(lon_bnds[0], lon_bnds[1])
+    else:
+        raise ValueError("latitude and longitude bounds must be provided")
+
+    # request = NoaaGhcnRequest(parameters=(prj_dict[project], "data"), start_date=start_date, end_date=end_date)
+    station_df = station_df[bbx_mask]
+    station_ids = station_df["station_id"].tolist()
+    # station_list = sorted(list(chunk_list(station_ids, nstations)))
+    #for ii, ss in enumerate(station_list):
+    ntry = 5
+    while ntry > 0:
+        errors = get_ghcn_raw(
+            station_ids=station_ids,
+            stationtype=prj_dict[project]['freq'],
+            outfolder=working_folder.joinpath("raw"),
+            update_raw=update_raw,
+        )
+        if len(errors) == 0:
+            break
+        else:
+            station_ids = errors
+            ntry -= 1
+            logging.info(f"Retrying ntry={ntry}")
+
+
+    
 
 
 def _get_ghcn_stations(
@@ -208,16 +238,12 @@ def _get_ghcn_stations(
 def convert_ghcn_bychunks(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
-    overwrite: bool = False,
     cfvariable_list: list | None = None,
-    lon_bnds: list[float] | None = None,
-    lat_bnds: list[float] | None = None,
     start_year: int | None = None,
     end_year: int | None = None,
     n_workers: int = 4,
     nstations: int = 100,
-    update_raw: bool = False,
-    delete_raw: bool = False,
+    update_from_raw: bool = False,
 ) -> None:
 
     var_attrs = load_json_data_mappings(project=project)["variables"]
@@ -234,190 +260,104 @@ def convert_ghcn_bychunks(
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
         station_df = _get_ghcn_stations(project=project)
-        # ctry_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-countries.txt"
-        # try:
-        #     ctry_df = pd.read_fwf(ctry_url, widths=[2, 50])
-        # except:
-        #     ctry_file = Path(__file__).parent.joinpath("data/ghcnd-countries.txt")
-        #     ctry_df = pd.read_fwf(ctry_file, widths=[2, 50])
-
-        # ctry_df.columns = ["code", "name"]
-        # ctry_df = ctry_df.set_index("code")
-        # station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
-        # dtypes = {
-        #     "station_id": str,
-        #     "lat": float,
-        #     "lon": float,
-        #     "elevation": float,
-        #     "state": str,
-        #     "station_name": str,
-        #     "gsn_flag": str,
-        #     "hcn_flag": str,
-        #     "wmo_id": str,
-        # }
-        # try:
-        #     station_df = pd.read_fwf(
-        #         station_url,
-        #         widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-        #         names=[d for d in dtypes.keys()],
-        #         converters=dtypes,
-        #     )
-        # except:
-        #     statfile = Path(__file__).parent.joinpath("data/ghcnd-stations.txt")
-        #     station_df = pd.read_fwf(
-        #         statfile,
-        #         widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-        #         names=[d for d in dtypes.keys()],
-        #         converters=dtypes,
-        #     )
-
+        
     elif project == "ghcnh":
         logging.info("ghcnh not implemented yet")
         exit()
 
-    prj_dict = dict(ghcnd="daily", ghcnh="hourly")
+    
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
     working_folder.mkdir(parents=True, exist_ok=True)
-    working_folder.joinpath("raw").mkdir(exist_ok=True)
     working_folder.joinpath("zarr").mkdir(exist_ok=True)
-
-    bbox = None
-    if lon_bnds and lat_bnds:
-        bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1]) & station_df[
-            "lon"
-        ].between(lon_bnds[0], lon_bnds[1])
-    else:
-        raise ValueError("latitude and longitude bounds must be provided")
+    
     if end_year is not None:
         end_date = dt.datetime(end_year, 12, 31, 23, 59, 59, tzinfo=ZoneInfo("UTC"))
     else:
         end_date = dt.datetime.now().astimezone(ZoneInfo("UTC"))
     start_date = dt.datetime(start_year, 1, 1, 0, 0, 0, tzinfo=ZoneInfo("UTC"))
-
-    # request = NoaaGhcnRequest(parameters=(prj_dict[project], "data"), start_date=start_date, end_date=end_date)
-    station_df = station_df[bbx_mask]
-    station_ids = station_df["station_id"].tolist()
-    station_list = sorted(list(chunk_list(station_ids, nstations)))
-    treated = []
-
-    if update_raw:
-        for folder in working_folder.joinpath("raw").iterdir():
-            logging.info(f"deleting {folder}")
-            shutil.rmtree(folder)
+    
+    if update_from_raw:
         for folder in working_folder.joinpath("zarr").iterdir():
             logging.info(f"deleting {folder}")
             shutil.rmtree(folder)
 
-    for ii, ss in enumerate(station_list):
+    treated = []
+    file_list =  sorted(list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}")))
+    jobs = []
+    for ii, ss in enumerate(chunk_list(file_list, nstations)):
+        print(ii)
+        if ii not in treated:
+            var_attrs_new = {}
+            for vv, meta in var_attrs.items():
+                cf_var = var_attrs[vv]["_cf_variable_name"]
+                outzarr = working_folder.joinpath(
+                    "zarr", cf_var, f"{project}_{ii}.zarr"
+                )
+                if not outzarr.exists() or update_from_raw:
+                    var_attrs_new[vv] = meta
 
-        ntry = 5
-        while ntry > 0:
-            errors = get_ghcn_raw(
-                station_ids=ss,
-                stationtype=prj_dict[project],
-                outfolder=working_folder.joinpath("raw", str(ii)),
-                update_raw=update_raw,
-            )
-            if len(errors) == 0:
-                break
-            else:
-                ss = errors
-                ntry -= 1
-                logging.info(f"Retrying ntry={ntry}")
-
-        infolders = [
-            i
-            for i in working_folder.joinpath("raw").iterdir()
-            if i.is_dir() and i not in treated
-        ]
-        if len(infolders) >= n_workers or ii + 1 == len(station_list):
-
-            jobs = []
-            for infolder in infolders:
-
-                var_attrs_new = {}
-                for vv, meta in var_attrs.items():
-                    cf_var = var_attrs[vv]["_cf_variable_name"]
+       
+            if var_attrs_new:
+                dsall_vars = create_ghcn_xarray(
+                    infiles=ss,
+                    varmeta=var_attrs_new,
+                    statmeta=station_df,
+                    project=project,
+                )
+                if dsall_vars is None:
+                    continue
+                dsall_vars = dsall_vars.sel(
+                    time=slice(str(start_date.year), str(end_date.year))
+                )
+                for kk, vv in var_attrs_new.items():
+                    cf_var = var_attrs[kk]["_cf_variable_name"]
                     outzarr = working_folder.joinpath(
-                        "zarr", cf_var, f"{project}_{infolder.name}.zarr"
+                        "zarr", cf_var, f"{project}_{ii}.zarr"
                     )
-                    if not outzarr.exists() or overwrite:
-                        var_attrs_new[vv] = meta
-                if var_attrs_new:
-                    dsall_vars = create_ghcn_xarray(
-                        infolder=infolder,
-                        varmeta=var_attrs_new,
-                        statmeta=station_df,
-                        project=project,
-                    )
-                    if dsall_vars is None:
+                    if kk not in dsall_vars.data_vars:
                         continue
-                    dsall_vars = dsall_vars.sel(
-                        time=slice(str(start_date.year), str(end_date.year))
+                    dsout = dsall_vars.drop_vars(
+                        [v for v in dsall_vars.data_vars if not v.startswith(kk)]
                     )
-                    for kk, vv in var_attrs_new.items():
-                        cf_var = var_attrs[kk]["_cf_variable_name"]
-                        outzarr = working_folder.joinpath(
-                            "zarr", cf_var, f"{project}_{infolder.name}.zarr"
-                        )
-                        if kk not in dsall_vars.data_vars:
-                            continue
-                        dsout = dsall_vars.drop_vars(
-                            [v for v in dsall_vars.data_vars if not v.startswith(kk)]
-                        )
-                        allnull_stat = dsout[kk].isnull().sum(dim="time") == len(
-                            dsout.time
-                        )
-                        dsout = dsout.sel(station=~allnull_stat)
-                        dsout = make_monotonous_time(dsout, freq=prj_dict[project])
+                    allnull_stat = dsout[kk].isnull().sum(dim="time") == len(
+                        dsout.time
+                    )
+                    dsout = dsout.sel(station=~allnull_stat)
+                    dsout = make_monotonous_time(dsout, freq=prj_dict[project]['freq'])
 
-                        ds_corr = dataset_conversion(
-                            dsout,
-                            project=project,
-                            add_version_hashes=False,
-                            overwrite=overwrite,
-                        )
-                        ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
-                        for vv in ds_corr.data_vars:
-                            if ds_corr[vv].dtype == "float64":
-                                ds_corr[vv] = ds_corr[vv].astype("float32")
-                            # if "flag" in vv:
-                            #     for tt in [inf, -inf]:
-                            #         ds_corr[vv] = ds_corr[vv].where(
-                            #             ds_corr[vv] != tt, nan
-                            #         )
-                            #     ds_corr[vv] = ds_corr[vv].fillna("").astype("str")
-                            #     mask = None
-                            #     for kk in q_flag_dict[project].keys():
-                            #         if mask is None:
-                            #             mask = ds_corr[vv] == kk
-                            #         else:
-                            #             mask = (mask) | (ds_corr[vv] == kk)
-                            #     ds_corr[vv] = ds_corr[vv].where(mask, "")
+                    ds_corr = dataset_conversion(
+                        dsout,
+                        project=project,
+                        add_version_hashes=False,
+                        overwrite=update_from_raw,
+                    )
+                    ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
+                    for vv in ds_corr.data_vars:
+                        if ds_corr[vv].dtype == "float64":
+                            ds_corr[vv] = ds_corr[vv].astype("float32")
+      
+                    desc_str = "; ".join(
+                        [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
+                    )
+                    desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                    attrs = {
+                        "flag_values": [c for c in q_flag_dict[project].keys()],
+                        "flag_meanings": [c for c in q_flag_dict[project].values()],
+                        "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                        "long_name": f"Quality flag for {cf_var}",
+                        "description": desc_str,
+                    }
 
-                        # ds_corr[f"{cf_var}_q_flag"]
-                        desc_str = "; ".join(
-                            [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
-                        )
-                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
-                        attrs = {
-                            "flag_values": [c for c in q_flag_dict[project].keys()],
-                            "flag_meanings": [c for c in q_flag_dict[project].values()],
-                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
-                            "long_name": f"Quality flag for {cf_var}",
-                            "description": desc_str,
-                        }
+                    ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
-                        ds_corr[f"{cf_var}_q_flag"].attrs = attrs
-
-                        jobs.append((ds_corr, outzarr, outchunks))
-                        if len(jobs) >= n_workers:
-                            pool = mp.Pool(n_workers)
-                            pool.starmap(write_zarr, jobs)
-                            pool.close()
-                            pool.join()
-                            jobs = []
+                    jobs.append((ds_corr, outzarr, outchunks))
+                    if len(jobs) >= n_workers:
+                        pool = mp.Pool(n_workers)
+                        pool.starmap(write_zarr, jobs)
+                        pool.close()
+                        pool.join()
+                        jobs = []
 
             if len(jobs) > 0:
                 pool = mp.Pool(n_workers)
@@ -425,10 +365,7 @@ def convert_ghcn_bychunks(
                 pool.close()
                 pool.join()
                 jobs = []
-            if delete_raw:
-                for infolder in infolders:
-                    shutil.rmtree(infolder)
-            treated.extend(infolders)
+            treated.append(ii)
 
 
 def make_monotonous_time(ds: xr.Dataset = None, freq: str = None):
