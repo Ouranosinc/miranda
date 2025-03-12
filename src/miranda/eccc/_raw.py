@@ -35,15 +35,11 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 from xclim.core.units import convert_units_to
 
-from miranda.archive import group_by_length
-from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
 from miranda.units import GiB, MiB
 from miranda.utils import generic_extract_archive
 
 from ._utils import cf_station_metadata
-
-config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "aggregate_stations",
@@ -389,10 +385,9 @@ def _convert_station_file(
 
                 del df
 
-        if os.listdir(temp_folder):
-            for temporary_file in Path(temp_folder).glob("*"):
-                if temporary_file in data_files:
-                    temporary_file.unlink()
+        for temporary_file in Path(temp_folder).glob("*"):
+            if temporary_file in data_files:
+                temporary_file.unlink()
 
 
 def convert_flat_files(
