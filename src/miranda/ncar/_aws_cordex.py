@@ -15,7 +15,6 @@ from xclim.core import calendar as xcal  # noqa
 
 from miranda.gis import subsetting_domains
 
-
 try:
     import intake  # noqa
     import intake_esm  # noqa

@@ -99,7 +99,7 @@ remote = [
   "intake",
   "intake-esm",
   "numcodecs",
-  "s3fs",
+  "s3fs"
 ]
 all = [
   "miranda[dev]",

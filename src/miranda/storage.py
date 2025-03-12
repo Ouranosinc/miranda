@@ -19,7 +19,6 @@ from functools import reduce
 from pathlib import Path
 from types import GeneratorType
 
-
 __all__ = [
     "DiskSpaceError",
     "FileMeta",

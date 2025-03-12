@@ -17,7 +17,6 @@ from io import StringIO
 from pathlib import Path
 from typing import TextIO
 
-
 __all__ = [
     "HiddenPrints",
     "chunk_iterables",
