@@ -96,13 +96,10 @@ gis = [
 remote = [
   "cdsapi",
   "ecmwf-api-client",
-  "fabric",
   "intake",
   "intake-esm",
   "numcodecs",
-  "paramiko >=2.6.0",
   "s3fs",
-  "scp"
 ]
 all = [
   "miranda[dev]",

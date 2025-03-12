@@ -26,7 +26,6 @@ __version__ = "0.6.0-dev.5"
 
 
 from . import (
-    archive,
     convert,
     cv,
     decode,

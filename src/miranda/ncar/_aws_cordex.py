@@ -14,9 +14,7 @@ from dask.diagnostics import ProgressBar
 from xclim.core import calendar as xcal  # noqa
 
 from miranda.gis import subsetting_domains
-from miranda.scripting import LOGGING_CONFIG
 
-logging.config.dictConfig(LOGGING_CONFIG)
 
 try:
     import intake  # noqa

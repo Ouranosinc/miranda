@@ -26,7 +26,6 @@ from calendar import monthrange
 from datetime import datetime as dt
 from logging import config
 from pathlib import Path
-from typing import Optional
 from urllib.error import HTTPError
 
 import dask.dataframe as dd

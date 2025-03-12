@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import logging
 
 from pandas._libs.tslibs import NaTType  # noqa
 
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)  # noqa
 
 __all__ = [
     "FREQUENCY_TO_POTENTIAL_TIME_UNITS",
