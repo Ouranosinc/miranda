@@ -78,9 +78,8 @@ docs = [
   "ipython",
   "jupyter_client",
   "nbsphinx",
-  "pandoc",
-  "pygments <2.19", # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
-  "sphinx >=7.0.0",
+  "pygments",
+  "sphinx >=7.0.0,<8.2.0",
   "sphinx-intl",
   "sphinx-mdinclude",
   "sphinx_codeautolink",
