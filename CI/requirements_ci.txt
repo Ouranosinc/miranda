@@ -352,10 +352,7 @@ tomli==2.2.1 \
     --hash=sha256:e85e99945e688e32d5a35c1ff38ed0b3f41f43fad8df0bdf79f72b2ba7bc5272 \
     --hash=sha256:ece47d672db52ac607a3d9599a9d48dcb2f2f735c6c2d1f34130085bb12b112a \
     --hash=sha256:f4039b9cbc3048b2416cc57ab3bda989a6fcf9b36cf8937f01a6e731b64f80d7
-    # via
-    #   -r CI/requirements_ci.in
-    #   pyproject-api
-    #   tox
+    # via -r CI/requirements_ci.in
 tomli-w==1.0.0 \
     --hash=sha256:9f2a07e8be30a0729e533ec968016807069991ae2fd921a78d42f429ae5f4463 \
     --hash=sha256:f463434305e0336248cac9c2dc8076b707d8a12d019dd349f5c1e382dd1ae1b9
@@ -370,9 +367,9 @@ tox==4.23.2 \
     # via
     #   -r CI/requirements_ci.in
     #   tox-gh
-tox-gh==1.3.2 \
-    --hash=sha256:beb8d277d5d7c1a1f09c107e4ef80bd7dd2f8f5d020edfaf4c1e3ae8fd45bf6f \
-    --hash=sha256:c2d6e977f66712e7cd5e5d1b655a1bd4c91ebaf3be104befdb53c81587292d7e
+tox-gh==1.5.0 \
+    --hash=sha256:bd4c56d1ebcde4ca2450fed347610a739614a7225945bdc89a67c8395eac9d63 \
+    --hash=sha256:fd7e8c826f4576a02af4737fd4b738817660b63898c161d6ee8f658c885f7fa1
     # via -r CI/requirements_ci.in
 typing-extensions==4.12.2 \
     --hash=sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d \
@@ -381,7 +378,6 @@ typing-extensions==4.12.2 \
     #   pydantic
     #   pydantic-core
     #   rich-click
-    #   tox
 urllib3==2.2.2 \
     --hash=sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472 \
     --hash=sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168
