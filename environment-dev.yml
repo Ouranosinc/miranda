@@ -9,7 +9,6 @@ dependencies:
   - dask
   - distributed
   - ecmwf-api-client
-  - fabric
   - h5netcdf
   - intake
   - intake-esm
@@ -18,7 +17,6 @@ dependencies:
   - numcodecs
   - numpy
   - pandas
-  - paramiko >=2.6.0
   - pyessv
   - pyproj
   - pyupgrade
@@ -27,7 +25,6 @@ dependencies:
   - requests
   - s3fs
   - schema
-  - scp
   - xarray
   - xclim >=0.47.0
   - xesmf
