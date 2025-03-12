@@ -260,7 +260,7 @@ def file_size(
         | list[str | Path]
         | GeneratorType
         | dict[str, Path | list[Path]]
-    )
+    ),
 ) -> int:
     """
     Return size of object in bytes.
