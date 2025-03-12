@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import logging.config
+import logging
 from collections.abc import Mapping
 from datetime import datetime as dt
 
-from miranda.scripting import LOGGING_CONFIG
-
 __all__ = ["cf_ahccd_metadata", "cf_station_metadata"]
-
-logging.config.dictConfig(LOGGING_CONFIG)
 
 
 def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | str]:
