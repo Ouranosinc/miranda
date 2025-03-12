@@ -78,7 +78,9 @@ def dimensions_compliance(ds: xr.Dataset, project: str, metadata: dict) -> xr.Da
                 rename_dims[dim] = cf_name
 
     # Rename dimensions
-    logging.info(f"Renaming dimensions: {', '.join(rename_dims.keys())}.")
+    _rename_dims = [str(d) for d in rename_dims.keys()]
+    msg = f"Renaming dimensions: {', '.join(_rename_dims)}."
+    logging.info(msg)
     ds = ds.rename(rename_dims)
     for new in ["lon", "lat"]:
         if new == "lon" and "lon" in ds.coords:
@@ -132,15 +134,17 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     strict_time = "_strict_time"
 
     if "time" not in m["dimensions"].keys():
-        warnings.warn(f"No time corrections listed for project `{p}`. Continuing...")
+        msg = f"No time corrections listed for project `{p}`. Continuing..."
+        warnings.warn(msg)
         return d
 
     if "time" not in list(d.variables.keys()):
-        logging.info(
+        msg = (
             "No time dimension among data variables: "
             f"{' ,'.join([str(v) for v in d.variables.keys()])}. "
             "Continuing..."
         )
+        logging.info(msg)
         return d
 
     if key in m["dimensions"]["time"].keys():
@@ -182,7 +186,8 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 error_msg = f"{error_msg}."
             raise ValueError(error_msg)
 
-        logging.info(f"Resampling dataset with time frequency: {freq_found}.")
+        msg = f"Resampling dataset with time frequency: {freq_found}."
+        logging.info(msg)
         with xr.set_options(keep_attrs=True):
             d_out = d.assign_coords(
                 time=d.time.resample(time=freq_found).mean(dim="time").time
@@ -218,23 +223,20 @@ def offset_time_dimension(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 try:
                     offset, offset_meaning = get_time_frequency(d, **time_freq)
                 except TypeError:
-                    logging.error(
-                        "Unable to parse the time frequency. Verify data integrity before retrying."
-                    )
+                    msg = "Unable to parse the time frequency. Verify data integrity before retrying."
+                    logging.error(msg)
                     raise
 
-            logging.info(
-                f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
-            )
+            msg = f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
+            logging.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
                 d_out[vv] = out
             converted.append(vv)
         elif offs is False:
-            logging.info(
-                f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
-            )
+            msg = f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
+            logging.info(msg)
             continue
         prev_history = d.attrs.get("history", "")
         history = f"Offset variable `{vv}` values by `{offset[0]} {offset_meaning}(s). {prev_history}"

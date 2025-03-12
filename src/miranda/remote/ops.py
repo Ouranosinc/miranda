@@ -1,5 +1,7 @@
 """Remote Operations module."""
 
+# FIXME: This module should be moved to its own package for licensing reasons.
+
 from __future__ import annotations
 
 import logging.config
@@ -28,23 +30,28 @@ __all__ = ["create_archive", "create_remote_directory", "transfer_file"]
 
 
 def create_remote_directory(
-    directory: str | os.PathLike,
+    directory: str | os.PathLike[str] | Path,
     transport: SSHClient | fabric.Connection | miranda.remote.Connection,
 ) -> None:
-    """Call "mkdir -p" function to create a folder structure over SFTP/SSH and wait for confirmation before continuing.
+    """
+    Call "mkdir -p" function to create a folder structure over SFTP/SSH and wait for confirmation before continuing.
 
     Parameters
     ----------
-    directory :  str or os.PathLike
+    directory : str or os.PathLike or Path
+        The directory to create.
     transport : SSHClient or fabric.Connection or miranda.remote.Connection
+        The transport to use.
 
-    Returns
-    -------
-    None
+    Raises
+    ------
+    ConnectionError
+        When the transport is not a valid connection.
     """
     if isinstance(directory, str):
         directory = Path(directory)
-    logging.info(f"Creating remote path: {directory}")
+    msg = f"Creating remote path: {directory}."
+    logging.info(msg)
 
     ownership = "0775"
     command = f"mkdir -p -m {ownership} '{directory.as_posix()}'"
@@ -64,8 +71,8 @@ def create_remote_directory(
 
 
 def create_archive(
-    source_files: list[str | os.PathLike],
-    destination: str | os.PathLike,
+    source_files: list[str | os.PathLike[str] | Path],
+    destination: str | os.PathLike[str],
     transport: (
         SCPClient | SFTPClient | fabric.Connection | miranda.remote.Connection | None
     ) = None,
@@ -73,20 +80,28 @@ def create_archive(
     compression: bool = False,
     recursive: bool = True,
 ) -> None:
-    """Create an archive from source files and transfer to another location (remote or local).
+    """
+    Create an archive from source files and transfer to another location (remote or local).
 
     Parameters
     ----------
     source_files : list of str or os.PathLike
+        The source files to archive.
     destination : str or os.PathLike
+        The destination directory to save the archive.
     transport : SCPClient or SFTPClient or fabric.Connection or miranda.remote.Connection, optional
+        The transport to use.
     delete : bool
+        Whether to delete the temporary file. Default: True.
     compression : bool
+        Whether to compress the archive. Default: False.
     recursive : bool
+        Whether to search for files recursively. Default: True.
 
-    Returns
-    -------
-    None
+    Raises
+    ------
+    ValueError
+        If the compression value is invalid.
     """
     if compression:
         write = "w:gz"
@@ -100,9 +115,10 @@ def create_archive(
         with tarfile.open(archive_file, write) as tar:
             for name in source_files:
                 try:
-                    logging.info(f"Tarring {Path(name).name}")
+                    msg = f"Tarring {Path(name).name}."
+                    logging.info(msg)
                     tar.add(Path(name).relative_to(Path.cwd()), recursive=recursive)
-                except Exception as e:
+                except OSError as e:  # noqa: PERF203
                     msg = f'File "{Path(name).name}" failed to be tarred: {e}'
                     logging.warning(msg)
             tar.close()
@@ -111,43 +127,56 @@ def create_archive(
 
 
 def transfer_file(
-    source_file: str | os.PathLike,
-    destination_file: str | os.PathLike,
+    source_file: str | os.PathLike[str] | Path,
+    destination_file: str | os.PathLike[str] | Path,
     transport: (
         SCPClient | SFTPClient | fabric.Connection | miranda.remote.Connection | None
     ) = None,
 ) -> bool:
-    """Transfer file from one location (remote or local) to another.
+    """
+    Transfer file from one location (remote or local) to another.
 
     Parameters
     ----------
-    source_file : str or os.PathLike
-    destination_file : str or os.PathLike
+    source_file : str or os.PathLike or Path
+        The source file to transfer.
+    destination_file : str or os.PathLike or Path
+        The destination file to transfer to.
     transport : SCPClient or SFTPClient or fabric.Connection or miranda.remote.Connection, optional
+        The transport to use.
 
     Returns
     -------
     bool
+        Whether the transfer was successful.
+
+    Raises
+    ------
+    SCPException
+        If the SCP transfer fails.
+    SSHException
+        If the SSH connection fails.
     """
     source_file = Path(source_file)
     destination_file = Path(destination_file)
 
     if transport:
         try:
-            logging.info(f"Beginning transfer of {source_file}")
+            msg = f"Beginning transfer of {source_file}."
+            logging.info(msg)
+
             transport.put(str(source_file), str(destination_file))
-            logging.info(
-                f"Transferred { Path(destination_file).name} to {Path(destination_file).parent}"
-            )
+
+            msg = f"Transferred { Path(destination_file).name} to {Path(destination_file).parent}."
+            logging.info(msg)
 
         except (OSError, SCPException, SSHException) as e:
             msg = f'File "{destination_file.name}" failed to be transferred: {e}.'
             logging.warning(msg)
             return False
 
-        logging.info(
-            f"Transferred {Path(destination_file).name} to {Path(destination_file).parent}"
-        )
+        msg = f"Transferred {Path(destination_file).name} to {Path(destination_file).parent}."
+        logging.info(msg)
 
     else:
         try:

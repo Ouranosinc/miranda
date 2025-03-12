@@ -1,11 +1,14 @@
 """Remote Connection Operations module."""
 
+# FIXME: This module should be moved to its own package for licensing reasons.
+
 from __future__ import annotations
 
 import logging.config
 import warnings
 from getpass import getpass
 from pathlib import Path
+from typing import Any
 
 from miranda.scripting import LOGGING_CONFIG
 
@@ -26,16 +29,61 @@ __all__ = ["Connection"]
 
 
 class Connection:
-    """Connection contextualise class."""
+    r"""
+    Connection contextualise class.
+
+    Parameters
+    ----------
+    username : str or Path, optional
+        The username to use for the connection.
+    host : str or Path, optional
+        The host URL to connect to.
+    protocol : str, optional
+        The protocol to use for the connection.
+    \*args : list
+        Additional arguments.
+    \*\*kwargs : dict
+        Additional keyword arguments.
+
+    Raises
+    ------
+    ValueError
+        When the protocol is not "sftp" or "scp".
+
+    Warnings
+    --------
+    Credentials are not encrypted.
+    """
 
     def __init__(
         self,
-        username: str | Path = None,
-        host: str | Path = None,
+        username: str | Path | None = None,
+        host: str | Path | None = None,
         protocol: str = "sftp",
         *args,
         **kwargs,
     ):
+        r"""
+        Initialise the connection object.
+
+        Parameters
+        ----------
+        username : str or Path, optional
+            The username to use for the connection.
+        host : str or Path, optional
+            The host URL to connect to.
+        protocol : str, optional
+            The protocol to use for the connection.
+        \*args : list
+            Additional arguments.
+        \*\*kwargs : dict
+            Additional keyword arguments.
+
+        Raises
+        ------
+        ValueError
+            When the protocol is not "sftp" or "scp".
+        """
         self.user = username or input("Enter username: ")
         self.host = host or input("Enter host URL: ")
         self._args = list(*args)
@@ -47,8 +95,14 @@ class Connection:
         else:
             raise ValueError('Protocol must be "sftp" or "scp".')
 
-    def update(self, **kwargs):
-        """Update connection keyword arguments.
+    def update(self, **kwargs: dict[str, Any]):
+        r"""
+        Update connection keyword arguments.
+
+        Parameters
+        ----------
+        \*\*kwargs : dict
+            The keyword arguments to update.
 
         Warnings
         --------
@@ -56,19 +110,56 @@ class Connection:
         """
         self._kwargs = kwargs
 
-    def __call__(self, **kwargs):
-        """Update keyword arguments on call."""
+    def __call__(self, **kwargs: dict[str, Any]):
+        r"""
+        Update keyword arguments on call.
+
+        Parameters
+        ----------
+        \*\*kwargs : dict
+            The keyword arguments to update.
+
+        Returns
+        -------
+        Connection
+            The updated connection object.
+        """
         self.update(**kwargs)
         return self
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
+        """
+        The string representation of the connection.
+
+        Returns
+        -------
+        str
+            The connection string.
+        """
         return f"Connection to {self.host} as {self.user}"
 
     def __repr__(self):  # noqa: D105
         return f"<{self.__class__.__module__}.{self.__class__.__name__} object at {hex(id(self))}>"
 
-    def connect(self, **kwargs):
-        """Connect to a remote server with credential prompts."""
+    def connect(self, **kwargs: dict[str, Any]):
+        r"""
+        Connect to a remote server with credential prompts.
+
+        Parameters
+        ----------
+        \*\*kwargs : dict
+            Additional keyword arguments.
+
+        Returns
+        -------
+        fabric.Connection or SCPClient
+            The connection object.
+
+        Raises
+        ------
+        Exception
+            If the connection fails.
+        """
         try:
             keywords = (
                 dict(**kwargs)
@@ -90,6 +181,7 @@ class Connection:
                 self.__c = SCPClient(c.get_transport())
 
             return self.__c
+        # FIXME: This is too broad.
         except Exception as e:
             raise e
 

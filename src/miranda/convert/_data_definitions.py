@@ -33,34 +33,34 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-_config_folder = Path(__file__).resolve().parent / "configs"
+_data_folder = Path(__file__).resolve().parent / "data"
 
 
-eccc_rdrs_variables = dict()
+eccc_rdrs_variables = {}
 eccc_rdrs_variables["raw"] = [
     v
-    for v in json.load(open(_config_folder / "eccc-rdrs_cf_attrs.json"))[
-        "variables"
-    ].keys()
+    for v in json.load(
+        _data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8")
+    )["variables"].keys()
 ]
 eccc_rdrs_variables["cf"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(open(_config_folder / "eccc-rdrs_cf_attrs.json"))[
-        "variables"
-    ].values()
+    for attrs in json.load(
+        _data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8")
+    )["variables"].values()
 ]
 
-era5_variables = json.load(open(_config_folder / "era5_era5-land_cf_attrs.json"))[
-    "variables"
-].keys()
+era5_variables = json.load(
+    _data_folder.joinpath("ecmwf_cf_attrs.json").open("r", encoding="utf-8")
+)["variables"].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(open(_config_folder / "agcfsr_agmerra2_cf_attrs.json"))[
-    "variables"
-].keys()
+nasa_ag_variables = json.load(
+    _data_folder.joinpath("nasa_cf_attrs.json").open("r", encoding="utf-8")
+)["variables"].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
 wfdei_gem_capa_variables = json.load(
-    open(_config_folder / "wfdei-gem-capa_cf_attrs.json")
+    _data_folder.joinpath("usask_cf_attrs.json").open()
 )["variables"].keys()
 
 project_institutes = {
@@ -106,8 +106,9 @@ def _gather(
     recursive: bool | None = False,
 ) -> dict[str, list[Path]]:
     source = Path(source).expanduser()
-    logging.info(f"Gathering {name} files from: {source.as_posix()}")
-    in_files = list()
+    msg = f"Gathering {name} files from: {source.as_posix()}"
+    logging.info(msg)
+    in_files = []
     for variable in variables:
         if suffix:
             pattern = glob_pattern.format(variable=variable, name=name, suffix=suffix)
@@ -117,9 +118,9 @@ def _gather(
             in_files.extend(list(sorted(source.rglob(pattern))))
         else:
             in_files.extend(list(sorted(source.glob(pattern))))
-    logging.info(
-        f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
-    )
+    msg = f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
+
+    logging.info(msg)
     return {name: in_files}
 
 
@@ -269,7 +270,7 @@ def gather_eccc_rdrs(
             source=path.joinpath(vv),
             glob_pattern="{variable}_*_{name}_*.{suffix}",
             suffix=suffix,
-            recursive=True,
+            recursive=False,
         )
         files[name][vv] = tmp[name]
     return files
@@ -314,14 +315,15 @@ def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
     """
     # GRNCH-ETS source data
     source_grnch = Path(path)
-    logging.info(f"Gathering GRNCH from: {source_grnch.as_posix()}")
+    msg = f"Gathering GRNCH from: {source_grnch.as_posix()}"
+    logging.info(msg)
     in_files_grnch = list()
     for v in grnch_variables:
         for yyyy in range(1970, 2020):
             in_files_grnch.extend(list(source_grnch.rglob(f"{v}_{yyyy}.nc")))
-    logging.info(
-        f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
-    )
+    msg = f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
+
+    logging.info(msg)
     return dict(cfsr=sorted(in_files_grnch))
 
 

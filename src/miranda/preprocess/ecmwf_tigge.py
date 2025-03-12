@@ -20,26 +20,34 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["tigge_convert"]
 
 
+# FIXME: Is this function still pertinent?
 def tigge_convert(
     source: os.PathLike | None = None,
     target: os.PathLike | None = None,
     processes: int = 8,
 ) -> None:
-    """Convert grib2 file to netCDF format.
+    """
+    Convert TIGGE grib2 file to netCDF format.
 
     Parameters
     ----------
     source : os.PathLike, optional
+        The source directory containing the TIGGE files.
     target : os.PathLike, optional
+        The target directory to save the converted files.
     processes : int
-
-    Returns
-    -------
-    None
+        The number of processes to use for the conversion.
     """
 
     def _tigge_convert(fn):
-        """Launch reformatting function."""
+        """
+        Launch reformatting function.
+
+        Parameters
+        ----------
+        fn : tuple
+            The file and output folder.
+        """
         infile, output_folder = fn
         try:
             for f in Path(infile.parent).glob(infile.name.replace(".grib", "*.idx")):
@@ -56,7 +64,8 @@ def tigge_convert(
             tf = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
 
             with ProgressBar():
-                logging.info(f"converting: {infile.name}")
+                msg = f"Converting `{infile.name}`."
+                logging.info(msg)
                 ds.to_netcdf(
                     tf.name, format="NETCDF4", engine="netcdf4", encoding=encoding
                 )
@@ -66,8 +75,9 @@ def tigge_convert(
                 output_folder.joinpath(infile.name.replace(".grib", ".nc")).as_posix(),
             )
 
-        except ValueError:
-            logging.error(f"error converting {infile.name} : File may be corrupted.")
+        except ValueError as err:
+            msg = f"error converting {infile.name} : File may be corrupted : {err}"
+            logging.error(msg)
 
     if source is None:
         source = Path().cwd().joinpath("downloaded")

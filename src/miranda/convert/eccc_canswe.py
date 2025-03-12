@@ -14,7 +14,16 @@ __all__ = ["convert_canswe"]
 
 
 def convert_canswe(file: str | Path, output: str | Path):
-    """Convert the CanSWE netCDF files to production-ready CF-compliant netCDFs."""
+    """
+    Convert the CanSWE netCDF files to production-ready CF-compliant netCDFs.
+
+    Parameters
+    ----------
+    file : str or Path
+        The path to the CanSWE netCDF file.
+    output : str or Path
+        The output directory.
+    """
     ds = xr.open_dataset(file)
     ds = ds.set_coords(
         [
@@ -31,14 +40,40 @@ def convert_canswe(file: str | Path, output: str | Path):
         ]
     )
 
-    def clean_flags(variable):
+    def clean_flags(variable: xr.DataArray) -> dict:
+        """
+        Clean the flags.
+
+        Parameters
+        ----------
+        variable : xr.DataArray
+            The flag variable.
+
+        Returns
+        -------
+        dict
+            The cleaned flags.
+        """
         values = list(map(bytes.decode, np.sort(pd.unique(variable.values.flatten()))))
         values[0] = "n"
         mean_dict = parse_desc(variable.description)
         meanings = " ".join(np.array([mean_dict[v] for v in values]))
         return dict(flag_values=values, flag_meanings=meanings)
 
-    def parse_desc(desc):
+    def parse_desc(desc: str) -> dict:
+        """
+        Parse the description attribute.
+
+        Parameters
+        ----------
+        desc : str
+            The description attribute.
+
+        Returns
+        -------
+        dict
+            The parsed description.
+        """
         d = dict(
             map(
                 lambda kv: (kv[0].strip(), "_".join(kv[1].replace(">", "").split())),

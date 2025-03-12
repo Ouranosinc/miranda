@@ -1,3 +1,5 @@
+"""Grouping functions for files based on different criteria."""
+
 from __future__ import annotations
 
 import logging
@@ -5,14 +7,13 @@ import re
 from logging.config import dictConfig
 from pathlib import Path
 from types import GeneratorType
-from typing import Dict, List
 
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 
 dictConfig(LOGGING_CONFIG)
-Nested_List = List[List[Path]]
-PathDict = Dict[str, List[Path]]
+Nested_List = list[list[Path]]
+PathDict = dict[str, list[Path]]
 
 
 GiB = int(pow(2, 30))
@@ -30,19 +31,25 @@ def group_by_length(
     size: int = 10,
     sort: bool = False,
 ) -> list[list[Path]]:
-    """Group files by an arbitrary number of file entries.
+    """
+    Group files by an arbitrary number of file entries.
 
     Parameters
     ----------
-    files: GeneratorType or list of str or pathlib.Path
-    size: int
-    sort: bool
+    files : GeneratorType or list of str or pathlib.Path
+        The files to be grouped.
+    size : int
+        The number of files to be grouped together.
+    sort : bool
+        Sort the files before grouping.
 
     Returns
     -------
     list[list[pathlib.Path]]
+        Grouped files.
     """
-    logging.info(f"Creating groups of {size} files")
+    msg = f"Creating groups of {size} files"
+    logging.info(msg)
     if sort:
         files = [Path(f) for f in files]
         files.sort()
@@ -58,22 +65,26 @@ def group_by_length(
         pass
     else:
         grouped_list.append(group.copy())
-    logging.info(f"Divided files into {len(grouped_list)} groups.")
+    msg = f"Divided files into {len(grouped_list)} groups."
+    logging.info(msg)
     return grouped_list
 
 
 def group_by_deciphered_date(
     files: GeneratorType | list[str | Path],
 ) -> dict[str, list[Path]]:
-    """Find a common date and groups files based on year and month.
+    """
+    Find a common date and groups files based on year and month.
 
     Parameters
     ----------
-    files: GeneratorType or list of str or pathlib.Path
+    files : GeneratorType or list of str or pathlib.Path
+        The files to be grouped.
 
     Returns
     -------
     dict[str, list[pathlib.Path]]
+        Grouped files.
     """
     logging.warning("This function doesn't work well with multi-thread processing!")
     logging.info("Creating files from deciphered dates.")
@@ -100,9 +111,9 @@ def group_by_deciphered_date(
             continue
 
     if dates and total == len(files):
-        logging.info(
-            f"All files have been grouped by date. {len(dates)} groups created."
-        )
+        msg = f"All files have been grouped by date. {len(dates)} groups created."
+
+        logging.info(msg)
         return dict(dates)
 
     if dates and total != len(files):
@@ -117,20 +128,24 @@ def group_by_deciphered_date(
 def group_by_size(
     files: GeneratorType | list[str | Path], size: int = 10 * GiB
 ) -> list[list[Path]]:
-    """Group files up until a desired size and save it as a grouping within a list.
+    """
+    Group files up until a desired size and save it as a grouping within a list.
 
     Parameters
     ----------
     files : GeneratorType or list of str or pathlib.Path
+        The files to be grouped.
     size : int
+        The maximum size of the group.
 
     Returns
     -------
     list[list[pathlib.Path]]
+        Grouped files.
     """
-    logging.info(
-        f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
-    )
+    msg = f"Creating groups of files based on size not exceeding: {report_file_size(size)}."
+
+    logging.info(msg)
 
     files = [Path(f) for f in files]
     files.sort()
@@ -153,18 +168,22 @@ def group_by_size(
 
 
 def group_by_subdirectories(
-    files: GeneratorType | list[str | Path], within: str | Path = None
+    files: GeneratorType | list[str | Path], within: str | Path | None = None
 ) -> dict[str, list[Path]]:
-    """Group files based on the parent folder that they are located within.
+    """
+    Group files based on the parent folder that they are located within.
 
     Parameters
     ----------
     files : GeneratorType or list of str or pathlib.Path
+        The files to be grouped.
     within : str or pathlib.Path
+        The parent folder to group the files by.
 
     Returns
     -------
     dict[str, list[pathlib.Path]]
+        Grouped files.
     """
     if not within:
         within = Path.cwd()
@@ -176,7 +195,7 @@ def group_by_subdirectories(
         group_name = Path(f).relative_to(within).parent
         groups.setdefault(group_name, list()).append(f)
 
-    logging.info(
-        f"File subdirectories found. Proceeding with: `{', '.join([str(key) for key in groups.keys()])}`."
-    )
+    msg = f"File subdirectories found. Proceeding with: `{', '.join([str(key) for key in groups.keys()])}`."
+
+    logging.info(msg)
     return groups

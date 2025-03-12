@@ -1,4 +1,6 @@
 # MIRANDA-specific
+templates/downloaded
+excluded
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -74,6 +76,9 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Dask worker cache
+dask-worker-space/
 
 # pyenv
 .python-version

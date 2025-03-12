@@ -8,6 +8,7 @@ import os
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import dask
 import netCDF4 as nc  # noqa
@@ -30,7 +31,9 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-name_configurations = json.load(open(_data_folder / "ouranos_name_config.json"))
+name_configurations = json.load(
+    _data_folder.joinpath("ouranos_name_config.json").open("r", encoding="utf-8")
+)
 
 
 def name_output_file(
@@ -38,7 +41,8 @@ def name_output_file(
     output_format: str,
     data_vars: str | None = None,
 ) -> str:
-    """Name an output file based on facets within a Dataset or a dictionary.
+    """
+    Name an output file based on facets within a Dataset or a dictionary.
 
     Parameters
     ----------
@@ -52,6 +56,7 @@ def name_output_file(
     Returns
     -------
     str
+        The formatted filename.
 
     Notes
     -----
@@ -161,28 +166,43 @@ def delayed_write(
     outfile: str | os.PathLike,
     output_format: str,
     overwrite: bool,
+    encode: bool = True,
     target_chunks: dict | None = None,
+    kwargs: dict | None = None,
 ) -> dask.delayed:
-    """Stage a Dataset writing job using `dask.delayed` objects.
+    """
+    Stage a Dataset writing job using `dask.delayed` objects.
 
     Parameters
     ----------
     ds : xr.Dataset
+        The Dataset to be written.
     outfile : str or os.PathLike
-    target_chunks : dict
+        The output file.
     output_format : {"netcdf", "zarr"}
+        The output format.
     overwrite : bool
+        Whether to overwrite existing files.
+        Default: False.
+    encode : bool
+        Whether to encode the chunks. Not currently implemented.
+    target_chunks : dict
+        The target chunks for the output file.
+    kwargs : dict
+        Additional keyword arguments.
 
     Returns
     -------
     dask.delayed.delayed
+        The delayed write job.
     """
     # Set correct chunks in encoding options
-    kwargs = dict()
-    kwargs["encoding"] = dict()
+    if not kwargs:
+        kwargs = {}
+    kwargs["encoding"] = {}
     try:
         for name, da in ds.data_vars.items():
-            chunks = list()
+            chunks = []
             for dim in da.dims:
                 if target_chunks:
                     if dim in target_chunks.keys():
@@ -200,15 +220,17 @@ def delayed_write(
                     kwargs["mode"] = "a"
             elif output_format == "zarr":
                 ds = ds.chunk(target_chunks)
-                kwargs["encoding"][name] = {
-                    "chunks": chunks,
-                    "compressor": zarr.Blosc(),
-                }
+                # if encode:
+                if "append_dim" not in kwargs.keys():
+                    kwargs["encoding"][name] = {
+                        "chunks": chunks,
+                    }
                 kwargs["compute"] = False
                 if overwrite:
                     kwargs["mode"] = "w"
         if kwargs["encoding"]:
-            kwargs["encoding"]["time"] = {"dtype": "int32"}
+            if "append_dim" not in kwargs.keys():
+                kwargs["encoding"]["time"] = {"dtype": "int32"}
 
     except KeyError:
         logging.error("Unable to encode chunks. Verify dataset.")
@@ -217,8 +239,22 @@ def delayed_write(
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
 
 
-def get_time_attrs(file_or_dataset: str | os.PathLike | xr.Dataset) -> (str, int):
-    """Determine attributes related to time dimensions."""
+def get_time_attrs(
+    file_or_dataset: str | os.PathLike[str] | xr.Dataset,
+) -> tuple[str, int]:
+    """
+    Determine attributes related to time dimensions.
+
+    Parameters
+    ----------
+    file_or_dataset : str or os.PathLike or xr.Dataset
+        The file or dataset to be examined.
+
+    Returns
+    -------
+    tuple
+        The calendar and time.
+    """
     if isinstance(file_or_dataset, (str, Path)):
         ds = xr.open_dataset(Path(file_or_dataset).expanduser())
     else:
@@ -231,9 +267,21 @@ def get_time_attrs(file_or_dataset: str | os.PathLike | xr.Dataset) -> (str, int
 
 
 def get_global_attrs(
-    file_or_dataset: str | os.PathLike | xr.Dataset,
+    file_or_dataset: str | os.PathLike[str] | xr.Dataset,
 ) -> dict[str, str | int]:
-    """Collect global attributes from NetCDF, Zarr, or Dataset object."""
+    """
+    Collect global attributes from NetCDF, Zarr, or Dataset object.
+
+    Parameters
+    ----------
+    file_or_dataset : str or os.PathLike or xr.Dataset
+        The file or dataset to be examined.
+
+    Returns
+    -------
+    dict
+        The global attributes.
+    """
     if isinstance(file_or_dataset, (str, Path)):
         file = Path(file_or_dataset).expanduser()
     elif isinstance(file_or_dataset, xr.Dataset):
@@ -257,29 +305,34 @@ def get_global_attrs(
 
 
 def sort_variables(
-    files: list[Path], variables: Sequence[str]
+    files: list[str | os.PathLike[str] | Path], variables: Sequence[str] | None
 ) -> dict[str, list[Path]]:
-    """Sort all variables within supplied files for treatment.
+    """
+    Sort all variables within supplied files for treatment.
 
     Parameters
     ----------
-    files: list of Path
-    variables: sequence of str
+    files : list of str or os.PathLike or Path
+        The files to be sorted.
+    variables : sequence of str, optional
+        The variables to be sorted.
+        If not provided, all variables will be grouped.
 
     Returns
     -------
     dict[str, list[Path]]
+        Files sorted by variables.
     """
-    variable_sorted = dict()
+    variable_sorted = {}
     if variables:
         logging.info("Sorting variables into groups. This could take some time.")
         for variable in variables:
-            var_group = []
-            for file in files:
-                if file.name.startswith(variable):
-                    var_group.append(file)
+            var_group = [
+                Path(file) for file in files if Path(file).name.startswith(variable)
+            ]
             if not var_group:
-                logging.warning(f"No files found for {variable}. Continuing...")
+                msg = f"No files found for {variable}. Continuing..."
+                logging.warning(msg)
                 continue
             variable_sorted[variable] = sorted(var_group)
     else:
@@ -288,19 +341,21 @@ def sort_variables(
     return variable_sorted
 
 
-def get_chunks_on_disk(file: os.PathLike | str) -> dict:
-    """Determine the chunks on disk for a given NetCDF or Zarr file.
+def get_chunks_on_disk(file: str | os.PathLike[str] | Path) -> dict[str, int]:
+    """
+    Determine the chunks on disk for a given NetCDF or Zarr file.
 
     Parameters
     ----------
-    file : str or os.PathLike
+    file : str or os.PathLike or Path
         File to be examined. Supports NetCDF and Zarr.
 
     Returns
     -------
     dict
+        The chunks on disk.
     """
-    chunks = dict()
+    chunks = {}
     file = Path(file)
 
     if file.suffix.lower() in [".nc", ".nc4"]:
@@ -308,7 +363,8 @@ def get_chunks_on_disk(file: os.PathLike | str) -> dict:
             for v in ds.variables:
                 chunks[v] = dict()
                 for ii, dim in enumerate(ds[v].dimensions):
-                    chunks[v][dim] = ds[v].chunking()[ii]
+                    if ds[v].chunking():
+                        chunks[v][dim] = ds[v].chunking()[ii]
     elif file.suffix.lower() == "zarr" and file.is_dir():
         with zarr.open(file, "r") as ds:  # noqa
             for v in ds.arrays():
@@ -320,18 +376,21 @@ def get_chunks_on_disk(file: os.PathLike | str) -> dict:
     return chunks
 
 
-def creation_date(path_to_file: str | os.PathLike) -> float | date:
-    """Return the date that a file was created, falling back to when it was last modified if unable to determine.
+def creation_date(path_to_file: str | os.PathLike[str] | Path) -> float | date:
+    """
+    Return the date that a file was created, falling back to when it was last modified if unable to determine.
 
     See https://stackoverflow.com/a/39501288/1709587 for explanation.
 
     Parameters
     ----------
-    path_to_file : str or os.PathLike
+    path_to_file : str or os.PathLike or Path
+        The file to be examined.
 
     Returns
     -------
     float or date
+        The creation date.
     """
     if os.name == "nt":
         return Path(path_to_file).stat().st_ctime

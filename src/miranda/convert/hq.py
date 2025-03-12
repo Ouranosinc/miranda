@@ -6,8 +6,10 @@ import csv
 import datetime as dt
 import json
 import logging.config
+import os
 import re
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -22,9 +24,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 __all__ = ["open_csv"]
 
 # CMOR-like attributes
-cmor = json.load(open(Path(__file__).parent / "configs" / "hq_cf_attrs.json"))[
-    "variables"
-]
+cmor = json.load(
+    Path(__file__).parent.joinpath("data").joinpath("hq_cf_attrs.json").open("r")
+)["variables"]
 
 fp = r"[-+]?\d*,\d+|\d+"
 
@@ -68,8 +70,24 @@ converters = {
 }
 
 
-def guess_variable(meta, cf_table: dict | None) -> tuple[str, str | None]:
-    """Return the corresponding CMOR variable."""
+def guess_variable(
+    meta: dict[str, Any], cf_table: dict | None
+) -> tuple[str, str | None]:
+    """
+    Return the corresponding CMOR variable.
+
+    Parameters
+    ----------
+    meta : dict
+        The metadata.
+    cf_table : dict, optional
+        The CMOR table.
+
+    Returns
+    -------
+    tuple
+        The variable name and the table name.
+    """
     if cf_table is None:
         cf_table = cmor
 
@@ -112,15 +130,27 @@ cf_frequency = {
 cf_attrs_names = {"x": "lon", "y": "lat", "z": "elevation", "nom": "site"}
 
 
-def extract_daily(path) -> tuple[dict, pd.DataFrame]:
-    """Extract data and metadata from HQ meteo file."""
-    with open(path, encoding="latin1") as fh:
+def extract_daily(path: str | os.PathLike[str]) -> tuple[dict, pd.DataFrame]:
+    """
+    Extract data and metadata from HQ météo file.
+
+    Parameters
+    ----------
+    path : os.PathLike or str
+        The path to the file.
+
+    Returns
+    -------
+    tuple
+        The metadata and the data.
+    """
+    with Path(path).open("r", encoding="latin1") as fh:
         txt = fh.read()
         meta, data = re.split(data_header_pattern, txt, maxsplit=2)
 
     sections = iter(re.split(section_patterns, meta)[1:])
 
-    m = dict()
+    m = {}
     for sec in sections:
         if sec in meta_patterns:
             content = next(sections)
@@ -149,13 +179,31 @@ def extract_daily(path) -> tuple[dict, pd.DataFrame]:
     return m, d
 
 
-def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict | None = None) -> xr.DataArray:
-    """Return CF-compliant metadata."""
+def to_cf(
+    meta: dict[str, Any], data: pd.DataFrame, cf_table: dict[str, Any] | None = None
+) -> xr.DataArray:
+    """
+    Return CF-compliant metadata.
+
+    Parameters
+    ----------
+    meta : dict
+        The metadata dictionary.
+    data : pd.DataFrame
+        The data DataFrame.
+    cf_table : dict, optional
+        The CF table dictionary.
+
+    Returns
+    -------
+    xr.DataArray
+        The CF-compliant xarray DataArray.
+    """
     if cf_table is None:
-        cf_table = dict()
+        cf_table = {}
 
     # Convert meta values
-    m = dict()
+    m = {}
     for key, val in meta.items():
         m[key] = converters.get(key, lambda q: q)(val)
 
@@ -182,7 +230,23 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict | None = None) -> xr.Da
     return cf_corrected
 
 
-def open_csv(path: str | Path, cf_table: dict | None = cmor) -> xr.DataArray:
-    """Extract daily HQ meteo configs and convert to xr.DataArray with CF-Convention attributes."""
+def open_csv(
+    path: str | os.PathLike[str], cf_table: dict[str, Any] | None = cmor
+) -> xr.DataArray:
+    """
+    Extract daily HQ meteo data and convert to xr.DataArray with CF-Convention attributes.
+
+    Parameters
+    ----------
+    path : os.PathLike or str
+        The path to the file.
+    cf_table : dict, optional
+        The CF table dictionary.
+
+    Returns
+    -------
+    xr.DataArray
+        The CF-compliant xarray DataArray.
+    """
     meta, data = extract_daily(path)
     return to_cf(meta, data, cf_table)

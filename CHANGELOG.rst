@@ -6,14 +6,38 @@ Changelog
 
 v0.6.0 (unreleased)
 -------------------
+Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
 ^^^^^^^^^^^^^
-* `miranda` boilerplate code is now versioned with `cruft <http://sddsd.sdss.sdsd>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
+* `miranda` boilerplate code is now versioned with `cruft <https://cruft.github.io/cruft>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
+* Python3.8 support has been dropped in favor of Python3.9+.
+
+New features
+^^^^^^^^^^^^
+* Aggregation operations now support more variables (`hur`, `hurs`, `huss`, `rlds`, `ta`, `tdp`, `ua`, `uas`, `va`, `vas`)
+* `RDRDv21` has been added as a dataset to be converted.
+* Minimum values of `0 kg m2 s-1` has been set for both `tp` and `sf` variables in ERA5 and ERA5-Land projects.
+* Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
+* The `miranda` library now uses a `src` layout for better packaging and distribution.
+* `ruff` checks and formatting standards have been adopted for the entire codebase.
+
+Bug fixes
+^^^^^^^^^
+* Transformation docstrings are now only updated when the transformation is actually applied.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
+* `miranda` now applies the `numpydoc` documentation style to all publicly-exposed docstrings.
+* GitHub Workflows now use commit hashes for both running GitHub Actions and installing Python dependencies from PyPI.
+* `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
+
+.. _changes_0.5.0:
 
 v0.5.0 (2023-06-19)
 -------------------
-Contributors to this version: Juliette Lavoie (:user: `juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
 ^^^^^^^^^^^^
@@ -31,6 +55,8 @@ Internal changes
 * Created a `gis` recipe for exclusively installing GIS libraries.
 * Removed many unneeded dependencies, cleaned up Makefile.
 * All public-facing functions now contain at least a minimal docstring for documentation generation.
+
+.. _changes_0.4.0:
 
 v0.4.0 (2023-03-30)
 -------------------
@@ -63,6 +89,8 @@ Internal changes
     - `gridded-obs` -> `reconstruction`
     - `bias-adjust-project` is used when present and not just when `level=="biasadjusted"`
 * CI now using `tox>=4.0` and `ubuntu-latest` virtual machine images.
+
+.. _changes_0.3.0:
 
 v0.3.0 (2022-11-24)
 -------------------

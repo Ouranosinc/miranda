@@ -39,25 +39,29 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
     offset, meaning = get_time_frequency(ds, minimum_continuous_period="1h")
 
     aggregation_legend = dict()
-    for v in ["tas", "tdps"]:
+    for v in ["tas", "tdps", "hurs"]:
         if freq == meaning:
             if not hasattr(ds, v) and (
                 hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")
             ):
                 aggregation_legend[f"_{v}"] = {"mean"}
     for variable in ds.data_vars:
-        if variable in ["tas", "tdps"]:
+        if variable in ["tas", "ta", "tdps", "tdp", "hurs", "hur"]:
             aggregation_legend[variable] = {"max", "mean", "min"}
+        elif variable in ["sfcWind"]:
+            aggregation_legend[variable] = {"max", "mean"}
         elif variable in [
             "evspsblpot",
             "hfls",
             "hfss",
-            "hur",
+            "huss",
             "hus",
             "pr",
             "prsn",
+            "prmod",
             "ps",
             "psl",
+            "rlds",
             "rsds",
             "rss",
             "rlds",
@@ -66,6 +70,13 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             "snr",
             "snw",
             "swe",
+            "uas",
+            "ua",
+            "vas",
+            "va",
+            "40mWind",
+            "zcrd10000",
+            "zcrd09944",
         ]:
             aggregation_legend[variable] = {"mean"}
 
@@ -102,8 +113,8 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
                 if variable.startswith("_"):
                     if op == "mean":
                         var = variable.strip("_")
-                        min_var = "".join([var, "min"])
-                        max_var = "".join([var, "max"])
+                        min_var = f"{var}min"
+                        max_var = f"{var}max"
 
                         mean_variable = tas(
                             tasmin=ds[min_var], tasmax=ds[max_var]
