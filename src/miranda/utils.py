@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gzip
-import logging.config
+import logging
 import os
 import re
 import sys
@@ -16,10 +16,6 @@ from contextlib import contextmanager
 from io import StringIO
 from pathlib import Path
 from typing import TextIO
-
-from .scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "HiddenPrints",
