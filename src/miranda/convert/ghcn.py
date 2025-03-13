@@ -10,10 +10,12 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import geopandas as gpd
 import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import inf, nan, unique
+
 
 from miranda.convert._data_corrections import (
     dataset_conversion,
@@ -257,6 +259,10 @@ def download_ghcn(
 def _get_ghcn_stations(
     project: str,
 ):
+    
+    tz_url = "https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_time_zones.zip"
+    tz = gpd.read_file(tz_url).to_crs(epsg=4326)
+    
     if project == "ghcnd":
         station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
         dtypes = {
