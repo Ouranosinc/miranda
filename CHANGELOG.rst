@@ -23,6 +23,10 @@ New features
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Removed modules ``miranda.archive`` and ``miranda.remote`` (split into separate project to be announced).
+
 Bug fixes
 ^^^^^^^^^
 * Transformation docstrings are now only updated when the transformation is actually applied.
