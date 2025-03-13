@@ -120,11 +120,13 @@ def convert_rdrs(
                         break
                     except Exception as e:
                         msg = f"Failed to open {nc} with engine {eng}: {e}"
-                        logging.warning(msg) 
-                        if eng == engine[-1]: 
+                        logging.warning(msg)
+                        if eng == engine[-1]:
                             msg = f"All engines failed for {nc}"
-                            logging.error(msg) 
-                            raise RuntimeError(f"Failed to open {nc} with both engines: {e}") from e
+                            logging.error(msg)
+                            raise RuntimeError(
+                                f"Failed to open {nc} with both engines: {e}"
+                            ) from e
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
