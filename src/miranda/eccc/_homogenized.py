@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import calendar
-import logging.config
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -11,11 +11,8 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from miranda.scripting import LOGGING_CONFIG
-
 from ._utils import cf_ahccd_metadata
 
-logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
