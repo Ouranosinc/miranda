@@ -90,7 +90,8 @@ def convert_rdrs(
         var_attrs = {
             v: var_attrs[v]
             for v in var_attrs
-            if "_cf_variable_name" in var_attrs[v] and var_attrs[v]["_cf_variable_name"] in cfvariable_list
+            if "_cf_variable_name" in var_attrs[v]
+            and var_attrs[v]["_cf_variable_name"] in cfvariable_list
         }
     freq_dict = dict(h="hr", d="day")
 
@@ -110,18 +111,20 @@ def convert_rdrs(
         if year_start and int(year) < year_start:
             continue
         ds_allvars = None
-        
+
         if len(ncfiles) >= 28:
             for nc in ncfiles:
                 for eng in engine:
                     try:
                         ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
-                        break  
+                        break
                     except Exception as e:
-                        logging.warning(f"Failed to open {nc} with engine {eng}: {e}") 
-                        if eng == engine[-1]: 
-                            logging.error(f"All engines failed for {nc}") 
-                            raise RuntimeError(f"Failed to open {nc} with both engines: {e}") from e
+                        logging.warning(f"Failed to open {nc} with engine {eng}: {e}")
+                        if eng == engine[-1]:
+                            logging.error(f"All engines failed for {nc}")
+                            raise RuntimeError(
+                                f"Failed to open {nc} with both engines: {e}"
+                            ) from e
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
@@ -149,8 +152,8 @@ def convert_rdrs(
                     ds_out = ds_month.drop_vars(drop_vars)
                     ds_out = ds_out.rename({real_var_name: short_var})
                     ds_out = ds_out.assign_coords(rotated_pole=ds_out["rotated_pole"])
-                    if ds_out[short_var].attrs['units'] == '-':
-                        ds_out[short_var].attrs['units'] = '1'
+                    if ds_out[short_var].attrs["units"] == "-":
+                        ds_out[short_var].attrs["units"] = "1"
                     ds_corr = dataset_conversion(
                         ds_out,
                         project=project,
@@ -164,7 +167,11 @@ def convert_rdrs(
                         priority="time", freq=out_freq, dims=ds_corr.dims
                     )
                     chunks["time"] = len(ds_corr.time)
-                    cf_var = var_attrs[short_var]["_cf_variable_name"] if var_attrs[short_var]["_cf_variable_name"] else short_var
+                    cf_var = (
+                        var_attrs[short_var]["_cf_variable_name"]
+                        if var_attrs[short_var]["_cf_variable_name"]
+                        else short_var
+                    )
                     write_dataset_dict(
                         {cf_var: ds_corr},
                         output_folder=output_folder.joinpath(out_freq),
@@ -248,7 +255,7 @@ def rdrs_to_daily(
                 xr.open_mfdataset(infiles, engine="zarr"), freq="day"
             )
             dims = set(next(iter(out_variables.values())).dims)
-            chunks = fetch_chunk_config(priority="time", freq="day", dims=dims) 
+            chunks = fetch_chunk_config(priority="time", freq="day", dims=dims)
             chunks["time"] = len(out_variables[list(out_variables.keys())[0]].time)
             write_dataset_dict(
                 out_variables,

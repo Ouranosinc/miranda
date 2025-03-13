@@ -1,190 +1,189 @@
 {
-    "Header": {
-      "Conventions": "CF-1.8",
-      "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product ORRC contains two variables for precipitation: 'RDPS_CaPA_P_PR_SFC' is the model precipitation (trial field used by CaPA) and 'RDPS_CaPA_A_PR_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
-      "_contact": {
-        "ORRC": ""
-      },
-      "_doi": {  
-        "ORRC": ""
-      },
-      "frequency" : "1hr",
-      "domain": "NAM",
-      "_miranda_version": true,
-      "_remove_attrs": {
-        "ORRC": [
-          "License",
-          "product"
-        ]
-      },
-      "_source": {
-        "ORRC": "ORRC"
-      },
-      "_version": {
-        "ORRC": "v1.0"
-      },
-      "institution": "Ouranos",
-      "licence_type": "open",
-      "license": "https://creativecommons.org/licenses/by/4.0/deed.en",
-      "organisation": "Ouranos",
-      "processing_level": "regridded",
-      "realm": "atmos",
-      "table_date": "2025-01-17",
-      "table_id": "ouranos_orrc_cf_attrs",
-      "terms_of_use": "ORRC data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
-      "type": "reconstruction"
+  "Header": {
+    "Conventions": "CF-1.8",
+    "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product ORRC contains two variables for precipitation: 'RDPS_CaPA_P_PR_SFC' is the model precipitation (trial field used by CaPA) and 'RDPS_CaPA_A_PR_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
+    "_contact": {
+      "ORRC": ""
     },
-    "dimensions": {
-      "time": {
-        "_ensure_correct_time": {
-          "ORRC": "1H"
-        },
-        "_strict_time": true,
-        "axis": "T",
-        "long_name": "time",
-        "standard_name": "time"
-      }
+    "_doi": {
+      "ORRC": ""
     },
-    "_prefix": {
-      "ORRC": "RDPS_CaPA_"
+    "frequency": "1hr",
+    "domain": "NAM",
+    "_miranda_version": true,
+    "_remove_attrs": {
+      "ORRC": [
+        "License",
+        "product"
+      ]
     },
-    "variables": {
-      "A_PR_SFC": {
-        "_cf_variable_name": "pr",
-        "_clip_values": {
-          "all": {
-            "context": "hydro",
-            "min": "0 kg m-2 s-1"
-          }
-        },
-        "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
-        "_transformation": {
-          "ORRC": "amount2rate" 
-        },
-        "cell_methods": "time: mean (interval: 1 hour)",
-        "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
-        "long_name": "Precipitation",
-        "standard_name": "precipitation_flux",
-        "units": "kg m-2 s-1"
+    "_source": {
+      "ORRC": "ORRC"
+    },
+    "_version": {
+      "ORRC": "v1.0"
+    },
+    "institution": "Ouranos",
+    "licence_type": "open",
+    "license": "https://creativecommons.org/licenses/by/4.0/deed.en",
+    "organisation": "Ouranos",
+    "processing_level": "regridded",
+    "realm": "atmos",
+    "table_date": "2025-01-17",
+    "table_id": "ouranos_orrc_cf_attrs",
+    "terms_of_use": "ORRC data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
+    "type": "reconstruction"
+  },
+  "dimensions": {
+    "time": {
+      "_ensure_correct_time": {
+        "ORRC": "1H"
       },
-      "P_FB_SFC": {
-        "_cf_variable_name": "rsds",
-        "cell_methods": "time: mean (interval: 1 hour)",
-        "long_name": "Surface Downwelling Shortwave Radiation",
-        "standard_name": "surface_downwelling_shortwave_flux_in_air",
-        "units": "W m-2"
+      "_strict_time": true,
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "_prefix": {
+    "ORRC": "RDPS_CaPA_"
+  },
+  "variables": {
+    "A_PR_SFC": {
+      "_cf_variable_name": "pr",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
       },
-      "P_FI_SFC": {
-        "_cf_variable_name": "rlds",
-        "cell_methods": "time: mean (interval: 1 hour)",
-        "long_name": "Surface Downwelling Longwave Radiation",
-        "standard_name": "surface_downwelling_longwave_flux_in_air",
-        "units": "W m-2"
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
+      "_transformation": {
+        "ORRC": "amount2rate"
       },
-      "P_HR_10000": {
-        "_cf_variable_name": "hurs",
-        "cell_methods": "time: point",
-        "long_name": "Near-Surface Relative Humidity (1.5m)",
-        "standard_name": "relative_humidity",
-        "units": "%"
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "P_FB_SFC": {
+      "_cf_variable_name": "rsds",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "long_name": "Surface Downwelling Shortwave Radiation",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "units": "W m-2"
+    },
+    "P_FI_SFC": {
+      "_cf_variable_name": "rlds",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "long_name": "Surface Downwelling Longwave Radiation",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "units": "W m-2"
+    },
+    "P_HR_10000": {
+      "_cf_variable_name": "hurs",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Relative Humidity (1.5m)",
+      "standard_name": "relative_humidity",
+      "units": "%"
+    },
+    "P_HU_10000": {
+      "_cf_variable_name": "huss",
+      "_corrected_units": {
+        "ORRC": "1"
       },
-      "P_HU_10000": {
-        "_cf_variable_name": "huss",
-        "_corrected_units": {
-          "ORRC": "1"
-        },
-        "cell_methods": "time: point",
-        "long_name": "Near-Surface Specific Humidity (1.5m)",
-        "standard_name": "specific_humidity",
-        "units": "1"
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Specific Humidity (1.5m)",
+      "standard_name": "specific_humidity",
+      "units": "1"
+    },
+    "P_P0_SFC": {
+      "_cf_variable_name": "ps",
+      "_corrected_units": {
+        "ORRC": "mbar"
       },
-      "P_P0_SFC": {
-        "_cf_variable_name": "ps",
-        "_corrected_units": {
-          "ORRC": "mbar"
-        },
-        "cell_methods": "time: point",
-        "long_name": "Surface Air Pressure",
-        "standard_name": "surface_air_pressure",
-        "units": "Pa"
+      "cell_methods": "time: point",
+      "long_name": "Surface Air Pressure",
+      "standard_name": "surface_air_pressure",
+      "units": "Pa"
+    },
+    "P_PN_SFC": {
+      "_cf_variable_name": "psl",
+      "cell_methods": "time: point",
+      "_corrected_units": {
+        "ORRC": "mbar"
       },
-      "P_PN_SFC": {
-        "_cf_variable_name": "psl",
-        "cell_methods": "time: point",
-        "_corrected_units": {
-          "ORRC": "mbar"
-        },
-        "long_name": "Sea Level Pressure",
-        "standard_name": "air_pressure_at_sea_level",
-        "units": "Pa"
+      "long_name": "Sea Level Pressure",
+      "standard_name": "air_pressure_at_sea_level",
+      "units": "Pa"
+    },
+    "P_PR_SFC": {
+      "_cf_variable_name": "prmod",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
       },
-      "P_PR_SFC": {
-        "_cf_variable_name": "prmod",
-        "_clip_values": {
-          "all": {
-            "context": "hydro",
-            "min": "0 kg m-2 s-1"
-          }
-        },
-        "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
-        "_transformation": {
-          "ORRC": "amount2rate"
-        },
-        "cell_methods": "time: mean (interval: 1 hour)",
-        "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
-        "description": "This field differs from the 'pr' variable. It is the model background field subsequently used by CaPA to produce 'pr'.",
-        "long_name": "Precipitation",
-        "standard_name": "precipitation_flux",
-        "units": "kg m-2 s-1"
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
+      "_transformation": {
+        "ORRC": "amount2rate"
       },
-      "P_TD_10000": {
-        "_cf_variable_name": "tdps",
-        "_corrected_units": {
-          "ORRC": "degC"
-        },
-        "cell_methods": "time: point",
-        "long_name": "1.5 metre dewpoint temperature",
-        "standard_name": "dew_point_temperature",
-        "units": "K"
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "description": "This field differs from the 'pr' variable. It is the model background field subsequently used by CaPA to produce 'pr'.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "P_TD_10000": {
+      "_cf_variable_name": "tdps",
+      "_corrected_units": {
+        "ORRC": "degC"
       },
-      "P_TT_10000": {
-        "_cf_variable_name": "_tas",
-        "_corrected_units": {
-          "ORRC": "degC"
-        },
-        "cell_methods": "time: point",
-        "long_name": "1.5 metre temperature",
-        "standard_name": "air_temperature",
-        "units": "K"
+      "cell_methods": "time: point",
+      "long_name": "1.5 metre dewpoint temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "P_TT_10000": {
+      "_cf_variable_name": "_tas",
+      "_corrected_units": {
+        "ORRC": "degC"
       },
-      "P_UUC_10000": {
-        "_cf_variable_name": "uas",
-        "cell_methods": "time: point",
-        "long_name": "Eastward Near-Surface Wind (10m)",
-        "standard_name": "eastward_wind",
-        "units": "m s-1"
-      },
-      "P_UVC_10000": {
-        "_cf_variable_name": "sfcWind",
-        "cell_methods": "time: point",
-        "long_name": "Near-Surface Wind Speed (10m)",
-        "standard_name": "wind_speed",
-        "units": "m s-1"
-      },
-      "P_VVC_10000": {
-        "_cf_variable_name": "vas",
-        "cell_methods": "time: point",
-        "long_name": "Northward Near-Surface Wind (10m)",
-        "standard_name": "northward_wind",
-        "units": "m s-1"
-      },
-      "P_WDC_10000": {
-        "_cf_variable_name": "winddir",
-        "cell_methods": "time: point",
-        "long_name": "Near-Surface Meteorological Wind Direction (10m)",
-        "standard_name": "wind_from_direction",
-        "units": "deg"
-      }
+      "cell_methods": "time: point",
+      "long_name": "1.5 metre temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "P_UUC_10000": {
+      "_cf_variable_name": "uas",
+      "cell_methods": "time: point",
+      "long_name": "Eastward Near-Surface Wind (10m)",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
+    "P_UVC_10000": {
+      "_cf_variable_name": "sfcWind",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Wind Speed (10m)",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "P_VVC_10000": {
+      "_cf_variable_name": "vas",
+      "cell_methods": "time: point",
+      "long_name": "Northward Near-Surface Wind (10m)",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
+    },
+    "P_WDC_10000": {
+      "_cf_variable_name": "winddir",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Meteorological Wind Direction (10m)",
+      "standard_name": "wind_from_direction",
+      "units": "deg"
     }
   }
-  
+}
