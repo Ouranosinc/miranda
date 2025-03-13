@@ -83,7 +83,6 @@ def get_ghcn_raw(
             url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
             outfile = outfolder / f"GHCNh_{station_id}_por.psv"
 
-    
         if outfile.exists() and not update_raw:
             continue
         try:
@@ -100,7 +99,6 @@ def get_ghcn_raw(
     return errors
 
 
-
 def create_ghcn_xarray(
     infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
 ) -> None:
@@ -109,7 +107,7 @@ def create_ghcn_xarray(
     statmeta
     for station_id in sorted(list(infiles)):
         logging.info(f"reading {station_id.name}")
-        if project == 'ghcnd':
+        if project == "ghcnd":
             df = pd.read_csv(station_id)
             df.columns = df.columns.str.lower()
             df.element = df.element.str.lower()
@@ -125,7 +123,9 @@ def create_ghcn_xarray(
 
                     ds1 = ds1.rename({"data_value": var, "id": "station"})
                     drop_vars = [
-                        v for v in ds1.data_vars if v not in varlist and v not in ["q_flag"]
+                        v
+                        for v in ds1.data_vars
+                        if v not in varlist and v not in ["q_flag"]
                     ]
                     ds1 = ds1.drop_vars(drop_vars)
                     ds1 = ds1.rename(
@@ -144,7 +144,11 @@ def create_ghcn_xarray(
                 for cc in [c for c in df_stat.columns if c != "station_id"]:
                     if cc not in ds.coords:
                         ds = ds.assign_coords(
-                            {cc: xr.DataArray(df_stat[cc].values, coords=ds.station.coords)}
+                            {
+                                cc: xr.DataArray(
+                                    df_stat[cc].values, coords=ds.station.coords
+                                )
+                            }
                         )
                 for vv in ds.data_vars:
                     if ds[vv].dtype == "float64":
@@ -155,8 +159,8 @@ def create_ghcn_xarray(
                     # ds[vv] = ds[vv].fillna("").astype("str")
 
                 data.append(ds)
-        elif project == 'ghcnh':
-            df = pd.read_csv(station_id, delimiter='|')
+        elif project == "ghcnh":
+            df = pd.read_csv(station_id, delimiter="|")
             df.columns = df.columns.str.lower()
             # df.element = df.element.str.lower()
             # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
@@ -171,7 +175,9 @@ def create_ghcn_xarray(
 
                     ds1 = ds1.rename({"data_value": var, "id": "station"})
                     drop_vars = [
-                        v for v in ds1.data_vars if v not in varlist and v not in ["q_flag"]
+                        v
+                        for v in ds1.data_vars
+                        if v not in varlist and v not in ["q_flag"]
                     ]
                     ds1 = ds1.drop_vars(drop_vars)
                     ds1 = ds1.rename(
@@ -190,7 +196,11 @@ def create_ghcn_xarray(
                 for cc in [c for c in df_stat.columns if c != "station_id"]:
                     if cc not in ds.coords:
                         ds = ds.assign_coords(
-                            {cc: xr.DataArray(df_stat[cc].values, coords=ds.station.coords)}
+                            {
+                                cc: xr.DataArray(
+                                    df_stat[cc].values, coords=ds.station.coords
+                                )
+                            }
                         )
                 for vv in ds.data_vars:
                     if ds[vv].dtype == "float64":
@@ -213,7 +223,7 @@ def download_ghcn(
     lat_bnds: list[float] | None = None,
     update_raw: bool = False,
     timeout: int = None,
-    n_workers: int = None
+    n_workers: int = None,
 ) -> None:
 
     station_df = _get_ghcn_stations(project)
@@ -221,7 +231,7 @@ def download_ghcn(
         shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("raw").mkdir(exist_ok=True)
-    
+
     if lon_bnds and lat_bnds:
         bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1]) & station_df[
             "lon"
@@ -232,11 +242,10 @@ def download_ghcn(
     # request = NoaaGhcnRequest(parameters=(prj_dict[project], "data"), start_date=start_date, end_date=end_date)
     station_df = station_df[bbx_mask]
     station_ids = station_df["station_id"].tolist()
-    
+
     # station_list = sorted(list(chunk_list(station_ids, nstations)))
     # for ii, ss in enumerate(station_list):
-    
-    
+
     ntry = 5
     while ntry > 0:
         errors = get_ghcn_raw(
@@ -316,8 +325,8 @@ def _get_ghcn_stations(
                 converters=dtypes,
             )
 
-        #logging.info("ghcnh not implemented yet")
-        #exit()
+        # logging.info("ghcnh not implemented yet")
+        # exit()
     else:
         raise ValueError(f"unknown project values {project}")
     return station_df
@@ -347,13 +356,12 @@ def convert_ghcn_bychunks(
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
-        
 
     elif project == "ghcnh":
         readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
-        #logging.info("ghcnh not implemented yet")
-        #exit()
+        # logging.info("ghcnh not implemented yet")
+        # exit()
     station_df = _get_ghcn_stations(project=project)
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
