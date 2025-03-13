@@ -118,9 +118,11 @@ def convert_rdrs(
                         ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
                         break  
                     except Exception as e:
-                        logging.warning(f"Failed to open {nc} with engine {eng}: {e}") 
+                        msg = f"Failed to open {nc} with engine {eng}: {e}"
+                        logging.warning(msg) 
                         if eng == engine[-1]: 
-                            logging.error(f"All engines failed for {nc}") 
+                            msg = f"All engines failed for {nc}"
+                            logging.error(msg) 
                             raise RuntimeError(f"Failed to open {nc} with both engines: {e}") from e
                 if ds_allvars is None:
                     out_freq = None
