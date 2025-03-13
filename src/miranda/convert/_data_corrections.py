@@ -56,6 +56,10 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(
             data_folder.joinpath("ghcnd_cf_attrs.json").open("r")
         )
+    elif project == "ghcnh":
+        metadata_definition = json.load(
+            data_folder.joinpath("ghcnh_cf_attrs.json").open("r")
+        )
     elif project.startswith("era5"):
         metadata_definition = json.load(
             data_folder.joinpath("ecmwf_cf_attrs.json").open("r")
