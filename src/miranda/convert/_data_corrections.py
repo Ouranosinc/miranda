@@ -350,14 +350,6 @@ def preprocessing_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     return ds
 
 
-def _correct_standard_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    key = "_corrected_standard_name"
-    for var, val in _iter_entry_key(d, m, "variables", key, p):
-        if val:
-            d[var].attrs["standard_name"] = val
-    return d
-
-
 def _correct_units_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_corrected_units"
     for var, val in _iter_entry_key(d, m, "variables", key, p):
@@ -369,6 +361,14 @@ def _correct_units_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if val_time:
         d["time"].attrs["units"] = val_time
 
+    return d
+
+
+def _correct_standard_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_corrected_standard_name"
+    for var, val in _iter_entry_key(d, m, "variables", key, p):
+        if val:
+            d[var].attrs["standard_name"] = val
     return d
 
 
@@ -464,9 +464,6 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         if vv not in converted:
             d_out[vv] = d[vv]
     return d_out
-
-
-# TODO: Determine if this function is still needed
 
 
 def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
@@ -875,7 +872,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 del d.attrs[attribute]
         elif field == "_remove_attrs":
             for ff in attr_treatment:
-                if ff:
+                if ff in d.attrs:
                     del d.attrs[ff]
         else:
             if field[1:] in d.attrs:
@@ -918,8 +915,6 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 
     ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
-    # TODO validate this is needed
-    ds = _offset_time(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
     ds = metadata_conversion(ds, project, metadata_definition)
