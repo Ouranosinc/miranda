@@ -9,7 +9,6 @@ from typing import Any
 
 import xarray as xr
 from numpy import unique
-
 from xscen.io import get_engine
 
 from miranda.io import fetch_chunk_config, write_dataset_dict
