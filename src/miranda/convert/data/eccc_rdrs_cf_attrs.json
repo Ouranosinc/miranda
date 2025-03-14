@@ -23,6 +23,9 @@
     "_version": {
       "rdrs-v21": "v2.1"
     },
+    "_prefix": {
+      "rdrs-v21": "RDRS_v2.1_"
+    },
     "institution": "GovCan",
     "licence_type": "open",
     "license": "https://eccc-msc.github.io/open-data/licence/readme_en/",
@@ -44,9 +47,6 @@
       "long_name": "time",
       "standard_name": "time"
     }
-  },
-  "_prefix": {
-    "rdrs-v21": "RDRS_v2.1_"
   },
   "variables": {
     "A_PR0_SFC": {

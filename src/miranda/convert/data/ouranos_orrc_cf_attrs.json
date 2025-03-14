@@ -1,7 +1,7 @@
 {
   "Header": {
     "Conventions": "CF-1.8",
-    "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product ORRC contains two variables for precipitation: 'RDPS_CaPA_P_PR_SFC' is the model precipitation (trial field used by CaPA) and 'RDPS_CaPA_A_PR_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
+    "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product ORRC contains two variables for precipitation: 'RDPS_CaPA_P_PR_SFC' is the model precipitation (trial field used by CaPA) and 'RDPS_CaPA_A_PR_SFC' is precipitations adjusted with CaPA 6h precipitation. Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
     "_contact": {
       "ORRC": ""
     },
@@ -22,6 +22,9 @@
     },
     "_version": {
       "ORRC": "v1.0"
+    },
+    "_prefix": {
+      "ORRC": "RDPS_CaPA_"
     },
     "institution": "Ouranos",
     "licence_type": "open",
@@ -44,9 +47,6 @@
       "long_name": "time",
       "standard_name": "time"
     }
-  },
-  "_prefix": {
-    "ORRC": "RDPS_CaPA_"
   },
   "variables": {
     "A_PR_SFC": {

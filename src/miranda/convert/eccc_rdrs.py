@@ -10,6 +10,8 @@ from typing import Any
 import xarray as xr
 from numpy import unique
 
+from xscen.io import get_engine
+
 from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
@@ -85,7 +87,7 @@ def convert_rdrs(
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project=project)["variables"]
-    prefix = load_json_data_mappings(project=project)["_prefix"][project]
+    prefix = load_json_data_mappings(project=project)["Header"]["_prefix"][project]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
@@ -105,7 +107,6 @@ def convert_rdrs(
         working_folder = Path(working_folder).expanduser()
 
     # FIXME: Do we want to collect everything? Maybe return a dictionary with years and associated files?
-    engine = ["netcdf4", "h5netcdf"]
     gathered = gather_raw_rdrs_by_years(input_folder, project)
     for year, ncfiles in gathered[project].items():
         if year_start and int(year) < year_start:
@@ -114,17 +115,13 @@ def convert_rdrs(
 
         if len(ncfiles) >= 28:
             for nc in ncfiles:
-                for eng in engine:
-                    try:
-                        ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
-                        break
-                    except Exception as e:
-                        msg = f"Failed to open {nc} with engine {eng}: {e}"
-                        logging.warning(msg) 
-                        if eng == engine[-1]: 
-                            msg = f"All engines failed for {nc}"
-                            logging.error(msg) 
-                            raise RuntimeError(f"Failed to open {nc} with both engines: {e}") from e
+                eng = get_engine(nc)
+                try:
+                    ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
+                except Exception as e:
+                    msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
+                    logging.error(msg)
+                    raise RuntimeError(msg) from e
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
@@ -246,11 +243,9 @@ def rdrs_to_daily(
             year_end = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
         for year in range(year_start, year_end + 1):
             infiles = [z for z in zarrs if f"_{year}" in z.name]
-            # NOTE: Commented out to allow for processing years with incomplete months now that we'll be continously updating ORRC data once a month
-            # if len(infiles) != 12:
-            #     # skip the year
-            #     print(f"Found {len(infiles)} input files. Expected 12.")
-            #     continue
+            if len(infiles) != 12:
+                msg = f"Found {len(infiles)} input files for {year}. The year is incomplete."
+                logging.warning(msg)
             out_variables = aggregate(
                 xr.open_mfdataset(infiles, engine="zarr"), freq="day"
             )
