@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 from typing import Any
 
+import h5py
 import xarray as xr
 from numpy import unique
-import h5py
 
 from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
