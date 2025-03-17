@@ -3,21 +3,15 @@
 from __future__ import annotations
 
 import contextlib
-import logging.config
-
-# import os
+import logging
 import tempfile
 from pathlib import Path
 from typing import Callable
 
 from dask.diagnostics import ProgressBar
 
-from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import file_size, report_file_size
 from miranda.utils import generic_extract_archive
-
-logging.config.dictConfig(LOGGING_CONFIG)
-
 
 _data_folder = Path(__file__).parent / "configs"
 
