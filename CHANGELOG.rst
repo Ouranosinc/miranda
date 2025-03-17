@@ -22,6 +22,10 @@ New features
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Removed modules ``miranda.archive`` and ``miranda.remote`` (split into separate project to be announced).
+
 Bug fixes
 ^^^^^^^^^
 * Transformation docstrings are now only updated when the transformation is actually applied.
@@ -32,6 +36,7 @@ Internal changes
 * `miranda` now applies the `numpydoc` documentation style to all publicly-exposed docstrings.
 * GitHub Workflows now use commit hashes for both running GitHub Actions and installing Python dependencies from PyPI.
 * `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
+* Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
 
 .. _changes_0.5.0:
 

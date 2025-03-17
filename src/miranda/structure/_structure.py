@@ -15,12 +15,10 @@ from schema import SchemaError
 from miranda.cv import VALIDATION_ENABLED
 from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.io import discover_data
-from miranda.scripting import LOGGING_CONFIG
 
 if VALIDATION_ENABLED:
     from miranda.validators import validation_schemas
 
-logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "build_path_from_schema",

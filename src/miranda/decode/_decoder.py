@@ -10,7 +10,6 @@ from logging import config
 from os import PathLike
 from pathlib import Path
 from types import GeneratorType
-from typing import Optional
 
 import netCDF4 as nc  # noqa
 import pandas as pd
