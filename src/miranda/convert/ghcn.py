@@ -15,7 +15,7 @@ import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import inf, nan, unique
-
+from shapely.geometry import box
 
 from miranda.convert._data_corrections import (
     dataset_conversion,
@@ -143,12 +143,12 @@ def create_ghcn_xarray(
                     raise ValueError(
                         f"expected a single station metadata for {station_id.stem}"
                     )
-                for cc in [c for c in df_stat.columns if c != "station_id"]:
+                for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
                     if cc not in ds.coords:
                         ds = ds.assign_coords(
                             {
                                 cc: xr.DataArray(
-                                    df_stat[cc].values, coords=ds.station.coords
+                                    df_stat[cc].values[0], coords=ds.station.coords
                                 )
                             }
                         )
@@ -224,29 +224,21 @@ def download_ghcn(
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
     update_raw: bool = False,
-    timeout: int = None,
-    n_workers: int = None,
+    timeout: int | None = None,
+    n_workers: int | None = None,
 ) -> None:
 
-    station_df = _get_ghcn_stations(project)
+    station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("raw").mkdir(exist_ok=True)
 
-    if lon_bnds and lat_bnds:
-        bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1]) & station_df[
-            "lon"
-        ].between(lon_bnds[0], lon_bnds[1])
-    else:
-        raise ValueError("latitude and longitude bounds must be provided")
+
 
     # request = NoaaGhcnRequest(parameters=(prj_dict[project], "data"), start_date=start_date, end_date=end_date)
-    station_df = station_df[bbx_mask]
+    
     station_ids = station_df["station_id"].tolist()
-
-    # station_list = sorted(list(chunk_list(station_ids, nstations)))
-    # for ii, ss in enumerate(station_list):
 
     ntry = 5
     while ntry > 0:
@@ -267,10 +259,9 @@ def download_ghcn(
 
 def _get_ghcn_stations(
     project: str,
+    lon_bnds: list[float] | None = None,
+    lat_bnds: list[float] | None = None,
 ):
-    
-    tz_url = "https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_time_zones.zip"
-    tz = gpd.read_file(tz_url).to_crs(epsg=4326)
     
     if project == "ghcnd":
         station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
@@ -335,6 +326,13 @@ def _get_ghcn_stations(
         # exit()
     else:
         raise ValueError(f"unknown project values {project}")
+    if lon_bnds: #and lat_bnds:
+        bbx_mask = station_df["lon"].between(lon_bnds[0], lon_bnds[1])
+        station_df = station_df[bbx_mask]
+    if lat_bnds:
+        bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1])
+        station_df = station_df[bbx_mask]
+        
     return station_df
 
 
@@ -344,6 +342,8 @@ def convert_ghcn_bychunks(
     cfvariable_list: list | None = None,
     start_year: int | None = None,
     end_year: int | None = None,
+    lon_bnds: list[float] | None = None,
+    lat_bnds: list[float] | None = None,
     n_workers: int = 4,
     nstations: int = 100,
     update_from_raw: bool = False,
@@ -368,7 +368,17 @@ def convert_ghcn_bychunks(
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
         # logging.info("ghcnh not implemented yet")
         # exit()
-    station_df = _get_ghcn_stations(project=project)
+    station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+    tz_file = Path(__file__).parent.joinpath('data/timezones-with-oceans-now.shapefile.zip')
+    
+    tz = gpd.read_file(tz_file).to_crs(epsg=4326)
+    # clip to bbox for faster sjoin
+    # Create a custom polygon
+    polygon = box(lon_bnds[0]-.1, lat_bnds[0]-.1, lon_bnds[-1]+.1, lat_bnds[-1]+.1)
+    poly_clip = gpd.GeoDataFrame([1], geometry=[polygon], crs=tz.crs)
+    tz = tz.clip(poly_clip)
+    station_df = gpd.GeoDataFrame(station_df, geometry=gpd.points_from_xy(station_df.lon, station_df.lat), crs=tz.crs).sjoin(tz, how='left')
+    station_df = station_df.rename(columns={'tzid':'timezone'})
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
     working_folder.mkdir(parents=True, exist_ok=True)

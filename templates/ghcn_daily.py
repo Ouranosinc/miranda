@@ -16,8 +16,8 @@ def main():
     start_year = 1981
     end_year = 2020
 
-    lon_bnds = [-76, -74]
-    lat_bnds = [44, 46]
+    lon_bnds = [-76, -75]
+    lat_bnds = [44, 45]
 
     nstations = 100
     update_raw = True
@@ -35,6 +35,8 @@ def main():
     convert_ghcn_bychunks(
         project="ghcnd",
         working_folder=working_folder,
+        lon_bnds=lon_bnds,
+        lat_bnds=lat_bnds,
         start_year=start_year,
         end_year=end_year,
         update_from_raw=update_raw,
