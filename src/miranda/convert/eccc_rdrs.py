@@ -9,8 +9,7 @@ from typing import Any
 
 import xarray as xr
 from numpy import unique
-
-from xscen.io import get_engine
+import h5py
 
 from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
@@ -115,10 +114,10 @@ def convert_rdrs(
 
         if len(ncfiles) >= 28:
             for nc in ncfiles:
-                eng = get_engine(nc)
+                eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
                 try:
                     ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
-                except Exception as e:
+                except (OSError, RuntimeError) as e:
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
                     logging.error(msg)
                     raise RuntimeError(msg) from e
