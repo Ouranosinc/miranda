@@ -6,9 +6,7 @@ import json
 import logging.config
 import os
 from collections.abc import Sequence
-from datetime import date
 from pathlib import Path
-from typing import Any
 
 import dask
 import netCDF4 as nc  # noqa
@@ -21,7 +19,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 
 __all__ = [
-    "creation_date",
     "delayed_write",
     "get_chunks_on_disk",
     "get_global_attrs",
@@ -374,31 +371,3 @@ def get_chunks_on_disk(file: str | os.PathLike[str] | Path) -> dict[str, int]:
     else:
         raise NotImplementedError(f"File type: {file.suffix}.")
     return chunks
-
-
-def creation_date(path_to_file: str | os.PathLike[str] | Path) -> float | date:
-    """
-    Return the date that a file was created, falling back to when it was last modified if unable to determine.
-
-    See https://stackoverflow.com/a/39501288/1709587 for explanation.
-
-    Parameters
-    ----------
-    path_to_file : str or os.PathLike or Path
-        The file to be examined.
-
-    Returns
-    -------
-    float or date
-        The creation date.
-    """
-    if os.name == "nt":
-        return Path(path_to_file).stat().st_ctime
-
-    stat = Path(path_to_file).stat()
-    try:
-        return date.fromtimestamp(stat.st_ctime)
-    except AttributeError:
-        # We're probably on Linux. No easy way to get creation dates here,
-        # so we'll settle for when its content was last modified.
-        return date.fromtimestamp(stat.st_mtime)

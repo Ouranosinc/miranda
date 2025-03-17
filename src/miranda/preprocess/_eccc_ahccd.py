@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import calendar
-import logging.config
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -16,10 +16,8 @@ from miranda.preprocess._metadata import (
     eccc_variable_metadata,
     homogenized_column_definitions,
 )
-from miranda.scripting import LOGGING_CONFIG
 from miranda.treatments import find_project_variable_codes, load_json_data_mappings
 
-logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_file", "merge_ahccd"]

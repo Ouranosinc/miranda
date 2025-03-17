@@ -13,7 +13,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "discover_data",
-    "find_filepaths",
 ]
 
 
@@ -64,48 +63,3 @@ def discover_data(
     else:
         raise NotImplementedError(f"input_files: {type(input_files)}")
     return input_files
-
-
-def find_filepaths(
-    source: str | pathlib.Path | GeneratorType | list[pathlib.Path | str],
-    recursive: bool = True,
-    file_suffixes: str | list[str] | None = None,
-    **_,
-) -> list[pathlib.Path]:
-    """Find all available filepaths at a given source.
-
-    Parameters
-    ----------
-    source : str, Path, GeneratorType, or list[str or Path]
-    recursive : bool
-    file_suffixes: str or list of str, optional
-
-    Returns
-    -------
-    list of pathlib.Path
-    """
-    if file_suffixes is None:
-        file_suffixes = ["*", ".*"]
-    elif isinstance(file_suffixes, str):
-        file_suffixes = [file_suffixes]
-
-    found = list()
-    if isinstance(source, (pathlib.Path, str)):
-        source = [source]
-
-    for location in source:
-        for pattern in file_suffixes:
-            if "*" not in pattern:
-                pattern = f"*{pattern}*"
-            if recursive:
-                found.extend(
-                    [f for f in pathlib.Path(location).expanduser().rglob(pattern)]
-                )
-            elif not recursive:
-                found.extend(
-                    [f for f in pathlib.Path(location).expanduser().glob(pattern)]
-                )
-            else:
-                raise ValueError(f"Recursive: {recursive}")
-
-    return found

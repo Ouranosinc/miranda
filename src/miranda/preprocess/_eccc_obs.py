@@ -9,30 +9,18 @@ import os
 import re
 import tempfile
 import time
-
-# from calendar import monthrange
 from datetime import datetime as dt
-from logging import config
 from pathlib import Path
 from typing import Any
 
 import dask.dataframe as dd
-
-# import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from miranda.archive import group_by_length
 from miranda.preprocess._metadata import eccc_variable_metadata, obs_column_definitions
-from miranda.scripting import LOGGING_CONFIG
 from miranda.treatments import find_project_variable_codes, load_json_data_mappings
 from miranda.vocabularies.eccc import obs_vocabularies
-
-# from xclim.core.units import convert_units_to
-
-
-config.dictConfig(LOGGING_CONFIG)
 
 __all__ = [
     "convert_station",
@@ -438,13 +426,11 @@ def merge_stations(
             groupings = max(n_workers**2, 4)
 
         if nc_list:
-            nc_lists = group_by_length(nc_list, groupings)
-
             with tempfile.TemporaryDirectory(
                 prefix="eccc", dir=temp_directory
             ) as temp_dir:
                 combinations = sorted(
-                    (ii, nc, temp_dir, len(nc_lists)) for ii, nc in enumerate(nc_lists)
+                    (ii, nc, temp_dir, len(nc_list)) for ii, nc in enumerate(nc_list)
                 )
 
                 with mp.Pool(processes=n_workers) as pool:

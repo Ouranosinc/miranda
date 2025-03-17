@@ -14,16 +14,10 @@ Functions:
 from __future__ import annotations
 
 import logging
-import logging.config
 import subprocess  # noqa: S404
 from functools import reduce
 from pathlib import Path
 from types import GeneratorType
-
-from .scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
-
 
 __all__ = [
     "DiskSpaceError",
@@ -266,7 +260,7 @@ def file_size(
         | list[str | Path]
         | GeneratorType
         | dict[str, Path | list[Path]]
-    )
+    ),
 ) -> int:
     """
     Return size of object in bytes.
