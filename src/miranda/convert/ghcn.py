@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Generator
 from zoneinfo import ZoneInfo
 
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
@@ -264,7 +264,7 @@ def download_ghcn(
 
 
     # request = NoaaGhcnRequest(parameters=(prj_dict[project], "data"), start_date=start_date, end_date=end_date)
-    
+
     station_ids = station_df["station_id"].tolist()
 
     ntry = 5
@@ -290,7 +290,7 @@ def _get_ghcn_stations(
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
 ):
-    
+
 ) -> pd.DataFrame:
     """
     Get GHCN station metadata.
@@ -374,7 +374,7 @@ def _get_ghcn_stations(
     if lat_bnds:
         bbx_mask = station_df["lat"].between(lat_bnds[0], lat_bnds[1])
         station_df = station_df[bbx_mask]
-        
+
     return station_df
 
 
@@ -433,7 +433,7 @@ def convert_ghcn_bychunks(
         # exit()
     station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     tz_file = Path(__file__).parent.joinpath('data/timezones-with-oceans-now.shapefile.zip')
-    
+
     tz = gpd.read_file(tz_file).to_crs(epsg=4326)
     # clip to bbox for faster sjoin
     # Create a custom polygon
