@@ -16,12 +16,8 @@ import geopandas as gpd
 import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
-<<<<<<< HEAD
-from numpy import inf, nan, unique
-from shapely.geometry import box
-=======
 from numpy import nan
->>>>>>> 95bb3e872031e07d3d0c76f622c2ba6381353a04
+from shapely.geometry import box
 
 from miranda.convert._data_corrections import (
     dataset_conversion,
@@ -194,10 +190,6 @@ def create_ghcn_xarray(
                 for vv in ds.data_vars:
                     if ds[vv].dtype == "float64":
                         ds[vv] = ds[vv].astype("float32")
-                    # if "flag" in vv:
-                    #     for tt in [inf, -inf]:
-                    #         ds[vv] = ds[vv].where(ds[vv] != tt, nan)
-                    # ds[vv] = ds[vv].fillna("").astype("str")
 
                 data.append(ds)
         elif project == "ghcnh":
@@ -246,10 +238,6 @@ def create_ghcn_xarray(
                 for vv in ds.data_vars:
                     if ds[vv].dtype == "float64":
                         ds[vv] = ds[vv].astype("float32")
-                    # if "flag" in vv:
-                    #     for tt in [inf, -inf]:
-                    #         ds[vv] = ds[vv].where(ds[vv] != tt, nan)
-                    # ds[vv] = ds[vv].fillna("").astype("str")
 
                 data.append(ds)
     if len(data) == 0:
@@ -265,34 +253,9 @@ def download_ghcn(
     update_raw: bool = False,
     timeout: int | None = None,
     n_workers: int | None = None,
-<<<<<<< HEAD
 ) -> None:
 
     station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
-=======
-):
-    """
-    Download GHCN data.
-
-    Parameters
-    ----------
-    project : str
-        Project name.
-    working_folder : str or os.PathLike[str], optional
-        The working folder. The default (None) is to use the current working directory.
-    lon_bnds : list[float], optional
-        Longitudinal boundaries. Optional.
-    lat_bnds : list[float], optional
-        Latitudinal boundaries. Optional.
-    update_raw : bool
-        Whether to update raw data.
-    timeout : int
-        Request timeout in seconds. Default is 10.
-    n_workers : int
-        Number of workers to use. Unimplemented.
-    """
-    station_df = _get_ghcn_stations(project)
->>>>>>> 95bb3e872031e07d3d0c76f622c2ba6381353a04
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
@@ -324,12 +287,10 @@ def download_ghcn(
 
 def _get_ghcn_stations(
     project: str,
-<<<<<<< HEAD
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
 ):
     
-=======
 ) -> pd.DataFrame:
     """
     Get GHCN station metadata.
@@ -344,7 +305,6 @@ def _get_ghcn_stations(
     pd.DataFrame
         Station metadata.
     """
->>>>>>> 95bb3e872031e07d3d0c76f622c2ba6381353a04
     if project == "ghcnd":
         station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
         dtypes = {
