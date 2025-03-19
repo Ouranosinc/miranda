@@ -289,8 +289,6 @@ def _get_ghcn_stations(
     project: str,
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
-):
-
 ) -> pd.DataFrame:
     """
     Get GHCN station metadata.

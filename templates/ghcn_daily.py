@@ -1,13 +1,9 @@
 import logging
 from pathlib import Path
-import os
 import shutil
 from dask.diagnostics import ProgressBar
 from miranda.convert.ghcn import convert_ghcn_bychunks, download_ghcn, q_flag_dict
-from miranda.convert.ghcn import chunk_list
 import xarray as xr
-from tempfile import TemporaryDirectory
-
 
 def main():
 
