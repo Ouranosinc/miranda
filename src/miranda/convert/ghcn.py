@@ -95,10 +95,13 @@ def get_ghcn_raw(
             url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
 
             outfile = outfolder / f"{station_id}.csv"
-        else:
+        elif station_type == 'hourly':
             url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
             outfile = outfolder / f"GHCNh_{station_id}_por.psv"
-
+        else:
+            msg = f"unknown station type : {station_type}"
+            raise ValueError(msg)
+        
         if outfile.exists() and not update_raw:
             continue
         try:
@@ -178,11 +181,7 @@ def create_ghcn_xarray(
                     raise ValueError(
                         f"expected a single station metadata for {station_id.stem}"
                     )
-                for cc in [
-                    c
-                    for c in df_stat.columns
-                    if c not in ["station_id", "geometry", "index_right"]
-                ]:
+                for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
                     if cc not in ds.coords:
                         ds = ds.assign_coords(
                             {
@@ -259,13 +258,13 @@ def download_ghcn(
     n_workers: int | None = None,
 ) -> None:
 
-    station_df = _get_ghcn_stations(
-        project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-    )
+    station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("raw").mkdir(exist_ok=True)
+
+
 
     # request = NoaaGhcnRequest(parameters=(prj_dict[project], "data"), start_date=start_date, end_date=end_date)
 
@@ -370,7 +369,7 @@ def _get_ghcn_stations(
         # exit()
     else:
         raise ValueError(f"unknown project values {project}")
-    if lon_bnds:  # and lat_bnds:
+    if lon_bnds: #and lat_bnds:
         bbx_mask = station_df["lon"].between(lon_bnds[0], lon_bnds[1])
         station_df = station_df[bbx_mask]
     if lat_bnds:
@@ -433,27 +432,17 @@ def convert_ghcn_bychunks(
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
         # logging.info("ghcnh not implemented yet")
         # exit()
-    station_df = _get_ghcn_stations(
-        project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-    )
-    tz_file = Path(__file__).parent.joinpath(
-        "data/timezones-with-oceans-now.shapefile.zip"
-    )
+    station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+    tz_file = Path(__file__).parent.joinpath('data/timezones-with-oceans-now.shapefile.zip')
 
     tz = gpd.read_file(tz_file).to_crs(epsg=4326)
     # clip to bbox for faster sjoin
     # Create a custom polygon
-    polygon = box(
-        lon_bnds[0] - 0.1, lat_bnds[0] - 0.1, lon_bnds[-1] + 0.1, lat_bnds[-1] + 0.1
-    )
+    polygon = box(lon_bnds[0]-.1, lat_bnds[0]-.1, lon_bnds[-1]+.1, lat_bnds[-1]+.1)
     poly_clip = gpd.GeoDataFrame([1], geometry=[polygon], crs=tz.crs)
     tz = tz.clip(poly_clip)
-    station_df = gpd.GeoDataFrame(
-        station_df,
-        geometry=gpd.points_from_xy(station_df.lon, station_df.lat),
-        crs=tz.crs,
-    ).sjoin(tz, how="left")
-    station_df = station_df.rename(columns={"tzid": "timezone"})
+    station_df = gpd.GeoDataFrame(station_df, geometry=gpd.points_from_xy(station_df.lon, station_df.lat), crs=tz.crs).sjoin(tz, how='left')
+    station_df = station_df.rename(columns={'tzid':'timezone'})
     if isinstance(working_folder, str):
         working_folder = Path(working_folder).expanduser()
     working_folder.mkdir(parents=True, exist_ok=True)
