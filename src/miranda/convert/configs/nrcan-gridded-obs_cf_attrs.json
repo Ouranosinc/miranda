@@ -21,8 +21,8 @@
     "product": "Natural Resources Canada ANUSPLIN interpolated historical climate model dataset",
     "realm": "atmos",
     "references:": "McKenney, D.W., M.F. Hutchinson, P. Papadopol, K. Lawrence, J. Pedlar, K. Campbell, E. Milewska, R.F. Hopkinson, D. Price, and T. Owen, 2011: Customized Spatial Climate Models for North America. Bull. Amer. Meteor. Soc., 92, 1611–1622, https://doi.org/10.1175/2011BAMS3132.1",
-    "source": "nrcan",
-    "title": "NRCan ANUSPLIN 10-Km Gridded Climate dataset",
+    "source": "NRCANmet",
+    "title": "NRCANmet ANUSPLIN 10-Km Gridded Climate dataset",
     "table_date": "2024-03-06",
     "table_id": "nrcan-gridded-obs",
     "type": "reconstruction"
