@@ -21,6 +21,7 @@ New features
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
+* Added a new configuration for converting the NRCAN gridded climate dataset.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -37,6 +38,7 @@ Internal changes
 * GitHub Workflows now use commit hashes for both running GitHub Actions and installing Python dependencies from PyPI.
 * `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
 * Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
+* Adjusted calls using `os.path` to use `pathlib` for better cross-platform compatibility.
 
 .. _changes_0.5.0:
 

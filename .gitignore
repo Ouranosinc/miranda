@@ -113,3 +113,7 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+# Manually excluded folders
+excluded/
+templates/downloaded/
