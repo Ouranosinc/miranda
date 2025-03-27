@@ -223,7 +223,7 @@ def concat_rechunk_zarr(
         years = [y for y in range(int(start_year), int(end_year) + 1)]
         years = [years[x : x + 4] for x in range(0, len(years), 4)]
         tmp_folder = out_zarr.parent.joinpath("tmp")
-        tmp_folder.mkdir(exist_ok=True)
+        tmp_folder.mkdir(parents=True, exist_ok=True)
         chunks = dict()
         for year in years:
             list_zarr1 = sorted(
