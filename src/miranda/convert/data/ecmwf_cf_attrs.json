@@ -80,7 +80,6 @@
       "_cf_variable_name": "tdps",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the temperature to which the air, at 2 metres above the surface of the Earth, would have to be cooled for saturation to occur. It is a measure of the humidity of the air. Combined with temperature and pressure, it can be used to calculate the relative humidity. 2m dew point temperature is calculated by interpolating between the lowest model level and the Earth's surface, taking account of the atmospheric conditions.",
@@ -92,7 +91,6 @@
       "_cf_variable_name": "psl",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: mean (interval: 1 hour)",
       "description": "This parameter is the pressure (force per unit area) of the atmosphere adjusted to the height of mean sea level. It is a measure of the weight that all the air in a column vertically above the area of Earth's surface would have at that point, if the point were located at the mean sea level. It is calculated over all surfaces - land, sea and in-land water.",
@@ -103,9 +101,11 @@
     "pev": {
       "_cf_variable_name": "evspsblpot",
       "_corrected_units": false,
+      "_corrected_standard_name": "lwe_thickness_of_water_evaporation_amount",
       "_invert_sign": {
         "era5-land": true,
         "era5-single-levels": true,
+        "era5-single-levels-monthly-means": true,
         "era5-single-levels-preliminary-back-extension": true
       },
       "_offset_time": {
@@ -116,6 +116,7 @@
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
+        "era5-single-levels-monthly-means": "amount2rate",
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
@@ -128,7 +129,6 @@
     "ptype": {
       "_cf_variable_name": "prtype",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter describes the type of precipitation at the surface, at the specified time. A precipitation type is assigned wherever there is a non-zero value of precipitation. In the ECMWF Integrated Forecasting System (IFS) there are only two predicted precipitation variables: rain and snow. Precipitation type is derived from these two predicted variables in combination with atmospheric conditions, such as temperature. Values of precipitation type defined in the IFS: 0: No precipitation, 1: Rain, 3: Freezing rain (i.e. supercooled raindrops which freeze on contact with the ground and other surfaces), 5: Snow, 6: Wet snow (i.e. snow particles which are starting to melt); 7: Mixture of rain and snow, 8: Ice pellets. These precipitation types are consistent with WMO Code Table 4.201. Other types in this WMO table are not defined in the IFS.",
@@ -140,7 +140,6 @@
       "_cf_variable_name": "hus",
       "_corrected_units": 1,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "The total mass of moist air is the sum of the dry air, water vapour, cloud liquid, cloud ice, rain and falling snow.",
@@ -151,7 +150,6 @@
     "r": {
       "_cf_variable_name": "hur",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the water vapour pressure as a percentage of the value at which the air becomes saturated (the point at which water vapour begins to condense into liquid water or deposition into ice). For temperatures over 0°C (273.15 K) it is calculated for saturation over water. At temperatures below -23°C it is calculated for saturation over ice. Between -23°C and 0°C this parameter is calculated by interpolating between the ice and water values using a quadratic function.",
@@ -163,7 +161,6 @@
       "_cf_variable_name": "snr",
       "_corrected_units": "kg m-3",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "The ECMWF Integrated Forecasting System (IFS) represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
@@ -176,7 +173,6 @@
       "_cf_variable_name": "snw",
       "_corrected_units": "Mg m-2",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "comment": "Liquid water equivalent of snow converted to snow amount using a water density of 1000 kg/m³.",
@@ -191,7 +187,6 @@
         "era5-land": "m"
       },
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "Snow thickness in m of liquid water equivalent converted to snow thickness using a water density of 1000 kg/m³ and a snow density of 300 kg/m³.",
@@ -208,6 +203,7 @@
         }
       },
       "_corrected_units": "m",
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_invert_sign": false,
       "_offset_time": {
         "era5-land": true,
@@ -217,6 +213,7 @@
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
+        "era5-single-levels-monthly-means": "amount2rate",
         "era5-single-levels-preliminary-back-extension": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
@@ -255,7 +252,6 @@
       "_cf_variable_name": "ps",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the pressure (force per unit area) of the atmosphere on the surface of land, sea and in-land water. It is a measure of the weight of all the air in a column vertically above the area of the Earth's surface represented at a fixed point.",
@@ -340,7 +336,11 @@
       "_cf_variable_name": "rls",
       "_corrected_units": "J m-2",
       "_invert_sign": false,
-      "_offset_time": true,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -384,7 +384,6 @@
       "_cf_variable_name": "mrsolv1",
       "_corrected_units": "1",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the volume of water in soil layer 1 (0 - 7cm, the surface is at 0cm).",
@@ -396,7 +395,6 @@
       "_cf_variable_name": "mrsolv2",
       "_corrected_units": "1",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the volume of water in soil layer 2 (7 - 28cm, the surface is at 0cm).",
@@ -408,7 +406,6 @@
       "_cf_variable_name": "mrsolv3",
       "_corrected_units": "1",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the volume of water in soil layer 3 (28 - 100cm, the surface is at 0cm).",
@@ -420,7 +417,6 @@
       "_cf_variable_name": "mrsolv4",
       "_corrected_units": "1",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the volume of water in soil layer 4 (100 - 289cm, the surface is at 0cm).",
@@ -432,7 +428,6 @@
       "_cf_variable_name": "tas",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "description": "This parameter is the temperature of air at 2m above the surface of land, sea or in-land waters. 2m temperature is calculated by interpolating between the lowest model level and the Earth's surface, taking account of the atmospheric conditions.",
@@ -448,9 +443,16 @@
           "min": "0 kg m-2 s-1"
         }
       },
-      "_corrected_units": false,
+      "_corrected_units": {
+        "era5-single-levels-monthly-means": "m d-1"
+      },
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_invert_sign": false,
-      "_offset_time": true,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
       "_transformation": {
         "era5-land": "deaccumulate",
         "era5-single-levels": "amount2rate",
@@ -467,7 +469,6 @@
       "_cf_variable_name": "uas",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "comments": "Care should be taken when comparing this parameter with observations, because wind observations vary on small space and time scales and are affected by the local terrain, vegetation and buildings that are represented only on average in the ECMWF Integrated Forecasting System.",
@@ -480,7 +481,6 @@
       "_cf_variable_name": "vas",
       "_corrected_units": false,
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "comments": "Care should be taken when comparing this parameter with observations, because wind observations vary on small space and time scales and are affected by the local terrain, vegetation and buildings that are represented only on average in the ECMWF Integrated Forecasting System.",
@@ -493,7 +493,6 @@
       "_cf_variable_name": "z",
       "_corrected_units": "m2 s-2",
       "_invert_sign": false,
-      "_offset_time": false,
       "_transformation": false,
       "cell_methods": "time: point",
       "comment": "The geopotential height can be calculated by dividing the geopotential by the Earth's gravitational acceleration, g (=9.80665 m s-2).",
@@ -501,6 +500,94 @@
       "long_name": "Geopotential",
       "standard_name": "geopotential",
       "units": "m2 s-2"
+    },
+    "sst": {
+      "_cf_variable_name": "tos",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter (SST) is the temperature of sea water near the surface. In ERA5, this parameter is a foundation SST, which means there are no variations due to the daily cycle of the sun (diurnal variations).",
+      "long_name": "Sea surface temperature",
+      "standard_name": "sea_surface_temperature",
+      "units": "degC"
+    },
+    "siconc": {
+      "_cf_variable_name": "siconc",
+      "_corrected_units": "1",
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter is the percentage of a grid box which is covered by sea ice. Sea ice can only occur in a grid box which includes ocean or inland water according to the land-sea mask and lake cover, at the resolution being used.",
+      "long_name": "Sea ice area percentage",
+      "standard_name": "sea_ice_area_fraction",
+      "units": "%"
+    },
+    "cp": {
+      "_cf_variable_name": "prc",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_corrected_units": {
+        "era5-single-levels-monthly-means": "m d-1"
+      },
+      "_corrected_standard_name": "lwe_thickness_of_convective_precipitation_amount",
+      "_invert_sign": false,
+      "_offset_time": {
+        "era5-land": true,
+        "era5-single-levels": true,
+        "era5-single-levels-preliminary-back-extension": true
+      },
+      "_transformation": {
+        "era5-land": "deaccumulate",
+        "era5-single-levels": "amount2rate",
+        "era5-single-levels-preliminary-back-extension": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "Convective precipitation thickness converted to mass flux using a water density of 1000 kg/m³.",
+      "long_name": "Convective precipitation",
+      "standard_name": "convective_precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "cape": {
+      "_cf_variable_name": "CAPE",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This is an indication of the instability (or stability) of the atmosphere and can be used to assess the potential for the development of convection, which can lead to heavy rainfall, thunderstorms and other severe weather. ",
+      "long_name": "Convective available potential energy",
+      "standard_name": "atmosphere_convective_available_potential_energy_wrt_surface",
+      "units": "J kg-1"
+    },
+    "u": {
+      "_cf_variable_name": "ua",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "comments": "Care should be taken when comparing model parameters with observations, because observations are often local to a particular point in space and time, rather than representing averages over a model grid box.",
+      "description": "This parameter is the eastward component of the wind at specified pressure levels. It is the horizontal speed of air moving towards the east, in metres per second.",
+      "long_name": "Eastward wind",
+      "original_long_name": "U component of wind",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
+    "v": {
+      "_cf_variable_name": "va",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "comments": "Care should be taken when comparing model parameters with observations, because observations are often local to a particular point in space and time, rather than representing averages over a model grid box.",
+      "description": "This parameter is the northward component of the wind at specified pressure levels. It is the horizontal speed of air moving towards the north, in metres per second.",
+      "long_name": "Northward wind",
+      "original_long_name": "V component of wind",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
     }
   }
 }

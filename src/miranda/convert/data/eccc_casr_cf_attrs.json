@@ -1,0 +1,328 @@
+{
+  "Header": {
+    "Conventions": "CF-1.8",
+    "_Remarks": {
+      "casr-v31": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period."
+    },
+    "_contact": {
+      "casr-v31": ""
+    },
+    "_doi": {
+      "casr-v31": "https://doi.org/10.5194/hess-25-4917-2021"
+    },
+    "_miranda_version": true,
+    "_remove_attrs": {
+      "casr-v31": [
+        "",
+        ""
+      ]
+    },
+    "_source": {
+      "casr-v31": "CaSR v3.1"
+    },
+    "_version": {
+      "casr-v31": "v3.1"
+    },
+    "_prefix": {
+      "casr-v31": "CaSR_v3.1_"
+    },
+    "institution": "GovCan",
+    "licence_type": "open",
+    "license": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+    "organisation": "ECCC",
+    "processing_level": "raw",
+    "realm": "atmos",
+    "table_date": "2025-02-13",
+    "table_id": "eccc",
+    "terms_of_use": "Canadian Surface Reanalysis data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
+    "type": "reconstruction"
+  },
+  "dimensions": {
+    "time": {
+      "_ensure_correct_time": {
+        "casr-v31": "1H"
+      },
+      "_strict_time": true,
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "A_PR0_SFC": {
+      "_cf_variable_name": "pr",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "P_FB_SFC": {
+      "_cf_variable_name": "rsds",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "long_name": "Surface Downwelling Shortwave Radiation",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "units": "W m-2"
+    },
+    "P_FI_SFC": {
+      "_cf_variable_name": "rlds",
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "long_name": "Surface Downwelling Longwave Radiation",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "units": "W m-2"
+    },
+    "P_GZ_SFC": {
+      "_cf_variable_name": "zcrd10000",
+      "cell_methods": "time: point",
+      "description": "Surface coordinate (10000) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
+      "long_name": "Model vertical grid coordinate at the surface",
+      "units": "m"
+    },
+    "P_HR_1.5m": {
+      "_cf_variable_name": "hurs",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Relative Humidity (1.5m)",
+      "standard_name": "relative_humidity",
+      "units": "%"
+    },
+    "P_HU_1.5m": {
+      "_cf_variable_name": "huss",
+      "_corrected_units": {
+        "casr-v31": "1"
+      },
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Specific Humidity (1.5m)",
+      "standard_name": "specific_humidity",
+      "units": "1"
+    },
+    "P_P0_SFC": {
+      "_cf_variable_name": "ps",
+      "_corrected_units": {
+        "casr-v31": "mbar"
+      },
+      "cell_methods": "time: point",
+      "long_name": "Surface Air Pressure",
+      "standard_name": "surface_air_pressure",
+      "units": "Pa"
+    },
+    "P_PN_SFC": {
+      "_cf_variable_name": "psl",
+      "cell_methods": "time: point",
+      "_corrected_units": {
+        "casr-v31": "mbar"
+      },
+      "long_name": "Sea Level Pressure",
+      "standard_name": "air_pressure_at_sea_level",
+      "units": "Pa"
+    },
+    "P_PR0_SFC": {
+      "_cf_variable_name": "prmod",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "description": "This field differs from the 'pr' variable. It is the model background field subsequently used by CaPA to produce 'pr'.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "P_TD_1.5m": {
+      "_cf_variable_name": "tdps",
+      "_corrected_units": {
+        "casr-v31": "degC"
+      },
+      "cell_methods": "time: point",
+      "long_name": "1.5 metre dewpoint temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "P_TT_1.5m": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": {
+        "casr-v31": "degC"
+      },
+      "cell_methods": "time: point",
+      "long_name": "1.5 metre temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "P_UUC_10m": {
+      "_cf_variable_name": "uas",
+      "cell_methods": "time: point",
+      "long_name": "Eastward Near-Surface Wind (10m)",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
+    "P_UVC_10m": {
+      "_cf_variable_name": "sfcWind",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Wind Speed (10m)",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "P_VVC_10m": {
+      "_cf_variable_name": "vas",
+      "cell_methods": "time: point",
+      "long_name": "Northward Near-Surface Wind (10m)",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
+    },
+    "P_WDC_10m": {
+      "_cf_variable_name": "winddir",
+      "cell_methods": "time: point",
+      "long_name": "Near-Surface Meteorological Wind Direction (10m)",
+      "standard_name": "wind_from_direction",
+      "units": "deg"
+    },
+    "P_SD_LAND": {
+      "_cf_variable_name": "sndLand",
+      "cell_methods": "time: point",
+      "long_name": "Snow Depth on Land",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "P_SWE_LAND": {
+      "_cf_variable_name": "sweLand",
+      "cell_methods": "time: point",
+      "long_name": "Snow Water Equivalent on Land",
+      "standard_name": "lwe_thickness_of_surface_snow_amount",
+      "units": "m"
+    },
+    "P_FR0_SFC": {
+      "_cf_variable_name": "prfr",
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Freezing Rain using a density of 1000 kg/m³.",
+      "long_name": "Freezing Rain",
+      "standard_name": "freezing_rain",
+      "units": "kg m-2 s-1"
+    },
+    "P_PE0_SFC": {
+      "_cf_variable_name": "prrp",
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Refrozen Rain using a density of 1000 kg/m³.",
+      "long_name": "Refrozen Rain",
+      "standard_name": "refrozen_rain",
+      "units": "kg m-2 s-1"
+    },
+    "P_RN0_SFC": {
+      "_cf_variable_name": "prra",
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Liquid Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Liquid Precipitation",
+      "standard_name": "rainfall_flux",
+      "units": "kg m-2 s-1"
+    },
+    "P_SN0_SFC": {
+      "_cf_variable_name": "prsn",
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Snow amount using a density of 1000 kg/m³.",
+      "long_name": "Snowfall Flux",
+      "standard_name": "snowfall_flux",
+      "units": "kg m-2 s-1"
+    },
+    "A_CFIA_SFC": {
+      "long_name": "Analysis: Confidence Index of CaPA 24h Analysis at surface",
+      "standard_name": "Confidence Index of CaPA 24h Analysis",
+      "units": "%"
+    },
+    "P_GZ_09975": {
+      "_cf_variable_name": "zcrd09975",
+      "cell_methods": "time: point",
+      "description": "Corresponding coordinate (09975) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
+      "long_name": "Model vertical grid coordinate",
+      "units": "m"
+    },
+    "P_HR_09975": {
+      "_cf_variable_name": "hur",
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "20 metre Relative Humidity (height is approximate :  see description)",
+      "standard_name": "relative_humidity",
+      "units": "%"
+    },
+    "P_HU_09975": {
+      "_cf_variable_name": "hus",
+      "_corrected_units": {
+        "casr-v31": "1"
+      },
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "20 metre Specific Humidity (height is approximate :  see description)",
+      "standard_name": "specific_humidity",
+      "units": "1"
+    },
+    "P_TD_09975": {
+      "_cf_variable_name": "tdp",
+      "_corrected_units": {
+        "casr-v31": "degC"
+      },
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "20 metre dewpoint temperature (height is approximate :  see description)",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "P_UUC_09975": {
+      "_cf_variable_name": "ua",
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Eastward Wind (20m). Height is approximate, see description.",
+      "standard_name": "eastward_wind",
+      "units": "m s-1"
+    },
+    "P_UVC_09975": {
+      "_cf_variable_name": "20mWind",
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Wind Speed (20m). Height is approximate, see description.",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "P_VVC_09975": {
+      "_cf_variable_name": "va",
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Northward Wind (20m). Height is approximate, see description.",
+      "standard_name": "northward_wind",
+      "units": "m s-1"
+    },
+    "P_WDC_09975": {
+      "_cf_variable_name": "20mWinddir",
+      "cell_methods": "time: point",
+      "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
+      "long_name": "Meteorological Wind Direction (20m)",
+      "standard_name": "wind_from_direction",
+      "units": "deg"
+    }
+  }
+}
