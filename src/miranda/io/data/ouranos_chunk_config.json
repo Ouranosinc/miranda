@@ -37,6 +37,20 @@
       }
     }
   },
+  "stations": {
+    "1hr": {
+      "default": {
+        "station": 50,
+        "time": "5 years"
+      }
+    },
+    "day": {
+      "default": {
+        "station": 200,
+        "time": "10 years"
+      }
+    }
+  },
   "time": {
     "1hr": {
       "default": {

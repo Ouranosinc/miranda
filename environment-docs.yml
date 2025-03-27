@@ -3,17 +3,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python >=3.12,<3.13
-  - sphinx >=7.0.0
-  - pandoc
+  - python >=3.9,<3.13
+  # Docs
   - furo >=2023.07.26
   - ipython
   - ipykernel
   - nbsphinx
-  - pygments <2.19 # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
-  - sphinx-autoapi
+  - sphinx >=7.1.0
   - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-intl
   - sphinx-mdinclude
-  - sphinxcontrib-napoleon

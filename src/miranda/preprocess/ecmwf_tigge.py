@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools as it
-import logging.config
+import logging
 import multiprocessing
 import os
 import shutil
@@ -12,10 +12,6 @@ from pathlib import Path
 
 import xarray
 from dask.diagnostics import ProgressBar
-
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["tigge_convert"]
 
