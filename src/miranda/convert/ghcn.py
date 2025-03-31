@@ -48,7 +48,7 @@ q_flag_dict = {
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
-    ghcnh=dict(freq="hourly", filetype=".psv"),
+    #ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
 )
 
 
@@ -95,9 +95,10 @@ def get_ghcn_raw(
             url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
 
             outfile = outfolder / f"{station_id}.csv"
-        elif station_type == "hourly":
-            url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
-            outfile = outfolder / f"GHCNh_{station_id}_por.psv"
+        # TODO ghcnh not implemented yet
+        # elif station_type == "hourly":
+        #     url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
+        #     outfile = outfolder / f"GHCNh_{station_id}_por.psv"
         else:
             msg = f"unknown station type : {station_type}"
             raise ValueError(msg)
@@ -199,54 +200,59 @@ def create_ghcn_xarray(
                         ds[vv] = ds[vv].astype("float32")
 
                 data.append(ds)
-        elif project == "ghcnh":
-            df = pd.read_csv(station_id, delimiter="|")
-            df.columns = df.columns.str.lower()
-            # df.element = df.element.str.lower()
-            # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
-            df.loc[imask, "q_flag"] = nan
-            varlist = [k for k in varmeta.keys() if k in df.element.unique()]
-            if varlist:
-                df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
-                df = df.set_index(["id", "time"])
-                dslist = []
-                for var in varlist:
-                    ds1 = df.loc[df.element == var].to_xarray()
+        # TODO ghcnh not implemented yet
+        # elif project == "ghcnh":
+        #     df = pd.read_csv(station_id, delimiter="|")
+        #     df.columns = df.columns.str.lower()
+        #     # df.element = df.element.str.lower()
+        #     # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
+        #     df.loc[imask, "q_flag"] = nan
+        #     varlist = [k for k in varmeta.keys() if k in df.element.unique()]
+        #     if varlist:
+        #         df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
+        #         df = df.set_index(["id", "time"])
+        #         dslist = []
+        #         for var in varlist:
+        #             ds1 = df.loc[df.element == var].to_xarray()
 
-                    ds1 = ds1.rename({"data_value": var, "id": "station"})
-                    drop_vars = [
-                        v
-                        for v in ds1.data_vars
-                        if v not in varlist and v not in ["q_flag"]
-                    ]
-                    ds1 = ds1.drop_vars(drop_vars)
-                    ds1 = ds1.rename(
-                        {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
-                    )
+        #             ds1 = ds1.rename({"data_value": var, "id": "station"})
+        #             drop_vars = [
+        #                 v
+        #                 for v in ds1.data_vars
+        #                 if v not in varlist and v not in ["q_flag"]
+        #             ]
+        #             ds1 = ds1.drop_vars(drop_vars)
+        #             ds1 = ds1.rename(
+        #                 {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
+        #             )
 
-                    dslist.append(ds1)
-                ds = xr.merge(dslist)
+        #             dslist.append(ds1)
+        #         ds = xr.merge(dslist)
 
-                del dslist
-                df_stat = statmeta[statmeta.station_id == station_id.stem]
-                if len(df_stat) != 1:
-                    raise ValueError(
-                        f"expected a single station metadata for {station_id.stem}"
-                    )
-                for cc in [c for c in df_stat.columns if c != "station_id"]:
-                    if cc not in ds.coords:
-                        ds = ds.assign_coords(
-                            {
-                                cc: xr.DataArray(
-                                    df_stat[cc].values, coords=ds.station.coords
-                                )
-                            }
-                        )
-                for vv in ds.data_vars:
-                    if ds[vv].dtype == "float64":
-                        ds[vv] = ds[vv].astype("float32")
+        #         del dslist
+        #         df_stat = statmeta[statmeta.station_id == station_id.stem]
+        #         if len(df_stat) != 1:
+        #             raise ValueError(
+        #                 f"expected a single station metadata for {station_id.stem}"
+        #             )
+        #         for cc in [c for c in df_stat.columns if c != "station_id"]:
+        #             if cc not in ds.coords:
+        #                 ds = ds.assign_coords(
+        #                     {
+        #                         cc: xr.DataArray(
+        #                             df_stat[cc].values, coords=ds.station.coords
+        #                         )
+        #                     }
+        #                 )
+        #         for vv in ds.data_vars:
+        #             if ds[vv].dtype == "float64":
+        #                 ds[vv] = ds[vv].astype("float32")
 
-                data.append(ds)
+        #         data.append(ds)
+        else:
+            msg = f"Unknown project {project}"
+            raise ValueError(msg)
+            
     if len(data) == 0:
         return None
     return xr.concat(data, dim="station")
@@ -338,36 +344,36 @@ def _get_ghcn_stations(
                 names=[d for d in dtypes.keys()],
                 converters=dtypes,
             )
-
-    elif project == "ghcnh":
-        project
-        station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
-        dtypes = {
-            "station_id": str,
-            "lat": float,
-            "lon": float,
-            "elevation": float,
-            "state": str,
-            "station_name": str,
-            "gsn_flag": str,
-            "hcn_flag": str,
-            "wmo_id": str,
-        }
-        try:
-            station_df = pd.read_fwf(
-                station_url,
-                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
-                converters=dtypes,
-            )
-        except ValueError:
-            statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
-            station_df = pd.read_fwf(
-                statfile,
-                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
-                converters=dtypes,
-            )
+    #TODO ghcnh not implemented yet
+    # elif project == "ghcnh":
+    #     project
+    #     station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
+    #     dtypes = {
+    #         "station_id": str,
+    #         "lat": float,
+    #         "lon": float,
+    #         "elevation": float,
+    #         "state": str,
+    #         "station_name": str,
+    #         "gsn_flag": str,
+    #         "hcn_flag": str,
+    #         "wmo_id": str,
+    #     }
+    #     try:
+    #         station_df = pd.read_fwf(
+    #             station_url,
+    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+    #             names=[d for d in dtypes.keys()],
+    #             converters=dtypes,
+    #         )
+    #     except ValueError:
+    #         statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
+    #         station_df = pd.read_fwf(
+    #             statfile,
+    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+    #             names=[d for d in dtypes.keys()],
+    #             converters=dtypes,
+    #         )
 
         # logging.info("ghcnh not implemented yet")
         # exit()
@@ -430,12 +436,15 @@ def convert_ghcn_bychunks(
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
-
-    elif project == "ghcnh":
-        readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-        outchunks = dict(time=(365 * 4) + 1, station=nstations)
+    # TODO ghcnh not implemented yet
+    # elif project == "ghcnh":
+    #     readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
+    #     outchunks = dict(time=(365 * 4) + 1, station=nstations)
         # logging.info("ghcnh not implemented yet")
         # exit()
+    else:
+        msg = f"Unknown project {project}"
+        raise ValueError(msg)
     station_df = _get_ghcn_stations(
         project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
     )
