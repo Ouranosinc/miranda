@@ -108,6 +108,14 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(
             data_folder.joinpath("emdna_cf_attrs.json").open("r")
         )
+    elif project in ["ORRC"]:
+        metadata_definition = json.load(
+            data_folder.joinpath("ouranos_orrc_cf_attrs.json").open("r")
+        )
+    elif project in ["casr-v31"]:
+        metadata_definition = json.load(
+            data_folder.joinpath("eccc_casr_cf_attrs.json").open("r")
+        )
     else:
         msg = f"Project `{project}` not supported."
         raise NotImplementedError(msg)
@@ -364,6 +372,14 @@ def _correct_units_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     return d
 
 
+def _correct_standard_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_corrected_standard_name"
+    for var, val in _iter_entry_key(d, m, "variables", key, p):
+        if val:
+            d[var].attrs["standard_name"] = val
+    return d
+
+
 # for de-accumulation or conversion to flux
 def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     key = "_transformation"
@@ -469,7 +485,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
-    for vv, offs in _iter_entry_key(d, m, "dimensions", key, p):
+    for vv, offs in _iter_entry_key(d, m, "variables", key, p):
         if offs:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
@@ -542,7 +558,7 @@ def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit, context="hydro")
+                d[vv] = units.convert_units_to(d[vv], unit)
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))
@@ -636,6 +652,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             correct_times = correct_time_entry.get(p)
             if isinstance(correct_times, list):
                 correct_times = [parse_offset(t)[1] for t in correct_times]
+            elif isinstance(correct_times, str):
+                correct_times = [parse_offset(correct_times)[1]]
             if correct_times is None:
                 msg = f"No expected times set for specified project `{p}`."
                 logging.warning(msg)
@@ -860,7 +878,8 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 del d.attrs[attribute]
         elif field == "_remove_attrs":
             for ff in attr_treatment:
-                del d.attrs[ff]
+                if ff in d.attrs:
+                    del d.attrs[ff]
         else:
             if field[1:] in d.attrs:
                 msg = f"Overwriting `{field[1:]}` based on JSON configuration."
@@ -905,6 +924,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     metadata_definition = load_json_data_mappings(project)
     ds = _multiplier(ds, project, metadata_definition)
     ds = _correct_units_names(ds, project, metadata_definition)
+    ds = _correct_standard_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
@@ -913,7 +933,6 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = _ensure_correct_time(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
-
     ds = metadata_conversion(ds, project, metadata_definition)
 
     ds.attrs["history"] = (
