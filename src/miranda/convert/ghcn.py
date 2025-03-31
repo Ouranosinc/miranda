@@ -48,7 +48,7 @@ q_flag_dict = {
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
-    #ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
+    # ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
 )
 
 
@@ -252,7 +252,7 @@ def create_ghcn_xarray(
         else:
             msg = f"Unknown project {project}"
             raise ValueError(msg)
-            
+
     if len(data) == 0:
         return None
     return xr.concat(data, dim="station")
@@ -344,7 +344,7 @@ def _get_ghcn_stations(
                 names=[d for d in dtypes.keys()],
                 converters=dtypes,
             )
-    #TODO ghcnh not implemented yet
+    # TODO ghcnh not implemented yet
     # elif project == "ghcnh":
     #     project
     #     station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
@@ -375,8 +375,8 @@ def _get_ghcn_stations(
     #             converters=dtypes,
     #         )
 
-        # logging.info("ghcnh not implemented yet")
-        # exit()
+    # logging.info("ghcnh not implemented yet")
+    # exit()
     else:
         raise ValueError(f"unknown project values {project}")
     if lon_bnds:  # and lat_bnds:
@@ -440,8 +440,8 @@ def convert_ghcn_bychunks(
     # elif project == "ghcnh":
     #     readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
     #     outchunks = dict(time=(365 * 4) + 1, station=nstations)
-        # logging.info("ghcnh not implemented yet")
-        # exit()
+    # logging.info("ghcnh not implemented yet")
+    # exit()
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
