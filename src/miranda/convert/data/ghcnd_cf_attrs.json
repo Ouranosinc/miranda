@@ -29,6 +29,7 @@
   },
   "variables": {
     "prcp": {
+      "_context": "hydro",
       "_cf_variable_name": "pr",
       "_corrected_units": "mm",
       "_transformation": "amount2rate",
