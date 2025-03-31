@@ -554,11 +554,11 @@ def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
     if "time" in m["dimensions"].keys():
         if m["dimensions"]["time"].get("units"):
             d["time"]["units"] = m["dimensions"]["time"]["units"]
-
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
+            context = _get_section_entry_key(m, "variables", vv, "_context", None)
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit)
+                d[vv] = units.convert_units_to(d[vv], unit, context=context)
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))
@@ -804,7 +804,11 @@ def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d = d.rename({orig_var_name: cf_name})
             d[cf_name].attrs.update(dict(original_variable=orig_var_name))
             del d[cf_name].attrs["_cf_variable_name"]
-
+        # remove attrs starting with "_"
+    for vv in d.data_vars:
+        for field in list(d[vv].attrs.keys()):
+            if field.startswith("_"):
+                del d[vv].attrs[field]
     return d
 
 
