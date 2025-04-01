@@ -16,7 +16,6 @@ import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import nan
-from shapely.geometry import box
 
 from miranda.convert._data_corrections import (
     dataset_conversion,
@@ -449,6 +448,7 @@ def convert_ghcn_bychunks(
     """
     try:
         import geopandas as gpd
+        from shapely.geometry import box
     except ImportError:
         msg = "GNCN conversion requires the GIS libraries. Install them with `$ pip install miranda[gis]`."
         logging.error(msg)
