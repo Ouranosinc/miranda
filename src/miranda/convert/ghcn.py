@@ -7,8 +7,8 @@ import logging.config
 import multiprocessing as mp
 import os
 import shutil
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 from zoneinfo import ZoneInfo
 
 import geopandas as gpd
@@ -267,7 +267,26 @@ def download_ghcn(
     timeout: int | None = None,
     n_workers: int | None = None,
 ) -> None:
+    """
+    Download GHCN data.
 
+    Parameters
+    ----------
+    project : str
+        Project name.
+    working_folder : str or os.PathLink[str], optional
+        Temporary files folder.
+    lon_bnds : list of float, optional
+        Longitude boundaries.
+    lat_bnds : list of float, optional
+        Latitude boundaries.
+    update_raw : bool
+        Whether to update the raw files or not.
+    timeout : int, optional
+        Request timeout in seconds.
+    n_workers : int, optional
+        Number of workers to use. Not implemented.
+    """
     station_df = _get_ghcn_stations(
         project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
     )
@@ -416,6 +435,10 @@ def convert_ghcn_bychunks(
         Start year. Optional.
     end_year : int, optional
         End year. Optional.
+    lon_bnds : list of float, optional
+        Longitude boundaries.
+    lat_bnds : list of float, optional
+        Latitude boundaries.
     n_workers : int
         Number of workers to use. Default is 4.
     nstations : int

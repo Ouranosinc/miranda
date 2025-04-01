@@ -13,7 +13,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.8.0"
+requires-python = ">=3.9.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
 license = {file = "LICENSE"}
 classifiers = [
