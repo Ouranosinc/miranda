@@ -11,7 +11,6 @@ from collections.abc import Generator
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import geopandas as gpd
 import pandas as pd
 import requests
 import xarray as xr
@@ -423,6 +422,8 @@ def convert_ghcn_bychunks(
     """
     Convert GHCN data to Zarr format.
 
+    Requires GIS libraries (geopandas).
+
     Parameters
     ----------
     project : str
@@ -446,6 +447,13 @@ def convert_ghcn_bychunks(
     update_from_raw : bool
         Whether to update from raw data.
     """
+    try:
+        import geopandas as gpd
+    except ImportError:
+        msg = "GNCN conversion requires the GIS libraries. Install them with `$ pip install miranda[gis]`."
+        logging.error(msg)
+        raise
+
     var_attrs = load_json_data_mappings(project=project)["variables"]
     if cfvariable_list:
         var_attrs = {
