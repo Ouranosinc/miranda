@@ -1,7 +1,6 @@
 name: miranda
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python >=3.12,<3.13
   - sphinx >=7.0.0
@@ -10,8 +9,6 @@ dependencies:
   - ipython
   - ipykernel
   - nbsphinx
-  - pygments <2.19 # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
-  - sphinx-autoapi
   - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-intl
