@@ -556,7 +556,7 @@ def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
             d["time"]["units"] = m["dimensions"]["time"]["units"]
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
-            context = _get_section_entry_key(m, "variables", vv, "_context", None)
+            context = _get_section_entry_key(m, "variables", vv, "_units_context", None)
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], unit, context=context)
             prev_history = d.attrs.get("history", "")
@@ -912,8 +912,8 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     return d
 
 
-def _multiplier(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    key = "_multiplier"
+def _scale_factor(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_scale_factor"
     for var, val in _iter_entry_key(d, m, "variables", key, p):
         if val:
             d[var] = d[var] * val
@@ -926,7 +926,7 @@ def _multiplier(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
-    ds = _multiplier(ds, project, metadata_definition)
+    ds = _scale_factor(ds, project, metadata_definition)
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _correct_standard_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
