@@ -556,7 +556,7 @@ def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
             d["time"]["units"] = m["dimensions"]["time"]["units"]
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
-            context = _get_section_entry_key(m, "variables", vv, "_context", None)
+            context = _get_section_entry_key(m, "variables", vv, "__units_context", None)
             with xr.set_options(keep_attrs=True):
                 d[vv] = units.convert_units_to(d[vv], unit, context=context)
             prev_history = d.attrs.get("history", "")
