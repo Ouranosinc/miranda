@@ -33,7 +33,7 @@
       "_cf_variable_name": "pr",
       "_corrected_units": "mm",
       "_transformation": "amount2rate",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
       "long_name": "Precipitation",
@@ -60,7 +60,7 @@
     "tmax": {
       "_cf_variable_name": "tasmax",
       "_corrected_units": "degC",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: max (interval: 1 day)",
       "long_name": "Daily Maximum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
@@ -69,7 +69,7 @@
     "tmin": {
       "_cf_variable_name": "tasmin",
       "_corrected_units": "degC",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: min (interval: 1 day)",
       "long_name": "Daily Minimum Near-Surface Air Temperature",
       "standard_name": "air_temperature",
@@ -78,7 +78,7 @@
     "tavg": {
       "_cf_variable_name": "tas",
       "_corrected_units": "degC",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
       "long_name": "Daily Mean Near-Surface Air Temperature",
       "standard_name": "air_temperature",
@@ -87,7 +87,7 @@
     "adpt": {
       "_cf_variable_name": "tdps",
       "_corrected_units": "degC",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
       "description": "This parameter is the temperature to which the air, at 2 metres above the surface of the Earth, would have to be cooled for saturation to occur. It is a measure of the humidity of the air. Combined with temperature and pressure, it can be used to calculate the relative humidity. 2m dew point temperature is calculated by interpolating between the lowest model level and the Earth's surface, taking account of the atmospheric conditions.",
       "long_name": "2 metre dewpoint temperature",
@@ -98,7 +98,7 @@
       "_cf_variable_name": "sfcWind",
       "long_name": "Near-Surface Wind Speed",
       "_corrected_units": "m s-1",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
       "standard_name": "wind_speed",
       "units": "m s-1"
@@ -114,7 +114,7 @@
     "aslp": {
       "_cf_variable_name": "psl",
       "_corrected_units": "hPa",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
       "long_name": "Sea Level Pressure",
       "standard_name": "air_pressure_at_sea_level",
@@ -123,7 +123,7 @@
     "astp": {
       "_cf_variable_name": "ps",
       "_corrected_units": "hPa",
-      "_multiplier": 0.1,
+      "_scale_factor": 0.1,
       "cell_methods": "time: mean (interval: 1 day)",
       "long_name": "Surface Air Pressure",
       "standard_name": "surface_air_pressure",
