@@ -52,7 +52,15 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
     """
     data_folder = Path(__file__).resolve().parent / "data"
 
-    if project.startswith("era5"):
+    if project == "ghcnd":
+        metadata_definition = json.load(
+            data_folder.joinpath("ghcnd_cf_attrs.json").open("r")
+        )
+    elif project == "ghcnh":
+        metadata_definition = json.load(
+            data_folder.joinpath("ghcnh_cf_attrs.json").open("r")
+        )
+    elif project.startswith("era5"):
         metadata_definition = json.load(
             data_folder.joinpath("ecmwf_cf_attrs.json").open("r")
         )
@@ -417,10 +425,8 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
                 logging.info(msg)
                 with xr.set_options(keep_attrs=True):
-                    out = units.amount2rate(
-                        d[vv],
-                        out_units=m["variables"][vv]["units"],
-                    )
+                    out = units.amount2rate(d[vv])
+
                     d_out[vv] = out
                 converted.append(vv)
             elif isinstance(trans, str):
@@ -548,11 +554,11 @@ def _units_cf_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
     if "time" in m["dimensions"].keys():
         if m["dimensions"]["time"].get("units"):
             d["time"]["units"] = m["dimensions"]["time"]["units"]
-
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
         if unit:
+            context = _get_section_entry_key(m, "variables", vv, "_units_context", None)
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit)
+                d[vv] = units.convert_units_to(d[vv], unit, context=context)
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))
@@ -734,14 +740,14 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if "time" in d.dims and transpose_order:
         transpose_order.insert(0, "time")
         transpose_order.extend(list(set(d.dims) - set(transpose_order)))
-
-    d = d.transpose(*transpose_order)
-    d = d.sortby(transpose_order)
-    # add history only when we actually changed something
-    if any([list(d[v].dims) != transpose_order for v in d.data_vars]):
-        prev_history = d.attrs.get("history", "")
-        history = f"Transposed dimension order to {transpose_order}. {prev_history}"
-        d.attrs.update(dict(history=history))
+    if transpose_order:
+        d = d.transpose(*transpose_order)
+        d = d.sortby(transpose_order)
+        # add history only when we actually changed something
+        if any([list(d[v].dims) != transpose_order for v in d.data_vars]):
+            prev_history = d.attrs.get("history", "")
+            history = f"Transposed dimension order to {transpose_order}. {prev_history}"
+            d.attrs.update(dict(history=history))
 
     # Add dimension original name and update attrs
     dim_descriptions = m["dimensions"]
@@ -798,7 +804,11 @@ def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d = d.rename({orig_var_name: cf_name})
             d[cf_name].attrs.update(dict(original_variable=orig_var_name))
             del d[cf_name].attrs["_cf_variable_name"]
-
+        # remove attrs starting with "_"
+    for vv in d.data_vars:
+        for field in list(d[vv].attrs.keys()):
+            if field.startswith("_"):
+                del d[vv].attrs[field]
     return d
 
 
@@ -902,17 +912,27 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     return d
 
 
+def _scale_factor(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_scale_factor"
+    for var, val in _iter_entry_key(d, m, "variables", key, p):
+        if val:
+            d[var] = d[var] * val
+            prev_history = d.attrs.get("history", "")
+            history = f"Multiplied raw value `{var}` by `{val}`. {prev_history}"
+            d.attrs.update(dict(history=history))
+    return d
+
+
 def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     """Convert variables to CF-compliant format"""
     metadata_definition = load_json_data_mappings(project)
-
+    ds = _scale_factor(ds, project, metadata_definition)
     ds = _correct_units_names(ds, project, metadata_definition)
     ds = _correct_standard_names(ds, project, metadata_definition)
     ds = _transform(ds, project, metadata_definition)
     ds = _invert_sign(ds, project, metadata_definition)
     ds = _units_cf_conversion(ds, metadata_definition)
     ds = _clip_values(ds, project, metadata_definition)
-
     ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
     ds = _offset_time(ds, project, metadata_definition)
