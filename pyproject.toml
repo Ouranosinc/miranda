@@ -59,7 +59,7 @@ dev = [
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
   "flit >=3.9.0,<4.0",
-  "isort ==5.13.2",
+  "isort ==6.0.1",
   "mypy",
   "numpydoc >=1.8.0",
   "pip >=25.0",
@@ -124,7 +124,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.6.0-dev.8"
+current_version = "0.6.0-dev.10"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -275,7 +275,9 @@ exclude = [
   '\.__enter__$',
   '\.__eq__$',
   '\.__exit__$',
-  '\.__repr__$'
+  '\.__repr__$',
+  # any object starting with an underscore is a private object
+  '\._\w+'
 ]
 override_SS05 = [
   # override SS05 to allow docstrings starting with these words

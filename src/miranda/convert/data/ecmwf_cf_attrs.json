@@ -197,6 +197,7 @@
       "units": "m"
     },
     "sf": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prsn",
       "_clip_values": {
         "all": {
@@ -438,6 +439,7 @@
       "units": "K"
     },
     "tp": {
+      "_units_context": "hydro",
       "_cf_variable_name": "pr",
       "_clip_values": {
         "all": {
@@ -526,6 +528,7 @@
       "units": "%"
     },
     "cp": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prc",
       "_clip_values": {
         "all": {

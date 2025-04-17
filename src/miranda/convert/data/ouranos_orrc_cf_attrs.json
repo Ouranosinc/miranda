@@ -50,6 +50,7 @@
   },
   "variables": {
     "A_PR_SFC": {
+      "_units_context": "hydro",
       "_cf_variable_name": "pr",
       "_clip_values": {
         "all": {
@@ -119,6 +120,7 @@
       "units": "Pa"
     },
     "P_PR_SFC": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prmod",
       "_clip_values": {
         "all": {

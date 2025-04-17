@@ -1,0 +1,110 @@
+{
+  "Header": {
+    "Conventions": "CF-1.8",
+    "_title": {
+      "ghcnh": "GHCN-Hourly"
+    },
+    "summary": {
+      "ghcnh": "The Global Historical Climatology Network hourly (GHCNh) is a next generation hourly/synoptic dataset that replaces the Integrated Surface Dataset (ISD). GHCNh consists of hourly and synoptic surface weather observations from fixed, land-based stations. This dataset is compiled from numerous data sources maintained by NOAA, the U.S. Air Force, and many other meteorological agencies (Met Services) around the world. These sources have been reformatted into a common data format and then harmonized into a set of unique period-of-record station files, which are then provided as GHCNh."
+    },
+    "keywords": "atmosphere, climatology, meteorology, precipitation, temperature, wind",
+    "id": "ghcn-hourly",
+    "naming_authority": "gov.noaa.ncdc",
+    "source": "GHCNh",
+    "institution": "NOAA",
+    "licence_type": "open",
+    "license": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication (https://creativecommons.org/publicdomain/zero/1.0/)",
+    "organisation": "NOAA",
+    "processing_level": "raw",
+    "realm": "atmos",
+    "type": "station-obs",
+    "doi": "https://doi.org/10.25921/jp3d-3v19",
+    "attribution": "Cite as: Menne, Matthew J.; Noone, Simon; Casey, Nancy W.; Dunn, Robert H.; McNeill, Shelley; Kantor, Diana; Thorne, Peter W.; Orcutt, Karen; Cunningham, Sam; Risavi, Nicholas. 2023. Global Historical Climatology Network-Hourly (GHCNh). NOAA National Centers for Environmental Information."
+  },
+  "dimensions": {
+    "time": {
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "precipitation": {
+      "_cf_variable_name": "pr",
+      "_corrected_units": "mm",
+      "_transformation": "amount2rate",
+      "cell_methods": "time: mean",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "snow_depth": {
+      "_cf_variable_name": "snd",
+      "_corrected_units": "mm",
+      "cell_methods": "time: mean",
+      "long_name": "Snow Depth",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    },
+    "temperature": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC",
+      "_scale_factor": 0.1,
+      "cell_methods": "time: mean",
+      "long_name": "Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "dew_point_temperature": {
+      "_cf_variable_name": "tdps",
+      "_corrected_units": "degC",
+      "_scale_factor": 0.1,
+      "cell_methods": "time: mean",
+      "description": "This parameter is the temperature to which the air, at 2 metres above the surface of the Earth, would have to be cooled for saturation to occur. It is a measure of the humidity of the air. Combined with temperature and pressure, it can be used to calculate the relative humidity. 2m dew point temperature is calculated by interpolating between the lowest model level and the Earth's surface, taking account of the atmospheric conditions.",
+      "long_name": "2 metre dewpoint temperature",
+      "standard_name": "dew_point_temperature",
+      "units": "K"
+    },
+    "wind_speed": {
+      "_cf_variable_name": "sfcWind",
+      "long_name": "Near-Surface Wind Speed",
+      "_corrected_units": "m s-1",
+      "cell_methods": "time: mean",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "wind_gust": {
+      "_cf_variable_name": "sfcWindmax",
+      "long_name": "Near-Surface Wind Speed",
+      "_corrected_units": "m s-1",
+      "cell_methods": "time: maximum",
+      "standard_name": "wind_speed",
+      "units": "m s-1"
+    },
+    "wind_direction": {
+      "_cf_variable_name": "winddir",
+      "_corrected_units": "degrees",
+      "cell_methods": "time: mean",
+      "long_name": "Near-Surface Wind Direction",
+      "standard_name": "wind_from_direction",
+      "units": "degrees"
+    },
+    "sea_level_pressure": {
+      "_cf_variable_name": "psl",
+      "_corrected_units": "hPa",
+      "cell_methods": "time: mean",
+      "long_name": "Sea Level Pressure",
+      "standard_name": "air_pressure_at_sea_level",
+      "units": "Pa"
+    },
+    "station_level_pressure": {
+      "_cf_variable_name": "ps",
+      "_corrected_units": "hPa",
+      "cell_methods": "time: mean",
+      "long_name": "Surface Air Pressure",
+      "standard_name": "surface_air_pressure",
+      "units": "Pa"
+    }
+  }
+}
