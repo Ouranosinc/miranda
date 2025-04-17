@@ -4,28 +4,37 @@
 Changelog
 =========
 
+.. _changes_0.6.0:
+
 v0.6.0 (unreleased)
 -------------------
-Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Aslı Beşe (:user:`aslibese`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `miranda` boilerplate code is now versioned with `cruft <https://cruft.github.io/cruft>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
 * Python3.8 support has been dropped in favor of Python3.9+.
+* The `miranda` library has undergone a significant refactoring to remove unused code and modules that were out of scope for the library.
+    * The modules `miranda.archive` and `miranda.remote` have been removed and will be moved to a separate project.
+    * Data treatment functions have been moved to `miranda.treatments`.
+    * Pre-processing logic and functions have been moved to `miranda.preprocess`.
 
 New features
 ^^^^^^^^^^^^
+* Conversions for variables in the `GHCN-D` weather station network dataset are now supported.
+* Conversion support has been added for the `ORRC`, `CaSR v3.1`, and `RDRS v2.1` datasets.
+* ECMWF: Added support for the `era5-single-levels-monthly-means` project.
+* ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`cp`, `cape`), and wind speed (`u`, `v`).
 * Aggregation operations now support more variables (`hur`, `hurs`, `huss`, `rlds`, `ta`, `tdp`, `ua`, `uas`, `va`, `vas`)
-* `RDRDv21` has been added as a dataset to be converted.
 * Minimum values of `0 kg m2 s-1` has been set for both `tp` and `sf` variables in ERA5 and ERA5-Land projects.
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
-* Added a new configuration for converting the NRCAN gridded climate dataset.
+* Added a new configuration for converting the NRCAN gridded climate dataset (`NRCANmet`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Removed modules ``miranda.archive`` and ``miranda.remote`` (split into separate project to be announced).
+* Removed modules ``miranda.archive`` and ``miranda.remote`` (split into a separate project yet to be published).
 
 Bug fixes
 ^^^^^^^^^
