@@ -8,6 +8,10 @@ from schema import And, Optional, Or, Regex, Schema, SchemaError
 
 __all__ = ["validate_json"]
 
+
+PROJECT_NAME_REGEX = r"^[a-zA-Z]\S+"
+VALID_TIME_FREQUENCIES = r"^(\d+)?(Y|YS|M|MS|W|D|H|T|min|S|L|ms|U|us|N)$"
+
 # Example schema
 _default = Schema(
     {
@@ -20,12 +24,22 @@ _default = Schema(
             "license": str,
             "license_type": Or("permissive", "proprietary"),
             "table_id": str,
-            Optional(Regex("^[a-zA-Z]")): str,
+            Optional(Regex(PROJECT_NAME_REGEX)): str,
             Optional("_frequency"): bool,
             Optional("_miranda_version"): bool,
-            Optional(Regex(r"^_")): {str: str},
+            Optional("_remove_attrs"): Or(
+                Regex(PROJECT_NAME_REGEX), {Regex(PROJECT_NAME_REGEX): Or(str, [str])}
+            ),
+            Optional(Regex(r"^_")): Or({str: str}, {str: {str: str}}),
         },
-        "dimensions": dict,
+        Optional("dimensions"): {
+            Optional("time"): {
+                Optional("_ensure_correct_time"): Or(
+                    Regex(VALID_TIME_FREQUENCIES),
+                    {Regex(PROJECT_NAME_REGEX): Regex(VALID_TIME_FREQUENCIES)},
+                )
+            }
+        },
         "variables": dict,
     }
 )
@@ -50,7 +64,7 @@ def validate_json(json_file: str | Path, _schema: Schema = _default) -> bool:
         True if the JSON file is valid, False otherwise.
     """
     try:
-        with open(json_file) as f:
+        with Path(json_file).open() as f:
             data = json.load(f)
         _schema.validate(data)
         return True
