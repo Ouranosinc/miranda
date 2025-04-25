@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path
 
-from schema import And, Optional, Regex, Schema, SchemaError, Or
+from schema import And, Optional, Or, Regex, Schema, SchemaError
 
 __all__ = ["validate_json"]
 
@@ -24,10 +24,9 @@ _default = Schema(
             Optional("_frequency"): bool,
             Optional("_miranda_version"): bool,
             Optional(Regex(r"^_")): {str: str},
-
         },
         "dimensions": dict,
-        "variables": dict
+        "variables": dict,
     }
 )
 
