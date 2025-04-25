@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import typing
 
 import pandas as pd
 from pandas._libs.tslibs import NaTType  # noqa
@@ -11,7 +10,7 @@ from schema import Literal, Optional, Or, Regex, Schema
 
 from miranda.cv import VALIDATION_ENABLED
 
-__all__ = ["url_validate"]
+__all__ = []
 
 if VALIDATION_ENABLED:
     from miranda.cv import (
@@ -22,7 +21,7 @@ if VALIDATION_ENABLED:
         WCRP_FREQUENCIES,
     )
 
-    __all__ = ["url_validate", "validation_schemas"]
+    __all__ = ["validation_schemas"]
 
     TYPE_NAMES = [
         "simulation",
@@ -148,34 +147,3 @@ if VALIDATION_ENABLED:
             for data_type in ["forecast", "gridded-obs", "reconstruction"]
         }
     )
-
-
-def url_validate(target: str) -> typing.Match[str] | None:
-    """
-    Validate whether a supplied URL is reliably written.
-
-    Parameters
-    ----------
-    target : str
-        The URL to validate.
-
-    Returns
-    -------
-    typing.Match[str], optional
-        The match object if the URL is valid.
-
-    References
-    ----------
-    https://stackoverflow.com/a/7160778/7322852
-    """
-    url_regex = re.compile(
-        r"^(?:http|ftp)s?://"  # http:// or https://
-        # domain...
-        r"(?:(?:[A-Z\d](?:[A-Z\d-]{0,61}[A-Z\d])?\.)+(?:[A-Z]{2,6}\.?|[A-Z\d-]{2,}\.?)|"
-        r"localhost|"  # localhost...
-        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
-        r"(?::\d+)?"  # optional port
-        r"(?:/?|[/?]\S+)$",
-        re.IGNORECASE,
-    )
-    return re.match(url_regex, target)
