@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from miranda.convert.eccc_rdrs import convert_rdrs, rdrs_to_daily
+from miranda.preprocess.eccc_rdrs import convert_rdrs, rdrs_to_daily
 from miranda.io import concat_rechunk_zarr
 
 

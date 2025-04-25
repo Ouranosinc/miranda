@@ -3,7 +3,7 @@
 ###################################################################################
 # Apache Software License 2.0
 #
-# Copyright (c) 2019-2024, Trevor James Smith
+# Copyright (c) 2019-2025, Trevor James Smith
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,5 +25,17 @@ __email__ = "smith.trevorj@ouranos.ca"
 __version__ = "0.6.0-dev.10"
 
 
-from . import convert, cv, decode, io, scripting, structure, units, utils, validators
+from . import (
+    convert,
+    cv,
+    decode,
+    io,
+    preprocess,
+    scripting,
+    structure,
+    units,
+    utils,
+    validators,
+    vocabularies,
+)
 from .storage import FileMeta, StorageState

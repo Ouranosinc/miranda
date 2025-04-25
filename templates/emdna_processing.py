@@ -4,6 +4,7 @@ from pathlib import Path
 
 from dask.diagnostics import ProgressBar
 
+import miranda.convert.corrections
 from miranda import convert, io, structure
 
 
@@ -23,7 +24,7 @@ def main():
     files_by_member = convert.gather_emdna(path)
     for member, files in files_by_member.items():
         if member == "OI":
-            ds = convert.dataset_conversion(
+            ds = miranda.convert.corrections.dataset_conversion(
                 files, project="EMDNA", preprocess=preprocess_dna
             )
 

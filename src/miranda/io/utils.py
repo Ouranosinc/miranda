@@ -34,7 +34,9 @@ name_configurations = json.load(
 
 
 def name_output_file(
-    ds_or_dict: xr.Dataset | dict[str, str], output_format: str
+    ds_or_dict: xr.Dataset | dict[str, str],
+    output_format: str,
+    data_vars: str | None = None,
 ) -> str:
     """
     Name an output file based on facets within a Dataset or a dictionary.
@@ -45,6 +47,8 @@ def name_output_file(
         A miranda-converted Dataset or a dictionary containing the appropriate facets.
     output_format : {"netcdf", "zarr"}
         Output filetype to be used for generating filename suffix.
+    data_vars : str, optional
+        If using a Dataset, the name of the data variable to be used for naming the file.
 
     Returns
     -------
@@ -65,7 +69,9 @@ def name_output_file(
     facets["suffix"] = suffix
 
     if isinstance(ds_or_dict, xr.Dataset):
-        if len(ds_or_dict.data_vars) == 1:
+        if data_vars is not None:
+            facets["variable"] = data_vars
+        elif len(ds_or_dict.data_vars) == 1:
             facets["variable"] = list(ds_or_dict.data_vars.keys())[0]
         elif (
             len(ds_or_dict.data_vars) == 2
@@ -76,7 +82,7 @@ def name_output_file(
             ][0]
         else:
             raise NotImplementedError(
-                f"Too many `data_vars` in Dataset: {' ,'.join(ds_or_dict.data_vars.keys())}."
+                f"Too many `data_vars` in Dataset: {', '.join(ds_or_dict.data_vars.keys())}."
             )
         for f in [
             "bias_adjust_project",

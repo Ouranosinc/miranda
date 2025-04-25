@@ -90,7 +90,7 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         )
     elif project.startswith("ec"):
         metadata_definition = json.load(
-            data_folder.joinpath("eccc_cf_attrs.json").open("r")
+            data_folder.joinpath("eccc_canswe_cf_attrs.json").open("r")
         )
     elif project in ["NEX-GDDP-CMIP6"]:
         metadata_definition = json.load(
