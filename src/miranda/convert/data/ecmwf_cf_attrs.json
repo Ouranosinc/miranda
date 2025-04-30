@@ -140,7 +140,7 @@
     },
     "q": {
       "_cf_variable_name": "hus",
-      "_corrected_units": 1,
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_transformation": false,
       "cell_methods": "time: point",

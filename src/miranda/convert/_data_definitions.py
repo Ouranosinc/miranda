@@ -28,7 +28,7 @@ __all__ = [
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
     "nrcan_variables",
-    "project_institutes",
+    "project_institutess",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
     "xarray_frequencies_to_cmip6like",
@@ -64,26 +64,6 @@ sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
 wfdei_gem_capa_variables = json.load(
     _data_folder.joinpath("usask_cf_attrs.json").open()
 )["variables"].keys()
-
-project_institutes = {
-    "cfsr": "ncar",
-    "era5": "ecmwf",
-    "era5-land": "ecmwf",
-    "era5-land-monthly-means": "ecmwf",
-    "era5-monthly": "ecmwf",
-    "era5-pressure-levels": "ecmwf",
-    "era5-pressure-levels-preliminary-back-extension": "ecmwf",
-    "era5-pressure-monthly-means-levels-preliminary-back-extension": "ecmwf",
-    "era5-single-levels": "ecmwf",
-    "era5-single-levels-monthly-means": "ecmwf",
-    "era5-single-levels-monthly-means-preliminary-back-extension": "ecmwf",
-    "era5-single-levels-preliminary-back-extension": "ecmwf",
-    "merra2": "nasa",
-    "nrcan-gridded-10km": "nrcan",
-    "wfdei-gem-capa": "usask",
-    "rdrs-v21": "eccc",
-    "NEX-GDDP-CMIP6": "nasa",
-}
 
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
