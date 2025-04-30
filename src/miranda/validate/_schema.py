@@ -8,12 +8,12 @@ from pydantic_core.core_schema import DictSchema
 from schema import And, Optional, Or, Regex, Schema, SchemaError
 
 from ._dimensions import cf_dimensions_schema
-from .utils import (
+from .regex import (
     CELL_METHODS_REGEX,
     CF_CONVENTIONS_REGEX,
     PROJECT_NAME_REGEX,
     STANDARD_NAME_REGEX,
-    VALID_TIME_FREQUENCIES,
+    VALID_TIME_FREQUENCY_REGEX,
 )
 
 __all__ = ["validate_json"]

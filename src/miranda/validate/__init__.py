@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from ._general import *
 from ._schema import *
 from ._structure import *
+from ._url import *

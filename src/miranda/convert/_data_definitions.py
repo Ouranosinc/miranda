@@ -10,8 +10,6 @@ from pathlib import Path
 from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 
-logging.config.dictConfig(LOGGING_CONFIG)
-
 __all__ = [
     "eccc_rdrs_variables",
     "era5_variables",
@@ -28,10 +26,8 @@ __all__ = [
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
     "nrcan_variables",
-    "project_institutess",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
-    "xarray_frequencies_to_cmip6like",
 ]
 
 _data_folder = Path(__file__).resolve().parent / "data"
@@ -64,19 +60,6 @@ sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
 wfdei_gem_capa_variables = json.load(
     _data_folder.joinpath("usask_cf_attrs.json").open()
 )["variables"].keys()
-
-# Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
-# see: https://github.com/ES-DOC/pyessv-archive
-xarray_frequencies_to_cmip6like = {
-    "h": "hr",
-    "H": "hr",
-    "D": "day",
-    "W": "sem",
-    "M": "mon",
-    "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
-    "A": "yr",
-    "Y": "yr",
-}
 
 
 def _gather(

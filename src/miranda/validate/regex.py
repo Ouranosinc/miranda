@@ -5,7 +5,7 @@ __all__ = [
     "CF_CONVENTIONS_REGEX",
     "PROJECT_NAME_REGEX",
     "STANDARD_NAME_REGEX",
-    "VALID_TIME_FREQUENCIES",
+    "VALID_TIME_FREQUENCY_REGEX",
 ]
 
 CELL_METHODS_REGEX = r"^\w+:\s*\w+"
@@ -13,4 +13,4 @@ CF_CONVENTIONS_REGEX = r"CF-\d\.\d+"
 PROJECT_NAME_REGEX = r"^[a-zA-Z]\S+"
 STANDARD_NAME_REGEX = r"^\w+(?:_\w+)*$"
 
-VALID_TIME_FREQUENCIES = r"^(\d+)?(Y|YS|M|MS|W|D|H|T|min|S|L|ms|U|us|N)$"
+VALID_TIME_FREQUENCY_REGEX = r"^(\d+)?(Y|YS|M|MS|W|D|H|T|min|S|L|ms|U|us|N)$"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from schema import Optional
 
-from .utils import (
+from .regex import (
     CELL_METHODS_REGEX,
     CF_CONVENTIONS_REGEX,
     PROJECT_NAME_REGEX,
@@ -13,9 +13,10 @@ __all__ = ["cf_dimensions_schema"]
 
 CF_DIMENSION_TREATMENTS = [
     "_cf_dimension_name",
-    "_precision",
     "_ensure_correct_time_frequency",
     "_offset_time",
+    "_precision",
+    "_strict_time",
 ]
 
 
