@@ -22,7 +22,7 @@
   },
   "dimensions": {
     "lat": {
-      "_cf_dimension_name": "lon",
+      "_cf_dimension_name": "lat",
       "long_name": "Latitude",
       "standard_name": "latitude",
       "units": "degrees_north"
