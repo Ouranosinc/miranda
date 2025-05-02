@@ -21,6 +21,20 @@
     "doi": "https://doi.org/10.1175/JTECH-D-11-00103.1"
   },
   "dimensions": {
+    "lat": {
+      "_cf_dimension_name": "lon",
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "lon": {
+      "_cf_dimension_name": "lon",
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
     "time": {
       "axis": "T",
       "long_name": "time",
