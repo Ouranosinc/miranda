@@ -23,14 +23,12 @@
   "dimensions": {
     "lat": {
       "_cf_dimension_name": "lon",
-      "axis": "Y",
       "long_name": "Latitude",
       "standard_name": "latitude",
       "units": "degrees_north"
     },
     "lon": {
       "_cf_dimension_name": "lon",
-      "axis": "X",
       "long_name": "Longitude",
       "standard_name": "longitude",
       "units": "degrees_east"
