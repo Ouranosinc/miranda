@@ -150,7 +150,7 @@
       "units": "K"
     },
     "P_TT_10000": {
-      "_cf_variable_name": "_tas",
+      "_cf_variable_name": "tas",
       "_corrected_units": {
         "ORRC": "degC"
       },
