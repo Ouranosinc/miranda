@@ -15,6 +15,8 @@ from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
 from miranda.units import get_time_frequency
 
+from xscen.io import get_engine
+
 from ._aggregation import aggregate
 from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
@@ -56,6 +58,7 @@ def convert_rdrs(
     working_folder: str | os.PathLike[str] | None = None,
     overwrite: bool = False,
     year_start: int | None = None,
+    year_end: int | None = None,
     cfvariable_list: list | None = None,
     **dask_kwargs: dict[str, Any],
 ) -> None:
@@ -79,6 +82,9 @@ def convert_rdrs(
     year_start : int, optional
         The start year.
         If not provided, the minimum year in the dataset will be used.
+    year_end : int, optional
+        The end year.
+        If not provided, the maximum year in the dataset will be used.
     cfvariable_list : list, optional
         The CF variable list.
     \*\*dask_kwargs : dict
@@ -110,17 +116,22 @@ def convert_rdrs(
     for year, ncfiles in gathered[project].items():
         if year_start and int(year) < year_start:
             continue
+        if year_end and int(year) > year_end:
+            continue
         ds_allvars = None
 
         if len(ncfiles) >= 28:
             for nc in ncfiles:
-                eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
+                eng = get_engine(nc)
                 try:
                     ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
                 except (OSError, RuntimeError) as e:
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
                     logging.error(msg)
                     raise RuntimeError(msg) from e
+                if isinstance(ds1.indexes['time'], xr.coding.cftimeindex.CFTimeIndex):
+                    ds1 = ds1.copy()
+                    ds1['time'] = ('time', ds1.indexes['time'].to_datetimeindex())
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
