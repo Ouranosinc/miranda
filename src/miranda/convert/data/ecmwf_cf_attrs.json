@@ -45,6 +45,7 @@
         "era5-land-monthly-means": 4
       },
       "axis": "Y",
+      "long_name": "Latitude",
       "standard_name": "latitude"
     },
     "longitude": {
@@ -54,6 +55,7 @@
         "era5-land-monthly-means": 4
       },
       "axis": "X",
+      "long_name": "Longitude",
       "standard_name": "longitude"
     },
     "time": {
@@ -71,7 +73,7 @@
       },
       "_strict_time": false,
       "axis": "T",
-      "long_name": "time",
+      "long_name": "Time",
       "standard_name": "time"
     }
   },

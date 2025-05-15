@@ -27,8 +27,10 @@ __all__ = ["daily_summaries_to_netcdf", "extract_daily_summaries"]
 
 eccc_metadata = json.load(
     Path(__file__)
-    .parent.joinpath("eccc_obs_summary_cf_attrs.json")
-    .open("r", encoding="utf-8")
+    .resolve()
+    .parent.joinpath("configs")
+    .joinpath("eccc-obs-summary_attrs.json")
+    .open()
 )["variable_entry"]
 
 

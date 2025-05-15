@@ -303,7 +303,9 @@ def build_path_from_schema(
     Path or None
     """
     if schema is None:
-        schema = Path(__file__).parent.joinpath("data").joinpath("ouranos_schema.yml")
+        schema = (
+            Path(__file__).parent.joinpath("configs").joinpath("ouranos_schema.yml")
+        )
 
     tree = parse_schema(facets, schema, top_folder)
     branch = tree[0]

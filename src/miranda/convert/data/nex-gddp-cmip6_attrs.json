@@ -12,6 +12,7 @@
     "domain": "QC",
     "mip_era": "CMIP6",
     "processing_level": "biasadjusted",
+    "source": "NASA-NEX-GDDP",
     "table_date": "2023-04-11",
     "table_id": "NEX-GDDP-CMIP6",
     "type": "simulation"

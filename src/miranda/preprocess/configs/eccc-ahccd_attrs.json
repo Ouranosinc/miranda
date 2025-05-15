@@ -1,0 +1,131 @@
+{
+  "Header": {
+    "_citation": {
+      "generation": {
+        "Second": "Mekis, É and L.A. Vincent, 2011: An overview of the second generation adjusted daily precipitation dataset for trend analysis in Canada. Atmosphere-Ocean 49(2), 163-177 doi:10.1080/07055900.2011.583910",
+        "Third": "Vincent, L.A., M.M. Hartwell and X.L. Wang, 2020: A Third Generation of Homogenized Temperature for Trend Analysis and Monitoring Changes in Canada’s Climate. Atmosphere-Ocean. https://doi.org/10.1080/07055900.2020.1765728"
+      }
+    },
+    "_miranda_version": true,
+    "_product": {
+      "generation": {
+        "Second": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 2",
+        "Third": "ECCC Adjusted and Homogenized Canadian Climate Data (AHCCD) version 3"
+      }
+    },
+    "_variable": true,
+    "acknowledgement": "This data is provided by Environment and Climate Change Canada (ECCC).",
+    "author": "Environment and Climate Change Canada (ECCC)",
+    "contact": "info.cccs-ccsc@canada.ca",
+    "dataset_id": "d6813de6-b20a-46cc-8990-01862ae15c5f",
+    "documentation": "https://www.canada.ca/en/environment-climate-change/services/climate-change/canadian-centre-climate-services/display-download/technical-documentation-adjusted-climate-data.html",
+    "domain": "CAN",
+    "frequency": "day",
+    "institution": "GovCan",
+    "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
+    "license_preamble": "The data is owned by the Government of Canada (Environment and Climate Change Canada), and fall under the licence agreement for use of Environment and Climate Change Canada data.",
+    "license_type": "permissive",
+    "organization": "ECCC",
+    "processing_level": "adjusted",
+    "project": "AHCCD",
+    "realm": "atmos",
+    "source": "msc",
+    "table_date": "2023-08-03",
+    "table_id": "ECCC",
+    "type": "station-obs"
+  },
+  "dimensions:": {
+    "lat": {
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "long": {
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "axis": "T",
+      "long_name": "Time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "dm": {
+      "NaN_value": -9999.9,
+      "_variable_name": "tas",
+      "cell_methods": "time: mean",
+      "comments": "Station data converted from Mean Temp (°C)",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Near-Surface Air Temperature",
+      "missing_flags": "M",
+      "original_field": "Mean Temp (°C)",
+      "units": "degC"
+    },
+    "dn": {
+      "NaN_value": -9999.9,
+      "_variable_name": "tasmin",
+      "cell_methods": "time: minimum",
+      "comments": "Station data converted from Min Temp (°C)",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "missing_flags": "M",
+      "original_field": "Min Temp (°C)",
+      "units": "degC"
+    },
+    "dr": {
+      "NaN_value": -9999.99,
+      "_variable_name": "prlp",
+      "cell_methods": "time: mean",
+      "comments": "Station data converted from Total Rain (mm) using a density of 1000 kg/m³",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Liquid Precipitation",
+      "missing_flags": "M",
+      "original_field": "Total Rain (mm)",
+      "units": "mm"
+    },
+    "ds": {
+      "NaN_value": -9999.99,
+      "_variable_name": "prsn",
+      "cell_methods": "time: mean",
+      "comments": "station data converted from Total Snow (cm) using a density of 100 kg/m³",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Snowfall Flux",
+      "missing_flags": "M",
+      "original_field": "Total Snow (cm)",
+      "units": "mm"
+    },
+    "dt": {
+      "NaN_value": -9999.99,
+      "_variable_name": "pr",
+      "cell_methods": "time: mean",
+      "comments": "Station data converted from Total Precip (mm) using a density of 1000 kg/m³",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Precipitation",
+      "missing_flags": "M",
+      "original_field": "Total Precip (mm)",
+      "units": "mm"
+    },
+    "dx": {
+      "NaN_value": -9999.9,
+      "_variable_name": "tasmax",
+      "cell_methods": "time: maximum",
+      "comments": "station data converted from Max Temp (°C)",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "missing_flags": "M",
+      "original_field": "Max Temp (°C)",
+      "standard_name": "air_temperature",
+      "units": "degC"
+    }
+  }
+}

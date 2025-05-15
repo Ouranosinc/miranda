@@ -7,24 +7,25 @@ import os
 from pathlib import Path
 from typing import Any
 
-import h5py
 import xarray as xr
 from numpy import unique
 
-from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments import load_json_data_mappings
 from miranda.units import get_time_frequency
+from miranda.io._output import write_dataset_dict
+from miranda.io._rechunk import fetch_chunk_config
 
 from xscen.io import get_engine
 
 from ._aggregation import aggregate
-from ._data_corrections import dataset_conversion, load_json_data_mappings
-from ._data_definitions import gather_raw_rdrs_by_years, gather_rdrs
+from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
+from .corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-__all__ = ["convert_rdrs", "rdrs_to_daily"]
+# __all__ = ["convert_rdrs", "rdrs_to_daily"]
 
 
 # FIXME: Can we use `name_output_file` instead? We already have a better version of this function.
@@ -240,7 +241,7 @@ def rdrs_to_daily(
         working_folder = Path(working_folder).expanduser()
 
     # GATHER ALL RDRS FILES
-    gathered = gather_rdrs(project, input_folder, "zarr", "cf")
+    gathered = gather_eccc_rdrs(project, input_folder, "zarr", "cf")
     files = gathered[project]  # noqa
     if process_variables:
         for vv in [f for f in files.keys() if f not in process_variables]:

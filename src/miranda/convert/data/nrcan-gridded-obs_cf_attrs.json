@@ -1,0 +1,94 @@
+{
+  "Header": {
+    "Conventions": "CF-1.9",
+    "_miranda_version": true,
+    "_missing_values": [
+      "-999."
+    ],
+    "_variable": true,
+    "acknowledgement": "This data is provided by Natural Resources Canada (NRCan).",
+    "author": "Natural Resources Canada",
+    "citation": "When referring to the ANUSPLIN gridded climate data set, the authors provide this data under the Environment and Climate Change Canada Data Server End Use License (<https://open.canada.ca/en/open-government-licence-canada>) and demand that any references to or derivative works based on this data set be cited as follows: McKenney, D.W., Hutchinson, M., Papadopol, P., Lawrence, K., Pedlar, J.H., Campbell, K.L., Milewska, E., Hopkinson, R.F., Price, D., Owen, T., 2011a. Customized spatial climate models for North America. Bulletin of the American Meteorological Society 92(12), pp. 1611-1622. https://doi.org/10.1175/2011BAMS3132.1",
+    "contact": "dan.mckenney@NRCan-RNCan.gc.ca",
+    "documentation": "https://www.canada.ca/en/environment-climate-change/services/climate-change/canadian-centre-climate-services/display-download/technical-documentation-adjusted-climate-data.html",
+    "domain": "CAN",
+    "frequency": "day",
+    "institution": "GovCan",
+    "license": "https://open.canada.ca/en/open-government-licence-canada",
+    "license_type": "permissive",
+    "organization": "NRCan",
+    "processing_level": "raw",
+    "product": "Natural Resources Canada ANUSPLIN interpolated historical climate model dataset",
+    "references:": "McKenney, D.W., M.F. Hutchinson, P. Papadopol, K. Lawrence, J. Pedlar, K. Campbell, E. Milewska, R.F. Hopkinson, D. Price, and T. Owen, 2011: Customized Spatial Climate Models for North America. Bull. Amer. Meteor. Soc., 92, 1611–1622, https://doi.org/10.1175/2011BAMS3132.1",
+    "source": "NRCANmet",
+    "title": "NRCANmet ANUSPLIN 10-Km Gridded Climate dataset",
+    "table_date": "2024-03-06",
+    "table_id": "nrcan-gridded-obs",
+    "type": "reconstruction"
+  },
+  "dimensions:": {
+    "lat": {
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "long": {
+      "_cf_dimension_name": "lon",
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "axis": "T",
+      "calendar": "standard",
+      "long_name": "Time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "maxt": {
+      "_cf_variable_name": "tasmax",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": "op + 273.15",
+      "cell_methods": "time: maximum",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "original_units": "°C",
+      "original_field": "Maximum Temperature / températures maximales",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "mint": {
+      "_cf_variable_name": "tasmin",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": "op + 273.15",
+      "cell_methods": "time: minimum",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Minimum Temperature / températures minimales",
+      "original_units": "°C",
+      "original_field": "Min Temp (°C)",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "pcp": {
+      "_cf_variable_name": "pr",
+      "_invert_sign": false,
+      "_offset_time": false,
+      "_transformation": "amount2rate",
+      "cell_methods": "time: mean",
+      "frequency": "day",
+      "grid_mapping": "regular_lon_lat",
+      "long_name": "Precipitation",
+      "original_field": "precipitation / précipitations",
+      "original_units": "mm",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    }
+  }
+}

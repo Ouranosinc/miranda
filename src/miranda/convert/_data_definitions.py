@@ -17,13 +17,13 @@ __all__ = [
     "era5_variables",
     "gather_agcfsr",
     "gather_agmerra",
+    "gather_eccc_rdrs",
     "gather_ecmwf",
     "gather_emdna",
     "gather_grnch",
     "gather_nex",
     "gather_nrcan_gridded_obs",
     "gather_raw_rdrs_by_years",
-    "gather_rdrs",
     "gather_sc_earth",
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
@@ -34,7 +34,8 @@ __all__ = [
     "xarray_frequencies_to_cmip6like",
 ]
 
-_data_folder = Path(__file__).parent / "data"
+_data_folder = Path(__file__).resolve().parent / "data"
+
 
 eccc_rdrs_variables = {}
 eccc_rdrs_variables["raw"] = [
@@ -87,6 +88,7 @@ project_institutes = {
 # Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
 # see: https://github.com/ES-DOC/pyessv-archive
 xarray_frequencies_to_cmip6like = {
+    "h": "hr",
     "H": "hr",
     "D": "day",
     "W": "sem",
@@ -239,7 +241,7 @@ def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
     )
 
 
-def gather_rdrs(
+def gather_eccc_rdrs(
     name: str, path: str | os.PathLike, suffix: str, key: str
 ) -> dict[str, dict[str, list[Path]]]:
     """Gather RDRS processed source data.
