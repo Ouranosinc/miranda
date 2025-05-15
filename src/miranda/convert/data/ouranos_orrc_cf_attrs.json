@@ -3,34 +3,43 @@
     "Conventions": "CF-1.8",
     "Remarks": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product ORRC contains two variables for precipitation: 'RDPS_CaPA_P_PR_SFC' is the model precipitation (trial field used by CaPA) and 'RDPS_CaPA_A_PR_SFC' is precipitations adjusted with CaPA 6h precipitation. Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
     "_contact": {
-      "ORRC": ""
+      "ORRC-v10": "",
+      "ORRC-v11": ""
     },
     "_doi": {
-      "ORRC": ""
+      "ORRC-v10": "",
+      "ORRC-v11": ""
     },
     "frequency": "1hr",
     "domain": "NAM",
     "_miranda_version": true,
     "_remove_attrs": {
-      "ORRC": [
+      "ORRC-v10": [
+        "License",
+        "product"
+      ],
+      "ORRC-v11": [
         "License",
         "product"
       ]
     },
     "_source": {
-      "ORRC": "ORRC"
+      "ORRC-v10": "ORRC",
+      "ORRC-v11": "ORRC"
     },
     "_version": {
-      "ORRC": "v1.0"
+      "ORRC-v10": "v1.0",
+      "ORRC-v11": "v1.1"
     },
     "_prefix": {
-      "ORRC": "RDPS_CaPA_"
+      "ORRC-v10": "RDPS_CaPA_",
+      "ORRC-v11": "RDPS_CaPA_"
     },
     "institution": "Ouranos",
     "licence_type": "open",
     "license": "https://creativecommons.org/licenses/by/4.0/deed.en",
     "organisation": "Ouranos",
-    "processing_level": "regridded",
+    "processing_level": "raw",
     "realm": "atmos",
     "table_date": "2025-01-17",
     "table_id": "ouranos_orrc_cf_attrs",
@@ -40,7 +49,8 @@
   "dimensions": {
     "time": {
       "_ensure_correct_time": {
-        "ORRC": "1H"
+        "ORRC-v10": "1H",
+        "ORRC-v11": "1H"
       },
       "_strict_time": true,
       "axis": "T",
@@ -60,7 +70,8 @@
       },
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_transformation": {
-        "ORRC": "amount2rate"
+        "ORRC-v10": "amount2rate",
+        "ORRC-v11": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
@@ -92,7 +103,8 @@
     "P_HU_10000": {
       "_cf_variable_name": "huss",
       "_corrected_units": {
-        "ORRC": "1"
+        "ORRC-v10": "1",
+        "ORRC-v11": "1"
       },
       "cell_methods": "time: point",
       "long_name": "Near-Surface Specific Humidity (1.5m)",
@@ -102,7 +114,8 @@
     "P_P0_SFC": {
       "_cf_variable_name": "ps",
       "_corrected_units": {
-        "ORRC": "mbar"
+        "ORRC-v10": "mbar",
+        "ORRC-v11": "mbar"
       },
       "cell_methods": "time: point",
       "long_name": "Surface Air Pressure",
@@ -113,7 +126,8 @@
       "_cf_variable_name": "psl",
       "cell_methods": "time: point",
       "_corrected_units": {
-        "ORRC": "mbar"
+        "ORRC-v10": "mbar",
+        "ORRC-v11": "mbar"
       },
       "long_name": "Sea Level Pressure",
       "standard_name": "air_pressure_at_sea_level",
@@ -130,7 +144,8 @@
       },
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_transformation": {
-        "ORRC": "amount2rate"
+        "ORRC-v10": "amount2rate",
+        "ORRC-v11": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
@@ -142,7 +157,8 @@
     "P_TD_10000": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {
-        "ORRC": "degC"
+        "ORRC-v10": "degC",
+        "ORRC-v11": "degC"
       },
       "cell_methods": "time: point",
       "long_name": "1.5 metre dewpoint temperature",
@@ -152,7 +168,8 @@
     "P_TT_10000": {
       "_cf_variable_name": "tas",
       "_corrected_units": {
-        "ORRC": "degC"
+        "ORRC-v10": "degC",
+        "ORRC-v11": "degC"
       },
       "cell_methods": "time: point",
       "long_name": "1.5 metre temperature",
