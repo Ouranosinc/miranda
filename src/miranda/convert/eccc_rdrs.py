@@ -4,25 +4,23 @@ from __future__ import annotations
 
 import logging.config
 import os
+from pathlib import Path
+from typing import Any
 
 import h5py
 import xarray as xr
+from numpy import unique
+from xscen.io import get_engine
 
+from miranda.io._output import write_dataset_dict
+from miranda.io._rechunk import fetch_chunk_config
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments import load_json_data_mappings
+from miranda.units import get_time_frequency
 
-# from pathlib import Path
-# from typing import Any
-
-
-# from numpy import unique
-
-
-# from miranda.treatments import load_json_data_mappings
-# from miranda.units import get_time_frequency
-#
-# from ._aggregation import aggregate
-# from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
-# from .corrections import dataset_conversion
+from ._aggregation import aggregate
+from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
+from .corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -61,6 +59,7 @@ def convert_rdrs(
     working_folder: str | os.PathLike[str] | None = None,
     overwrite: bool = False,
     year_start: int | None = None,
+    year_end: int | None = None,
     cfvariable_list: list | None = None,
     **dask_kwargs: dict[str, Any],
 ) -> None:
@@ -84,6 +83,9 @@ def convert_rdrs(
     year_start : int, optional
         The start year.
         If not provided, the minimum year in the dataset will be used.
+    year_end : int, optional
+        The end year.
+        If not provided, the maximum year in the dataset will be used.
     cfvariable_list : list, optional
         The CF variable list.
     \*\*dask_kwargs : dict
@@ -115,6 +117,8 @@ def convert_rdrs(
     for year, ncfiles in gathered[project].items():
         if year_start and int(year) < year_start:
             continue
+        if year_end and int(year) > year_end:
+            continue
         ds_allvars = None
 
         if len(ncfiles) >= 28:
@@ -126,6 +130,9 @@ def convert_rdrs(
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
                     logging.error(msg)
                     raise RuntimeError(msg) from e
+                if isinstance(ds1.indexes["time"], xr.coding.cftimeindex.CFTimeIndex):
+                    ds1 = ds1.copy()
+                    ds1["time"] = ("time", ds1.indexes["time"].to_datetimeindex())
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
@@ -234,7 +241,7 @@ def rdrs_to_daily(
         working_folder = Path(working_folder).expanduser()
 
     # GATHER ALL RDRS FILES
-    gathered = gather_rdrs(project, input_folder, "zarr", "cf")
+    gathered = gather_eccc_rdrs(project, input_folder, "zarr", "cf")
     files = gathered[project]  # noqa
     if process_variables:
         for vv in [f for f in files.keys() if f not in process_variables]:
