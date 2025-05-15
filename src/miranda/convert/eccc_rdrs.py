@@ -9,14 +9,13 @@ from typing import Any
 
 import xarray as xr
 from numpy import unique
+from xscen.io import get_engine
 
+from miranda.io._output import write_dataset_dict
+from miranda.io._rechunk import fetch_chunk_config
 from miranda.scripting import LOGGING_CONFIG
 from miranda.treatments import load_json_data_mappings
 from miranda.units import get_time_frequency
-from miranda.io._output import write_dataset_dict
-from miranda.io._rechunk import fetch_chunk_config
-
-from xscen.io import get_engine
 
 from ._aggregation import aggregate
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
@@ -130,9 +129,9 @@ def convert_rdrs(
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
                     logging.error(msg)
                     raise RuntimeError(msg) from e
-                if isinstance(ds1.indexes['time'], xr.coding.cftimeindex.CFTimeIndex):
+                if isinstance(ds1.indexes["time"], xr.coding.cftimeindex.CFTimeIndex):
                     ds1 = ds1.copy()
-                    ds1['time'] = ('time', ds1.indexes['time'].to_datetimeindex())
+                    ds1["time"] = ("time", ds1.indexes["time"].to_datetimeindex())
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
