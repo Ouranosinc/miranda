@@ -6,8 +6,8 @@ import logging.config
 import os
 from pathlib import Path
 from typing import Any
-import h5py
 
+import h5py
 import xarray as xr
 from numpy import unique
 from xscen.io import get_engine
