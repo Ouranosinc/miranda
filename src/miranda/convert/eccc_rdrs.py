@@ -6,6 +6,7 @@ import logging.config
 import os
 from pathlib import Path
 from typing import Any
+import h5py
 
 import xarray as xr
 from numpy import unique
@@ -15,8 +16,6 @@ from miranda.treatments import load_json_data_mappings
 from miranda.units import get_time_frequency
 from miranda.io._output import write_dataset_dict
 from miranda.io._rechunk import fetch_chunk_config
-
-from xscen.io import get_engine
 
 from ._aggregation import aggregate
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
@@ -123,7 +122,7 @@ def convert_rdrs(
 
         if len(ncfiles) >= 28:
             for nc in ncfiles:
-                eng = get_engine(nc)
+                eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
                 try:
                     ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
                 except (OSError, RuntimeError) as e:
