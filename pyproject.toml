@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.9,<4"]
+requires = ["flit_core >=3.10.1,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -28,7 +28,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  # "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Scientific/Engineering :: Atmospheric Science"
 ]
@@ -66,6 +66,7 @@ dev = [
   "pre-commit >=3.5.0",
   "pytest >=8.3.2",
   "pytest-cov >=5.0.0",
+  "pytest-xdist >=3.2.0",
   "ruff >=0.9.0",
   "tox >=4.24.1",
   "watchdog >=4.0.0"
@@ -290,11 +291,18 @@ override_SS05 = [
 addopts = [
   "--verbose",
   "--color=yes",
-  "--cov=miranda",
-  "--cov-report=term-missing"
+  "--numprocesses=0",
+  "--maxprocesses=8",
+  "--dist=worksteal"
 ]
 filterwarnings = ["ignore::UserWarning"]
-testpaths = "tests"
+testpaths = [
+  "tests"
+]
+pythonpath = [
+  "src"
+]
+xfail_strict = true
 
 [tool.ruff]
 src = ["miranda"]
