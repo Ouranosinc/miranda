@@ -45,7 +45,7 @@ dependencies = [
   "pyyaml",
   "schema",
   "xarray",
-  "xclim",
+  "xclim >=0.47.0",
   "zarr"
 ]
 
