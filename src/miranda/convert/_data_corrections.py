@@ -108,7 +108,7 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(
             data_folder.joinpath("emdna_cf_attrs.json").open("r")
         )
-    elif project in ["ORRC"]:
+    elif project in ["ORRC-v10", "ORRC-v11"]:
         metadata_definition = json.load(
             data_folder.joinpath("ouranos_orrc_cf_attrs.json").open("r")
         )
