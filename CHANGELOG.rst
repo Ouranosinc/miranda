@@ -18,6 +18,9 @@ Announcements
     * The modules `miranda.archive` and `miranda.remote` have been removed and will be moved to a separate project.
     * Data treatment functions have been moved to `miranda.treatments`.
     * Pre-processing logic and functions have been moved to `miranda.preprocess`.
+* `miranda` now leverages `pooch` to fetch and cache testing datasets from `miranda-testdata <https://github.com/Ouranosinc/miranda-testdata>`_:
+    * ``miranda.testing.cassini`` is used to create an instance of `Cassini` for fetching testing data.
+    * ``miranda.testing.registry.txt`` is a text file containing the list of datasets available in `miranda-testdata`.
 
 New features
 ^^^^^^^^^^^^
@@ -35,6 +38,8 @@ New features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Removed modules ``miranda.archive`` and ``miranda.remote`` (split into a separate project yet to be published).
+* ``miranda.utils.show_versions`` has been moved to ``miranda.testing.show_versions``. It now uses ``xclim.testing.show_versions`` to display the versions of all dependencies.
+* The `dev` recipe now requires `pooch` (>=1.8.0).
 
 Bug fixes
 ^^^^^^^^^
@@ -48,6 +53,10 @@ Internal changes
 * `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
 * Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
 * Adjusted calls using `os.path` to use `pathlib` for better cross-platform compatibility.
+* Added new `pytest` functions for the new `miranda-testdata` repository:
+    * ``open_dataset``: `pytest` fixture for one-off fetching and opening of a registered test data set.
+    * ``era5_precip``: `pytest` fixture fetching and opening a zip file containing a subset of the ERA5 precipitation dataset.
+* The `tox.ini` and `pyproject.toml` dependency pins have been synchronized.
 
 .. _changes_0.5.0:
 
