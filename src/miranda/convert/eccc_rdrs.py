@@ -10,7 +10,6 @@ from typing import Any
 import h5py
 import xarray as xr
 from numpy import unique
-from xscen.io import get_engine
 
 from miranda.io._output import write_dataset_dict
 from miranda.io._rechunk import fetch_chunk_config
