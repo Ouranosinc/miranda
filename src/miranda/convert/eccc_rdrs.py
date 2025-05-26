@@ -7,15 +7,14 @@ import os
 from pathlib import Path
 from typing import Any
 import h5py
+import pathlib
 
 import xarray as xr
 from numpy import unique
-from xscen.io import get_engine
 
 from miranda.io._output import write_dataset_dict
 from miranda.io._rechunk import fetch_chunk_config
 from miranda.scripting import LOGGING_CONFIG
-from miranda.treatments import load_json_data_mappings
 from miranda.units import get_time_frequency
 
 from ._aggregation import aggregate
@@ -23,6 +22,18 @@ from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
 from .corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+from miranda.treatments.utils import load_json_data_mappings
+
+CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
+CONFIG_FILES = {
+    "rdrs-v21": "eccc_rdrs_cf_attrs.json",
+    "casr-v31": "eccc_casr_cf_attrs.json",
+    "ORRC-v10": "ouranos_orrc_cf_attrs.json",
+    "ORRC-v11": "ouranos_orrc_cf_attrs.json",
+}
+for k, v in CONFIG_FILES.items():
+    CONFIG_FILES[k] = CONFIG_FOLDER / v
 
 
 # __all__ = ["convert_rdrs", "rdrs_to_daily"]
@@ -92,8 +103,8 @@ def convert_rdrs(
         Additional keyword arguments passed to the Dask scheduler.
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
-    var_attrs = load_json_data_mappings(project=project)["variables"]
-    prefix = load_json_data_mappings(project=project)["Header"]["_prefix"][project]
+    var_attrs = load_json_data_mappings(project, CONFIG_FILES)["variables"]
+    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][project]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
