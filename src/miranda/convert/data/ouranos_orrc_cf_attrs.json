@@ -49,8 +49,8 @@
   "dimensions": {
     "time": {
       "_ensure_correct_time": {
-        "ORRC-v10": "1H",
-        "ORRC-v11": "1H"
+        "ORRC-v10": "h",
+        "ORRC-v11": "h"
       },
       "_strict_time": true,
       "axis": "T",
