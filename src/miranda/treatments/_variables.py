@@ -185,7 +185,7 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     for vv in d.data_vars:
         if vv in m["variables"].keys():
             clip_vals = _get_section_entry_key(m, "variables", vv, key, p)
-            if clip_values:
+            if clip_vals:
                 min_value, max_value = None, None
                 # Gather unit conversion context, if applicable
                 context = clip_vals.get("context", None)
