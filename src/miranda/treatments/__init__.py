@@ -90,10 +90,10 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
         elif field == "_remove_attrs":
             if isinstance(attr_treatments, dict):
                 attrs_to_remove = attr_treatments.get(p, [])
-            else:                       
+            else:
                 attrs_to_remove = attr_treatments
             for ff in attrs_to_remove:
-                d.attrs.pop(ff, None)   
+                d.attrs.pop(ff, None)
         elif field.startswith("_") and p in attr_treatments:
             header[field[1:]] = attr_treatments[p]
         else:
