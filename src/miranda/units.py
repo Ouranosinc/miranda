@@ -123,7 +123,7 @@ def check_time_frequency(
                 freq = set(collected_freqs).pop()
             else:
                 raise ValueError("Dataset time component may be discontinuous.")
-            
+
     # TODO: add a check for irregular datasets for hours in a month
     # if freq is None and (1 < int(parse_offset(freq)[0]) < 25 and freq.endswith("h")):
 

@@ -104,7 +104,9 @@ def convert_rdrs(
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project, CONFIG_FILES)["variables"]
-    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][project]
+    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][
+        project
+    ]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
