@@ -8,7 +8,7 @@ from xclim.core import units
 
 from miranda.treatments.utils import _get_section_entry_key  # noqa
 from miranda.treatments.utils import _iter_entry_key  # noqa
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 __all__ = [
     "cf_units_conversion",
@@ -56,7 +56,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 # Time-step accumulated total to time-based flux (de-accumulation)
                 if offset is None and offset_meaning is None:
                     try:
-                        offset, offset_meaning = get_time_frequency(d, **time_freq)
+                        offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
                         logging.error(
                             "Unable to parse the time frequency. Verify data integrity before retrying."
@@ -71,7 +71,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         getattr(d[vv].time.dt, offset_meaning) == offset[0],
                         out.broadcast_like(d[vv]),
                     )
-                    out = units.amount2rate(out, out_units=m["variables"][vv]["units"])
+                    out = units.amount2rate(out)
                     d_out[vv] = out
                 converted.append(vv)
             elif trans == "amount2rate":
@@ -80,10 +80,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 msg = f"Performing amount-to-rate units conversion for variable `{vv}`."
                 logging.info(msg)
                 with xr.set_options(keep_attrs=True):
-                    out = units.amount2rate(
-                        d[vv],
-                        out_units=m["variables"][vv]["units"],
-                    )
+                    out = units.amount2rate(d[vv])
                     d_out[vv] = out
                 converted.append(vv)
             elif isinstance(trans, str):
@@ -166,9 +163,10 @@ def cf_units_conversion(d: xr.Dataset, m: dict) -> xr.Dataset:
             d["time"]["units"] = m["dimensions"]["time"]["units"]
 
     for vv, unit in _iter_entry_key(d, m, "variables", "units", None):
+        context = m["variables"][vv].get("_units_context", None)
         if unit:
             with xr.set_options(keep_attrs=True):
-                d[vv] = units.convert_units_to(d[vv], unit, context="hydro")
+                d[vv] = units.convert_units_to(d[vv], unit, context=context)
             prev_history = d.attrs.get("history", "")
             history = f"Converted variable `{vv}` to CF-compliant units (`{unit}`). {prev_history}"
             d.attrs.update(dict(history=history))
@@ -185,7 +183,7 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     for vv in d.data_vars:
         if vv in m["variables"].keys():
             clip_vals = _get_section_entry_key(m, "variables", vv, key, p)
-            if clip_values:
+            if clip_vals:
                 min_value, max_value = None, None
                 # Gather unit conversion context, if applicable
                 context = clip_vals.get("context", None)

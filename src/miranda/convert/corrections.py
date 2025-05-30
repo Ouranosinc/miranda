@@ -52,7 +52,10 @@ CONFIG_FILES = {
     "era5-single-levels-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
     "ets-grnch": "ets-grnch_cf_attrs.json",
     "melcc": "melcc_cf_attrs.json",
-    "rdrs-v21": "eccc-rdrs_cf_attrs.json",
+    "rdrs-v21": "eccc_rdrs_cf_attrs.json",
+    "casr-v31": "eccc_casr_cf_attrs.json",
+    "ORRC-v10": "ouranos_orrc_cf_attrs.json",
+    "ORRC-v11": "ouranos_orrc_cf_attrs.json",
     "wfdei-gem-capa": "wfdei-gem-capa_cf_attrs.json",
 }
 for k, v in CONFIG_FILES.items():

@@ -4,27 +4,36 @@ from __future__ import annotations
 
 import logging.config
 import os
+import pathlib
+from pathlib import Path
+from typing import Any
 
 import h5py
 import xarray as xr
+from numpy import unique
 
+from miranda.io._output import write_dataset_dict
+from miranda.io._rechunk import fetch_chunk_config
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments.utils import load_json_data_mappings
+from miranda.units import check_time_frequency
 
-# from pathlib import Path
-# from typing import Any
-
-
-# from numpy import unique
-
-
-# from miranda.treatments import load_json_data_mappings
-# from miranda.units import get_time_frequency
-#
-# from ._aggregation import aggregate
-# from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
-# from .corrections import dataset_conversion
+from ._aggregation import aggregate
+from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
+from .corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+
+CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
+CONFIG_FILES = {
+    "rdrs-v21": "eccc_rdrs_cf_attrs.json",
+    "casr-v31": "eccc_casr_cf_attrs.json",
+    "ORRC-v10": "ouranos_orrc_cf_attrs.json",
+    "ORRC-v11": "ouranos_orrc_cf_attrs.json",
+}
+for k, v in CONFIG_FILES.items():
+    CONFIG_FILES[k] = CONFIG_FOLDER / v
 
 
 # __all__ = ["convert_rdrs", "rdrs_to_daily"]
@@ -61,6 +70,7 @@ def convert_rdrs(
     working_folder: str | os.PathLike[str] | None = None,
     overwrite: bool = False,
     year_start: int | None = None,
+    year_end: int | None = None,
     cfvariable_list: list | None = None,
     **dask_kwargs: dict[str, Any],
 ) -> None:
@@ -84,14 +94,19 @@ def convert_rdrs(
     year_start : int, optional
         The start year.
         If not provided, the minimum year in the dataset will be used.
+    year_end : int, optional
+        The end year.
+        If not provided, the maximum year in the dataset will be used.
     cfvariable_list : list, optional
         The CF variable list.
     \*\*dask_kwargs : dict
         Additional keyword arguments passed to the Dask scheduler.
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
-    var_attrs = load_json_data_mappings(project=project)["variables"]
-    prefix = load_json_data_mappings(project=project)["Header"]["_prefix"][project]
+    var_attrs = load_json_data_mappings(project, CONFIG_FILES)["variables"]
+    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][
+        project
+    ]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
@@ -115,22 +130,27 @@ def convert_rdrs(
     for year, ncfiles in gathered[project].items():
         if year_start and int(year) < year_start:
             continue
+        if year_end and int(year) > year_end:
+            continue
         ds_allvars = None
 
         if len(ncfiles) >= 28:
             for nc in ncfiles:
                 eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
                 try:
-                    ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
+                    ds1 = xr.open_dataset(nc, chunks="auto", engine=eng, cache=False)
                 except (OSError, RuntimeError) as e:
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
                     logging.error(msg)
                     raise RuntimeError(msg) from e
+                if isinstance(ds1.indexes["time"], xr.coding.cftimeindex.CFTimeIndex):
+                    ds1 = ds1.copy()
+                    ds1["time"] = ("time", ds1.indexes["time"].to_datetimeindex())
                 if ds_allvars is None:
                     out_freq = None
                     ds_allvars = ds1
                     if out_freq is None:
-                        out_freq, meaning = get_time_frequency(ds1)
+                        out_freq, meaning = check_time_frequency(ds1)
                         out_freq = (
                             f"{out_freq[0]}{freq_dict[out_freq[1]]}"
                             if meaning == "hour"
@@ -234,7 +254,7 @@ def rdrs_to_daily(
         working_folder = Path(working_folder).expanduser()
 
     # GATHER ALL RDRS FILES
-    gathered = gather_rdrs(project, input_folder, "zarr", "cf")
+    gathered = gather_eccc_rdrs(project, input_folder, "zarr", "cf")
     files = gathered[project]  # noqa
     if process_variables:
         for vv in [f for f in files.keys() if f not in process_variables]:

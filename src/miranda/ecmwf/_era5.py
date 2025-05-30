@@ -25,7 +25,7 @@ except ModuleNotFoundError:
 
 from miranda.gis import subsetting_domains
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -395,7 +395,7 @@ def rename_era5_files(path: os.PathLike | str) -> None:
             date_found = f"{year}{str(month).zfill(2)}"
 
         try:
-            freq_parts = get_time_frequency(ds)
+            freq_parts = check_time_frequency(ds)
             freq = f"{freq_parts[0]}{freq_parts[1]}"
         except ValueError:
             msg = (

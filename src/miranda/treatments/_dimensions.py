@@ -9,7 +9,7 @@ import xarray as xr
 from xclim.core.calendar import parse_offset
 
 from miranda.treatments.utils import _get_section_entry_key, _iter_entry_key  # noqa
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 
 def find_project_variable_codes(code: str, configuration: dict[str, Any]) -> str:
@@ -221,7 +221,7 @@ def offset_time_dimension(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
                 try:
-                    offset, offset_meaning = get_time_frequency(d, **time_freq)
+                    offset, offset_meaning = check_time_frequency(d, **time_freq)
                 except TypeError:
                     msg = "Unable to parse the time frequency. Verify data integrity before retrying."
                     logging.error(msg)

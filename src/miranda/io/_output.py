@@ -172,8 +172,33 @@ def write_dataset_dict(
                 shutil.copytree(tmp_path, outpath, dirs_exist_ok=True)
                 shutil.rmtree(tmp_path)
 
+        elif outpath.exists() and not overwrite:
+            existing_ds = xr.open_dataset(
+                outpath, engine=output_format, decode_times=False
+            )
+            if "time" in ds.dims and "time" in existing_ds.dims:
+                if ds.time.size > existing_ds.time.size:
+                    msg = f"Dataset {variable} has more time points than existing file. Will overwrite {outpath.as_posix()}."
+                    logging.warning(msg)
+
+                    tmp_path = None
+                    if temp_folder:
+                        tmp_path = temp_folder.joinpath(outfile)
+                    job = delayed_write(
+                        ds,
+                        tmp_path if tmp_path else outpath,
+                        output_format=output_format,
+                        target_chunks=chunks,
+                        overwrite=True,
+                    )
+                    with Client(**dask_kwargs):
+                        dask.compute(job)
+                    if temp_folder:
+                        shutil.copytree(tmp_path, outpath, dirs_exist_ok=True)
+                        shutil.rmtree(tmp_path)
+
         else:
-            msg = f"{outpath.as_posix()} exists and overwrite is False. Continuing..."
+            msg = f"Skipping {outpath.as_posix()} as overwrite is False and time dimension is sufficient."
             logging.warning(msg)
 
 
