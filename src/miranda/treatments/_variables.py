@@ -8,7 +8,7 @@ from xclim.core import units
 
 from miranda.treatments.utils import _get_section_entry_key  # noqa
 from miranda.treatments.utils import _iter_entry_key  # noqa
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 __all__ = [
     "cf_units_conversion",
@@ -56,7 +56,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 # Time-step accumulated total to time-based flux (de-accumulation)
                 if offset is None and offset_meaning is None:
                     try:
-                        offset, offset_meaning = get_time_frequency(d, **time_freq)
+                        offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
                         logging.error(
                             "Unable to parse the time frequency. Verify data integrity before retrying."

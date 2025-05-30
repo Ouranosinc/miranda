@@ -20,7 +20,7 @@ from xclim.core.calendar import parse_offset
 from miranda import __version__ as __miranda_version__
 from miranda.gis import subset_domain
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 from .utils import date_parser, find_version_hash
 
@@ -400,7 +400,7 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 # Time-step accumulated total to time-based flux (de-accumulation)
                 if offset is None and offset_meaning is None:
                     try:
-                        offset, offset_meaning = get_time_frequency(d, **time_freq)
+                        offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
                         logging.error(
                             "Unable to parse the time frequency. Verify data integrity before retrying."
@@ -490,7 +490,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             # Offset time by value of one time-step
             if offset is None and offset_meaning is None:
                 try:
-                    offset, offset_meaning = get_time_frequency(d, **time_freq)
+                    offset, offset_meaning = check_time_frequency(d, **time_freq)
                 except TypeError:
                     logging.error(
                         "Unable to parse the time frequency. Verify data integrity before retrying."
@@ -850,10 +850,10 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     frequency = m["Header"].get("_frequency")
     if frequency:
         if isinstance(frequency, bool):
-            _, m["Header"]["frequency"] = get_time_frequency(d)
+            _, m["Header"]["frequency"] = check_time_frequency(d)
         elif isinstance(frequency, dict):
             if p in frequency.keys():
-                m["Header"]["frequency"] = get_time_frequency(d)
+                m["Header"]["frequency"] = check_time_frequency(d)
         else:
             logging.warning("`frequency` not set for project. Not appending.")
     if "_frequency" in m["Header"]:

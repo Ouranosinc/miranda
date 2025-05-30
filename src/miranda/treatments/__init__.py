@@ -13,7 +13,7 @@ from miranda.treatments._dimensions import *
 from miranda.treatments._preprocessing import *
 from miranda.treatments._variables import *
 from miranda.treatments.utils import *
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
@@ -56,10 +56,10 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
     frequency = m["Header"].get("_frequency")
     if frequency:
         if isinstance(frequency, bool):
-            _, m["Header"]["frequency"] = get_time_frequency(d)
+            _, m["Header"]["frequency"] = check_time_frequency(d)
         elif isinstance(frequency, dict):
             if p in frequency.keys():
-                m["Header"]["frequency"] = get_time_frequency(d)
+                m["Header"]["frequency"] = check_time_frequency(d)
         else:
             logging.warning("`frequency` not set for project. Not appending.")
     if "_frequency" in m["Header"]:
