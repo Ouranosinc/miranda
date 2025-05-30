@@ -15,6 +15,7 @@ from numpy import unique
 from miranda.io._output import write_dataset_dict
 from miranda.io._rechunk import fetch_chunk_config
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments.utils import load_json_data_mappings
 from miranda.units import check_time_frequency
 
 from ._aggregation import aggregate
@@ -23,7 +24,6 @@ from .corrections import dataset_conversion
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-from miranda.treatments.utils import load_json_data_mappings
 
 CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
 CONFIG_FILES = {
