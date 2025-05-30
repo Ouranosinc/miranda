@@ -35,7 +35,7 @@ from . import (
     structure,
     units,
     utils,
-    validators,
+    validate,
     vocabularies,
 )
 from .storage import FileMeta, StorageState
