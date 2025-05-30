@@ -14,7 +14,7 @@ MiB = int(pow(2, 20))
 GiB = int(pow(2, 30))
 
 
-def get_time_frequency(
+def check_time_frequency(
     d: xr.Dataset,
     expected_period: str | None = None,
     minimum_continuous_period: str = "1M",
@@ -57,7 +57,7 @@ def get_time_frequency(
     freq = xr.infer_freq(d.time)
 
     # Hacky workaround for irregular Monthly data
-    if freq is None or (1 < int(parse_offset(freq)[0]) < 32 and freq.endswith("D")):
+    if freq is None and (1 < int(parse_offset(freq)[0]) < 32 and freq.endswith("D")):
         if "freq" in d.attrs:
             freq = d.attrs["freq"]
         elif "freq" in d.time.attrs:
@@ -90,7 +90,7 @@ def get_time_frequency(
                 for period, ds_part in zip(time_periods, datasets):
                     if len(ds_part) == 1:
                         msg = f"Skipping {np.datetime_as_string(period)!s}."
-                        logging.info()
+                        logging.info(msg)
                         # In the event that a deaccumulation/shift has created a period with one data value,
                         # we are safe in ignoring this.
                         continue
@@ -123,6 +123,9 @@ def get_time_frequency(
                 freq = set(collected_freqs).pop()
             else:
                 raise ValueError("Dataset time component may be discontinuous.")
+            
+    # TODO: add a check for irregular datasets for hours in a month
+    # if freq is None and (1 < int(parse_offset(freq)[0]) < 25 and freq.endswith("h")):
 
     offset = [int(parse_offset(freq)[0]), parse_offset(freq)[1]]
 

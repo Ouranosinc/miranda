@@ -8,7 +8,7 @@ import xarray as xr
 from xclim.indices import tas
 
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -24,6 +24,9 @@ _resampling_keys["year"] = "A"
 
 def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[str]]:
     """Determine which aggregations are possible based on variables within a dataset.
+    It does it in two steps:
+    1. Check if the dataset has a continuous time frequency of at least 1 hour.
+    2. Based on the frequency, determine which variables can be aggregated and how.
 
     Parameters
     ----------
@@ -36,7 +39,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
     """
     logging.info("Determining potential upscaled climate variables.")
 
-    offset, meaning = get_time_frequency(ds, minimum_continuous_period="1h")
+    _, meaning = check_time_frequency(ds, minimum_continuous_period="1H")
 
     aggregation_legend = dict()
     for v in ["tas", "tdps", "hurs"]:
@@ -45,6 +48,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
                 hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")
             ):
                 aggregation_legend[f"_{v}"] = {"mean"}
+
     for variable in ds.data_vars:
         if variable in ["tas", "ta", "tdps", "tdp", "hurs", "hur"]:
             aggregation_legend[variable] = {"max", "mean", "min"}

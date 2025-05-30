@@ -15,7 +15,7 @@ from numpy import unique
 from miranda.io._output import write_dataset_dict
 from miranda.io._rechunk import fetch_chunk_config
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 from ._aggregation import aggregate
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
@@ -104,9 +104,7 @@ def convert_rdrs(
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project, CONFIG_FILES)["variables"]
-    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][
-        project
-    ]
+    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][project]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
@@ -138,7 +136,7 @@ def convert_rdrs(
             for nc in ncfiles:
                 eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
                 try:
-                    ds1 = xr.open_dataset(nc, chunks="auto", engine=eng)
+                    ds1 = xr.open_dataset(nc, chunks="auto", engine=eng, cache=False)
                 except (OSError, RuntimeError) as e:
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
                     logging.error(msg)
@@ -150,7 +148,7 @@ def convert_rdrs(
                     out_freq = None
                     ds_allvars = ds1
                     if out_freq is None:
-                        out_freq, meaning = get_time_frequency(ds1)
+                        out_freq, meaning = check_time_frequency(ds1)
                         out_freq = (
                             f"{out_freq[0]}{freq_dict[out_freq[1]]}"
                             if meaning == "hour"
