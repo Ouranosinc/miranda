@@ -4,9 +4,11 @@ import logging
 import os
 from os.path import commonpath
 from pathlib import Path
+from typing import Callable
 
 import pooch
 import pytest
+from xclim.testing.helpers import test_timeseries
 
 from miranda.testing.utils import (
     TESTDATA_BRANCH,
@@ -22,6 +24,31 @@ from miranda.testing.utils import open_dataset as _open_dataset
 from miranda.testing.utils import (
     testing_setup_warnings,
 )
+
+
+@pytest.fixture
+def timeseries() -> Callable:
+    """Fixture to provide a test time series."""
+    return test_timeseries
+
+
+@pytest.fixture
+def multivariable_dataset(timeseries) -> Callable:
+    """Return a test time series for the specified variable."""
+
+    def _multivariable_dataset(values, variables: list[str], **kwargs):
+        """Return a test time series for multiple variables."""
+        kwargs.setdefault("as_dataset", True)
+        tt = timeseries(values, variable=variables[0], **kwargs)
+
+        del kwargs["as_dataset"]
+        for var in variables[1:]:
+            tt[var] = timeseries(values, variable=var, **kwargs)
+        tt.attrs["title"] = "Multivariable Test Time Series"
+        tt.attrs["description"] = "This is a test time series with multiple variables."
+        return tt
+
+    return _multivariable_dataset
 
 
 @pytest.fixture(scope="session")
@@ -101,3 +128,4 @@ def era5_precip(cassini):
     }
 
     return data
+

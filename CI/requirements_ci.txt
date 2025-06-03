@@ -16,9 +16,9 @@ bracex==2.4 \
     --hash=sha256:a27eaf1df42cf561fed58b7a8f3fdf129d1ea16a81e1fadd1d17989bc6384beb \
     --hash=sha256:efdc71eff95eaff5e0f8cfebe7d01adf2c8637c8c92edaf63ef348c241a82418
     # via wcmatch
-bump-my-version==1.0.2 \
-    --hash=sha256:2f156877d2cdcda69afcb257ae4564c26e70f2fd5e5b15f2c7f26ab9e91502da \
-    --hash=sha256:61d350b8c71968dd4520fc6b9df8b982c7df254cd30858b8645eff0f4eaf380b
+bump-my-version==1.1.4 \
+    --hash=sha256:5e6928a24a73bae11aa28184936d0f2a8071bb2f033f36d310ff194f7f8d6be8 \
+    --hash=sha256:e4fd5cc092f32b6166dbc5aee5e8e4399c5543c95a5782cf727e2ab3e15ad99c
     # via -r CI/requirements_ci.in
 cachetools==5.5.2 \
     --hash=sha256:1a661caa9175d26759571b2e19580f9d6393969e5dfca11fdb1f947a23e640d4 \
@@ -145,9 +145,9 @@ docutils==0.20.1 \
     --hash=sha256:96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6 \
     --hash=sha256:f08a4e276c3a1583a86dce3e34aba3fe04d02bba2dd51ed16106244e8a923e3b
     # via flit
-exceptiongroup==1.2.2 \
-    --hash=sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b \
-    --hash=sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc
+exceptiongroup==1.3.0 \
+    --hash=sha256:4d111e6e0c13d0644cad6ddaa7ed0261a0b36971f6d23e7ec9b4b9097da78a10 \
+    --hash=sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88
     # via
     #   -r CI/requirements_ci.in
     #   anyio
@@ -392,9 +392,9 @@ tomlkit==0.13.0 \
     --hash=sha256:08ad192699734149f5b97b45f1f18dad7eb1b6d16bc72ad0c2335772650d7b72 \
     --hash=sha256:7075d3042d03b80f603482d69bf0c8f345c2b30e41699fd8883227f89972b264
     # via bump-my-version
-tox==4.25.0 \
-    --hash=sha256:4dfdc7ba2cc6fdc6688dde1b21e7b46ff6c41795fb54586c91a3533317b5255c \
-    --hash=sha256:dd67f030317b80722cf52b246ff42aafd3ed27ddf331c415612d084304cf5e52
+tox==4.26.0 \
+    --hash=sha256:75f17aaf09face9b97bd41645028d9f722301e912be8b4c65a3f938024560224 \
+    --hash=sha256:a83b3b67b0159fa58e44e646505079e35a43317a62d2ae94725e0586266faeca
     # via
     #   -r CI/requirements_ci.in
     #   tox-gh
@@ -407,6 +407,7 @@ typing-extensions==4.12.2 \
     --hash=sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8
     # via
     #   anyio
+    #   exceptiongroup
     #   pydantic
     #   pydantic-core
     #   rich-click
@@ -415,9 +416,9 @@ urllib3==2.2.2 \
     --hash=sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472 \
     --hash=sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168
     # via requests
-virtualenv==20.30.0 \
-    --hash=sha256:800863162bcaa5450a6e4d721049730e7f2dae07720e0902b0e4040bd6f9ada8 \
-    --hash=sha256:e34302959180fca3af42d1800df014b35019490b119eba981af27f2fa486e5d6
+virtualenv==20.31.2 \
+    --hash=sha256:36efd0d9650ee985f0cad72065001e66d49a6f24eb44d98980f630686243cf11 \
+    --hash=sha256:e10c0a9d02835e592521be48b332b6caee6887f332c111aa79a09b9e79efc2af
     # via tox
 wcmatch==8.5.2 \
     --hash=sha256:17d3ad3758f9d0b5b4dedc770b65420d4dac62e680229c287bf24c9db856a478 \
