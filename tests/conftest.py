@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable
 from os.path import commonpath
 from pathlib import Path
-from collections.abc import Callable
 
 import pooch
 import pytest

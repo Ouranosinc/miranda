@@ -5,8 +5,8 @@ from __future__ import annotations
 import contextlib
 import logging
 import tempfile
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
 
 from dask.diagnostics import ProgressBar
 

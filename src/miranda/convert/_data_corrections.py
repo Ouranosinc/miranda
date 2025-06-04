@@ -5,11 +5,10 @@ import json
 import logging.config
 import os
 import warnings
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from functools import partial
 from pathlib import Path
 from typing import Any
-from collections.abc import Callable
 
 import numpy as np
 import xarray as xr

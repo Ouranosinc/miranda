@@ -121,7 +121,6 @@ all = [
 
 [tool.black]
 target-version = [
-  "py39",
   "py310",
   "py311",
   "py312",
@@ -242,7 +241,7 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 39
+py_version = 310
 append_only = true
 add_imports = "from __future__ import annotations"
 skip = ["templates", "docs/conf.py"]
