@@ -72,13 +72,11 @@ nbsphinx_prolog = r"""
 autodoc_mock_imports = [
     "cdsapi",
     "ecmwfapi",
-    "fabric",
     "intake",
     "numcodecs",
-    "paramiko",
+    "pooch",
     "regionmask",
     "s3fs",
-    "scp",
 ]
 
 # To ensure that underlined fields (e.g. `_field`) are shown in the docs.

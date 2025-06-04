@@ -26,7 +26,7 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from xclim.testing.utils import show_versions as _show_versions
 
-from miranda import __version__ as __miranda_version__
+import miranda
 
 try:
     import pytest
@@ -42,8 +42,6 @@ except ImportError:
         "The `pooch` library is not installed. The default cache directory for testing data will not be set."
     )
     pooch = None
-
-import miranda
 
 logger = logging.getLogger("miranda")
 
@@ -279,13 +277,13 @@ def show_versions(
 def testing_setup_warnings():
     """Warn users about potential incompatibilities between miranda and miranda-testdata versions."""
     if (
-        re.match(r"^\d+\.\d+\.\d+$", __miranda_version__)
+        re.match(r"^\d+\.\d+\.\d+$", miranda.__version__)
         and TESTDATA_BRANCH != default_testdata_version
     ):
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs
         if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
             warnings.warn(
-                f"`miranda` stable ({__miranda_version__}) is running tests against a non-default "
+                f"`miranda` stable ({miranda.__version__}) is running tests against a non-default "
                 f"branch of the testing data. It is possible that changes to the testing data may "
                 f"be incompatible with some assertions in this version. "
                 f"Please be sure to check {TESTDATA_REPO_URL} for more information.",
