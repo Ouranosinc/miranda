@@ -251,8 +251,8 @@ def show_versions(
     """
 
     def _get_miranda_dependencies():
-        xscen_metadata = ilm.metadata("miranda")
-        requires = xscen_metadata.get_all("Requires-Dist")
+        miranda_metadata = ilm.metadata("miranda")
+        requires = miranda_metadata.get_all("Requires-Dist")
         requires = [
             req.split("[")[0]
             .split(";")[0]
@@ -260,10 +260,12 @@ def show_versions(
             .split("<")[0]
             .split("=")[0]
             .split("!")[0]
+            .strip()
             for req in requires
         ]
+        sorted_deps = sorted(list(set(requires) - {"miranda"}))
 
-        return ["xscen"] + requires
+        return ["miranda"] + sorted_deps
 
     if deps is None:
         deps = _get_miranda_dependencies()
