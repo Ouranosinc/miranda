@@ -33,6 +33,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.coverage",
     "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
@@ -51,6 +52,10 @@ extlinks = {
     "issue": ("https://github.com/Ouranosinc/miranda/issues/%s", "GH/%s"),
     "pull": ("https://github.com/Ouranosinc/miranda/pull/%s", "PR/%s"),
     "user": ("https://github.com/%s", "@%s"),
+}
+
+intersphinx_mapping = {
+    "xarray": ("https://docs.xarray.dev/en/stable/", None)
 }
 
 napoleon_numpy_docstring = True

@@ -74,7 +74,7 @@ default_testdata_repo_url = (
 try:
     default_testdata_cache = Path(pooch.os_cache("miranda-testdata"))
     """Default location for the testing data cache."""
-except AttributeError:
+except (AttributeError, TypeError):
     default_testdata_cache = None
 
 TESTDATA_REPO_URL = str(
