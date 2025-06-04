@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import builtins
-
 import numpy as np
 import pytest
 import xarray as xr
@@ -32,19 +30,20 @@ class TestDomains:
 
         assert "region" in ar6.coords
 
-    @pytest.mark.skipif(regionmask, reason="regionmask is installed")
+    @pytest.mark.skipif(regionmask is not None, reason="regionmask is installed")
     def test_ar6_regions_no_regionmask(self, cassini):
         from miranda.gis._domains import add_ar6_regions
 
         ds = xr.open_dataset(
-            builtins.str(
-                cassini.fetch(
-                    "CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
-                )
+            cassini.fetch(
+                "CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
             )
         )
 
-        with pytest.raises(ImportError, match="regionmask"):
+        with pytest.raises(
+            ImportError,
+            match="`add_ar6_regions` requires installation of the miranda GIS libraries.",
+        ):
             add_ar6_regions(ds)
 
     @pytest.mark.parametrize(
