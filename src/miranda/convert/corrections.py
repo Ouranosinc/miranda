@@ -6,7 +6,7 @@ import datetime
 import pathlib
 from collections.abc import Iterator, Sequence
 from functools import partial
-from typing import Callable
+from collections.abc import Callable
 
 import xarray as xr
 

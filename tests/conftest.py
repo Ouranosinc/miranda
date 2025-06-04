@@ -4,7 +4,7 @@ import logging
 import os
 from os.path import commonpath
 from pathlib import Path
-from typing import Callable
+from collections.abc import Callable
 
 import pooch
 import pytest

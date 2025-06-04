@@ -6,7 +6,7 @@ import contextlib
 import logging
 import tempfile
 from pathlib import Path
-from typing import Callable
+from collections.abc import Callable
 
 from dask.diagnostics import ProgressBar
 
