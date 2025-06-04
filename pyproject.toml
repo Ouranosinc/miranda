@@ -13,7 +13,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -24,7 +24,6 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -35,17 +34,18 @@ classifiers = [
 dynamic = ["description", "version"]
 dependencies = [
   "cftime",
-  "dask[dataframe]",
+  "cf-xarray >=0.10.4",
+  "dask >=2024.8.1",
   "distributed",
   "h5netcdf",
-  "netCDF4",
-  "numpy",
+  "numcodecs <0.16",
+  "numpy >=1.25",
   "pandas",
   "pyessv",
   "pyyaml",
   "schema",
-  "xarray",
-  "xclim >=0.47.0",
+  "xarray >=2023.11.0",
+  "xclim >=0.57.0",
   "zarr"
 ]
 
@@ -61,6 +61,7 @@ dev = [
   "flit >=3.9.0,<4.0",
   "isort ==6.0.1",
   "mypy",
+  "netCDF4",
   "numpydoc >=1.8.0",
   "pooch >=1.8.0",
   "pip >=25.0",
@@ -79,18 +80,19 @@ docs = [
   "ipykernel",
   "ipython",
   "jupyter_client",
-  "nbsphinx",
+  "nbsphinx>=0.9.5",
   "sphinx >=7.0.0,<8.2.0",
   "sphinx-intl",
   "sphinx-mdinclude",
-  "sphinx_codeautolink",
+  "sphinx_codeautolink >=0.16.2",
   "sphinx_copybutton"
 ]
 gis = [
   # GIS library support
-  "clisops",
-  "geopandas",
-  "regionmask",
+  "clisops >=0.16.1",
+  "geopandas >=1.0.0",
+  "regionmask >=0.13.0",
+  "shapely >=2.0",
   "xesmf"
 ]
 remote = [
@@ -98,7 +100,7 @@ remote = [
   "ecmwf-api-client",
   "intake",
   "intake-esm",
-  "numcodecs",
+  "requests >=2.31",
   "s3fs"
 ]
 all = [

@@ -63,7 +63,7 @@ def tigge_convert(
                 msg = f"Converting `{infile.name}`."
                 logging.info(msg)
                 ds.to_netcdf(
-                    tf.name, format="NETCDF4", engine="netcdf4", encoding=encoding
+                    tf.name, format="NETCDF4", engine="h5netcdf", encoding=encoding
                 )
 
             shutil.move(

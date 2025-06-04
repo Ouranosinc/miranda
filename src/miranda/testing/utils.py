@@ -452,7 +452,7 @@ def cassini(
             check_only: bool | None = False,
         ) -> None:
             """Download the file from the URL and save it to the save_path."""
-            headers = {"User-Agent": f"miranda ({__miranda_version__})"}
+            headers = {"User-Agent": f"miranda ({miranda.__version__})"}
             downloader = pooch.HTTPDownloader(headers=headers)
             return downloader(url, output_file, poocher, check_only=check_only)
 
