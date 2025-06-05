@@ -13,7 +13,7 @@ Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Sm
 Announcements
 ^^^^^^^^^^^^^
 * `miranda` boilerplate code is now versioned with `cruft <https://cruft.github.io/cruft>`_ and the `Ouranosinc/cookiecutter-pypackage <https://github.com/Ouranosinc/cookiecutter-pypackage>`_ template.
-* Python3.8 support has been dropped in favor of Python3.9+.
+* The `miranda` library now requires Python 3.10 or higher.
 * The `miranda` library has undergone a significant refactoring to remove unused code and modules that were out of scope for the library.
     * The modules `miranda.archive` and `miranda.remote` have been removed and will be moved to a separate project.
     * Data treatment functions have been moved to `miranda.treatments`.
@@ -39,7 +39,12 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * Removed modules ``miranda.archive`` and ``miranda.remote`` (split into a separate project yet to be published).
 * ``miranda.utils.show_versions`` has been moved to ``miranda.testing.show_versions``. It now uses ``xclim.testing.show_versions`` to display the versions of all dependencies.
+* Python 3.8 and Python 3.9 are no longer supported.
 * The `dev` recipe now requires `pooch` (>=1.8.0).
+* many dependencies have been updated to more modern versions, including:
+    * `numpy` (>=1.25.0)
+    * `xarray` (>=2023.11.0)
+    * `xclim` (>=0.57.0)
 
 Bug fixes
 ^^^^^^^^^
@@ -53,9 +58,12 @@ Internal changes
 * `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
 * Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
 * Adjusted calls using `os.path` to use `pathlib` for better cross-platform compatibility.
-* Added new `pytest` functions for the new `miranda-testdata` repository:
+* Added new `pytest` fixtures for the new `miranda-testdata` repository:
+    * ``cassini``: `pytest` fixture for fetching local filepaths of cached testing data.
     * ``open_dataset``: `pytest` fixture for one-off fetching and opening of a registered test data set.
     * ``era5_precip``: `pytest` fixture fetching and opening a zip file containing a subset of the ERA5 precipitation dataset.
+    * ``timeseries``: `pytest` fixture for generating an artificial CF-compliant time series dataset using `xclim` and `xarray`.
+    * ``multivariable_dataset``: `pytest` fixture for generating an artificial `xarray` multivariable dataset.
 * The `tox.ini` and `pyproject.toml` dependency pins have been synchronized.
 
 .. _changes_0.5.0:
