@@ -40,7 +40,7 @@
   "dimensions": {
     "time": {
       "_ensure_correct_time": {
-        "rdrs-v21": "1H"
+        "rdrs-v21": "h"
       },
       "_strict_time": true,
       "axis": "T",

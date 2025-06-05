@@ -2,48 +2,50 @@ name: miranda
 channels:
   - conda-forge
 dependencies:
-  - python >=3.9,<3.13
+  - python >=3.10,<3.14
   - cdsapi
   - cftime
-  - clisops >=0.9
-  - dask
+  - cf-xarray >=0.10.4
+  - clisops >=0.16.1
+  - dask >=2024.8.1
   - distributed
   - ecmwf-api-client
   - h5netcdf
   - intake
   - intake-esm
-  - netCDF4
-  - numba >=0.55.2  # There's a problem with numba on conda
-  - numcodecs
-  - numpy
-  - pandas
+  - netCDF4 >=1.6.4
+  - numcodecs <0.16
+  - numpy >=1.25
+  - pandas >=1.0.0
   - pyessv
   - pyproj
   - pyupgrade
   - pyyaml
-  - regionmask
-  - requests
+  - regionmask >=0.13.0
+  - requests >=2.31.0
   - s3fs
   - schema
-  - xarray
-  - xclim >=0.47.0
+  - shapely >=2.0
+  - xarray >=2023.11.0
+  - xclim >=0.57.0
   - xesmf
   - zarr
   # Dev tools and testing
-  - pip >=24.3.1
+  - pip >=25.1
   - black ==24.10.0
   - blackdoc ==0.3.9
   - bump-my-version >=0.28.0
   - coverage >=7.5.0
-  - coveralls >=4.0.1
   - flake8 >=7.1.1
   - flake8-rst-docstrings >=0.3.0
   - flit >=3.9.0,<4.0
-  - isort ==5.13.2
+  - isort ==6.0.1
   - numpydoc >=1.8.0
+  - pooch >=1.8.0
   - pre-commit >=3.5.0
   - pytest >=8.3.2
   - pytest-cov >=5.0.0
+  - pytest-xdist >=3.2.0
   - ruff >=0.8.2
   - tox >=4.23.2
   - watchdog >=4.0.0

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-"""Tests for `miranda` package."""
 from __future__ import annotations
 
 from importlib.util import find_spec
@@ -11,19 +9,6 @@ import miranda
 class TestMirandaVersion:
     def test_version(self):
         assert isinstance(miranda.__version__, str)
-
-
-class TestMiranda:
-    @classmethod
-    def setup_class(cls):
-        pass
-
-    def test_something(self):
-        pass
-
-    @classmethod
-    def teardown_class(cls):
-        pass
 
 
 # class TestDatabase:
@@ -72,4 +57,4 @@ def test_package_metadata():
         contents = f.read()
         assert """Trevor James Smith""" in contents
         assert '__email__ = "smith.trevorj@ouranos.ca"' in contents
-        assert '__version__ = "0.6.0-dev.11"' in contents
+        assert '__version__ = "0.6.0-dev.15"' in contents

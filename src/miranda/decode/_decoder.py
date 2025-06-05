@@ -21,7 +21,7 @@ from pandas._libs.tslibs import NaTType  # noqa
 from miranda.convert.utils import date_parser, find_version_hash  # noqa
 from miranda.cv import VALIDATION_ENABLED
 from miranda.scripting import LOGGING_CONFIG
-from miranda.units import get_time_frequency
+from miranda.units import check_time_frequency
 
 from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderError
 
@@ -410,7 +410,7 @@ class Decoder:
             )
             logging.warning(msg)
             if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
-                engine = "netcdf4"
+                engine = "h5netcdf"
             elif Path(file).is_dir() and Path(file).suffix == ".zarr":
                 engine = "zarr"
             else:
@@ -433,7 +433,7 @@ class Decoder:
                     return pd.NaT
                 raise ValueError(f"Field `{field}` not supported.")
             else:
-                _, found_freq = get_time_frequency(_ds.time)
+                _, found_freq = check_time_frequency(_ds.time)
 
             if found_freq in potential_times:
                 msg = (
