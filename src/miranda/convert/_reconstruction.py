@@ -55,18 +55,18 @@ def reanalysis_processing(
 
     Parameters
     ----------
-    data: dict[str, list[str]]
-    output_folder: str or os.PathLike
-    variables: Sequence[str]
-    aggregate: {"day", None}
-    domains: {"QC", "CAN", "AMNO", "NAM", "GLOBAL"}
-    start: str, optional
-    end: str, optional
-    target_chunks: dict, optional
-    output_format: {"netcdf", "zarr"}
-    overwrite: bool
-    engine: {"netcdf4", "h5netcdf"}
-    n_workers: int
+    data : dict[str, list[str]]
+    output_folder : str or os.PathLike
+    variables : Sequence[str]
+    aggregate : {"day", None}
+    domains : {"QC", "CAN", "AMNO", "NAM", "GLOBAL"}
+    start : str, optional
+    end : str, optional
+    target_chunks : dict, optional
+    output_format : {"netcdf", "zarr"}
+    overwrite : bool
+    engine : {"netcdf4", "h5netcdf"}
+    n_workers : int
 
     Returns
     -------

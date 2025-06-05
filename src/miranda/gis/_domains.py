@@ -148,6 +148,6 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
         msg = _gis_import_error_message.format(add_ar6_regions.__name__)
         raise ImportError(msg)
 
-    mask = regionmask.defined_regions.ar6.all.mask(ds.lon, ds.lat)
+    mask = regionmask.defined_regions.ar6.all.mask(ds.cf["lon"], ds.cf["lat"])
     ds = ds.assign_coords(region=mask)
     return ds

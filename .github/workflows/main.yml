@@ -21,6 +21,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  MIRANDA_TESTDATA_BRANCH: v2025.5.16
+
 jobs:
   lint_and_docs:
     runs-on: ubuntu-latest
@@ -63,12 +66,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version:
-          - "3.9"
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          # - "3.13"
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
@@ -113,12 +111,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version:
-          - "3.9"
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          # - "3.13"
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     defaults:
       run:
         shell: bash -l {0}
@@ -139,6 +132,10 @@ jobs:
           environment-file: environment-dev.yml
           create-args: >-
             python=${{ matrix.python-version }}
+      - name: Manual install of pyessv-archive
+        run: |
+          mkdir -p ~/.esdoc
+          git clone https://github.com/ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
       - name: Install miranda
         run: |
           python -m pip install --no-deps .

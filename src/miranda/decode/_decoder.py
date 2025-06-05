@@ -410,7 +410,7 @@ class Decoder:
             )
             logging.warning(msg)
             if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
-                engine = "netcdf4"
+                engine = "h5netcdf"
             elif Path(file).is_dir() and Path(file).suffix == ".zarr":
                 engine = "zarr"
             else:

@@ -13,16 +13,12 @@ import datetime
 import os
 import sys
 
-import miranda
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, os.path.abspath("../src"))
 
-cwd = os.getcwd()
-parent = os.path.dirname(cwd)
-sys.path.insert(0, parent)
+import miranda
 
 
 # -- General configuration -----------------------------------------------------
@@ -37,6 +33,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.coverage",
     "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
@@ -57,6 +54,10 @@ extlinks = {
     "user": ("https://github.com/%s", "@%s"),
 }
 
+intersphinx_mapping = {
+    "xarray": ("https://docs.xarray.dev/en/stable/", None)
+}
+
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
 napoleon_use_param = False
@@ -72,13 +73,11 @@ nbsphinx_prolog = r"""
 autodoc_mock_imports = [
     "cdsapi",
     "ecmwfapi",
-    "fabric",
     "intake",
     "numcodecs",
-    "paramiko",
+    "pooch",
     "regionmask",
     "s3fs",
-    "scp",
 ]
 
 # To ensure that underlined fields (e.g. `_field`) are shown in the docs.
