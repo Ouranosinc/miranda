@@ -189,7 +189,7 @@ def create_ghcn_xarray(
                         ds = ds.assign_coords(
                             {
                                 cc: xr.DataArray(
-                                    df_stat[cc].values[0], coords=ds.station.coords
+                                    [df_stat[cc].values[0]], coords=ds.station.coords
                                 )
                             }
                         )
