@@ -15,9 +15,9 @@ from miranda.gis import subset_domain
 from miranda.io.utils import delayed_write, get_chunks_on_disk
 from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
+from miranda.vocabularies import project_institute, xarray_frequencies_to_cmip6like
 
 from ._aggregation import aggregate as aggregate_func
-from ._data_definitions import project_institutes, xarray_frequencies_to_cmip6like
 from .corrections import dataset_corrections
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -140,7 +140,7 @@ def reanalysis_processing(
                             )
                             time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6like[parse_freq[1]]}"
 
-                        institute = project_institutes[project]
+                        institute = project_institute(project)
                         file_name = f"{var}_{time_freq}_{institute}_{project}"
                         if domain != "not-specified":
                             file_name = f"{file_name}_{domain}"
