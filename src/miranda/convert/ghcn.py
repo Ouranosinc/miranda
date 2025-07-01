@@ -46,7 +46,7 @@ q_flag_dict = {
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
-    # ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
+    ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
 )
 
 
@@ -94,9 +94,9 @@ def get_ghcn_raw(
 
             outfile = outfolder / f"{station_id}.csv"
         # TODO ghcnh not implemented yet
-        # elif station_type == "hourly":
-        #     url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
-        #     outfile = outfolder / f"GHCNh_{station_id}_por.psv"
+        elif station_type == "hourly":
+            url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
+            outfile = outfolder / f"GHCNh_{station_id}_por.psv"
         else:
             msg = f"unknown station type : {station_type}"
             raise ValueError(msg)
@@ -199,54 +199,60 @@ def create_ghcn_xarray(
 
                 data.append(ds)
         # TODO ghcnh not implemented yet
-        # elif project == "ghcnh":
-        #     df = pd.read_csv(station_id, delimiter="|")
-        #     df.columns = df.columns.str.lower()
-        #     # df.element = df.element.str.lower()
-        #     # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
-        #     df.loc[imask, "q_flag"] = nan
-        #     varlist = [k for k in varmeta.keys() if k in df.element.unique()]
-        #     if varlist:
-        #         df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
-        #         df = df.set_index(["id", "time"])
-        #         dslist = []
-        #         for var in varlist:
-        #             ds1 = df.loc[df.element == var].to_xarray()
+        elif project == "ghcnh":
+            df = pd.read_csv(station_id, delimiter="|")
+            df.columns = df.columns.str.lower()
+            # df.element = df.element.str.lower()
+            # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
+            #df.loc[imask, "q_flag"] = nan
+            varlist = [k for k in varmeta.keys() if k in df.columns]
+            flaglist = [f"{k}_quality_code" for k in varlist]
+            coordlist = ['station_id', 'station_name', 'year', 'month', 'day', 'hour', 'minute', 'latitude', 'longitude', 'elevation']
+            drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
+            if varlist:
+                df["time"] = pd.to_datetime(df[['year', 'month', 'day', 'hour']])
+                df = df.set_index(["station_id", "time"])
+                df = df.iloc[~df.index.duplicated()]
+                dslist = []
+                for var in varlist:
+                    ds1 = df[[var, f"{var}_quality_code"]].to_xarray()
 
-        #             ds1 = ds1.rename({"data_value": var, "id": "station"})
-        #             drop_vars = [
-        #                 v
-        #                 for v in ds1.data_vars
-        #                 if v not in varlist and v not in ["q_flag"]
-        #             ]
-        #             ds1 = ds1.drop_vars(drop_vars)
-        #             ds1 = ds1.rename(
-        #                 {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
-        #             )
+                    ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code":f"{var}_flag"})
+                    if ds1[f"{var}_flag"].dtype == 'float':
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].round().astype(str)
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(ds1[f"{var}_flag"]!='nan', '') 
+                    else:
+                        df1 = df[[var, f"{var}_quality_code"]].copy()
+                        df1['num_str'] = pd.to_numeric(df1[f"{var}_quality_code"], errors='coerce').round().astype(str)
+                        df1.loc[df1[f"{var}_quality_code"].apply(type) == str, 'num_str'] = df1[df1[f"{var}_quality_code"].apply(type) == str][f"{var}_quality_code"].astype(str)
+                        df1 = df1.drop(columns = [f"{var}_quality_code"])
+                        df1 = df1.rename(columns={'num_str':f"{var}_quality_code"})
+                        ds1 = df1.to_xarray()
+                        ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code":f"{var}_flag"})
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(ds1[f"{var}_flag"]!='nan', '')
+                    dslist.append(ds1)
+                ds = xr.merge(dslist)
 
-        #             dslist.append(ds1)
-        #         ds = xr.merge(dslist)
+                del dslist
+                df_stat = statmeta[statmeta.station_id == station_id.stem.split('_')[1]]
+                if len(df_stat) != 1:
+                    raise ValueError(
+                        f"expected a single station metadata for {station_id.stem}"
+                    )
+                for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
+                    if cc not in ds.coords:
+                        ds = ds.assign_coords(
+                            {
+                                cc: xr.DataArray(
+                                    df_stat[cc].values, coords=ds.station.coords
+                                )
+                            }
+                        )
+                for vv in ds.data_vars:
+                    if ds[vv].dtype == "float64":
+                        ds[vv] = ds[vv].astype("float32")
 
-        #         del dslist
-        #         df_stat = statmeta[statmeta.station_id == station_id.stem]
-        #         if len(df_stat) != 1:
-        #             raise ValueError(
-        #                 f"expected a single station metadata for {station_id.stem}"
-        #             )
-        #         for cc in [c for c in df_stat.columns if c != "station_id"]:
-        #             if cc not in ds.coords:
-        #                 ds = ds.assign_coords(
-        #                     {
-        #                         cc: xr.DataArray(
-        #                             df_stat[cc].values, coords=ds.station.coords
-        #                         )
-        #                     }
-        #                 )
-        #         for vv in ds.data_vars:
-        #             if ds[vv].dtype == "float64":
-        #                 ds[vv] = ds[vv].astype("float32")
-
-        #         data.append(ds)
+                data.append(ds)
         else:
             msg = f"Unknown project {project}"
             raise ValueError(msg)
@@ -288,8 +294,8 @@ def download_ghcn(
     station_df = _get_ghcn_stations(
         project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
     )
-    if update_raw and working_folder.joinpath("raw").exists():
-        shutil.rmtree(working_folder.joinpath("raw"))
+    # if update_raw and working_folder.joinpath("raw").exists():
+    #     shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("raw").mkdir(exist_ok=True)
 
@@ -362,35 +368,35 @@ def _get_ghcn_stations(
                 converters=dtypes,
             )
     # TODO ghcnh not implemented yet
-    # elif project == "ghcnh":
-    #     project
-    #     station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
-    #     dtypes = {
-    #         "station_id": str,
-    #         "lat": float,
-    #         "lon": float,
-    #         "elevation": float,
-    #         "state": str,
-    #         "station_name": str,
-    #         "gsn_flag": str,
-    #         "hcn_flag": str,
-    #         "wmo_id": str,
-    #     }
-    #     try:
-    #         station_df = pd.read_fwf(
-    #             station_url,
-    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-    #             names=[d for d in dtypes.keys()],
-    #             converters=dtypes,
-    #         )
-    #     except ValueError:
-    #         statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
-    #         station_df = pd.read_fwf(
-    #             statfile,
-    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-    #             names=[d for d in dtypes.keys()],
-    #             converters=dtypes,
-    #         )
+    elif project == "ghcnh":
+        project
+        station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
+        dtypes = {
+            "station_id": str,
+            "lat": float,
+            "lon": float,
+            "elevation": float,
+            "state": str,
+            "station_name": str,
+            "gsn_flag": str,
+            "hcn_flag": str,
+            "wmo_id": str,
+        }
+        try:
+            station_df = pd.read_fwf(
+                station_url,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+        except ValueError:
+            statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
+            station_df = pd.read_fwf(
+                statfile,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
 
     # logging.info("ghcnh not implemented yet")
     # exit()
@@ -468,9 +474,9 @@ def convert_ghcn_bychunks(
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
     # TODO ghcnh not implemented yet
-    # elif project == "ghcnh":
-    #     readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-    #     outchunks = dict(time=(365 * 4) + 1, station=nstations)
+    elif project == "ghcnh":
+        readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
+        outchunks = dict(time=(365 * 4) + 1, station=nstations)
     # logging.info("ghcnh not implemented yet")
     # exit()
     else:
@@ -567,22 +573,33 @@ def convert_ghcn_bychunks(
                         add_version_hashes=False,
                         overwrite=update_from_raw,
                     )
-                    ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
+                    ds_corr = ds_corr.rename({f"{kk}_flag": f"{cf_var}_q_flag"})
                     for vv in ds_corr.data_vars:
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
 
-                    desc_str = "; ".join(
+                    if project == 'ghcnd':
+                        desc_str = "; ".join(
                         [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
-                    )
-                    desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
-                    attrs = {
-                        "flag_values": [c for c in q_flag_dict[project].keys()],
-                        "flag_meanings": [c for c in q_flag_dict[project].values()],
-                        "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
-                        "long_name": f"Quality flag for {cf_var}",
-                        "description": desc_str,
-                    }
+                        )
+                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                        attrs = {
+                            "flag_values": [c for c in q_flag_dict[project].keys()],
+                            "flag_meanings": [c for c in q_flag_dict[project].values()],
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}",
+                            "description": desc_str,
+                        }
+                    elif project == 'ghcnh':
+                        desc_str = f"See the readme file for information of quality flag codes (Table 3) : {readme_url}"
+                        attrs = {
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}",
+                            "description": desc_str,
+                        }
+                    else:
+                        raise ValueError(f'unknown project {project}')
+
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
