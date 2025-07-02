@@ -19,6 +19,7 @@ from miranda.treatments import (
     ensure_correct_time_frequency,
     invert_value_sign,
     metadata_conversion,
+    mask_values,
     offset_time_dimension,
     preprocessing_corrections,
     transform_values,
@@ -50,6 +51,8 @@ CONFIG_FILES = {
     "era5-single-levels-monthly-means-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
     "era5-single-levels-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
     "ets-grnch": "ets-grnch_cf_attrs.json",
+    "ghcnh": "ghcnh_cf_attrs.json",
+    "ghcnd": "ghcnd_cf_attrs.json",
     "melcc": "melcc_cf_attrs.json",
     "rdrs-v21": "eccc_rdrs_cf_attrs.json",
     "casr-v31": "eccc_casr_cf_attrs.json",
@@ -84,7 +87,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = invert_value_sign(ds, project, metadata_definition)
     ds = cf_units_conversion(ds, metadata_definition)
     ds = clip_values(ds, project, metadata_definition)
-
+    ds = mask_values(ds, project, metadata_definition)
     ds = dimensions_compliance(ds, project, metadata_definition)
     ds = ensure_correct_time_frequency(ds, project, metadata_definition)
     ds = offset_time_dimension(ds, project, metadata_definition)
