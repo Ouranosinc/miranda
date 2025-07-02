@@ -86,11 +86,12 @@
     "wind_direction": {
       "_cf_variable_name": "winddir",
       "_corrected_units": "degrees",
-      "_clip_values": {
+      "_mask_values": {
         "all": {
           "min": "0 degrees",
           "max": "360 degrees"
-        }},
+        }
+      },
       "cell_methods": "time: mean",
       "long_name": "Near-Surface Wind Direction",
       "standard_name": "wind_from_direction",
@@ -115,11 +116,12 @@
     "relative_humidity": {
       "_cf_variable_name": "hurs",
       "_corrected_units": "%",
-      "_clip_values": {
+      "_mask_values": {
         "all": {
           "min": "0 %",
           "max": "100 %"
-        }},
+        }
+      },
       "long_name": "Near-Surface Relative Humidity",
       "standard_name": "relative_humidity",
       "units": "%"
