@@ -17,10 +17,9 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import nan
 
-from miranda.convert._data_corrections import (
-    dataset_conversion,
-    load_json_data_mappings,
-)
+from miranda.convert.corrections import dataset_corrections, CONFIG_FILES
+from miranda.treatments.utils import load_json_data_mappings
+
 from miranda.scripting import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -147,7 +146,7 @@ def create_ghcn_xarray(
         msg = f"Reading {station_id.name}"
         logging.info(msg)
         if project == "ghcnd":
-            df = pd.read_csv(station_id)
+            df = pd.read_csv(station_id , low_memory=False)
             df.columns = df.columns.str.lower()
             df.element = df.element.str.lower()
             imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
@@ -200,7 +199,7 @@ def create_ghcn_xarray(
                 data.append(ds)
         # TODO ghcnh not implemented yet
         elif project == "ghcnh":
-            df = pd.read_csv(station_id, delimiter="|")
+            df = pd.read_csv(station_id, delimiter="|", low_memory=False)
             df.columns = df.columns.str.lower()
             # df.element = df.element.str.lower()
             # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
@@ -234,7 +233,7 @@ def create_ghcn_xarray(
                 ds = xr.merge(dslist)
 
                 del dslist
-                df_stat = statmeta[statmeta.station_id == station_id.stem.split('_')[1]]
+                df_stat = statmeta[statmeta.station_id == station_id.stem.split('_', 1)[1].split("_por")[0]]
                 if len(df_stat) != 1:
                     raise ValueError(
                         f"expected a single station metadata for {station_id.stem}"
@@ -460,7 +459,7 @@ def convert_ghcn_bychunks(
         logging.error(msg)
         raise
 
-    var_attrs = load_json_data_mappings(project=project)["variables"]
+    var_attrs = load_json_data_mappings(project=project, configurations=CONFIG_FILES)["variables"]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
@@ -565,13 +564,14 @@ def convert_ghcn_bychunks(
                     )
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
+                    # skip empty datasets
+                    if 0 in dsout[kk].shape:
+                        continue
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
 
-                    ds_corr = dataset_conversion(
+                    ds_corr = dataset_corrections(
                         dsout,
                         project=project,
-                        add_version_hashes=False,
-                        overwrite=update_from_raw,
                     )
                     ds_corr = ds_corr.rename({f"{kk}_flag": f"{cf_var}_q_flag"})
                     for vv in ds_corr.data_vars:
