@@ -4,10 +4,7 @@ import os
 import shutil
 from dask.diagnostics import ProgressBar
 from miranda.convert.ghcn import convert_ghcn_bychunks, download_ghcn, q_flag_dict
-
 import xarray as xr
-from tempfile import TemporaryDirectory
-
 
 def main():
 
@@ -19,8 +16,8 @@ def main():
     lon_bnds = [-76, -74]
     lat_bnds = [44, 46]
 
-    nstations = 100
-    update_raw = False
+    nstations = 50
+    update_raw = True
 
     # download station data
     download_ghcn(
@@ -41,7 +38,7 @@ def main():
         end_year=end_year,
         update_from_raw=True,
         nstations=nstations,
-        n_workers=6,
+        n_workers=3,
     )
 
     # combine zarrs
