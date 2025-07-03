@@ -19,6 +19,7 @@ def main():
     nstations = 50
     update_raw = True
 
+    zarr_format = 2
     # download station data
     download_ghcn(
         project="ghcnh",
@@ -39,6 +40,7 @@ def main():
         update_from_raw=True,
         nstations=nstations,
         n_workers=3,
+        zarr_format=zarr_format
     )
 
     # combine zarrs
@@ -64,7 +66,7 @@ def main():
                 ds[c] = ds[c].astype(str)
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(
-                outzarr.with_suffix(".tmp.zarr"), mode="w"
+                outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format
             )
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
 

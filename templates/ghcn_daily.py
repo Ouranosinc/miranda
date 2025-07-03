@@ -9,7 +9,7 @@ import xarray as xr
 def main():
 
     logging.basicConfig(level=logging.INFO)
-    working_folder = Path.home().joinpath("ghcnd")
+    working_folder = Path.home().joinpath("scratch/ghcnd")
     start_year = 1981
     end_year = 2020
 
@@ -19,6 +19,7 @@ def main():
     nstations = 100
     update_raw = True
 
+    zarr_format=2
     # download station data
     download_ghcn(
         project="ghcnd",
@@ -39,6 +40,7 @@ def main():
         update_from_raw=update_raw,
         nstations=nstations,
         n_workers=6,
+        zarr_format=zarr_format
     )
 
     # combine zarrs
@@ -66,7 +68,7 @@ def main():
                 ds[c] = ds[c].astype(str)
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(
-                outzarr.with_suffix(".tmp.zarr"), mode="w"
+                outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format
             )
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
 
