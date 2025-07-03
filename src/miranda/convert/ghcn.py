@@ -422,6 +422,7 @@ def convert_ghcn_bychunks(
     n_workers: int = 4,
     nstations: int = 100,
     update_from_raw: bool = False,
+    zarr_format: int = 2,
 ) -> None:
     """
     Convert GHCN data to Zarr format.
@@ -450,6 +451,8 @@ def convert_ghcn_bychunks(
         Number of stations to process. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
+    zarr_format: int
+        output zarr version
     """
     try:
         import geopandas as gpd
@@ -607,7 +610,7 @@ def convert_ghcn_bychunks(
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
-                    jobs.append((ds_corr, outzarr, outchunks))
+                    jobs.append((ds_corr, outzarr, outchunks, zarr_format))
                     if len(jobs) >= n_workers:
                         pool = mp.Pool(n_workers)
                         pool.starmap(write_zarr, jobs)
@@ -656,7 +659,9 @@ def write_zarr(
     ds: xr.Dataset,
     outzarr: Path,
     chunks: dict,
+    zarr_format: int,
     overwrite: bool = False,
+    
 ) -> None:
     """
     Write Zarr file.
@@ -674,5 +679,5 @@ def write_zarr(
     """
     if not outzarr.exists() or overwrite:
         with ProgressBar():
-            ds.chunk(chunks).to_zarr(outzarr.with_suffix(".tmp.zarr"), mode="w")
+            ds.chunk(chunks).to_zarr(outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
