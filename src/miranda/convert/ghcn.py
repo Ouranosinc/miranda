@@ -573,7 +573,11 @@ def convert_ghcn_bychunks(
                         dsout,
                         project=project,
                     )
-                    ds_corr = ds_corr.rename({f"{kk}_flag": f"{cf_var}_q_flag"})
+                    flg_var = [v for v in ds_corr.data_vars if v.endswith('_flag')]
+                    if len(flg_var) != 1:
+                        msg = f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
+                        raise ValueError(msg)
+                    ds_corr = ds_corr.rename({flg_var[0]: f"{cf_var}_q_flag"})
                     for vv in ds_corr.data_vars:
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
