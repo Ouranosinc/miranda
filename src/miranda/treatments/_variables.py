@@ -249,7 +249,7 @@ def mask_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 logging.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv]
-                    d_out[out.name] = out.where(((out<=min_value) & (out>=max_value)))
+                    d_out[out.name] = out.where(((out>=min_value) & (out<=max_value)))
                 converted.append(vv)
                 prev_history = d.attrs.get("history", "")
                 history = f"masked variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
