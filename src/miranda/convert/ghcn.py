@@ -246,8 +246,8 @@ def create_ghcn_xarray(
                             .astype(str)
                         )
                         df1.loc[
-                            df1[f"{var}_quality_code"].apply(type) == str, "num_str"
-                        ] = df1[df1[f"{var}_quality_code"].apply(type) == str][
+                            df1[f"{var}_quality_code"].apply(lambda x: isinstance(x, str)), "num_str"
+                        ] = df1[df1[f"{var}_quality_code"].apply(lambda x: isinstance(x, str))][
                             f"{var}_quality_code"
                         ].astype(
                             str
