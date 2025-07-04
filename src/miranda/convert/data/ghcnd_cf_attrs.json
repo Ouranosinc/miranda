@@ -122,7 +122,8 @@
         "all": {
           "min": "0 degrees",
           "max": "360 degrees"
-        }},
+        }
+      },
       "cell_methods": "time: mean (interval: 1 day)",
       "long_name": "Near-Surface Wind Direction",
       "standard_name": "wind_from_direction",

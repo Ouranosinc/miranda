@@ -19,7 +19,7 @@ def main():
     nstations = 100
     update_raw = True
 
-    zarr_format=2
+    zarr_format = 2
     # download station data
     download_ghcn(
         project="ghcnd",
@@ -40,7 +40,7 @@ def main():
         update_from_raw=update_raw,
         nstations=nstations,
         n_workers=6,
-        zarr_format=zarr_format
+        zarr_format=zarr_format,
     )
 
     # combine zarrs

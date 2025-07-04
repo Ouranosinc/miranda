@@ -17,10 +17,9 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import nan
 
-from miranda.convert.corrections import dataset_corrections, CONFIG_FILES
-from miranda.treatments.utils import load_json_data_mappings
-
+from miranda.convert.corrections import CONFIG_FILES, dataset_corrections
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments.utils import load_json_data_mappings
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -45,7 +44,7 @@ q_flag_dict = {
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
-    ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
+    ghcnh=dict(freq="hourly", filetype=".psv"),  # TODO ghcnh not implemented yet
 )
 
 
@@ -146,7 +145,7 @@ def create_ghcn_xarray(
         msg = f"Reading {station_id.name}"
         logging.info(msg)
         if project == "ghcnd":
-            df = pd.read_csv(station_id , low_memory=False)
+            df = pd.read_csv(station_id, low_memory=False)
             df.columns = df.columns.str.lower()
             df.element = df.element.str.lower()
             imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
@@ -203,42 +202,85 @@ def create_ghcn_xarray(
             df.columns = df.columns.str.lower()
             # df.element = df.element.str.lower()
             # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
-            #df.loc[imask, "q_flag"] = nan
+            # df.loc[imask, "q_flag"] = nan
             varlist = [k for k in varmeta.keys() if k in df.columns]
             flaglist = [f"{k}_quality_code" for k in varlist]
-            coordlist = ['station_id', 'station_name', 'year', 'month', 'day', 'hour', 'minute', 'latitude', 'longitude', 'elevation']
-            drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
+            coordlist = [
+                "station_id",
+                "station_name",
+                "year",
+                "month",
+                "day",
+                "hour",
+                "minute",
+                "latitude",
+                "longitude",
+                "elevation",
+            ]
+            drop_cols = [
+                c
+                for c in df.columns
+                if c not in varlist and c not in flaglist and c not in coordlist
+            ]
             if varlist:
-                df["time"] = pd.to_datetime(df[['year', 'month', 'day', 'hour']])
+                df["time"] = pd.to_datetime(df[["year", "month", "day", "hour"]])
                 df = df.set_index(["station_id", "time"])
                 df = df.iloc[~df.index.duplicated()]
                 dslist = []
                 for var in varlist:
                     ds1 = df[[var, f"{var}_quality_code"]].to_xarray()
 
-                    ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code":f"{var}_flag"})
-                    if ds1[f"{var}_flag"].dtype == 'float':
+                    ds1 = ds1.rename(
+                        {"station_id": "station", f"{var}_quality_code": f"{var}_flag"}
+                    )
+                    if ds1[f"{var}_flag"].dtype == "float":
                         ds1[f"{var}_flag"] = ds1[f"{var}_flag"].round().astype(str)
-                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(ds1[f"{var}_flag"]!='nan', '') 
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(
+                            ds1[f"{var}_flag"] != "nan", ""
+                        )
                     else:
                         df1 = df[[var, f"{var}_quality_code"]].copy()
-                        df1['num_str'] = pd.to_numeric(df1[f"{var}_quality_code"], errors='coerce').round().astype(str)
-                        df1.loc[df1[f"{var}_quality_code"].apply(type) == str, 'num_str'] = df1[df1[f"{var}_quality_code"].apply(type) == str][f"{var}_quality_code"].astype(str)
-                        df1 = df1.drop(columns = [f"{var}_quality_code"])
-                        df1 = df1.rename(columns={'num_str':f"{var}_quality_code"})
+                        df1["num_str"] = (
+                            pd.to_numeric(df1[f"{var}_quality_code"], errors="coerce")
+                            .round()
+                            .astype(str)
+                        )
+                        df1.loc[
+                            df1[f"{var}_quality_code"].apply(type) == str, "num_str"
+                        ] = df1[df1[f"{var}_quality_code"].apply(type) == str][
+                            f"{var}_quality_code"
+                        ].astype(
+                            str
+                        )
+                        df1 = df1.drop(columns=[f"{var}_quality_code"])
+                        df1 = df1.rename(columns={"num_str": f"{var}_quality_code"})
                         ds1 = df1.to_xarray()
-                        ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code":f"{var}_flag"})
-                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(ds1[f"{var}_flag"]!='nan', '')
+                        ds1 = ds1.rename(
+                            {
+                                "station_id": "station",
+                                f"{var}_quality_code": f"{var}_flag",
+                            }
+                        )
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(
+                            ds1[f"{var}_flag"] != "nan", ""
+                        )
                     dslist.append(ds1)
                 ds = xr.merge(dslist)
 
                 del dslist
-                df_stat = statmeta[statmeta.station_id == station_id.stem.split('_', 1)[1].split("_por")[0]]
+                df_stat = statmeta[
+                    statmeta.station_id
+                    == station_id.stem.split("_", 1)[1].split("_por")[0]
+                ]
                 if len(df_stat) != 1:
                     raise ValueError(
                         f"expected a single station metadata for {station_id.stem}"
                     )
-                for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
+                for cc in [
+                    c
+                    for c in df_stat.columns
+                    if c not in ["station_id", "geometry", "index_right"]
+                ]:
                     if cc not in ds.coords:
                         ds = ds.assign_coords(
                             {
@@ -462,7 +504,9 @@ def convert_ghcn_bychunks(
         logging.error(msg)
         raise
 
-    var_attrs = load_json_data_mappings(project=project, configurations=CONFIG_FILES)["variables"]
+    var_attrs = load_json_data_mappings(project=project, configurations=CONFIG_FILES)[
+        "variables"
+    ]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
@@ -576,18 +620,20 @@ def convert_ghcn_bychunks(
                         dsout,
                         project=project,
                     )
-                    flg_var = [v for v in ds_corr.data_vars if v.endswith('_flag')]
+                    flg_var = [v for v in ds_corr.data_vars if v.endswith("_flag")]
                     if len(flg_var) != 1:
-                        msg = f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
+                        msg = (
+                            f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
+                        )
                         raise ValueError(msg)
                     ds_corr = ds_corr.rename({flg_var[0]: f"{cf_var}_q_flag"})
                     for vv in ds_corr.data_vars:
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
 
-                    if project == 'ghcnd':
+                    if project == "ghcnd":
                         desc_str = "; ".join(
-                        [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
+                            [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
                         )
                         desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
                         attrs = {
@@ -597,7 +643,7 @@ def convert_ghcn_bychunks(
                             "long_name": f"Quality flag for {cf_var}",
                             "description": desc_str,
                         }
-                    elif project == 'ghcnh':
+                    elif project == "ghcnh":
                         desc_str = f"See the readme file for information of quality flag codes (Table 3) : {readme_url}"
                         attrs = {
                             "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
@@ -605,8 +651,7 @@ def convert_ghcn_bychunks(
                             "description": desc_str,
                         }
                     else:
-                        raise ValueError(f'unknown project {project}')
-
+                        raise ValueError(f"unknown project {project}")
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
@@ -661,7 +706,6 @@ def write_zarr(
     chunks: dict,
     zarr_format: int,
     overwrite: bool = False,
-    
 ) -> None:
     """
     Write Zarr file.
@@ -679,5 +723,7 @@ def write_zarr(
     """
     if not outzarr.exists() or overwrite:
         with ProgressBar():
-            ds.chunk(chunks).to_zarr(outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
+            ds.chunk(chunks).to_zarr(
+                outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format
+            )
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)

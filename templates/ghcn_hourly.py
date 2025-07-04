@@ -6,6 +6,7 @@ from dask.diagnostics import ProgressBar
 from miranda.convert.ghcn import convert_ghcn_bychunks, download_ghcn, q_flag_dict
 import xarray as xr
 
+
 def main():
 
     logging.basicConfig(level=logging.INFO)
@@ -40,7 +41,7 @@ def main():
         update_from_raw=True,
         nstations=nstations,
         n_workers=3,
-        zarr_format=zarr_format
+        zarr_format=zarr_format,
     )
 
     # combine zarrs
