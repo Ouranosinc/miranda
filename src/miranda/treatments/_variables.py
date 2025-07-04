@@ -15,6 +15,7 @@ __all__ = [
     "clip_values",
     "correct_unit_names",
     "invert_value_sign",
+    "mask_values",
     "transform_values",
     "variable_conversion",
 ]
@@ -109,16 +110,14 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 converted.append(vv)
             else:
                 raise NotImplementedError(f"Unknown transformation: {trans}")
+
+            prev_history = d.attrs.get("history", "")
+            history = f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif trans is False:
             msg = f"No transformations needed for `{vv}` (Explicitly set to False)."
             logging.info(msg)
             continue
-
-        prev_history = d.attrs.get("history", "")
-        history = (
-            f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
-        )
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -140,13 +139,13 @@ def invert_value_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 out = d[vv]
                 d_out[out.name] = -out
             converted.append(vv)
+            prev_history = d.attrs.get("history", "")
+            history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
+            d_out.attrs.update(dict(history=history))
         elif inv_sign is False:
             msg = f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
             logging.info(msg)
             continue
-        prev_history = d.attrs.get("history", "")
-        history = f"Inverted sign for variable `{vv}` (switched direction of values). {prev_history}"
-        d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
     for vv in d.data_vars:
@@ -198,6 +197,9 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         )
                 msg = f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
                 logging.info(msg)
+                prev_history = d.attrs.get("history", "")
+                history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
+                d_out.attrs.update(dict(history=history))
                 with xr.set_options(keep_attrs=True):
                     out = d[vv]
                     d_out[out.name] = out.clip(min_value, max_value)
@@ -211,9 +213,55 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 logging.info(msg)
                 continue
 
-            prev_history = d.attrs.get("history", "")
-            history = f"Clipped variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
-            d_out.attrs.update(dict(history=history))
+    # Copy unconverted variables
+    for vv in d.data_vars:
+        if vv not in converted:
+            d_out[vv] = d[vv]
+
+    return d_out
+
+
+# for masking variable values exceeding an established maximum or minimum
+def mask_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
+    key = "_mask_values"
+    d_out = xr.Dataset(coords=d.coords, attrs=d.attrs)
+    converted = []
+    for vv in d.data_vars:
+        if vv in m["variables"].keys():
+            mask_values = _get_section_entry_key(m, "variables", vv, key, p)
+            if mask_values:
+                min_value, max_value = (
+                    d[vv].min(),
+                    d[vv].max(),
+                )  # default is min, max of dataset
+                # Gather unit conversion context, if applicable
+                context = mask_values.get("context", None)
+                for op, value in mask_values.items():
+                    if op == "min":
+                        min_value = xclim.core.units.convert_units_to(
+                            value, d[vv], context
+                        )
+                    if op == "max":
+                        max_value = xclim.core.units.convert_units_to(
+                            value, d[vv], context
+                        )
+                msg = f"masking values outside min/max values for `{vv}` ({min_value}/{max_value})."
+                logging.info(msg)
+                with xr.set_options(keep_attrs=True):
+                    out = d[vv]
+                    d_out[out.name] = out.where((out >= min_value) & (out <= max_value))
+                converted.append(vv)
+                prev_history = d.attrs.get("history", "")
+                history = f"masked variable `{vv}` with `min={min_value}` and `max={max_value}`. {prev_history}"
+                d_out.attrs.update(dict(history=history))
+            elif mask_values is False:
+                msg = f"No masking of values needed for `{vv}` in `{p}` (Explicitly set to False)."
+                logging.info(msg)
+                continue
+            else:
+                msg = f"No masking of values needed for `{vv}` in `{p}`."
+                logging.info(msg)
+                continue
 
     # Copy unconverted variables
     for vv in d.data_vars:
