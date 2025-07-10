@@ -24,7 +24,7 @@ Announcements
 
 New features
 ^^^^^^^^^^^^
-* Conversions for variables in the `GHCN-D` weather station network dataset are now supported.
+* Conversions for variables in the `GHCN-D` (daily) and `GHCN-H` (hourly) weather station network dataset are now supported.
 * Conversion support has been added for the `ORRC`, `CaSR v3.1`, and `RDRS v2.1` datasets.
 * ECMWF: Added support for the `era5-single-levels-monthly-means` project.
 * ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`cp`, `cape`), and wind speed (`u`, `v`).
