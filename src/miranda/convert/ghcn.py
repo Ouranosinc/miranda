@@ -224,7 +224,7 @@ def create_ghcn_xarray(
             ]
             if varlist:
                 for col in ["year", "month", "day", "hour"]:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
                     df = df.dropna(subset=[col])
                 df["time"] = pd.to_datetime(df[["year", "month", "day", "hour"]])
                 df = df.set_index(["station_id", "time"])
