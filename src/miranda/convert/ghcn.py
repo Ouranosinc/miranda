@@ -17,11 +17,9 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import nan
 
-from miranda.convert._data_corrections import (
-    dataset_conversion,
-    load_json_data_mappings,
-)
+from miranda.convert.corrections import CONFIG_FILES, dataset_corrections
 from miranda.scripting import LOGGING_CONFIG
+from miranda.treatments.utils import load_json_data_mappings
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -46,7 +44,7 @@ q_flag_dict = {
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
-    # ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
+    ghcnh=dict(freq="hourly", filetype=".psv"),  # TODO ghcnh not implemented yet
 )
 
 
@@ -94,9 +92,9 @@ def get_ghcn_raw(
 
             outfile = outfolder / f"{station_id}.csv"
         # TODO ghcnh not implemented yet
-        # elif station_type == "hourly":
-        #     url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
-        #     outfile = outfolder / f"GHCNh_{station_id}_por.psv"
+        elif station_type == "hourly":
+            url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
+            outfile = outfolder / f"GHCNh_{station_id}_por.psv"
         else:
             msg = f"unknown station type : {station_type}"
             raise ValueError(msg)
@@ -147,7 +145,7 @@ def create_ghcn_xarray(
         msg = f"Reading {station_id.name}"
         logging.info(msg)
         if project == "ghcnd":
-            df = pd.read_csv(station_id)
+            df = pd.read_csv(station_id, low_memory=False)
             df.columns = df.columns.str.lower()
             df.element = df.element.str.lower()
             imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
@@ -199,54 +197,113 @@ def create_ghcn_xarray(
 
                 data.append(ds)
         # TODO ghcnh not implemented yet
-        # elif project == "ghcnh":
-        #     df = pd.read_csv(station_id, delimiter="|")
-        #     df.columns = df.columns.str.lower()
-        #     # df.element = df.element.str.lower()
-        #     # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
-        #     df.loc[imask, "q_flag"] = nan
-        #     varlist = [k for k in varmeta.keys() if k in df.element.unique()]
-        #     if varlist:
-        #         df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
-        #         df = df.set_index(["id", "time"])
-        #         dslist = []
-        #         for var in varlist:
-        #             ds1 = df.loc[df.element == var].to_xarray()
+        elif project == "ghcnh":
+            df = pd.read_csv(station_id, delimiter="|", low_memory=False)
+            df.columns = df.columns.str.lower()
+            # df.element = df.element.str.lower()
+            # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
+            # df.loc[imask, "q_flag"] = nan
+            varlist = [k for k in varmeta.keys() if k in df.columns]
+            flaglist = [f"{k}_quality_code" for k in varlist]
+            coordlist = [
+                "station_id",
+                "station_name",
+                "year",
+                "month",
+                "day",
+                "hour",
+                "minute",
+                "latitude",
+                "longitude",
+                "elevation",
+            ]
+            drop_cols = [
+                c
+                for c in df.columns
+                if c not in varlist and c not in flaglist and c not in coordlist
+            ]
+            if varlist:
+                for col in ["year", "month", "day", "hour"]:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+                    df = df.dropna(subset=[col])
+                df["time"] = pd.to_datetime(df[["year", "month", "day", "hour"]])
+                df = df.set_index(["station_id", "time"])
+                df = df.iloc[~df.index.duplicated()]
+                dslist = []
+                for var in varlist:
+                    ds1 = df[[var, f"{var}_quality_code"]].to_xarray()
 
-        #             ds1 = ds1.rename({"data_value": var, "id": "station"})
-        #             drop_vars = [
-        #                 v
-        #                 for v in ds1.data_vars
-        #                 if v not in varlist and v not in ["q_flag"]
-        #             ]
-        #             ds1 = ds1.drop_vars(drop_vars)
-        #             ds1 = ds1.rename(
-        #                 {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
-        #             )
+                    ds1 = ds1.rename(
+                        {"station_id": "station", f"{var}_quality_code": f"{var}_flag"}
+                    )
+                    if ds1[f"{var}_flag"].dtype == "float":
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].round().astype(str)
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(
+                            ds1[f"{var}_flag"] != "nan", ""
+                        )
+                    else:
+                        df1 = df[[var, f"{var}_quality_code"]].copy()
+                        df1["num_str"] = (
+                            pd.to_numeric(df1[f"{var}_quality_code"], errors="coerce")
+                            .round()
+                            .astype(str)
+                        )
+                        df1.loc[
+                            df1[f"{var}_quality_code"].apply(
+                                lambda x: isinstance(x, str)
+                            ),
+                            "num_str",
+                        ] = df1[
+                            df1[f"{var}_quality_code"].apply(
+                                lambda x: isinstance(x, str)
+                            )
+                        ][
+                            f"{var}_quality_code"
+                        ].astype(
+                            str
+                        )
+                        df1 = df1.drop(columns=[f"{var}_quality_code"])
+                        df1 = df1.rename(columns={"num_str": f"{var}_quality_code"})
+                        ds1 = df1.to_xarray()
+                        ds1 = ds1.rename(
+                            {
+                                "station_id": "station",
+                                f"{var}_quality_code": f"{var}_flag",
+                            }
+                        )
+                        ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(
+                            ds1[f"{var}_flag"] != "nan", ""
+                        )
+                    dslist.append(ds1)
+                ds = xr.merge(dslist)
 
-        #             dslist.append(ds1)
-        #         ds = xr.merge(dslist)
+                del dslist
+                df_stat = statmeta[
+                    statmeta.station_id
+                    == station_id.stem.split("_", 1)[1].split("_por")[0]
+                ]
+                if len(df_stat) != 1:
+                    raise ValueError(
+                        f"expected a single station metadata for {station_id.stem}"
+                    )
+                for cc in [
+                    c
+                    for c in df_stat.columns
+                    if c not in ["station_id", "geometry", "index_right"]
+                ]:
+                    if cc not in ds.coords:
+                        ds = ds.assign_coords(
+                            {
+                                cc: xr.DataArray(
+                                    df_stat[cc].values, coords=ds.station.coords
+                                )
+                            }
+                        )
+                for vv in ds.data_vars:
+                    if ds[vv].dtype == "float64":
+                        ds[vv] = ds[vv].astype("float32")
 
-        #         del dslist
-        #         df_stat = statmeta[statmeta.station_id == station_id.stem]
-        #         if len(df_stat) != 1:
-        #             raise ValueError(
-        #                 f"expected a single station metadata for {station_id.stem}"
-        #             )
-        #         for cc in [c for c in df_stat.columns if c != "station_id"]:
-        #             if cc not in ds.coords:
-        #                 ds = ds.assign_coords(
-        #                     {
-        #                         cc: xr.DataArray(
-        #                             df_stat[cc].values, coords=ds.station.coords
-        #                         )
-        #                     }
-        #                 )
-        #         for vv in ds.data_vars:
-        #             if ds[vv].dtype == "float64":
-        #                 ds[vv] = ds[vv].astype("float32")
-
-        #         data.append(ds)
+                data.append(ds)
         else:
             msg = f"Unknown project {project}"
             raise ValueError(msg)
@@ -288,8 +345,8 @@ def download_ghcn(
     station_df = _get_ghcn_stations(
         project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
     )
-    if update_raw and working_folder.joinpath("raw").exists():
-        shutil.rmtree(working_folder.joinpath("raw"))
+    # if update_raw and working_folder.joinpath("raw").exists():
+    #     shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
     working_folder.joinpath("raw").mkdir(exist_ok=True)
 
@@ -362,35 +419,35 @@ def _get_ghcn_stations(
                 converters=dtypes,
             )
     # TODO ghcnh not implemented yet
-    # elif project == "ghcnh":
-    #     project
-    #     station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
-    #     dtypes = {
-    #         "station_id": str,
-    #         "lat": float,
-    #         "lon": float,
-    #         "elevation": float,
-    #         "state": str,
-    #         "station_name": str,
-    #         "gsn_flag": str,
-    #         "hcn_flag": str,
-    #         "wmo_id": str,
-    #     }
-    #     try:
-    #         station_df = pd.read_fwf(
-    #             station_url,
-    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-    #             names=[d for d in dtypes.keys()],
-    #             converters=dtypes,
-    #         )
-    #     except ValueError:
-    #         statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
-    #         station_df = pd.read_fwf(
-    #             statfile,
-    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-    #             names=[d for d in dtypes.keys()],
-    #             converters=dtypes,
-    #         )
+    elif project == "ghcnh":
+        project
+        station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
+        dtypes = {
+            "station_id": str,
+            "lat": float,
+            "lon": float,
+            "elevation": float,
+            "state": str,
+            "station_name": str,
+            "gsn_flag": str,
+            "hcn_flag": str,
+            "wmo_id": str,
+        }
+        try:
+            station_df = pd.read_fwf(
+                station_url,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+        except ValueError:
+            statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
+            station_df = pd.read_fwf(
+                statfile,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
 
     # logging.info("ghcnh not implemented yet")
     # exit()
@@ -408,6 +465,7 @@ def _get_ghcn_stations(
 
 def convert_ghcn_bychunks(
     project: str,
+    raw_folder: str | os.PathLike[str] | None = None,
     working_folder: str | os.PathLike[str] | None = None,
     cfvariable_list: list | None = None,
     start_year: int | None = None,
@@ -417,6 +475,7 @@ def convert_ghcn_bychunks(
     n_workers: int = 4,
     nstations: int = 100,
     update_from_raw: bool = False,
+    zarr_format: int = 2,
 ) -> None:
     """
     Convert GHCN data to Zarr format.
@@ -445,6 +504,8 @@ def convert_ghcn_bychunks(
         Number of stations to process. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
+    zarr_format: int
+        output zarr version
     """
     try:
         import geopandas as gpd
@@ -454,7 +515,9 @@ def convert_ghcn_bychunks(
         logging.error(msg)
         raise
 
-    var_attrs = load_json_data_mappings(project=project)["variables"]
+    var_attrs = load_json_data_mappings(project=project, configurations=CONFIG_FILES)[
+        "variables"
+    ]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v]
@@ -468,9 +531,9 @@ def convert_ghcn_bychunks(
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
     # TODO ghcnh not implemented yet
-    # elif project == "ghcnh":
-    #     readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-    #     outchunks = dict(time=(365 * 4) + 1, station=nstations)
+    elif project == "ghcnh":
+        readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
+        outchunks = dict(time=(365 * 4) + 1, station=nstations)
     # logging.info("ghcnh not implemented yet")
     # exit()
     else:
@@ -520,9 +583,7 @@ def convert_ghcn_bychunks(
             yield lst[i : i + n]
 
     treated = []
-    file_list = sorted(
-        list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}"))
-    )
+    file_list = sorted(list(raw_folder.rglob(f"*{prj_dict[project]['filetype']}")))
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, nstations)):
         if ii not in treated:
@@ -559,34 +620,51 @@ def convert_ghcn_bychunks(
                     )
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
+                    # skip empty datasets
+                    if 0 in dsout[kk].shape:
+                        continue
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
 
-                    ds_corr = dataset_conversion(
+                    ds_corr = dataset_corrections(
                         dsout,
                         project=project,
-                        add_version_hashes=False,
-                        overwrite=update_from_raw,
                     )
-                    ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
+                    flg_var = [v for v in ds_corr.data_vars if v.endswith("_flag")]
+                    if len(flg_var) != 1:
+                        msg = (
+                            f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
+                        )
+                        raise ValueError(msg)
+                    ds_corr = ds_corr.rename({flg_var[0]: f"{cf_var}_q_flag"})
                     for vv in ds_corr.data_vars:
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
 
-                    desc_str = "; ".join(
-                        [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
-                    )
-                    desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
-                    attrs = {
-                        "flag_values": [c for c in q_flag_dict[project].keys()],
-                        "flag_meanings": [c for c in q_flag_dict[project].values()],
-                        "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
-                        "long_name": f"Quality flag for {cf_var}",
-                        "description": desc_str,
-                    }
+                    if project == "ghcnd":
+                        desc_str = "; ".join(
+                            [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
+                        )
+                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                        attrs = {
+                            "flag_values": [c for c in q_flag_dict[project].keys()],
+                            "flag_meanings": [c for c in q_flag_dict[project].values()],
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}",
+                            "description": desc_str,
+                        }
+                    elif project == "ghcnh":
+                        desc_str = f"See the readme file for information of quality flag codes (Table 3) : {readme_url}"
+                        attrs = {
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}",
+                            "description": desc_str,
+                        }
+                    else:
+                        raise ValueError(f"unknown project {project}")
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
-                    jobs.append((ds_corr, outzarr, outchunks))
+                    jobs.append((ds_corr, outzarr, outchunks, zarr_format))
                     if len(jobs) >= n_workers:
                         pool = mp.Pool(n_workers)
                         pool.starmap(write_zarr, jobs)
@@ -635,6 +713,7 @@ def write_zarr(
     ds: xr.Dataset,
     outzarr: Path,
     chunks: dict,
+    zarr_format: int,
     overwrite: bool = False,
 ) -> None:
     """
@@ -653,5 +732,7 @@ def write_zarr(
     """
     if not outzarr.exists() or overwrite:
         with ProgressBar():
-            ds.chunk(chunks).to_zarr(outzarr.with_suffix(".tmp.zarr"), mode="w")
+            ds.chunk(chunks).to_zarr(
+                outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format
+            )
         shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
