@@ -583,9 +583,7 @@ def convert_ghcn_bychunks(
             yield lst[i : i + n]
 
     treated = []
-    file_list = sorted(
-        list(raw_folder.rglob(f"*{prj_dict[project]['filetype']}"))
-    )
+    file_list = sorted(list(raw_folder.rglob(f"*{prj_dict[project]['filetype']}")))
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, nstations)):
         if ii not in treated:
