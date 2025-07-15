@@ -465,6 +465,7 @@ def _get_ghcn_stations(
 
 def convert_ghcn_bychunks(
     project: str,
+    raw_folder: str | os.PathLike[str] | None = None,
     working_folder: str | os.PathLike[str] | None = None,
     cfvariable_list: list | None = None,
     start_year: int | None = None,
@@ -583,7 +584,7 @@ def convert_ghcn_bychunks(
 
     treated = []
     file_list = sorted(
-        list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}"))
+        list(raw_folder.rglob(f"*{prj_dict[project]['filetype']}"))
     )
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, nstations)):
