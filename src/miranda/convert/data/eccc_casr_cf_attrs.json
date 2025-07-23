@@ -98,9 +98,6 @@
     },
     "P_HU_1.5m": {
       "_cf_variable_name": "huss",
-      "_corrected_units": {
-        "casr-v31": "1"
-      },
       "cell_methods": "time: point",
       "long_name": "Near-Surface Specific Humidity (1.5m)",
       "standard_name": "specific_humidity",
@@ -108,9 +105,6 @@
     },
     "P_P0_SFC": {
       "_cf_variable_name": "ps",
-      "_corrected_units": {
-        "casr-v31": "mbar"
-      },
       "cell_methods": "time: point",
       "long_name": "Surface Air Pressure",
       "standard_name": "surface_air_pressure",
@@ -119,9 +113,6 @@
     "P_PN_SFC": {
       "_cf_variable_name": "psl",
       "cell_methods": "time: point",
-      "_corrected_units": {
-        "casr-v31": "mbar"
-      },
       "long_name": "Sea Level Pressure",
       "standard_name": "air_pressure_at_sea_level",
       "units": "Pa"
@@ -148,9 +139,6 @@
     },
     "P_TD_1.5m": {
       "_cf_variable_name": "tdps",
-      "_corrected_units": {
-        "casr-v31": "degC"
-      },
       "cell_methods": "time: point",
       "long_name": "1.5 metre dewpoint temperature",
       "standard_name": "dew_point_temperature",
@@ -158,9 +146,6 @@
     },
     "P_TT_1.5m": {
       "_cf_variable_name": "tas",
-      "_corrected_units": {
-        "casr-v31": "degC"
-      },
       "cell_methods": "time: point",
       "long_name": "1.5 metre temperature",
       "standard_name": "air_temperature",
@@ -203,13 +188,25 @@
     },
     "P_SWE_LAND": {
       "_cf_variable_name": "sweLand",
+      "_scale_factor": 0.001,
+      "_corrected_units": {
+        "casr-v31": "m"
+      },
+      "comments": "Converted from areal mass using a density of 1000 kg/m³.",
       "cell_methods": "time: point",
       "long_name": "Snow Water Equivalent on Land",
       "standard_name": "lwe_thickness_of_surface_snow_amount",
       "units": "m"
     },
     "P_FR0_SFC": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prfr",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
       "_transformation": {
         "casr-v31": "amount2rate"
       },
@@ -220,7 +217,14 @@
       "units": "kg m-2 s-1"
     },
     "P_PE0_SFC": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prrp",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
       "_transformation": {
         "casr-v31": "amount2rate"
       },
@@ -231,7 +235,14 @@
       "units": "kg m-2 s-1"
     },
     "P_RN0_SFC": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prra",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
       "_transformation": {
         "casr-v31": "amount2rate"
       },
@@ -242,7 +253,14 @@
       "units": "kg m-2 s-1"
     },
     "P_SN0_SFC": {
+      "_units_context": "hydro",
       "_cf_variable_name": "prsn",
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
       "_transformation": {
         "casr-v31": "amount2rate"
       },
@@ -276,9 +294,6 @@
     },
     "P_HU_09975": {
       "_cf_variable_name": "hus",
-      "_corrected_units": {
-        "casr-v31": "1"
-      },
       "cell_methods": "time: point",
       "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "20 metre Specific Humidity (height is approximate :  see description)",
@@ -287,9 +302,6 @@
     },
     "P_TD_09975": {
       "_cf_variable_name": "tdp",
-      "_corrected_units": {
-        "casr-v31": "degC"
-      },
       "cell_methods": "time: point",
       "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "20 metre dewpoint temperature (height is approximate :  see description)",
