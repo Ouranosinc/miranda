@@ -253,6 +253,8 @@
       "units": "kg m-2 s-1"
     },
     "A_CFIA_SFC": {
+      "_cf_variable_name": "cfia",
+      "cell_methods": "time: point",
       "long_name": "Analysis: Confidence Index of CaPA 24h Analysis at surface",
       "standard_name": "Confidence Index of CaPA 24h Analysis",
       "units": "%"
