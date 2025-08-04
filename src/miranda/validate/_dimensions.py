@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from schema import Optional
+from schema import Optional, Or, Regex
 
 from .regex import (
     CELL_METHODS_REGEX,
     CF_CONVENTIONS_REGEX,
     PROJECT_NAME_REGEX,
     STANDARD_NAME_REGEX,
+    VALID_TIME_FREQUENCY_REGEX,
 )
 
 __all__ = ["cf_dimensions_schema"]
@@ -25,8 +26,8 @@ CF_DIMENSION_TREATMENTS = [
 cf_time_dimension_schema = {
     Optional("_cf_dimension_name"): "time",
     Optional("_ensure_correct_time"): Or(
-        Regex(VALID_TIME_FREQUENCIES),
-        {Regex(PROJECT_NAME_REGEX): Regex(VALID_TIME_FREQUENCIES)},
+        Regex(VALID_TIME_FREQUENCY_REGEX),
+        {Regex(PROJECT_NAME_REGEX): Regex(VALID_TIME_FREQUENCY_REGEX)},
     ),
     Optional("_strict_time"): bool,
     "axis": "T",

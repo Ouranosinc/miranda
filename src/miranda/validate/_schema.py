@@ -105,7 +105,7 @@ variables_schema = {
         Optional(str): {
             "standard_name": Regex(STANDARD_NAME_REGEX),
             "_cf_variable_name": str,
-            Optional(*VARIABLE_TREATMENTS): Or(
+            Optional(Or(*VARIABLE_TREATMENTS)): Or(
                 str, bool, {str: Or(str, bool, {str: str})}
             ),
             Optional("cell_methods"): Regex(CELL_METHODS_REGEX),

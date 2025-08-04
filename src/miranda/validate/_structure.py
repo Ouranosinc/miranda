@@ -21,7 +21,7 @@ if VALIDATION_ENABLED:
         WCRP_FREQUENCIES,
     )
 
-    __all__ = ["validation_schemas"]
+    __all__ = ["FACETS_SCHEMA", "validation_schemas"]
 
     TYPE_NAMES = [
         "simulation",

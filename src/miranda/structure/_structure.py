@@ -17,7 +17,7 @@ from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.io import discover_data
 
 if VALIDATION_ENABLED:
-    from miranda.validators import validation_schemas
+    from miranda.validate import validation_schemas
 
 
 __all__ = [
