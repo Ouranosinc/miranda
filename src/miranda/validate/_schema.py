@@ -32,13 +32,13 @@ VARIABLE_TREATMENTS = [
 ]
 
 
-def _institution_in_header(header_dict):
+def _institution_in_header(header_dict: dict):
     """
     Check for institution metadata in header.
 
     Parameters
     ----------
-    header_dict : Schema
+    header_dict : dict
         The Schema dictionary for the header.
 
     Returns
@@ -76,60 +76,66 @@ def _institution_in_header(header_dict):
 
 
 # Template for
-header_schema = {
-    "Header": And(
-        {
-            "Conventions": Regex(CF_CONVENTIONS_REGEX),
-            "source": str,
-            "type": str,
-            "processing_level": Or("raw", "biasadjusted"),
-            "license": str,
-            "license_type": Or("permissive", "proprietary", "restricted"),
-            "table_id": str,
-            Optional(Regex(PROJECT_NAME_REGEX)): str,
-            Optional("_frequency"): bool,
-            Optional("_miranda_version"): bool,
-            Optional("_remove_attrs"): Or(
-                Regex(PROJECT_NAME_REGEX),
-                {Regex(PROJECT_NAME_REGEX): Or(str, [str])},
+header_schema = Schema(
+    {
+        "Header": And(
+            Schema(
+                {
+                    "Conventions": Regex(CF_CONVENTIONS_REGEX),
+                    "source": str,
+                    "type": str,
+                    "processing_level": Or("raw", "biasadjusted"),
+                    "license": str,
+                    "license_type": Or("permissive", "proprietary", "restricted"),
+                    "table_id": str,
+                    Optional(Regex(PROJECT_NAME_REGEX)): str,
+                    Optional("_frequency"): bool,
+                    Optional("_miranda_version"): bool,
+                    Optional("_remove_attrs"): Or(
+                        Regex(PROJECT_NAME_REGEX),
+                        {Regex(PROJECT_NAME_REGEX): Or(str, [str])},
+                    ),
+                    Optional(Regex(r"^_")): Or({str: str}, {str: {str: str}}),
+                }
             ),
-            Optional(Regex(r"^_")): Or({str: str}, {str: {str: str}}),
-        },
-        _institution_in_header,
-    )
-}
+            _institution_in_header,
+        )
+    },
+    name="header_schema",
+)
 
 
-variables_schema = {
-    Optional("variables"): {
-        Optional(str): {
-            "standard_name": Regex(STANDARD_NAME_REGEX),
-            "_cf_variable_name": str,
-            Optional(Or(*VARIABLE_TREATMENTS)): Or(
-                str, bool, {str: Or(str, bool, {str: str})}
-            ),
-            Optional("cell_methods"): Regex(CELL_METHODS_REGEX),
-            Optional("comment"): str,
-            Optional("description"): str,
-            Optional("long_name"): str,
-            Optional("original_long_name"): str,
-            Optional("units"): str,
+variables_schema = Schema(
+    {
+        Optional("variables"): {
+            Optional(str): {
+                "standard_name": Regex(STANDARD_NAME_REGEX),
+                "_cf_variable_name": str,
+                Optional(Or(*VARIABLE_TREATMENTS)): Or(
+                    str, bool, {str: Or(str, bool, {str: str})}
+                ),
+                Optional("cell_methods"): Regex(CELL_METHODS_REGEX),
+                Optional("comment"): str,
+                Optional("description"): str,
+                Optional("long_name"): str,
+                Optional("original_long_name"): str,
+                Optional("units"): str,
+            }
         }
-    }
-}
+    },
+    name="variables_schema",
+)
 
 
 # Convert Schema
 _convert_schema = Schema(
     And(
-        dict,
-        {
-            **header_schema,
-            **cf_dimensions_schema,
-            **variables_schema,
-        },
+        header_schema,
+        variables_schema,
+        cf_dimensions_schema,
     ),
     ignore_extra_keys=False,  # Extra entries will raise a ValidationError
+    name="convert_schema",
 )
 
 
