@@ -4,7 +4,6 @@ import json
 import logging
 from pathlib import Path
 
-from pydantic_core.core_schema import DictSchema
 from schema import And, Optional, Or, Regex, Schema, SchemaError
 
 from ._dimensions import cf_dimensions_schema
@@ -167,7 +166,7 @@ def validate_json(json_file: str | Path, schema: Schema | None = None) -> bool:
     try:
         with Path(json_file).open() as f:
             data = json.load(f)
-        _schema.validate(data)
+        schema.validate(data)
         return True
     except (OSError, json.JSONDecodeError, SchemaError) as e:
         msg = f"Error validating JSON file {json_file}: {e}"
