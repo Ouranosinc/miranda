@@ -4,6 +4,7 @@ from schema import Optional, Or, Regex, Schema
 
 from .regex import (
     PROJECT_NAME_REGEX,
+    TIME_UNITS_REGEX,
     VALID_TIME_FREQUENCY_REGEX,
 )
 
@@ -30,8 +31,9 @@ cf_time_dimension_schema = Schema(
         Optional("_strict_time"): bool,
         "axis": "T",
         Optional("bounds"): "time_bnds",
-        "standard_name": "time",
         Optional("long_name"): Or("time", "Time"),
+        "standard_name": "time",
+        "units": TIME_UNITS_REGEX,
     },
     name="cf_time_dimension_schema",
 )
@@ -46,8 +48,10 @@ cf_lat_dimension_schema = Schema(
             {Regex(PROJECT_NAME_REGEX): int},
         ),
         "axis": "Y",
-        "standard_name": "latitude",
+        Optional("bounds"): "lat_bnds",
         Optional("long_name"): Or("latitude", "Latitude"),
+        "standard_name": "latitude",
+        "units": str,
     },
     name="cf_lat_dimension_schema",
 )
@@ -62,8 +66,10 @@ cf_lon_dimension_schema = Schema(
             {Regex(PROJECT_NAME_REGEX): int},
         ),
         "axis": "X",
-        "standard_name": "longitude",
+        Optional("bounds"): "lon_bnds",
         Optional("long_name"): Or("longitude", "Longitude"),
+        "standard_name": "longitude",
+        "units": str,
     },
     name="cf_lon_dimension_schema",
 )

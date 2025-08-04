@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import os
-from datetime import date
 from pathlib import Path
 
 import pytest
 
-import miranda.preprocess._metadata as metadata
+import miranda.preprocess._metadata as metadata  # noqa
 import miranda.utils
 
 
