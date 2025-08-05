@@ -18,6 +18,7 @@ def test_valid_dimensions_schema():
                 "bounds": "time_bnds",
                 "standard_name": "time",
                 "long_name": "Time",
+                "units": "days since 1850-01-01",
             },
             "lat": {
                 "_cf_dimension_name": "lat",
@@ -25,6 +26,7 @@ def test_valid_dimensions_schema():
                 "axis": "Y",
                 "standard_name": "latitude",
                 "long_name": "Latitude",
+                "units": "degrees_north",
             },
             "lon": {
                 "_cf_dimension_name": "lon",
@@ -32,6 +34,7 @@ def test_valid_dimensions_schema():
                 "axis": "X",
                 "standard_name": "longitude",
                 "long_name": "Longitude",
+                "units": "degrees_east",
             },
         }
     }
@@ -48,6 +51,7 @@ def test_invalid_time_schema():
                 "axis": "T",
                 "standard_name": "time",
                 "long_name": "Tijd",
+                "units": "days since 2000-01-01",
             }
         }
     }

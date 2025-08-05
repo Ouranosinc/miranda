@@ -33,7 +33,7 @@ cf_time_dimension_schema = Schema(
         Optional("bounds"): "time_bnds",
         Optional("long_name"): Or("time", "Time"),
         "standard_name": "time",
-        "units": TIME_UNITS_REGEX,
+        "units": Regex(TIME_UNITS_REGEX),
     },
     name="cf_time_dimension_schema",
 )
