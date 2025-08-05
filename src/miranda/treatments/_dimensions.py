@@ -11,6 +11,13 @@ from xclim.core.calendar import parse_offset
 from miranda.treatments.utils import _get_section_entry_key, _iter_entry_key  # noqa
 from miranda.units import check_time_frequency
 
+__all__ = [
+    "dimensions_compliance",
+    "ensure_correct_time_frequency",
+    "find_project_variable_codes",
+    "offset_time_dimension",
+]
+
 
 def find_project_variable_codes(code: str, configuration: dict[str, Any]) -> str:
     """Find the variable code for a given variable name and project.

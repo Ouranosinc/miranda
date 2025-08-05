@@ -86,7 +86,9 @@ cf_header_schema = Schema(
                         Regex(PROJECT_NAME_REGEX),
                         {Regex(PROJECT_NAME_REGEX): Or(str, [str])},
                     ),
-                    Optional(Regex(r"^_")): Or({str: str}, {str: {str: str}}),
+                    Optional(Regex(r"^_")): Or(
+                        Schema({str: str}), Schema({str: {str: str}})
+                    ),
                 }
             ),
             _institution_in_header,

@@ -23,6 +23,8 @@ __all__ = [
     "working_directory",
 ]
 
+from types import GeneratorType
+
 # For datetime validation
 ISO_8601 = (
     r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])"
@@ -107,6 +109,51 @@ def working_directory(directory: str | Path) -> None:
         yield directory
     finally:
         os.chdir(owd)
+
+
+# FIXME: The following function could probably be replaced or at least placed closer to its usages.
+def group_by_length(
+    files: GeneratorType | list[str | Path],
+    size: int = 10,
+    sort: bool = False,
+) -> list[list[Path]]:
+    """
+    Group files by an arbitrary number of file entries.
+
+    Parameters
+    ----------
+    files : GeneratorType or list of str or pathlib.Path
+        The files to be grouped.
+    size : int
+        The number of files to be grouped together.
+    sort : bool
+        Sort the files before grouping.
+
+    Returns
+    -------
+    list[list[pathlib.Path]]
+        Grouped files.
+    """
+    msg = f"Creating groups of {size} files"
+    logging.info(msg)
+    if sort:
+        files = [Path(f) for f in files]
+        files.sort()
+    grouped_list = list()
+    group = list()
+    for i, f in enumerate(files):
+        group.append(Path(f))
+        if (i + 1) % size == 0:
+            grouped_list.append(group.copy())
+            group.clear()
+            continue
+    if not group:
+        pass
+    else:
+        grouped_list.append(group.copy())
+    msg = f"Divided files into {len(grouped_list)} groups."
+    logging.info(msg)
+    return grouped_list
 
 
 # FIXME: The following function could probably be replaced or at least placed closer to its usages.

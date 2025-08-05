@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging.config
+import logging
 import os
 import pathlib
 from pathlib import Path
@@ -12,9 +12,7 @@ import h5py
 import xarray as xr
 from numpy import unique
 
-from miranda.io._output import write_dataset_dict
-from miranda.io._rechunk import fetch_chunk_config
-from miranda.scripting import LOGGING_CONFIG
+from miranda.io import fetch_chunk_config, write_dataset_dict
 from miranda.treatments.utils import load_json_data_mappings
 from miranda.units import check_time_frequency
 
@@ -22,7 +20,7 @@ from ._aggregation import aggregate
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
 from .corrections import dataset_conversion
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.eccc_rdrs")
 
 
 CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
@@ -33,7 +31,7 @@ CONFIG_FILES = {
     "ORRC-v11": "ouranos_orrc_cf_attrs.json",
 }
 for k, v in CONFIG_FILES.items():
-    CONFIG_FILES[k] = CONFIG_FOLDER / v
+    CONFIG_FILES[k] = str(CONFIG_FOLDER / v)
 
 
 # __all__ = ["convert_rdrs", "rdrs_to_daily"]
@@ -99,7 +97,7 @@ def convert_rdrs(
         If not provided, the maximum year in the dataset will be used.
     cfvariable_list : list, optional
         The CF variable list.
-    \*\*dask_kwargs : dict
+    **dask_kwargs : dict
         Additional keyword arguments passed to the Dask scheduler.
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
@@ -141,7 +139,7 @@ def convert_rdrs(
                     ds1 = xr.open_dataset(nc, chunks="auto", engine=eng, cache=False)
                 except (OSError, RuntimeError) as e:
                     msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
-                    logging.error(msg)
+                    logger.error(msg)
                     raise RuntimeError(msg) from e
                 if isinstance(ds1.indexes["time"], xr.coding.cftimeindex.CFTimeIndex):
                     ds1 = ds1.copy()
@@ -243,7 +241,7 @@ def rdrs_to_daily(
     process_variables : list of str, optional
         The variables to process.
         If not provided, all variables will be processed.
-    \*\*dask_kwargs : dict
+    **dask_kwargs : dict
         Additional keyword arguments passed to the Dask scheduler.
     """
     if isinstance(input_folder, str):
@@ -269,7 +267,7 @@ def rdrs_to_daily(
             infiles = [z for z in zarrs if f"_{year}" in z.name]
             if len(infiles) != 12:
                 msg = f"Found {len(infiles)} input files for {year}. The year is incomplete."
-                logging.warning(msg)
+                logger.warning(msg)
             out_variables = aggregate(
                 xr.open_mfdataset(infiles, engine="zarr"), freq="day"
             )

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import logging.config
+import logging
 import os
 import shutil
 import time
@@ -11,13 +11,10 @@ from pathlib import Path
 import xarray as xr
 from xarray.core.utils import Frozen
 
-from miranda.scripting import LOGGING_CONFIG
-
 from ._input import discover_data
 from .utils import delayed_write, get_global_attrs, get_time_attrs, sort_variables
 
-logging.config.dictConfig(LOGGING_CONFIG)
-
+logger = logging.getLogger("miranda.io.rechunk")
 
 __all__ = [
     "fetch_chunk_config",
@@ -61,7 +58,7 @@ def prepare_chunks_for_ds(
         length = ds.dims[dim]
         if c == -1 or c > length:
             msg = f"Chunk was changed from {c} to {length} for dimension {dim}."
-            logging.info(msg)
+            logger.info(msg)
             chunks[dim] = length
 
     return chunks
@@ -183,7 +180,7 @@ def rechunk_files(
     if target_chunks is None or time_step is None:
         test_file = next(input_folder.glob(f"*.{suffix}"))
         if project is None:
-            logging.warning(
+            logger.warning(
                 "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
             )
             project = get_global_attrs(test_file).get("project")
@@ -228,11 +225,11 @@ def rechunk_files(
                 if overwrite:
                     if out.is_dir() and output_format == "zarr":
                         msg = f"Removing existing zarr files for {out.name}."
-                        logging.warning(msg)
+                        logger.warning(msg)
                         shutil.rmtree(out)
                 else:
                     msg = f"Files exist: {file.name}. Skipping..."
-                    logging.info(msg)
+                    logger.info(msg)
                     continue
 
             ds = xr.open_dataset(file, chunks={"time": -1})
@@ -253,26 +250,26 @@ def rechunk_files(
 
             except KeyError:
                 msg = f"{file} has chunking errors. Verify data manually."
-                logging.warning(msg)
+                logger.warning(msg)
                 errored.append(file)
                 continue
 
             msg = f"Done for {file.stem} in {time.perf_counter() - start:.2f} s."
-            logging.info(msg)
+            logger.info(msg)
 
             msg = f"Moving {file.name} to {output_folder}."
-            logging.info(msg)
+            logger.info(msg)
             shutil.move(out, output_folder)
 
         msg = (
             f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         )
-        logging.info(msg)
+        logger.info(msg)
         continue
 
     msg = f"All variables in {input_folder} rechunked in {time.perf_counter() - start_all}."
-    logging.info(msg)
+    logger.info(msg)
     if errored:
         errored_filenames = "\n".join(map(str, errored))
         msg = f"Errored files are as follows: \n{errored_filenames}."
-        logging.warning(msg)
+        logger.warning(msg)

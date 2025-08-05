@@ -13,7 +13,7 @@ from dask.diagnostics import ProgressBar
 
 from ._utils import cf_ahccd_metadata
 
-logger = logging.Logger("miranda")
+logger = logging.getLogger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
 

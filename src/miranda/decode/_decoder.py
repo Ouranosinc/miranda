@@ -6,7 +6,6 @@ import os
 import re
 import warnings
 from functools import partial
-from logging import config
 from os import PathLike
 from pathlib import Path
 from types import GeneratorType
@@ -30,7 +29,7 @@ if VALIDATION_ENABLED:
     from miranda.validate import FACETS_SCHEMA  # noqa
 
 
-config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.decode.decoder")
 
 __all__ = [
     "Decoder",
@@ -154,7 +153,7 @@ class Decoder:
             )
         else:
             msg = f"Deciphering metadata with project = '{self.project}'"
-            logging.info(msg)
+            logger.info(msg)
 
         with mp.Manager() as manager:
             _file_facets = manager.dict()
@@ -184,7 +183,7 @@ class Decoder:
             variable_name = cls._decode_primary_variable(file)
         except DecoderError:
             msg = f"Unable to open dataset: {file.name}"
-            logging.error(msg)
+            logger.error(msg)
             raise
 
         datetimes = file_name.split("_")[-1]
@@ -334,11 +333,11 @@ class Decoder:
                 else:
                     msg = f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
 
-                    logging.warning(msg)
+                    logger.warning(msg)
                     potential_time = "fx"
             if potential_time in ["ymon", "yseas", "fixed", "fx"]:
                 msg = f"Found `{potential_time}`. Frequency is likely `fx`."
-                logging.warning(msg)
+                logger.warning(msg)
                 if field == "frequency":
                     return "fx"
                 if field == "timedelta":
@@ -386,12 +385,12 @@ class Decoder:
                     else:
                         msg = f"Could not find `frequency` or `time` for {Path(file).name}. Assuming `fx`."
 
-                        logging.warning(msg)
+                        logger.warning(msg)
                         potential_time = "fx"
                 if potential_time in ["ymon", "yseas", "fixed", "fx"]:
                     msg = f"Found `{potential_time}`. Frequency is likely `fx`."
 
-                    logging.warning(msg)
+                    logger.warning(msg)
                     if "fx" in file_parts or "fixed" in file_parts:
                         if field == "frequency":
                             return "fx"
@@ -408,7 +407,7 @@ class Decoder:
                 f"Frequency from metadata (`{potential_time}`) not found in filename (`{Path(file).name}`): "
                 "Performing more rigorous frequency checks."
             )
-            logging.warning(msg)
+            logger.warning(msg)
             if Path(file).is_file() and Path(file).suffix in [".nc", ".nc4"]:
                 engine = "h5netcdf"
             elif Path(file).is_dir() and Path(file).suffix == ".zarr":
@@ -424,7 +423,7 @@ class Decoder:
                 drop_variables="time_bnds",
             )
             if not hasattr(_ds, "time"):
-                logging.warning(
+                logger.warning(
                     "Dataset does not contain time array. Assuming fixed variable."
                 )
                 if field == "frequency":
@@ -441,20 +440,20 @@ class Decoder:
                     f"Metadata for `{Path(file).name} is probably incorrect. "
                     f"Basing fields on `{found_freq}`."
                 )
-                logging.warning(msg)
+                logger.warning(msg)
                 return time_dictionary[found_freq]
             elif found_freq in ["month", "mon"]:
                 for f in ["Amon", "Omon", "monC", "monthly", "months", "mon"]:
                     if f in potential_times:
                         msg = f"Month-like time frequency found in dataset on analysis was found in filename. Basing fields on `{f}`."
-                        logging.warning(msg)
+                        logger.warning(msg)
                         return time_dictionary[f]
             else:
                 msg = (
                     "Time frequency found in dataset on analysis was not found in filename. "
                     f"Basing fields on `{found_freq}`."
                 )
-                logging.warning(msg)
+                logger.warning(msg)
                 return time_dictionary[found_freq]
         raise DecoderError(f"Time frequency indiscernible for file `{file}`.")
 
@@ -714,7 +713,7 @@ class Decoder:
                 facets["domain"] = domain.strip()
             else:
                 msg = f"File {Path(file).name} has a nonstandard domain name."
-                logging.error(msg)
+                logger.error(msg)
                 raise NotImplementedError(msg)
 
         # CORDEX-NAM on AWS mis-attributes the domain (22/44 should be 22i/44i)
@@ -741,7 +740,7 @@ class Decoder:
             elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
                 driving_institution = "-".join(driving_institution_parts[:3])
         else:
-            logging.warning(
+            logger.warning(
                 "CORDEX Metadata validation checks require PyESSV. "
                 "Driving institution cannot be determined."
             )

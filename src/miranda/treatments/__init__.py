@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import datetime
-import logging.config
+import logging
 
 import xarray
 
 from miranda import __version__ as __miranda_version__
-from miranda.scripting import LOGGING_CONFIG
 from miranda.treatments._dimensions import *
 from miranda.treatments._preprocessing import *
 from miranda.treatments._variables import *
 from miranda.treatments.utils import *
 from miranda.units import check_time_frequency
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.treatments")
+
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 
@@ -35,7 +35,7 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
     -------
     xarray.Dataset
     """
-    logging.info("Converting metadata to CF-like conventions.")
+    logger.info("Converting metadata to CF-like conventions.")
 
     header = m["Header"]
 
@@ -49,7 +49,7 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
                 header["miranda_version"] = __miranda_version__
         else:
             msg = f"`_miranda_version` not set for project `{p}`. Not appending."
-            logging.warning(msg)
+            logger.warning(msg)
     if "_miranda_version" in header:
         del header["_miranda_version"]
 
@@ -61,7 +61,7 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
             if p in frequency.keys():
                 m["Header"]["frequency"] = check_time_frequency(d)
         else:
-            logging.warning("`frequency` not set for project. Not appending.")
+            logger.warning("`frequency` not set for project. Not appending.")
     if "_frequency" in m["Header"]:
         del m["Header"]["_frequency"]
 
@@ -72,7 +72,7 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
                 attr_treatments = header[field][p]
             else:
                 msg = f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
-                logging.warning(msg)
+                logger.warning(msg)
                 continue
         elif isinstance(header[field], dict):
             attr_treatments = header[field]
@@ -82,7 +82,7 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
 
         if field[1:] in d.attrs:
             msg = f"Overwriting `{field[1:]}` based on JSON configuration."
-            logging.warning(msg)
+            logger.warning(msg)
         if field == "_map_attrs":
             for attribute, mapping in attr_treatments.items():
                 header[mapping] = d.attrs[attribute]

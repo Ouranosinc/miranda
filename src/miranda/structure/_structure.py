@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-import logging.config
+import logging
 import multiprocessing
 import os
 import shutil
@@ -19,6 +19,7 @@ from miranda.io import discover_data
 if VALIDATION_ENABLED:
     from miranda.validate import validation_schemas
 
+logger = logging.getLogger("miranda.structure.structure")
 
 __all__ = [
     "build_path_from_schema",
@@ -40,7 +41,7 @@ def _verify(hash_value: str, hash_file: os.PathLike) -> None:
             f"does not match current value (starting: {hash_value[:6]}) "
             f"for file `{Path(hash_file).name}."
         )
-        logging.error(msg)
+        logger.error(msg)
 
 
 def generate_hash_file(
@@ -59,7 +60,7 @@ def generate_hash_file(
             with Path(out_file).open("w") as f:
                 f.write(sha256sum)
         except PermissionError:
-            logging.error("Unable to write file. Ensure access privileges.")
+            logger.error("Unable to write file. Ensure access privileges.")
 
         del hash_sha256_writer
         del sha256sum
@@ -207,7 +208,7 @@ def parse_schema(
         try:
             parent = schematic[top]
         except KeyError:
-            logging.error("Schema is not a valid facet-tree reference.")
+            logger.error("Schema is not a valid facet-tree reference.")
             raise
 
         for i, options in enumerate(parent):
@@ -316,19 +317,19 @@ def build_path_from_schema(
                 validation_schemas[facets[branch]].validate(facets)
             except SchemaError as e:
                 msg = f"Validation issues found for file matching schema: {facets}: {e}"
-                logging.error(msg)
+                logger.error(msg)
                 return
         elif facets[branch] not in validation_schemas.keys():
             msg = (
                 f"No appropriate data schemas found for file matching schema: {facets}",
             )
-            logging.error(
+            logger.error(
                 msg,
                 DecoderError,
             )
             return
     elif validate and not VALIDATION_ENABLED:
-        logging.warning(
+        logger.warning(
             "Facets validation requires pyessv-archive source files. Skipping validation checks."
         )
 
@@ -429,10 +430,9 @@ def structure_datasets(
             msg = (
                 f"Some files were unable to be structured: [{', '.join(errored_files)}]"
             )
-            logging.warning(msg)
         else:
             msg = f"Many files were unable to be structured (n={len(errored_files)})"
-            logging.warning(msg)
+        logger.warning(msg)
 
     if make_dirs:
         for new_paths in set(all_file_paths.values()):

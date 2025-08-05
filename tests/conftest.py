@@ -25,6 +25,8 @@ from miranda.testing.utils import (
     testing_setup_warnings,
 )
 
+logger = logging.getLogger("miranda")
+
 
 @pytest.fixture
 def timeseries() -> Callable:
@@ -107,7 +109,7 @@ def gather_session_data(request, cassini, worker_id):
             try:
                 flag.unlink()
             except FileNotFoundError:
-                logging.info(
+                logger.info(
                     "Teardown race condition occurred: .data_written flag already removed. Lucky!"
                 )
                 pass

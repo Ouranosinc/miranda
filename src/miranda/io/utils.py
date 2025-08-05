@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-import logging.config
+import logging
 import os
 from collections.abc import Sequence
 from pathlib import Path
@@ -13,9 +13,7 @@ import netCDF4 as nc  # noqa
 import xarray as xr
 import zarr
 
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.io.utils")
 
 
 __all__ = [
@@ -230,7 +228,7 @@ def delayed_write(
                 kwargs["encoding"]["time"] = {"dtype": "int32"}
 
     except KeyError:
-        logging.error("Unable to encode chunks. Verify dataset.")
+        logger.error("Unable to encode chunks. Verify dataset.")
         raise
 
     return getattr(ds, f"to_{output_format}")(outfile, **kwargs)
@@ -322,14 +320,14 @@ def sort_variables(
     """
     variable_sorted = {}
     if variables:
-        logging.info("Sorting variables into groups. This could take some time.")
+        logger.info("Sorting variables into groups. This could take some time.")
         for variable in variables:
             var_group = [
                 Path(file) for file in files if Path(file).name.startswith(variable)
             ]
             if not var_group:
                 msg = f"No files found for {variable}. Continuing..."
-                logging.warning(msg)
+                logger.warning(msg)
                 continue
             variable_sorted[variable] = sorted(var_group)
     else:

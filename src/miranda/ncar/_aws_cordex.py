@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 import functools
 import json
-import logging.config
+import logging
 import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
