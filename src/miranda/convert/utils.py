@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import logging.config
+import logging
 import os
 import re
 from pathlib import Path
@@ -13,9 +13,7 @@ import cftime
 import pandas as pd
 from pandas._libs import NaTType  # noqa
 
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.utils")
 
 __all__ = ["date_parser", "find_version_hash"]
 
@@ -54,7 +52,7 @@ def find_version_hash(file: str | os.PathLike[str]) -> dict[str, Any]:
             hash_sha256_writer.update(f_opened.read())
         sha256sum = hash_sha256_writer.hexdigest()
         _msg = f"Calculated sha256sum (starting: {sha256sum[:6]})"
-        logging.info(_msg)
+        logger.info(_msg)
         del hash_sha256_writer
         return sha256sum
 
@@ -75,7 +73,7 @@ def find_version_hash(file: str | os.PathLike[str]) -> dict[str, Any]:
                     version_info["sha256sum"] = int(sig.open().read())
                 except ValueError:
                     msg = "Unable to read version hash file. Calculating sha256sum."
-                    logging.error(msg)
+                    logger.error(msg)
                     continue
                 break
         else:

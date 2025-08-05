@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging.config
+import logging
 import os
 import shutil
 import time
@@ -14,14 +14,12 @@ import xarray as xr
 from dask.distributed import Client
 
 from miranda.convert.utils import date_parser
-from miranda.scripting import LOGGING_CONFIG
 
 from ._input import discover_data
 from ._rechunk import fetch_chunk_config, prepare_chunks_for_ds, translate_time_chunk
 from .utils import delayed_write, get_global_attrs, name_output_file, sort_variables
 
-logging.config.dictConfig(LOGGING_CONFIG)
-
+logger = logging.getLogger("miranda.io.output")
 
 __all__ = [
     "concat_rechunk_zarr",
@@ -76,8 +74,8 @@ def write_dataset(
     outfile_path = output_path.joinpath(output_name)
 
     if overwrite and outfile_path.exists():
-        msg = f"Removing existing {output_format} files for {outfile}."
-        logging.warning(msg)
+        msg = f"Removing existing {output_format} files for {outfile_path}."
+        logger.warning(msg)
         if outfile_path.is_dir():
             shutil.rmtree(outfile_path)
         if outfile_path.is_file():
@@ -94,8 +92,8 @@ def write_dataset(
         elif "lat" not in ds.dims and "lon" not in ds.dims:
             chunks = fetch_chunk_config(priority="stations", freq=freq, dims=ds.dims)
 
-    msg = f"Writing {outfile}."
-    logging.info(msg)
+    msg = f"Writing {outfile_path}."
+    logger.info(msg)
     write_object = delayed_write(
         ds,
         outfile_path,
@@ -179,7 +177,7 @@ def write_dataset_dict(
             if "time" in ds.dims and "time" in existing_ds.dims:
                 if ds.time.size > existing_ds.time.size:
                     msg = f"Dataset {variable} has more time points than existing file. Will overwrite {outpath.as_posix()}."
-                    logging.warning(msg)
+                    logger.warning(msg)
 
                     tmp_path = None
                     if temp_folder:
@@ -199,7 +197,7 @@ def write_dataset_dict(
 
         else:
             msg = f"Skipping {outpath.as_posix()} as overwrite is False and time dimension is sufficient."
-            logging.warning(msg)
+            logger.warning(msg)
 
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
@@ -275,7 +273,7 @@ def concat_rechunk_zarr(
                 f"{out_zarr.stem.split(f'_{start_year}_')[0]}_{year[0]}-{year[-1]}.zarr",
             )
             msg = f"Writing year {year} to {tmp_zarr.as_posix()}."
-            logging.info(msg)
+            logger.info(msg)
 
             job = delayed_write(
                 ds=ds,
@@ -353,7 +351,7 @@ def merge_rechunk_zarrs(
     variable_sorted = sort_variables(files_found, variables)
 
     if project is None and target_chunks is None:
-        logging.warning(
+        logger.warning(
             "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
         )
         project = get_global_attrs(files_found[0]).get("project")
@@ -386,11 +384,11 @@ def merge_rechunk_zarrs(
         if overwrite:
             if out_zarr.is_dir():
                 msg = f"Removing existing zarr files for {out_zarr.name}."
-                logging.warning(msg)
+                logger.warning(msg)
                 shutil.rmtree(out_zarr)
         else:
             msg = f"Files exist: {out_zarr.name}. Skipping..."
-            logging.info(msg)
+            logger.info(msg)
             continue
 
         ds = ds.chunk(target_chunks)
@@ -401,6 +399,6 @@ def merge_rechunk_zarrs(
         msg = (
             f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         )
-        logging.info(msg)
+        logger.info(msg)
     msg = f"All variables rechunked in {time.perf_counter() - start:.2f} s."
-    logging.info(msg)
+    logger.info(msg)

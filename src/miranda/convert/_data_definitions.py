@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import datetime
 import json
-import logging.config
+import logging
 import os
 import re
 from pathlib import Path
 
-from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
+
+logger = logging.getLogger("miranda.convert.data_definitions")
 
 __all__ = [
     "eccc_rdrs_variables",
@@ -72,7 +73,7 @@ def _gather(
 ) -> dict[str, list[Path]]:
     source = Path(source).expanduser()
     msg = f"Gathering {name} files from: {source.as_posix()}"
-    logging.info(msg)
+    logger.info(msg)
     in_files = []
     for variable in variables:
         if suffix:
@@ -85,7 +86,7 @@ def _gather(
             in_files.extend(list(sorted(source.glob(pattern))))
     msg = f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
 
-    logging.info(msg)
+    logger.info(msg)
     return {name: in_files}
 
 
@@ -305,14 +306,14 @@ def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
     # GRNCH-ETS source data
     source_grnch = Path(path)
     msg = f"Gathering GRNCH from: {source_grnch.as_posix()}"
-    logging.info(msg)
+    logger.info(msg)
     in_files_grnch = list()
     for v in grnch_variables:
         for yyyy in range(1970, 2020):
             in_files_grnch.extend(list(source_grnch.rglob(f"{v}_{yyyy}.nc")))
     msg = f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
 
-    logging.info(msg)
+    logger.info(msg)
     return dict(cfsr=sorted(in_files_grnch))
 
 
