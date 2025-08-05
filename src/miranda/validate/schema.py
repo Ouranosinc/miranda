@@ -1,3 +1,5 @@
+"""Validate outputted metadata against CF-like schemas."""
+
 from __future__ import annotations
 
 import json
@@ -7,28 +9,18 @@ from pathlib import Path
 from schema import And, Optional, Or, Regex, Schema, SchemaError
 
 from ._dimensions import cf_dimensions_schema
-from .regex import (
-    CELL_METHODS_REGEX,
+from ._regex import (
     CF_CONVENTIONS_REGEX,
     PROJECT_NAME_REGEX,
-    STANDARD_NAME_REGEX,
-    VALID_TIME_FREQUENCY_REGEX,
 )
+from ._variables import cf_variables_schema
 
-__all__ = ["validate_json"]
-
-
-DIMENSION_TREATMENTS = ["_cf_dimension_name", "", ""]
-
-VARIABLE_TREATMENTS = [
-    "_corrected_units",
-    "_cf_units_conversion",
-    "_clip_values",
-    "_correct_unit_names",
-    "_invert_value_sign",
-    "_transform_values",
-    "_units_context",
-    "_variable_conversion",
+__all__ = [
+    "cf_dimensions_schema",
+    "cf_header_schema",
+    "cf_variables_schema",
+    "converter_schema",
+    "validate_json",
 ]
 
 
@@ -49,7 +41,7 @@ def _institution_in_header(header_dict: dict):
     Raises
     ------
     ValueError
-        If the Header has neither "institution" or {"_map_attrs": {str : "institution"}
+        If the Header has neither "institution" nor {"_map_attrs": {str : "institution"}
         If the Header contains both "institution" and {"_map_attrs": {str : "institution"}
     """
     # Must contain either 'institution' or '_map_attrs', but not both
@@ -75,8 +67,7 @@ def _institution_in_header(header_dict: dict):
     return header_dict
 
 
-# Template for
-header_schema = Schema(
+cf_header_schema = Schema(
     {
         "Header": And(
             Schema(
@@ -105,33 +96,11 @@ header_schema = Schema(
 )
 
 
-variables_schema = Schema(
-    {
-        Optional("variables"): {
-            Optional(str): {
-                "standard_name": Regex(STANDARD_NAME_REGEX),
-                "_cf_variable_name": str,
-                Optional(Or(*VARIABLE_TREATMENTS)): Or(
-                    str, bool, {str: Or(str, bool, {str: str})}
-                ),
-                Optional("cell_methods"): Regex(CELL_METHODS_REGEX),
-                Optional("comment"): str,
-                Optional("description"): str,
-                Optional("long_name"): str,
-                Optional("original_long_name"): str,
-                Optional("units"): str,
-            }
-        }
-    },
-    name="variables_schema",
-)
-
-
-# Convert Schema
-_convert_schema = Schema(
+# Converter Schema
+converter_schema = Schema(
     And(
-        header_schema,
-        variables_schema,
+        cf_header_schema,
+        cf_variables_schema,
         cf_dimensions_schema,
     ),
     ignore_extra_keys=False,  # Extra entries will raise a ValidationError
@@ -146,9 +115,9 @@ def validate_json(json_file: str | Path, schema: Schema | None = None) -> bool:
 
     Parameters
     ----------
-    json_file: str or pathlib.Path
+    json_file : str or pathlib.Path
         The path to the JSON file.
-    schema: Schema, optional
+    schema : Schema, optional
         The schema to validate against.
         If None, will choose a definition based on filename parameters.
 
@@ -163,7 +132,7 @@ def validate_json(json_file: str | Path, schema: Schema | None = None) -> bool:
 
     if schema is None:
         if "_cf_" in Path(json_file).name:
-            schema = _convert_schema
+            schema = converter_schema
         else:
             raise ValueError("No schema specified.")
     elif not isinstance(schema, Schema):

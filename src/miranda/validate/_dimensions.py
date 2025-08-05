@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from schema import Optional, Or, Regex, Schema
 
-from .regex import (
+from ._regex import (
     PROJECT_NAME_REGEX,
     TIME_UNITS_REGEX,
     VALID_TIME_FREQUENCY_REGEX,
@@ -31,6 +31,14 @@ cf_time_dimension_schema = Schema(
         Optional("_strict_time"): bool,
         "axis": "T",
         Optional("bounds"): "time_bnds",
+        Optional("calendar"): Or(
+            "standard",
+            "gregorian",
+            "proleptic_gregorian",
+            "noleap",
+            "365_day",
+            "360_day",
+        ),
         Optional("long_name"): Or("time", "Time"),
         "standard_name": "time",
         "units": Regex(TIME_UNITS_REGEX),

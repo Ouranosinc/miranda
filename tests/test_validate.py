@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 from schema import SchemaError
 
-from miranda.validate import cf_dimensions_schema
+from miranda.validate import cf_dimensions_schema, url_validate
 
 
 def test_valid_dimensions_schema():
@@ -98,3 +98,32 @@ def test_invalid_real_data_dimensions(cassini, name, file, expected_error):
         assert cf_dimensions_schema.validate(dimensions)
     except SchemaError as e:
         assert expected_error in str(e)
+
+
+def test_valid_url():
+    valid_urls = [
+        "http://example.com",
+        "https://example.com",
+        "ftp://example.com",
+        "http://localhost:8000",
+        "https://www.example.com/path/to/resource",
+    ]
+
+    for url in valid_urls:
+        assert url_validate(url) is not None, f"URL validation failed for: {url}"
+
+
+def test_invalid_url():
+    invalid_urls = [
+        "htp://example.com",  # Typo in scheme
+        "://example.com",  # Missing scheme
+        "http:/example.com",  # Single slash after http
+        "http://",  # Incomplete URL
+        "example.com",  # No scheme
+        "http://-example.com",  # Invalid domain start
+    ]
+
+    for url in invalid_urls:
+        assert (
+            url_validate(url) is None
+        ), f"URL validation should have failed for: {url}"
