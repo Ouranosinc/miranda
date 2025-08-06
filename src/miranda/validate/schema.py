@@ -125,6 +125,17 @@ def validate_json(json_file: str | Path, schema: Schema | None = None) -> bool:
     -------
     bool
         True if the JSON file is valid, False otherwise.
+
+    Raises
+    ------
+    ValueError
+        If the JSON file does not exist, or if the schema is not CF-compliant.
+    OSError
+        If there is an error reading the JSON file.
+    json.JSONDecodeError
+        If the JSON file is not valid JSON.
+    SchemaError
+        If the JSON data does not conform to the schema.
     """
     if not Path(json_file).is_file():
         msg = f"{json_file} is not a file."
@@ -143,7 +154,11 @@ def validate_json(json_file: str | Path, schema: Schema | None = None) -> bool:
             data = json.load(f)
         schema.validate(data)
         return True
-    except (OSError, json.JSONDecodeError, SchemaError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         msg = f"Error validating JSON file {json_file}: {e}"
         logging.error(msg)
-        return False
+        raise
+    except SchemaError as e:
+        msg = f"Schema validation error in {json_file}: {e}"
+        logging.error(msg)
+        raise

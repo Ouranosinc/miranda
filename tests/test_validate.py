@@ -16,7 +16,7 @@ from miranda.validate import (
 
 class TestValidateJSON:
 
-    @pytest.mark.xfail(raises=SchemaError)
+    @pytest.mark.xfail(raises=SchemaError, strict=False)
     @pytest.mark.parametrize(
         "project, configuration", ([(k, v) for k, v in CONFIG_FILES.items()])
     )
