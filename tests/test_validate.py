@@ -43,43 +43,40 @@ class TestValidateJSON:
 class TestHeaderSchema:
 
     def test_valid_header_schema(self):
-        valid_input = {
-            "Header": {
-                "title": "Test Dataset",
-                "institution": "Test Institution",
-                "source": "Test Source",
-                "history": "Created on 2023-10-01",
-                "references": "https://example.com/references",
-                "Conventions": "CF-1.8",
-                "license": "CC-BY-4.0",
-                "license_type": "proprietary",
-                "processing_level": "raw",
-                "table_id": "test-321",
-                "type": "test_data",
-                "_miranda_version": True,
-                "_special_attrs": {
-                    "myproject": "1.8"
-                },  # underscore keys that aren't "_freq" or "_miranda_version" must point to either a dictionary or a boolean
-                "_project_name": {"myproject": True},
-            }
+        valid_header_input = {
+            "title": "Test Dataset",
+            "institution": "Test Institution",
+            "source": "Test Source",
+            "history": "Created on 2023-10-01",
+            "references": "https://example.com/references",
+            "Conventions": "CF-1.8",
+            "license": "CC-BY-4.0",
+            "license_type": "proprietary",
+            "processing_level": "raw",
+            "table_id": "test-321",
+            "type": "test_data",
+            "_miranda_version": True,
+            "_special_attrs": {
+                "myproject": "1.8"
+            },  # underscore keys that aren't "_freq" or "_miranda_version" must point to either a dictionary or a boolean
+            "_project_name": {"myproject": True},
         }
-        assert cf_header_schema.validate(valid_input)
+
+        assert cf_header_schema.validate(valid_header_input)
 
     def test_invalid_header_schema(self):
-        invalid_input = {
-            "Header": {
-                "title": "Test Dataset",
-                "institution": "Test Institution",
-                "source": "Test Source",
-                "history": "Created on 2023-10-01",
-                "references": "https://example.com/references",
-                "_miranda_version": True,
-                "_special_attrs": {"myproject": "1.8"},
-                "_project_name": "Test Project",  # underscore keys that aren't "_freq" or "_miranda_version" must point to a dictionary
-            }
+        invalid_header_input = {
+            "title": "Test Dataset",
+            "institution": "Test Institution",
+            "source": "Test Source",
+            "history": "Created on 2023-10-01",
+            "references": "https://example.com/references",
+            "_miranda_version": True,
+            "_special_attrs": {"myproject": "1.8"},
+            "_project_name": "Test Project",  # underscore keys that aren't "_freq" or "_miranda_version" must point to a dictionary
         }
         try:
-            cf_header_schema.validate(invalid_input)
+            cf_header_schema.validate(invalid_header_input)
         except SchemaError as e:
             assert "'Test Project' should be instance of 'dict'" in str(e)
 
@@ -87,33 +84,30 @@ class TestHeaderSchema:
 class TestVariablesSchema:
 
     def test_valid_variables_schema(self):
-        valid_input = {
-            "variables": {
-                "some-variable": {
-                    "standard_name": "air_temperature",
-                    "_cf_variable_name": "temperature",
-                    "_corrected_units": "K",
-                    "units": "K",
-                    "long_name": "Air Temperature",
-                }
+        valid_variable_input = {
+            "some-variable": {
+                "standard_name": "air_temperature",
+                "_cf_variable_name": "temperature",
+                "_corrected_units": "K",
+                "units": "K",
+                "long_name": "Air Temperature",
             }
         }
 
-        assert cf_variables_schema.validate(valid_input)
+        assert cf_variables_schema.validate(valid_variable_input)
 
     def test_invalid_variable_schema(self):
-        invalid_input = {
-            "variables": {
-                "T": {
-                    "standard_name": "air_temperature",
-                    "_cf_variable_name": "temp",
-                    "_corrected_units": 300,  # Invalid type
-                    "units": "K",
-                }
+        invalid_variable_input = {
+            "T": {
+                "standard_name": "air_temperature",
+                "_cf_variable_name": "temp",
+                "_corrected_units": 300,  # Invalid type
+                "units": "K",
             }
         }
+
         try:
-            cf_variables_schema.validate(invalid_input)
+            cf_variables_schema.validate(invalid_variable_input)
         except SchemaError as e:
             assert "300 should be instance of 'str'" in str(e)
 
@@ -121,54 +115,50 @@ class TestVariablesSchema:
 class TestDimensionsSchema:
 
     def test_valid_dimensions_schema(self):
-        valid_input = {
-            "dimensions": {
-                "time": {
-                    "_cf_dimension_name": "time",
-                    "_ensure_correct_time": "1YS",
-                    "_strict_time": True,
-                    "axis": "T",
-                    "bounds": "time_bnds",
-                    "standard_name": "time",
-                    "long_name": "Time",
-                    "units": "days since 1850-01-01",
-                },
-                "lat": {
-                    "_cf_dimension_name": "lat",
-                    "_precision": 2,
-                    "axis": "Y",
-                    "standard_name": "latitude",
-                    "long_name": "Latitude",
-                    "units": "degrees_north",
-                },
-                "lon": {
-                    "_cf_dimension_name": "lon",
-                    "_precision": 2,
-                    "axis": "X",
-                    "standard_name": "longitude",
-                    "long_name": "Longitude",
-                    "units": "degrees_east",
-                },
-            }
+        valid_dimensions_input = {
+            "time": {
+                "_cf_dimension_name": "time",
+                "_ensure_correct_time": "1YS",
+                "_strict_time": True,
+                "axis": "T",
+                "bounds": "time_bnds",
+                "standard_name": "time",
+                "long_name": "Time",
+                "units": "days since 1850-01-01",
+            },
+            "lat": {
+                "_cf_dimension_name": "lat",
+                "_precision": 2,
+                "axis": "Y",
+                "standard_name": "latitude",
+                "long_name": "Latitude",
+                "units": "degrees_north",
+            },
+            "lon": {
+                "_cf_dimension_name": "lon",
+                "_precision": 2,
+                "axis": "X",
+                "standard_name": "longitude",
+                "long_name": "Longitude",
+                "units": "degrees_east",
+            },
         }
-        assert cf_dimensions_schema.validate(valid_input)
+        assert cf_dimensions_schema.validate(valid_dimensions_input)
 
     def test_invalid_time_schema(self):
-        invalid_time = {
-            "dimensions": {
-                "time": {
-                    "_cf_dimension_name": "time",
-                    "_ensure_correct_time": "1D",
-                    "_strict_time": False,
-                    "axis": "T",
-                    "standard_name": "time",
-                    "long_name": "Tijd",
-                    "units": "days since 2000-01-01",
-                }
+        invalid_dimensions_time = {
+            "time": {
+                "_cf_dimension_name": "time",
+                "_ensure_correct_time": "1D",
+                "_strict_time": False,
+                "axis": "T",
+                "standard_name": "time",
+                "long_name": "Tijd",
+                "units": "days since 2000-01-01",
             }
         }
         try:
-            cf_dimensions_schema.validate(invalid_time)
+            cf_dimensions_schema.validate(invalid_dimensions_time)
         except SchemaError as e:
             assert "'Time' does not match 'Tijd'" in str(e)
 
@@ -178,12 +168,12 @@ class TestDimensionsSchema:
             (
                 "CMIP",
                 "CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc",
-                "'cf_time_dimension_schema' Missing key: 'units'",
+                "Time dimension must contain either 'units' or '_units', but not both",
             ),
             (
                 "ECMWF",
                 "ECMWF/era5_t2m-d2m_2024.nc",
-                "'cf_time_dimension_schema' Missing keys: 'axis', 'standard_name', 'units'",
+                "'cf_time_dimension_schema' Missing keys: 'axis', 'standard_name'",
             ),
             (
                 "NASA",
@@ -200,9 +190,7 @@ class TestDimensionsSchema:
             )
 
         dimensions = {
-            "dimensions": {
-                dim: ds[dim].attrs for dim in ds.dims if dim in ["time", "lat", "lon"]
-            }
+            dim: ds[dim].attrs for dim in ds.dims if dim in ["time", "lat", "lon"]
         }
 
         try:
