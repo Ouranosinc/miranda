@@ -134,7 +134,7 @@ def validate_json(json_file: str | Path, schema: Schema | None = None) -> bool:
         if "_cf_" in Path(json_file).name:
             schema = converter_schema
         else:
-            raise ValueError("No schema specified.")
+            raise ValueError("Schema is not CF-compliant. No validation is possible.")
     elif not isinstance(schema, Schema):
         raise ValueError("'schema' must be a Schema instance.")
 
