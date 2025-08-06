@@ -68,41 +68,39 @@ def _institution_in_header(header_dict: dict):
 
 
 cf_header_schema = Schema(
-    {
-        "Header": And(
-            Schema(
-                {
-                    "Conventions": Regex(CF_CONVENTIONS_REGEX),
-                    "source": str,
-                    "type": str,  # FIXME: Should this be constrained to specific values? e.g., "simulation", "observation", etc.
-                    "processing_level": Or("raw", "biasadjusted"),
-                    "license": str,
-                    "license_type": Or("permissive", "proprietary", "restricted"),
-                    "table_id": str,
-                    Optional(Regex(PROJECT_NAME_REGEX)): str,
-                    Optional("_frequency"): bool,
-                    Optional("_miranda_version"): bool,
-                    Optional("_remove_attrs"): Or(
-                        Schema(Regex(PROJECT_NAME_REGEX)),
-                        Schema({Regex(PROJECT_NAME_REGEX): Or(str, Schema([str]))}),
-                    ),
-                    Optional(Regex(r"^_")): {str: Or(str, bool, Schema({str: str}))},
-                }
-            ),
-            _institution_in_header,
-        )
-    },
+    And(
+        Schema(
+            {
+                "Conventions": Regex(CF_CONVENTIONS_REGEX),
+                "source": str,
+                "type": str,  # FIXME: Should this be constrained to specific values? e.g., "simulation", "observation", etc.
+                "processing_level": Or("raw", "biasadjusted"),
+                "license": str,
+                "license_type": Or("permissive", "proprietary", "restricted"),
+                "table_id": str,
+                Optional(Regex(PROJECT_NAME_REGEX)): str,
+                Optional("_frequency"): bool,
+                Optional("_miranda_version"): bool,
+                Optional("_remove_attrs"): Or(
+                    Schema(Regex(PROJECT_NAME_REGEX)),
+                    Schema({Regex(PROJECT_NAME_REGEX): Or(str, Schema([str]))}),
+                ),
+                Optional(Regex(r"^_")): {str: Or(str, bool, Schema({str: str}))},
+            }
+        ),
+        _institution_in_header,
+    ),
     name="header_schema",
 )
 
 
 # Converter Schema
 converter_schema = Schema(
-    And(
-        cf_header_schema,
-        cf_variables_schema,
-        cf_dimensions_schema,
-    ),
+    {
+        "Header": cf_header_schema,
+        "variables": cf_variables_schema,
+        "dimensions": cf_dimensions_schema,
+    },
     ignore_extra_keys=False,  # Extra entries will raise a ValidationError
     name="convert_schema",
 )

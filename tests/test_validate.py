@@ -25,11 +25,19 @@ class TestValidateJSON:
         try:
             validate_json(configuration)
         except ValueError as e:
-            if project in ["ESPO-G6-E5L", "ESPO-G6-R2", "NEX-GDDP-CMIP6"]:
+            if project in [
+                "CMIP",
+                "CORDEX",
+                "ESPO-G6-E5L",
+                "ESPO-G6-R2",
+                "NEX-GDDP-CMIP6",
+            ]:
                 # These projects have a different schema that is not yet implemented
                 assert "Schema is not CF-compliant. No validation is possible." in str(
                     e
                 )
+            else:
+                raise e
 
 
 class TestHeaderSchema:
