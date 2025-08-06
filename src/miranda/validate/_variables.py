@@ -21,7 +21,7 @@ VARIABLE_TREATMENTS = [
 cf_variables_schema = Schema(
     {
         Optional("variables"): {
-            Optional(str): {
+            str: {
                 "standard_name": Regex(STANDARD_NAME_REGEX),
                 "_cf_variable_name": str,
                 Optional(Or(*VARIABLE_TREATMENTS)): Or(

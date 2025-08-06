@@ -74,7 +74,7 @@ cf_header_schema = Schema(
                 {
                     "Conventions": Regex(CF_CONVENTIONS_REGEX),
                     "source": str,
-                    "type": str,
+                    "type": str,  # FIXME: Should this be constrained to specific values? e.g., "simulation", "observation", etc.
                     "processing_level": Or("raw", "biasadjusted"),
                     "license": str,
                     "license_type": Or("permissive", "proprietary", "restricted"),
@@ -83,10 +83,10 @@ cf_header_schema = Schema(
                     Optional("_frequency"): bool,
                     Optional("_miranda_version"): bool,
                     Optional("_remove_attrs"): Or(
-                        Regex(PROJECT_NAME_REGEX),
-                        {Regex(PROJECT_NAME_REGEX): Or(str, [str])},
+                        Schema(Regex(PROJECT_NAME_REGEX)),
+                        Schema({Regex(PROJECT_NAME_REGEX): Or(str, Schema([str]))}),
                     ),
-                    Optional(Regex(r"^_")): Or({str: str}, {str: {str: str}}),
+                    Optional(Regex(r"^_")): {str: Or(str, bool, Schema({str: str}))},
                 }
             ),
             _institution_in_header,
