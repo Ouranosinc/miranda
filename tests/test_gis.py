@@ -74,7 +74,7 @@ class TestDomains:
         ids=["era5", "daymet"],
     )
     def test_subset_domain(self, cassini, dataset):
-        from miranda.gis._domains import subset_domain
+        from miranda.gis import subset_domain
 
         ds = xr.open_dataset(cassini.fetch(dataset))
 
@@ -84,7 +84,7 @@ class TestDomains:
 
         if dataset == "NASA/daymet_v4_prcp_annttl_hi_1987.nc":
             with pytest.raises(ValueError):
-                subset = subset_domain(ds, "mtl")
+                subset_domain(ds, "mtl")
         else:
             subset = subset_domain(ds, "mtl")
 
