@@ -41,11 +41,15 @@ q_flag_dict = {
         "W": "temperature too warm for snow",
         "X": "failed bounds check",
         "Z": "flagged as a result of an official Datzilla investigation",
+    },
+    "canhomt": {
+        "I": "infilled data",
     }
 }
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
+    canhomt=dict(freq="daily", filetype=".csv"),
     # ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
 )
 
@@ -285,7 +289,7 @@ def download_ghcn(
     n_workers : int, optional
         Number of workers to use. Not implemented.
     """
-    station_df = _get_ghcn_stations(
+    station_df = _get_station_meta(
         project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
     )
     if update_raw and working_folder.joinpath("raw").exists():
@@ -315,13 +319,13 @@ def download_ghcn(
             logging.info(msg)
 
 
-def _get_ghcn_stations(
+def get_station_meta(
     project: str,
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
 ) -> pd.DataFrame:
     """
-    Get GHCN station metadata.
+    Get GHCN or CanHomT station metadata.
 
     Parameters
     ----------
@@ -334,33 +338,10 @@ def _get_ghcn_stations(
         Station metadata.
     """
     if project == "ghcnd":
-        station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
-        dtypes = {
-            "station_id": str,
-            "lat": float,
-            "lon": float,
-            "elevation": float,
-            "state": str,
-            "station_name": str,
-            "gsn_flag": str,
-            "hcn_flag": str,
-            "wmo_id": str,
-        }
-        try:
-            station_df = pd.read_fwf(
-                station_url,
-                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
-                converters=dtypes,
-            )
-        except ValueError:
-            statfile = Path(__file__).parent.joinpath("data/ghcnd-stations.txt")
-            station_df = pd.read_fwf(
-                statfile,
-                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
-                converters=dtypes,
-            )
+        station_df = _get_ghcn_stations(project=project)
+    elif project == "canhomt":
+        station_df = _get_canhomt_stations(project=project)
+        
     # TODO ghcnh not implemented yet
     # elif project == "ghcnh":
     #     project
@@ -405,8 +386,87 @@ def _get_ghcn_stations(
 
     return station_df
 
+def _get_canhomt_stations(project: str) -> pd.DataFrame:
+    """
+    Get CanHomT station metadata.
 
-def convert_ghcn_bychunks(
+    Parameters
+    ----------
+    project : str
+        Project name.
+
+    Returns
+    -------
+    pd.DataFrame
+        Station metadata.
+    """
+    if project == "canhomt":
+        station_url = "https://crd-data-donnees-rdc.ec.gc.ca/CDAS/products/CanHomTV4/Temp_Stations_Gen4_2024_monthly.csv"
+        
+        try:
+            station_df = pd.read_csv(
+                station_url,
+            )
+        except ValueError:
+            statfile = Path(__file__).parent.joinpath("data/eccc-canhomt_Temp_Stations_Gen4_2024_monthly.zip")
+            station_df = pd.read_csv(
+                statfile,
+            )
+        station_df = station_df.rename(columns={p: p.lower() for p in station_df.columns})
+        rename = {"name": "station_name", "id": "station_id", "ele": "elevation"}
+        station_df = station_df.rename(columns=rename) 
+    else:
+        raise ValueError(f"unknown project values {project}")
+    
+    return station_df
+
+def _get_ghcn_stations(
+    project: str) -> pd.DataFrame:
+    """
+    Get GHCN station metadata.
+    Parameters
+    ----------
+    project : str
+        Project name.
+
+    Returns
+    -------
+    pd.DataFrame
+        Station metadata.   
+    """
+    if project == "ghcnd":
+        station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
+        dtypes = {
+            "station_id": str,
+            "lat": float,
+            "lon": float,
+            "elevation": float,
+            "state": str,
+            "station_name": str,
+            "gsn_flag": str,
+            "hcn_flag": str,
+            "wmo_id": str,
+        }
+        try:
+            station_df = pd.read_fwf(
+                station_url,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+        except ValueError:
+            statfile = Path(__file__).parent.joinpath("data/ghcnd-stations.txt")
+            station_df = pd.read_fwf(
+                statfile,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+    else:
+        raise ValueError(f"unknown project values {project}")
+    return station_df
+
+def convert_statdata_bychunks(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
     cfvariable_list: list | None = None,
@@ -419,7 +479,7 @@ def convert_ghcn_bychunks(
     update_from_raw: bool = False,
 ) -> None:
     """
-    Convert GHCN data to Zarr format.
+    Convert GHCN or CanHomT station data to Zarr format.
 
     Requires GIS libraries (geopandas).
 
@@ -464,6 +524,9 @@ def convert_ghcn_bychunks(
     freq_dict = dict(h="hr", d="day")
     if project == "ghcnd":
 
+        station_df = _get_station_meta(
+            project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
+        )
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
@@ -476,9 +539,7 @@ def convert_ghcn_bychunks(
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
-    station_df = _get_ghcn_stations(
-        project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-    )
+    
     tz_file = Path(__file__).parent.joinpath(
         "data/timezones-with-oceans-now.shapefile.zip"
     )
@@ -536,12 +597,17 @@ def convert_ghcn_bychunks(
                     var_attrs_new[vv] = meta
 
             if var_attrs_new:
-                dsall_vars = create_ghcn_xarray(
-                    infiles=ss,
-                    varmeta=var_attrs_new,
-                    statmeta=station_df,
-                    project=project,
-                )
+                dsall_vars = None
+                if 'ghcn' in project:
+                    dsall_vars = create_ghcn_xarray(
+                        infiles=ss,
+                        varmeta=var_attrs_new,
+                        statmeta=station_df,
+                        project=project,
+                    )
+                #elif 'canhomt' in project:
+
+
                 if dsall_vars is None:
                     continue
                 dsall_vars = dsall_vars.sel(
