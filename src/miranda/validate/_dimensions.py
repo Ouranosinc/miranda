@@ -47,9 +47,9 @@ def _time_units_in_dimensions(time_dict: dict):
     has_units = "units" in time_dict
     has_calculate_units = "_units" in time_dict
 
-    if has_units == has_calculate_units:  # both true or both false
+    if has_units and has_calculate_units:  # both true or both false
         raise ValueError(
-            "Time dimension must contain either 'units' or '_units', but not both"
+            "Time dimension may contain either 'units' or '_units', but not both"
         )
     return time_dict
 
@@ -76,7 +76,7 @@ cf_time_dimension_schema = And(
                 "365_day",
                 "360_day",
             ),
-            Optional("long_name"): Or("time", "Time"),
+            Optional("long_name"): Regex(r"^time$|^Time$"),
             "standard_name": "time",
             Optional("units"): Regex(TIME_UNITS_REGEX),
         },
@@ -96,7 +96,7 @@ cf_lat_dimension_schema = Schema(
         ),
         "axis": "Y",
         Optional("bounds"): "lat_bnds",
-        Optional("long_name"): Or("latitude", "Latitude"),
+        Optional("long_name"): Regex(r"^latitude$|^Latitude$"),
         "standard_name": "latitude",
         "units": str,
     },
@@ -114,7 +114,7 @@ cf_lon_dimension_schema = Schema(
         ),
         "axis": "X",
         Optional("bounds"): "lon_bnds",
-        Optional("long_name"): Or("longitude", "Longitude"),
+        Optional("long_name"): Regex(r"^longitude$|^Longitude$"),
         "standard_name": "longitude",
         "units": str,
     },

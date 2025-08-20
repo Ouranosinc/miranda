@@ -23,6 +23,8 @@ __all__ = [
     "validate_json",
 ]
 
+LICENSES_TYPES = ["open", "permissive", "proprietary", "restricted"]
+
 
 def _institution_in_header(header_dict: dict):
     """
@@ -75,11 +77,17 @@ cf_header_schema = Schema(
                 "source": str,
                 "type": str,  # FIXME: Should this be constrained to specific values? e.g., "simulation", "observation", etc.
                 "processing_level": Or("raw", "biasadjusted"),
-                "license": str,
-                "license_type": Or("permissive", "proprietary", "restricted"),
+                Optional(Regex(r"^license$|^licence$")): str,
+                Regex(r"^license_type$|^licence_type$"): Or(
+                    *LICENSES_TYPES,
+                    Schema({Regex(PROJECT_NAME_REGEX): Or(*LICENSES_TYPES)}),
+                ),
                 "table_id": str,
                 Optional(Regex(PROJECT_NAME_REGEX)): str,
                 Optional("_frequency"): bool,
+                Optional(Regex(r"^_license$|^_licence$")): {
+                    str: Or(str, Schema({str: str}))
+                },
                 Optional("_miranda_version"): bool,
                 Optional("_remove_attrs"): Or(
                     Schema(Regex(PROJECT_NAME_REGEX)),
