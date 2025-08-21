@@ -17,9 +17,7 @@
         ""
       ]
     },
-    "_source": {
-      "casr-v31": "CaSR"
-    },
+    "source": "CaSR",
     "_version": {
       "casr-v31": "v3.1"
     },

@@ -17,4 +17,4 @@ TIME_UNITS_REGEX = (
     r"^(seconds|minutes|hours|days|months|years)\s+since\s+(\d{4})-(\d{1,2})-(\d{1,2})"
 )
 
-VALID_TIME_FREQUENCY_REGEX = r"^(\d+)?(Y|YS|M|MS|W|D|H|T|min|S|L|ms|U|us|N)$"
+VALID_TIME_FREQUENCY_REGEX = r"^(\d+)?(Y|YS|Q|QS|M|MS|W|D|h|m|s|ms|us|ns)$"
