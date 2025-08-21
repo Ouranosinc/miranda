@@ -52,7 +52,7 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
     """
     data_folder = Path(__file__).resolve().parent / "data"
 
-    if project == "canhomt":
+    if project == "canhomt_dly":
         metadata_definition = json.load(
             data_folder.joinpath("eccc-canhomt_cf_attrs.json").open("r")
         )
