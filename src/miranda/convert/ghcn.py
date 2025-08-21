@@ -6,6 +6,7 @@ import datetime as dt
 import logging.config
 import multiprocessing as mp
 import os
+
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -42,14 +43,14 @@ q_flag_dict = {
         "X": "failed bounds check",
         "Z": "flagged as a result of an official Datzilla investigation",
     },
-    "canhomt": {
+    "canhomt_dly": {
         "I": "infilled data",
     }
 }
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
-    canhomt=dict(freq="daily", filetype=".csv"),
+    canhomt_dly=dict(freq="daily", filetype=".csv"),
     # ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
 )
 
@@ -122,6 +123,107 @@ def get_ghcn_raw(
             continue
     return errors
 
+def _add_coords_to_dataset(ds: xr.Dataset, df_stat: pd.DataFrame, floatflag=True) -> xr.Dataset:
+    """
+    Add coordinates to the dataset from the station metadata.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset.
+    df_stat : pd.DataFrame
+        Station metadata.
+    floatflag : bool, optional
+        Whether to convert data variables to float32. Default is True.
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset with added coordinates.
+    """
+    
+    for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
+        if cc not in ds.coords:
+            ds = ds.assign_coords(
+                {
+                    cc: xr.DataArray(
+                        [df_stat[cc].values[0]], coords=ds.station.coords
+                    )
+                }
+            )
+    if floatflag:
+        for vv in ds.data_vars:
+            if ds[vv].dtype == "float64":
+                ds[vv] = ds[vv].astype("float32")
+    return ds
+
+def create_canhomt_xarray(
+    infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
+) -> xr.Dataset | None:
+    """
+    Create a Zarr dump of DWD climate summary data.
+
+    Parameters
+    ----------
+    infiles : list
+        A list of input files.
+    varmeta : dict
+        Variable metadata.
+    statmeta : pd.DataFrame
+        Station metadata.
+    project : str
+        Project name.
+
+    Returns
+    -------
+    xr.Dataset, optional
+        Dataset.
+    """
+    data = []
+    statmeta
+    for cc in ['beginyear', 'endyear']:
+        statmeta[cc] = pd.to_datetime(statmeta[cc], format="%Y-%m")
+    for station_id in statmeta.station_id:
+        msg = f"Reading {station_id}"
+        logging.info(msg)
+        statfile = [f for f in infiles if f.name == f"{station_id}.csv"]
+        
+        if statfile == []:
+            msg = f"Station {station_id} not found in input files"
+            logging.warning(msg)
+            continue
+        df = pd.read_csv(statfile[0])
+        
+        df.columns = df.columns.str.lower()
+        df['station'] = station_id
+        varlist = [k for k in varmeta.keys() if k in df.columns]
+        if varlist:
+            df["time"] = pd.to_datetime(df["time"], format="%Y-%m-%d")
+            df = df.set_index(["station", "time"])
+            
+            ds = df.to_xarray()
+            drop_vars = [v for v in ds.data_vars
+                    if v not in varlist and 'flag' not in v
+                ]
+            ds = ds.drop_vars(drop_vars)
+            df_stat = statmeta[statmeta.station_id == station_id]
+            if len(df_stat) != 1:
+                raise ValueError(
+                    f"expected a single station metadata for {station_id.stem}"
+                )
+            ds = _add_coords_to_dataset(ds, df_stat)
+            ds = ds.rename({f"{v}_flag": f"{v}_q_flag" for v in ds.data_vars if "flag" not in v})
+            data.append(ds)
+    
+    if len(data) == 0:
+        return None 
+    return xr.concat(data, dim="station")
+
+
+
+            
+
+
 
 def create_ghcn_xarray(
     infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
@@ -184,22 +286,7 @@ def create_ghcn_xarray(
                     raise ValueError(
                         f"expected a single station metadata for {station_id.stem}"
                     )
-                for cc in [
-                    c
-                    for c in df_stat.columns
-                    if c not in ["station_id", "geometry", "index_right"]
-                ]:
-                    if cc not in ds.coords:
-                        ds = ds.assign_coords(
-                            {
-                                cc: xr.DataArray(
-                                    [df_stat[cc].values[0]], coords=ds.station.coords
-                                )
-                            }
-                        )
-                for vv in ds.data_vars:
-                    if ds[vv].dtype == "float64":
-                        ds[vv] = ds[vv].astype("float32")
+                ds = _add_coords_to_dataset(ds, df_stat, floatflag=False)
 
                 data.append(ds)
         # TODO ghcnh not implemented yet
@@ -258,6 +345,61 @@ def create_ghcn_xarray(
     if len(data) == 0:
         return None
     return xr.concat(data, dim="station")
+
+def download_canhomt(
+    project: str,
+    working_folder: str | os.PathLike[str] | None = None,
+    update_raw: bool = False,
+    timeout: int | None = None,
+    n_workers: int | None = None,
+) -> None:
+    """
+    Download CanHomT data.
+
+    Parameters
+    ----------
+    project : str
+        Project name.
+    working_folder : str or os.PathLink[str], optional
+        Temporary files folder.
+    update_raw : bool
+        Whether to update the raw files or not.
+    timeout : int, optional
+        Request timeout in seconds.
+    n_workers : int, optional
+        Number of workers to use. Not implemented.
+    """
+    if update_raw and working_folder.joinpath("raw").exists():
+        shutil.rmtree(working_folder.joinpath("raw"))
+    working_folder.mkdir(parents=True, exist_ok=True)
+    working_folder.joinpath("raw").mkdir(exist_ok=True)
+
+    outfolder = working_folder.joinpath("raw")
+    ntry = 5
+    while ntry > 0:
+        outfolder.mkdir(parents=True, exist_ok=True)
+        if project == "canhomt_dly":
+            url = "https://crd-data-donnees-rdc.ec.gc.ca/CDAS/products/CanHomTV4/CanHomT_dlyV4.tar.gz"
+            outfile = outfolder / f"CanHomT_dlyV4.tar.gz"
+        else:
+            msg = f"unknown project type : {project}"
+            raise ValueError(msg)
+
+        if outfile.exists() and not update_raw:
+            break
+        try:
+            msg = f"Downloading {url}"
+            logging.info(msg)
+            with requests.get(url, timeout=(5, timeout)) as r:
+                r.raise_for_status()
+                with Path(outfile.with_suffix(f".tmp{outfile.suffix}")).open("wb") as f:
+                    f.write(r.content)
+            shutil.move(outfile.with_suffix(f".tmp{outfile.suffix}"), outfile)
+        except OSError as e:
+            raise(e)
+    shutil.unpack_archive(outfile, outfolder, "gztar")
+
+    return True
 
 
 def download_ghcn(
@@ -339,7 +481,7 @@ def get_station_meta(
     """
     if project == "ghcnd":
         station_df = _get_ghcn_stations(project=project)
-    elif project == "canhomt":
+    elif project == "canhomt_dly":
         station_df = _get_canhomt_stations(project=project)
         
     # TODO ghcnh not implemented yet
@@ -400,7 +542,7 @@ def _get_canhomt_stations(project: str) -> pd.DataFrame:
     pd.DataFrame
         Station metadata.
     """
-    if project == "canhomt":
+    if project == "canhomt_dly":
         station_url = "https://crd-data-donnees-rdc.ec.gc.ca/CDAS/products/CanHomTV4/Temp_Stations_Gen4_2024_monthly.csv"
         
         try:
@@ -522,13 +664,12 @@ def convert_statdata_bychunks(
             if var_attrs[v]["_cf_variable_name"] in cfvariable_list
         }
     freq_dict = dict(h="hr", d="day")
-    if project == "ghcnd":
-
-        station_df = _get_station_meta(
+    readme_url = None
+    station_df = get_station_meta(
             project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
         )
+    if project == "ghcnd":
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
-
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
     # TODO ghcnh not implemented yet
     # elif project == "ghcnh":
@@ -536,6 +677,8 @@ def convert_statdata_bychunks(
     #     outchunks = dict(time=(365 * 4) + 1, station=nstations)
     # logging.info("ghcnh not implemented yet")
     # exit()
+    elif project == "canhomt_dly":
+        outchunks = dict(time=(365 * 4) + 1, station=nstations)
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
@@ -584,6 +727,7 @@ def convert_statdata_bychunks(
     file_list = sorted(
         list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}"))
     )
+    file_list = [f for f in file_list if f.stem in station_df.station_id.tolist()]
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, nstations)):
         if ii not in treated:
@@ -605,7 +749,13 @@ def convert_statdata_bychunks(
                         statmeta=station_df,
                         project=project,
                     )
-                #elif 'canhomt' in project:
+                elif 'canhomt' in project:
+                    dsall_vars = create_canhomt_xarray(
+                        infiles=ss,
+                        varmeta=var_attrs_new,
+                        statmeta=station_df,
+                        project=project,
+                    )
 
 
                 if dsall_vars is None:
@@ -641,7 +791,8 @@ def convert_statdata_bychunks(
                     desc_str = "; ".join(
                         [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
                     )
-                    desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                    if readme_url is not None:
+                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
                     attrs = {
                         "flag_values": [c for c in q_flag_dict[project].keys()],
                         "flag_meanings": [c for c in q_flag_dict[project].values()],
