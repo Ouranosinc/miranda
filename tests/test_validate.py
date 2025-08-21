@@ -160,7 +160,7 @@ class TestDimensionsSchema:
         try:
             cf_dimensions_schema.validate(invalid_dimensions_time)
         except SchemaError as e:
-            assert "'Time' does not match 'Tijd'" in str(e)
+            assert "'Tijd' does not match '^time$|^Time$'" in str(e)
 
     @pytest.mark.parametrize(
         "name, file, expected_error",
@@ -178,7 +178,7 @@ class TestDimensionsSchema:
             (
                 "NASA",
                 "NASA/daymet_v4_tmax_annavg_hi_1987.nc",
-                "Or('time', 'Time') did not validate '24-hour day based on local time'",
+                "'24-hour day based on local time' does not match '^time$|^Time$'",
             ),
         ],
     )
