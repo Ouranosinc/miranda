@@ -27,7 +27,7 @@ from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderErro
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS
-    from miranda.validators import FACETS_SCHEMA  # noqa
+    from miranda.validate import FACETS_SCHEMA  # noqa
 
 
 config.dictConfig(LOGGING_CONFIG)

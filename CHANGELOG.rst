@@ -18,6 +18,8 @@ Announcements
     * The modules `miranda.archive` and `miranda.remote` have been removed and will be moved to a separate project.
     * Data treatment functions have been moved to `miranda.treatments`.
     * Pre-processing logic and functions have been moved to `miranda.preprocess`.
+    * Several obsolete/nonexistent configuration files have been removed from `miranda.convert.corrections`.
+* The `miranda.validators` submodule has become `miranda.validate` and now contains all controlled vocabulary and validation functions.
 * `miranda` now leverages `pooch` to fetch and cache testing datasets from `miranda-testdata <https://github.com/Ouranosinc/miranda-testdata>`_:
     * ``miranda.testing.cassini`` is used to create an instance of `Cassini` for fetching testing data.
     * ``miranda.testing.registry.txt`` is a text file containing the list of datasets available in `miranda-testdata`.
@@ -27,17 +29,18 @@ New features
 * Conversions for variables in the `GHCN-D` weather station network dataset are now supported.
 * Conversion support has been added for the `ORRC`, `CaSR v3.1`, and `RDRS v2.1` datasets.
 * ECMWF: Added support for the `era5-single-levels-monthly-means` project.
-* ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`cp`, `cape`), and wind speed (`u`, `v`).
-* Aggregation operations now support more variables (`hur`, `hurs`, `huss`, `rlds`, `ta`, `tdp`, `ua`, `uas`, `va`, `vas`)
-* Minimum values of `0 kg m2 s-1` has been set for both `tp` and `sf` variables in ERA5 and ERA5-Land projects.
+* ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`'cp'`, `'cape'`), and wind speed (`'u'`, `'v'`).
+* Aggregation operations now support more variables (`'hur'`, `'hurs'`, `'huss'`, `'rlds'`, `'ta'`, `'tdp'`, `'ua'`, `'uas'`, `'va'`, `'vas'`)
+* Minimum values of `"0 kg m2 s-1"` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
 * Added a new configuration for converting the NRCAN gridded climate dataset (`NRCANmet`).
+* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_` schemas.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Removed modules ``miranda.archive`` and ``miranda.remote`` (split into a separate project yet to be published).
+* Removed modules `miranda.archive` and `miranda.remote` (split into a separate project yet to be published).
 * ``miranda.utils.show_versions`` has been moved to ``miranda.testing.show_versions``. It now uses ``xclim.testing.show_versions`` to display the versions of all dependencies.
 * Python 3.8 and Python 3.9 are no longer supported.
 * The `dev` recipe now requires `pooch` (>=1.8.0).
@@ -65,6 +68,7 @@ Internal changes
     * ``timeseries``: `pytest` fixture for generating an artificial CF-compliant time series dataset using `xclim` and `xarray`.
     * ``multivariable_dataset``: `pytest` fixture for generating an artificial `xarray` multivariable dataset.
 * The `tox.ini` and `pyproject.toml` dependency pins have been synchronized.
+* `schema` schemas have been defined for all conversion JSON files, and are now used to validate the JSON files as part of the testing suite.
 
 .. _changes_0.5.0:
 

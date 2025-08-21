@@ -46,7 +46,8 @@
       },
       "axis": "Y",
       "long_name": "Latitude",
-      "standard_name": "latitude"
+      "standard_name": "latitude",
+      "units": "degrees_north"
     },
     "longitude": {
       "_cf_dimension_name": "lon",
@@ -56,7 +57,8 @@
       },
       "axis": "X",
       "long_name": "Longitude",
-      "standard_name": "longitude"
+      "standard_name": "longitude",
+      "units": "degrees_east"
     },
     "time": {
       "_ensure_correct_time": {
@@ -72,6 +74,7 @@
         "era5-single-levels-preliminary-back-extension": "1H"
       },
       "_strict_time": false,
+      "_units": true,
       "axis": "T",
       "long_name": "Time",
       "standard_name": "time"
@@ -140,7 +143,7 @@
     },
     "q": {
       "_cf_variable_name": "hus",
-      "_corrected_units": 1,
+      "_corrected_units": "1",
       "_invert_sign": false,
       "_transformation": false,
       "cell_methods": "time: point",
@@ -177,7 +180,7 @@
       "_invert_sign": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comment": "Liquid water equivalent of snow converted to snow amount using a water density of 1000 kg/m³.",
+      "comments": "Liquid water equivalent of snow converted to snow amount using a water density of 1000 kg/m³.",
       "description": "This parameter is the average amount of snow of a grid box. Its units are kilograms per square metre, so it is the weight of snow spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
       "long_name": "Surface snow amount",
       "standard_name": "surface_snow_amount",
@@ -499,7 +502,7 @@
       "_invert_sign": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comment": "The geopotential height can be calculated by dividing the geopotential by the Earth's gravitational acceleration, g (=9.80665 m s-2).",
+      "comments": "The geopotential height can be calculated by dividing the geopotential by the Earth's gravitational acceleration, g (=9.80665 m s-2).",
       "description": "This parameter is the gravitational potential energy of a unit mass, at a particular location, relative to mean sea level. It is also the amount of work that would have to be done, against the force of gravity, to lift a unit mass to that location from mean sea level.",
       "long_name": "Geopotential",
       "standard_name": "geopotential",
