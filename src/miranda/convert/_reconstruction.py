@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging.config
+import logging
 import os
 from collections.abc import Sequence
 from pathlib import Path
@@ -13,14 +13,13 @@ from xclim.core import calendar
 
 from miranda.gis import subset_domain
 from miranda.io.utils import delayed_write, get_chunks_on_disk
-from miranda.scripting import LOGGING_CONFIG
 from miranda.utils import chunk_iterables
 from miranda.vocabularies import project_institute, xarray_frequencies_to_cmip6like
 
 from ._aggregation import aggregate as aggregate_func
 from .corrections import dataset_corrections
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.reconstruction")
 
 
 dask.config.set(local_directory=f"{Path(__file__).parent}/dask_workers/")
@@ -93,7 +92,7 @@ def reanalysis_processing(
 
         for domain in domains:
             if domain == "_DEFAULT":
-                logging.warning("No domain specified. proceeding with 'not-specified'.")
+                logger.warning("No domain specified. proceeding with 'not-specified'.")
                 output_folder = output_folder
                 domain = "not-specified"
             elif isinstance(domain, str):
@@ -105,7 +104,7 @@ def reanalysis_processing(
 
             for project, in_files in data.items():
                 msg = f"Processing {project} data{f' for domain {domain}' if domain != 'not_specified' else ''}."
-                logging.info(msg)
+                logger.info(msg)
 
                 for var in variables:
                     # Select only for variable of interest
@@ -125,12 +124,12 @@ def reanalysis_processing(
                                     output_chunks[k] = v
 
                             msg = f"No `target_chunks` set. Proceeding with following found chunks: {output_chunks}."
-                            logging.warning(msg)
+                            logger.warning(msg)
                         else:
                             output_chunks = target_chunks
 
                         msg = f"Resampling variable `{var}`."
-                        logging.info(msg)
+                        logger.info(msg)
 
                         if aggregate:
                             time_freq = aggregate
@@ -190,7 +189,7 @@ def reanalysis_processing(
                                 f"Daily aggregation methods for variable `{var}` are not supported. "
                                 "Continuing..."
                             )
-                            logging.warning(msg)
+                            logger.warning(msg)
 
                         for key in dataset.keys():
                             ds = dataset[key]
@@ -206,7 +205,7 @@ def reanalysis_processing(
                             )
 
                             msg = f"Writing out fixed files for {file_name1}."
-                            logging.info(msg)
+                            logger.info(msg)
                             years, datasets = zip(*ds.resample(time=freq))
                             if freq == "MS":
                                 format_str = "%Y-%m"
@@ -226,7 +225,7 @@ def reanalysis_processing(
                             if output_format != "zarr" and overwrite:
                                 msg = f"Removing existing {output_format} files for {var}."
 
-                                logging.warning(msg)
+                                logger.warning(msg)
                             for i, d in enumerate(datasets):
                                 if (
                                     out_filenames[i].exists()
@@ -253,17 +252,17 @@ def reanalysis_processing(
                                     f"All output files for `{var}` currently exist."
                                     " To overwrite them, set `overwrite=True`. Continuing..."
                                 )
-                                logging.warning(msg)
+                                logger.warning(msg)
                             else:
                                 chunked_jobs = chunk_iterables(jobs, iterable_chunks)
                                 msg = f"Writing out job chunk {iterations}."
-                                logging.info(msg)
+                                logger.info(msg)
                                 iterations = 0
                                 for chunk in chunked_jobs:
                                     iterations += 1
                                     msg = f"Processing iteration {iterations} for variable `{var}`."
-                                    logging.info(msg)
+                                    logger.info(msg)
                                     compute(chunk)
                     else:
                         msg = f"No files found for variable {var}."
-                        logging.info(msg)
+                        logger.info(msg)

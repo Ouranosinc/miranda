@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import functools
-import logging.config
+import logging
 import multiprocessing
 import os
 from datetime import datetime as dt
 from datetime import timedelta as td
 from pathlib import Path
 
-from miranda.scripting import LOGGING_CONFIG
+logger = logging.getLogger("miranda.ecmwf.tigge")
 
-logging.config.dictConfig(LOGGING_CONFIG)
 
 __all__ = ["request_tigge"]
 

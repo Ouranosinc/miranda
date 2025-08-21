@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
-import logging.config
+import logging
 import os
 import re
 import subprocess  # noqa: S404
@@ -24,12 +24,10 @@ from xclim.core.units import convert_units_to, pint_multiply, str2pint
 
 from miranda import __version__
 from miranda.convert.corrections import dataset_corrections
-from miranda.scripting import LOGGING_CONFIG
 from miranda.treatments import metadata_conversion
 from miranda.treatments.utils import load_json_data_mappings
 
-logging.config.dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("miranda.convert.melcc")
 
 
 frequencies = {
@@ -552,7 +550,7 @@ def convert_snow_table(
     output : str or os.PathLike or Path
         Folder where to put the netCDF files (one for each of snd, sd and snw).
     """
-    logging.info("Parsing stations.")
+    logger.info("Parsing stations.")
     stations = pd.read_excel(file, sheet_name="Stations")
     stations = stations.rename(
         columns={
@@ -575,7 +573,7 @@ def convert_snow_table(
     stations.station_closing.attrs.update(description="Date of station closure.")
 
     # Periods
-    logging.info("Parsing observation periods.")
+    logger.info("Parsing observation periods.")
     periods = pd.read_excel(
         file, sheet_name="Périodes standards", names=["start", "end", "middle"]
     )
@@ -595,7 +593,7 @@ def convert_snow_table(
     )
 
     # Data
-    logging.info("Parsing data.")
+    logger.info("Parsing data.")
     data = pd.read_excel(
         file,
         sheet_name="Données",
@@ -677,7 +675,7 @@ def convert_snow_table(
     ds = metadata_conversion(ds, "melcc-snow", meta)
     date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
     # Save
-    logging.info("Saving to files.")
+    logger.info("Saving to files.")
     for vv in ["sd", "snd", "snw"]:
         ds[[vv, f"{vv}_flag"]].to_netcdf(
             output / f"{vv}_{ds[vv].melcc_code}_MELCC_2sem_{date}.nc"

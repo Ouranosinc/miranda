@@ -48,10 +48,14 @@ Breaking changes
     * `numpy` (>=1.25.0)
     * `xarray` (>=2023.11.0)
     * `xclim` (>=0.57.0)
+* Logging has been significantly improved and standardized across the library.
+    * Logging within modules has been standardized to use the ``miranda`` logger and never ``root``.
+    * Submodules no longer configure message logging to standard output and instead use the `miranda` logger.
 
 Bug fixes
 ^^^^^^^^^
 * Transformation docstrings are now only updated when the transformation is actually applied.
+* Added a missing helper function to `miranda.units` (`group_by_length`) that was mistakenly removed in a previous change.
 
 Internal changes
 ^^^^^^^^^^^^^^^^

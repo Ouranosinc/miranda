@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import logging.config
+import logging
 
 import numpy as np
 import xarray as xr
 
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
-
+logger = logging.getLogger("miranda.gis")
 
 __all__ = [
     "add_ar6_regions",
@@ -105,14 +102,14 @@ def subsetting_domains(domain: str) -> list:
 #         if shape is None:
 #             raise ValueError
 #     except (KeyError, ValueError):
-#         logging.exception("No shape provided.")
+#         logger.exception("No shape provided.")
 #         raise
 #
 #     geom = list()
 #     geometry_types = list()
 #     try:
 #         with fiona.open(shape) as fio:
-#             logging.info("Vector read OK.")
+#             logger.info("Vector read OK.")
 #             if crs:
 #                 shape_crs = CRS.from_user_input(crs)
 #             else:
@@ -122,11 +119,11 @@ def subsetting_domains(domain: str) -> list:
 #                 geom.append(g["geometry"])
 #                 geometry_types.append(g["geometry"]["type"])
 #     except fiona.errors.DriverError:
-#         logging.exception("Unable to read shape.")
+#         logger.exception("Unable to read shape.")
 #         raise
 #
 #     if len(geom) > 0:
-#         logging.info(f"Shapes found are: {', '.join(set(geometry_types))}.")
+#         logger.info(f"Shapes found are: {', '.join(set(geometry_types))}.")
 #         return geom, shape_crs
 #     raise RuntimeError("No geometries found.")
 
@@ -146,6 +143,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
         import regionmask  # noqa
     except ImportError:
         msg = _gis_import_error_message.format(add_ar6_regions.__name__)
+        logger.error(msg)
         raise ImportError(msg)
 
     mask = regionmask.defined_regions.ar6.all.mask(ds.cf["lon"], ds.cf["lat"])

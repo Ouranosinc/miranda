@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import json
-import logging.config
+import logging
 import os
 import warnings
 from collections.abc import Callable, Iterator, Sequence
@@ -19,12 +19,11 @@ from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
 from miranda.gis import subset_domain
-from miranda.scripting import LOGGING_CONFIG
 from miranda.units import check_time_frequency
 
 from .utils import date_parser, find_version_hash
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.data_corrections")
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
@@ -179,7 +178,7 @@ def conservative_regrid(
 
     msg = f"Performing regridding and masking with `xesmf` using method: {method}."
 
-    logging.info(msg)
+    logger.info(msg)
 
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
@@ -229,7 +228,7 @@ def threshold_mask(
         log_msg = f"Masking dataset with {mask_variable}."
         if mask_cutoff:
             log_msg = f"{log_msg.strip('.')} at `{mask_cutoff}` cutoff value."
-        logging.info(log_msg)
+        logger.info(log_msg)
 
         lon_bounds = np.array([ds.lon.min(), ds.lon.max()])
         lat_bounds = np.array([ds.lat.min(), ds.lat.max()])
@@ -249,7 +248,7 @@ def threshold_mask(
 
     if mask_subset.dtype == bool:
         if mask_cutoff:
-            logging.warning("Mask value cutoff set for boolean mask. Ignoring.")
+            logger.warning("Mask value cutoff set for boolean mask. Ignoring.")
         mask_subset = mask_subset.where(mask)
     else:
         mask_subset = mask_subset.where(mask >= mask_cutoff)
@@ -402,13 +401,13 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     try:
                         offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
-                        logging.error(
+                        logger.error(
                             "Unable to parse the time frequency. Verify data integrity before retrying."
                         )
                         raise
 
                 msg = f"De-accumulating units for variable `{vv}`."
-                logging.info(msg)
+                logger.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv].diff(dim="time")
                     out = d[vv].where(
@@ -423,7 +422,7 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 # frequency-based totals to time-based flux
                 msg = f"Performing amount-to-rate units conversion for variable `{vv}`."
 
-                logging.info(msg)
+                logger.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(d[vv])
 
@@ -462,7 +461,7 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         elif trans is False:
             msg = f"No transformations needed for `{vv}` (Explicitly set to False)."
 
-            logging.info(msg)
+            logger.info(msg)
             continue
 
     # Copy unconverted variables
@@ -492,14 +491,14 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 try:
                     offset, offset_meaning = check_time_frequency(d, **time_freq)
                 except TypeError:
-                    logging.error(
+                    logger.error(
                         "Unable to parse the time frequency. Verify data integrity before retrying."
                     )
                     raise
 
             msg = f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
 
-            logging.info(msg)
+            logger.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 out["time"] = out.time - np.timedelta64(offset[0], offset[1])
@@ -511,7 +510,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         elif offs is False:
             msg = f"No time offsetting needed for `{vv}` in `{p}` (Explicitly set to False)."
 
-            logging.info(msg)
+            logger.info(msg)
             continue
 
     # Copy unconverted variables
@@ -528,7 +527,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     for vv, inv_sign in _iter_entry_key(d, m, "variables", key, p):
         if inv_sign:
             msg = f"Inverting sign for `{vv}` (switching direction of values)."
-            logging.info(msg)
+            logger.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = -out
@@ -539,7 +538,7 @@ def _invert_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         elif inv_sign is False:
             msg = f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
 
-            logging.info(msg)
+            logger.info(msg)
             continue
 
     # Copy unconverted variables
@@ -588,7 +587,7 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                             value, d[vv], context
                         )
                 msg = f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
-                logging.info(msg)
+                logger.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv]
                     d_out[out.name] = out.clip(min_value, max_value)
@@ -598,11 +597,11 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 d_out.attrs.update(dict(history=history))
             elif clip_values is False:
                 msg = f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
-                logging.info(msg)
+                logger.info(msg)
                 continue
             else:
                 msg = f"No clipping of values needed for `{vv}` in `{p}`."
-                logging.info(msg)
+                logger.info(msg)
                 continue
 
     # Copy unconverted variables
@@ -619,7 +618,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     if "time" not in m["dimensions"].keys():
         msg = f"No time corrections listed for project `{p}`. Continuing..."
-        logging.warning(msg)
+        logger.warning(msg)
         return d
 
     if "time" not in list(d.variables.keys()):
@@ -628,7 +627,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             f"{' ,'.join([str(v) for v in d.variables.keys()])}. "
             "Continuing..."
         )
-        logging.info(msg)
+        logger.info(msg)
         return d
 
     if key in m["dimensions"]["time"].keys():
@@ -642,7 +641,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     raise ValueError(msg)
                 else:
                     msg = f"{msg} Continuing..."
-                    logging.warning(msg)
+                    logger.warning(msg)
                     return d
 
         correct_time_entry = m["dimensions"]["time"][key]
@@ -656,11 +655,11 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 correct_times = [parse_offset(correct_times)[1]]
             if correct_times is None:
                 msg = f"No expected times set for specified project `{p}`."
-                logging.warning(msg)
+                logger.warning(msg)
         elif isinstance(correct_time_entry, list):
             correct_times = correct_time_entry
         else:
-            logging.warning("No expected times set for family of projects.")
+            logger.warning("No expected times set for family of projects.")
             return d
 
         if freq_found not in correct_times:
@@ -675,7 +674,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             raise ValueError(error_msg)
 
         msg = f"Resampling dataset with time frequency: {freq_found}."
-        logging.info(msg)
+        logger.info(msg)
 
         with xr.set_options(keep_attrs=True):
             d_out = d.assign_coords(
@@ -828,7 +827,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     -------
     xarray.Dataset
     """
-    logging.info("Converting metadata to CF-like conventions.")
+    logger.info("Converting metadata to CF-like conventions.")
 
     header = m["Header"]
 
@@ -843,7 +842,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         else:
             msg = f"`_miranda_version` not set for project `{p}`. Not appending."
 
-            logging.warning(msg)
+            logger.warning(msg)
     if "_miranda_version" in header:
         del header["_miranda_version"]
 
@@ -855,7 +854,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if p in frequency.keys():
                 m["Header"]["frequency"] = check_time_frequency(d)
         else:
-            logging.warning("`frequency` not set for project. Not appending.")
+            logger.warning("`frequency` not set for project. Not appending.")
     if "_frequency" in m["Header"]:
         del m["Header"]["_frequency"]
 
@@ -867,7 +866,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             else:
                 msg = f"Attribute handling (`{field}`) not set for project `{p}`. Continuing..."
 
-                logging.warning(msg)
+                logger.warning(msg)
                 continue
         elif isinstance(header[field], dict):
             attr_treatment = header[field][p]
@@ -888,7 +887,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if field[1:] in d.attrs:
                 msg = f"Overwriting `{field[1:]}` based on JSON configuration."
 
-                logging.warning(msg)
+                logger.warning(msg)
             header[field[1:]] = attr_treatment
 
         del header[field]

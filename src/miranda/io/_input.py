@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import logging.config
+import logging
 import pathlib
 from types import GeneratorType
 
 import netCDF4 as nc  # noqa
 
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.io.input")
 
 
 __all__ = [
@@ -49,14 +47,14 @@ def discover_data(
             else:
                 input_files = input_files.rglob(f"*.{suffix}")
         elif input_files.is_file():
-            logging.warning(
+            logger.warning(
                 "Data discovery yielded a single file. Casting to `list[Path]`."
             )
             input_files = [input_files]
     elif isinstance(input_files, list):
         input_files = sorted(pathlib.Path(p) for p in input_files)
     elif isinstance(input_files, GeneratorType):
-        logging.warning(
+        logger.warning(
             "A Generator was passed to `discover_data`. Passing object along..."
         )
         pass
