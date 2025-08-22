@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import os
 import shutil
 from dask.diagnostics import ProgressBar
 from miranda.convert.ghcn import convert_ghcn_bychunks, download_ghcn, q_flag_dict
@@ -9,20 +10,20 @@ import xarray as xr
 def main():
 
     logging.basicConfig(level=logging.INFO)
-    working_folder = Path.home().joinpath("scratch/ghcnd")
-    start_year = 1981
+    working_folder = Path.home().joinpath("scratch/ghcnh")
+    start_year = 2001
     end_year = 2020
 
-    lon_bnds = [-76, -75]
-    lat_bnds = [44, 45]
+    lon_bnds = [-76, -74]
+    lat_bnds = [44, 46]
 
-    nstations = 100
+    nstations = 50
     update_raw = True
 
     zarr_format = 2
     # download station data
     download_ghcn(
-        project="ghcnd",
+        project="ghcnh",
         working_folder=working_folder,
         lon_bnds=lon_bnds,
         lat_bnds=lat_bnds,
@@ -31,15 +32,15 @@ def main():
 
     # convert ghcn data by chunks of nstations
     convert_ghcn_bychunks(
-        project="ghcnd",
+        project="ghcnh",
         working_folder=working_folder,
         lon_bnds=lon_bnds,
         lat_bnds=lat_bnds,
         start_year=start_year,
         end_year=end_year,
-        update_from_raw=update_raw,
+        update_from_raw=True,
         n_stations=nstations,
-        n_workers=6,
+        n_workers=3,
         zarr_format=zarr_format,
     )
 
@@ -54,7 +55,7 @@ def main():
             [xr.open_zarr(z, decode_timedelta=False) for z in inzarrs], dim="station"
         ).sortby(["station", "time"])
         outzarr = outfolder.joinpath(
-            f'{var1.name}_day_NOAA_ghcnd_{ds.time[0].dt.strftime("%Y%m%d").values}-{ds.time[-1].dt.strftime("%Y%m%d").values}.zarr'
+            f'{var1.name}_1h_NOAA_ghcnh_{ds.time[0].dt.strftime("%Y%m%d").values}-{ds.time[-1].dt.strftime("%Y%m%d").values}.zarr'
         )
         # remove encoding
         for c in ds.coords:
@@ -63,8 +64,6 @@ def main():
         for c in ds.data_vars:
             ds[c].encoding = {}
             if "flag" in c:
-                mask = ds[c].isin(list(q_flag_dict.keys()))
-                ds[c] = ds[c].where(mask, "")
                 ds[c] = ds[c].astype(str)
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(
