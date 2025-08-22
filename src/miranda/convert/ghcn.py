@@ -19,12 +19,9 @@ from numpy import nan
 
 from miranda.convert.corrections import (
     CONFIG_FILES,
-    dataset_conversion,
     dataset_corrections,
     load_json_data_mappings,
 )
-
-# from miranda.treatments.utils import load_json_data_mappings
 
 logger = logging.getLogger("miranda.convert.ghcn")
 
@@ -56,7 +53,7 @@ prj_dict = dict(
 def get_ghcn_raw(
     station_ids: list,
     station_type: str,
-    outfolder: Path,
+    out_folder: Path,
     timeout: int = 10,
     update_raw: bool = False,
 ) -> list[str]:
@@ -69,7 +66,7 @@ def get_ghcn_raw(
         List of station IDs.
     station_type : str
         Station type.
-    outfolder : Path
+    out_folder : Path
         Output folder.
     timeout : int
         Request timeout in seconds. Default is 10.
@@ -84,22 +81,22 @@ def get_ghcn_raw(
     if station_ids is None:
         raise ValueError("station_ids must be provided")
     if station_type is None:
-        raise ValueError("stationtype must be provided")
-    if outfolder is None:
-        raise ValueError("outfolder must be provided")
+        raise ValueError("station_type must be provided")
+    if out_folder is None:
+        raise ValueError("out_folder must be provided")
 
-    outfolder.mkdir(parents=True, exist_ok=True)
+    out_folder.mkdir(parents=True, exist_ok=True)
     errors = []
     for station_id in station_ids:
         if station_type == "daily":
             # url = f"https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{station_id}.csv"
             url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
 
-            outfile = outfolder / f"{station_id}.csv"
+            outfile = out_folder / f"{station_id}.csv"
         # TODO ghcnh not implemented yet
         elif station_type == "hourly":
             url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
-            outfile = outfolder / f"GHCNh_{station_id}_por.psv"
+            outfile = out_folder / f"GHCNh_{station_id}_por.psv"
         else:
             msg = f"unknown station type : {station_type}"
             raise ValueError(msg)
@@ -123,18 +120,18 @@ def get_ghcn_raw(
 
 
 def create_ghcn_xarray(
-    infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
+    in_files: list, var_meta: dict, station_meta: pd.DataFrame, project: str
 ) -> xr.Dataset | None:
     """
     Create a Zarr dump of DWD climate summary data.
 
     Parameters
     ----------
-    infiles : list
+    in_files : list
         A list of input files.
-    varmeta : dict
+    var_meta : dict
         Variable metadata.
-    statmeta : pd.DataFrame
+    station_meta : pd.DataFrame
         Station metadata.
     project : str
         Project name.
@@ -145,8 +142,7 @@ def create_ghcn_xarray(
         Dataset.
     """
     data = []
-    statmeta
-    for station_id in sorted(list(infiles)):
+    for station_id in sorted(list(in_files)):
         msg = f"Reading {station_id.name}"
         logger.info(msg)
         if project == "ghcnd":
@@ -155,7 +151,7 @@ def create_ghcn_xarray(
             df.element = df.element.str.lower()
             imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
             df.loc[imask, "q_flag"] = nan
-            varlist = [k for k in varmeta.keys() if k in df.element.unique()]
+            varlist = [k for k in var_meta.keys() if k in df.element.unique()]
             if varlist:
                 df["time"] = pd.to_datetime(df["date"], format="%Y%m%d")
                 df = df.set_index(["id", "time"])
@@ -178,7 +174,7 @@ def create_ghcn_xarray(
                 ds = xr.merge(dslist)
 
                 del dslist
-                df_stat = statmeta[statmeta.station_id == station_id.stem]
+                df_stat = station_meta[station_meta.station_id == station_id.stem]
                 if len(df_stat) != 1:
                     raise ValueError(
                         f"expected a single station metadata for {station_id.stem}"
@@ -208,7 +204,7 @@ def create_ghcn_xarray(
             # df.element = df.element.str.lower()
             # imask = ~df.q_flag.isin(list(q_flag_dict[project].keys()))
             # df.loc[imask, "q_flag"] = nan
-            varlist = [k for k in varmeta.keys() if k in df.columns]
+            varlist = [k for k in var_meta.keys() if k in df.columns]
             flaglist = [f"{k}_quality_code" for k in varlist]
             coordlist = [
                 "station_id",
@@ -222,6 +218,8 @@ def create_ghcn_xarray(
                 "longitude",
                 "elevation",
             ]
+
+            # FIXME: This is never referenced
             drop_cols = [
                 c
                 for c in df.columns
@@ -283,8 +281,8 @@ def create_ghcn_xarray(
                 ds = xr.merge(dslist)
 
                 del dslist
-                df_stat = statmeta[
-                    statmeta.station_id
+                df_stat = station_meta[
+                    station_meta.station_id
                     == station_id.stem.split("_", 1)[1].split("_por")[0]
                 ]
                 if len(df_stat) != 1:
@@ -325,7 +323,7 @@ def download_ghcn(
     lat_bnds: list[float] | None = None,
     update_raw: bool = False,
     timeout: int | None = None,
-    n_workers: int | None = None,
+    n_workers: int | None = None,  # FIXME: This is not implemented yet
 ) -> None:
     """
     Download GHCN data.
@@ -364,7 +362,7 @@ def download_ghcn(
         errors = get_ghcn_raw(
             station_ids=station_ids,
             station_type=prj_dict[project]["freq"],
-            outfolder=working_folder.joinpath("raw"),
+            out_folder=working_folder.joinpath("raw"),
             update_raw=update_raw,
             timeout=timeout,
         )
@@ -425,7 +423,6 @@ def _get_ghcn_stations(
             )
     # TODO ghcnh not implemented yet
     elif project == "ghcnh":
-        project
         station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
         dtypes = {
             "station_id": str,
@@ -454,10 +451,9 @@ def _get_ghcn_stations(
                 converters=dtypes,
             )
 
-    # logger.info("ghcnh not implemented yet")
-    # exit()
     else:
         raise ValueError(f"unknown project values {project}")
+
     if lon_bnds:  # and lat_bnds:
         bbx_mask = station_df["lon"].between(lon_bnds[0], lon_bnds[1])
         station_df = station_df[bbx_mask]
@@ -472,13 +468,13 @@ def convert_ghcn_bychunks(
     project: str,
     raw_folder: str | os.PathLike[str] | None = None,
     working_folder: str | os.PathLike[str] | None = None,
-    cfvariable_list: list | None = None,
+    cf_variable_list: list | None = None,
     start_year: int | None = None,
     end_year: int | None = None,
     lon_bnds: list[float] | None = None,
     lat_bnds: list[float] | None = None,
     n_workers: int = 4,
-    nstations: int = 100,
+    n_stations: int = 100,
     update_from_raw: bool = False,
     zarr_format: int = 2,
 ) -> None:
@@ -491,26 +487,28 @@ def convert_ghcn_bychunks(
     ----------
     project : str
         Project name.
+    raw_folder : str or os.PathLike[str], optional
+        The folder containing the raw data. If None, it will use the current working directory.
     working_folder : str or os.PathLike[str], optional
-        The working folder. The default (None) is to use the current working directory.
-    cfvariable_list : list, optional
+        The working folder. The None, will use the current working directory.
+    cf_variable_list : list, optional
         List of CF variable names. Optional.
     start_year : int, optional
-        Start year. Optional.
+        Start year. If None, first year is used.
     end_year : int, optional
-        End year. Optional.
+        End year. If None, last year is used.
     lon_bnds : list of float, optional
         Longitude boundaries.
     lat_bnds : list of float, optional
         Latitude boundaries.
     n_workers : int
         Number of workers to use. Default is 4.
-    nstations : int
+    n_stations : int
         Number of stations to process. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
-    zarr_format: int
-        output zarr version
+    zarr_format : int
+        Output zarr version.
     """
     try:
         import geopandas as gpd
@@ -523,22 +521,24 @@ def convert_ghcn_bychunks(
     var_attrs = load_json_data_mappings(project=project, configurations=CONFIG_FILES)[
         "variables"
     ]
-    if cfvariable_list:
+    if cf_variable_list:
         var_attrs = {
             v: var_attrs[v]
             for v in var_attrs
-            if var_attrs[v]["_cf_variable_name"] in cfvariable_list
+            if var_attrs[v]["_cf_variable_name"] in cf_variable_list
         }
+    # FIXME: This is never referenced
     freq_dict = dict(h="hr", d="day")
+
     if project == "ghcnd":
 
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
 
-        outchunks = dict(time=(365 * 4) + 1, station=nstations)
+        outchunks = dict(time=(365 * 4) + 1, station=n_stations)
     # TODO ghcnh not implemented yet
     elif project == "ghcnh":
         readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-        outchunks = dict(time=(365 * 4) + 1, station=nstations)
+        outchunks = dict(time=(365 * 4) + 1, station=n_stations)
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
@@ -586,9 +586,11 @@ def convert_ghcn_bychunks(
             yield lst[i : i + n]
 
     treated = []
-    file_list = sorted(list(raw_folder.rglob(f"*{prj_dict[project]['filetype']}")))
+    file_list = sorted(
+        list(Path(raw_folder).rglob(f"*{prj_dict[project]['filetype']}"))
+    )
     jobs = []
-    for ii, ss in enumerate(_chunk_list(file_list, nstations)):
+    for ii, ss in enumerate(_chunk_list(file_list, n_stations)):
         if ii not in treated:
             var_attrs_new = {}
             for vv, meta in var_attrs.items():
@@ -601,9 +603,9 @@ def convert_ghcn_bychunks(
 
             if var_attrs_new:
                 dsall_vars = create_ghcn_xarray(
-                    infiles=ss,
-                    varmeta=var_attrs_new,
-                    statmeta=station_df,
+                    in_files=ss,
+                    var_meta=var_attrs_new,
+                    station_meta=station_df,
                     project=project,
                 )
                 if dsall_vars is None:
@@ -619,7 +621,7 @@ def convert_ghcn_bychunks(
                     if kk not in dsall_vars.data_vars:
                         continue
                     dsout = dsall_vars.drop_vars(
-                        [v for v in dsall_vars.data_vars if not v.startswith(kk)]
+                        [v for v in dsall_vars.data_vars if not str(v).startswith(kk)]
                     )
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
@@ -632,7 +634,7 @@ def convert_ghcn_bychunks(
                         dsout,
                         project=project,
                     )
-                    flg_var = [v for v in ds_corr.data_vars if v.endswith("_flag")]
+                    flg_var = [v for v in ds_corr.data_vars if str(v).endswith("_flag")]
                     if len(flg_var) != 1:
                         msg = (
                             f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
@@ -714,7 +716,7 @@ def make_monotonous_time(ds: xr.Dataset, freq: str):
 
 def write_zarr(
     ds: xr.Dataset,
-    outzarr: Path,
+    out_zarr: Path,
     chunks: dict,
     zarr_format: int,
     overwrite: bool = False,
@@ -726,16 +728,18 @@ def write_zarr(
     ----------
     ds : xr.Dataset
         Dataset.
-    outzarr : Path
+    out_zarr : Path
         Output Zarr file.
     chunks : dict
         Chunk sizes.
+    zarr_format : int
+        Zarr format version.
     overwrite : bool
         Whether to overwrite. Default is False.
     """
-    if not outzarr.exists() or overwrite:
+    if not out_zarr.exists() or overwrite:
         with ProgressBar():
             ds.chunk(chunks).to_zarr(
-                outzarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format
+                out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format
             )
-        shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
+        shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)

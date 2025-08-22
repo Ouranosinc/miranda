@@ -38,7 +38,7 @@ def main():
         start_year=start_year,
         end_year=end_year,
         update_from_raw=update_raw,
-        nstations=nstations,
+        n_stations=nstations,
         n_workers=6,
         zarr_format=zarr_format,
     )
