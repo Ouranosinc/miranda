@@ -27,38 +27,38 @@ from miranda.treatments import (
 )
 from miranda.treatments.utils import load_json_data_mappings
 
+__all__ = ["CONFIG_FILES", "CONFIG_FOLDER", "dataset_conversion", "dataset_corrections"]
+
 CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
 CONFIG_FILES = {
     "EMDNA": "emdna_cf_attrs.json",
     "ESPO-G6-E5L": "espo-g6-e5l_attrs.json",
     "ESPO-G6-R2": "espo-g6-r2_attrs.json",
     "NEX-GDDP-CMIP6": "nex-gddp-cmip6_attrs.json",
-    "agcfsr": "agcfsr_agmerra2_cf_attrs.json",
-    "agmerra2": "agcfsr_agmerra2_cf_attrs.json",
-    "cmip": "cmip5_cmip6_cordex_ouranos_attrs.json",
-    "cordex": "cmip5_cmip6_cordex_ouranos_attrs.json",
-    "eccc-canswe": "eccc-canswe_cf_attrs.json",
-    "eccc-ahccd": "eccc-ahccd_cf_attrs.json",
-    "eccc-obs": "eccc-obs_cf_attrs.json",
-    "era5-land": "era5_era5-land_cf_attrs.json",
-    "era5-land-monthly-means": "era5_era5-land_cf_attrs.json",
-    "era5-pressure-levels": "era5_era5-land_cf_attrs.json",
-    "era5-pressure-levels-monthly-means": "era5_era5-land_cf_attrs.json",
-    "era5-pressure-levels-monthly-means-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
-    "era5-pressure-levels-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
-    "era5-single-levels": "era5_era5-land_cf_attrs.json",
-    "era5-single-levels-monthly-means": "era5_era5-land_cf_attrs.json",
-    "era5-single-levels-monthly-means-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
-    "era5-single-levels-preliminary-back-extension": "era5_era5-land_cf_attrs.json",
-    "ets-grnch": "ets-grnch_cf_attrs.json",
+    "CMIP": "cmip_ouranos_attrs.json",
+    "CORDEX": "cmip_ouranos_attrs.json",
+    "eccc-canswe": "eccc_canswe_cf_attrs.json",
+    "eccc-ahccd": "eccc_ahccd_cf_attrs.json",
+    "eccc-obs": "eccc_obs_cf_attrs.json",
+    "era5-land": "ecmwf_cf_attrs.json",
+    "era5-land-monthly-means": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels-monthly-means": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels-monthly-means-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "era5-single-levels": "ecmwf_cf_attrs.json",
+    "era5-single-levels-monthly-means": "ecmwf_cf_attrs.json",
+    "era5-single-levels-monthly-means-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "era5-single-levels-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "ets-grnch": "ets_grnch_cf_attrs.json",
     "ghcnh": "ghcnh_cf_attrs.json",
     "ghcnd": "ghcnd_cf_attrs.json",
     "melcc": "melcc_cf_attrs.json",
+    "nrcan-gridded-obs": "nrcan_gridded_obs_cf_attrs.json",
     "rdrs-v21": "eccc_rdrs_cf_attrs.json",
     "casr-v31": "eccc_casr_cf_attrs.json",
     "ORRC-v10": "ouranos_orrc_cf_attrs.json",
     "ORRC-v11": "ouranos_orrc_cf_attrs.json",
-    "wfdei-gem-capa": "wfdei-gem-capa_cf_attrs.json",
 }
 for k, v in CONFIG_FILES.items():
     CONFIG_FILES[k] = CONFIG_FOLDER / v

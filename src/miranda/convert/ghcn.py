@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
-import logging.config
+import logging
 import multiprocessing as mp
 import os
 import shutil
@@ -17,11 +17,10 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 from numpy import nan
 
-from miranda.convert.corrections import CONFIG_FILES, dataset_corrections
-from miranda.scripting import LOGGING_CONFIG
-from miranda.treatments.utils import load_json_data_mappings
+from miranda.convert.corrections import CONFIG_FILES, dataset_conversion, dataset_corrections, load_json_data_mappings
+# from miranda.treatments.utils import load_json_data_mappings
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.ghcn")
 
 q_flag_dict = {
     "ghcnd": {
@@ -103,7 +102,7 @@ def get_ghcn_raw(
             continue
         try:
             msg = f"Downloading {url}"
-            logging.info(msg)
+            logger.info(msg)
             with requests.get(url, timeout=(5, timeout)) as r:
                 r.raise_for_status()
                 with Path(outfile.with_suffix(f".tmp{outfile.suffix}")).open("wb") as f:
@@ -112,7 +111,7 @@ def get_ghcn_raw(
         except OSError:
             errors.append(station_id)
             msg = f"Failed to download from URL: {url} .. continuing"
-            logging.info(msg)
+            logger.info(msg)
             continue
     return errors
 
@@ -143,7 +142,7 @@ def create_ghcn_xarray(
     statmeta
     for station_id in sorted(list(infiles)):
         msg = f"Reading {station_id.name}"
-        logging.info(msg)
+        logger.info(msg)
         if project == "ghcnd":
             df = pd.read_csv(station_id, low_memory=False)
             df.columns = df.columns.str.lower()
@@ -369,7 +368,7 @@ def download_ghcn(
             station_ids = errors
             ntry -= 1
             msg = f"Failed to download {len(errors)} stations. Retrying ntry={ntry}"
-            logging.info(msg)
+            logger.info(msg)
 
 
 def _get_ghcn_stations(
@@ -449,7 +448,7 @@ def _get_ghcn_stations(
                 converters=dtypes,
             )
 
-    # logging.info("ghcnh not implemented yet")
+    # logger.info("ghcnh not implemented yet")
     # exit()
     else:
         raise ValueError(f"unknown project values {project}")
@@ -512,7 +511,7 @@ def convert_ghcn_bychunks(
         from shapely.geometry import box
     except ImportError:
         msg = "GNCN conversion requires the GIS libraries. Install them with `$ pip install miranda[gis]`."
-        logging.error(msg)
+        logger.error(msg)
         raise
 
     var_attrs = load_json_data_mappings(project=project, configurations=CONFIG_FILES)[
@@ -534,8 +533,6 @@ def convert_ghcn_bychunks(
     elif project == "ghcnh":
         readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
-    # logging.info("ghcnh not implemented yet")
-    # exit()
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
@@ -574,7 +571,7 @@ def convert_ghcn_bychunks(
     if update_from_raw:
         for folder in working_folder.joinpath("zarr").iterdir():
             msg = f"Deleting {folder}"
-            logging.info(msg)
+            logger.info(msg)
             shutil.rmtree(folder)
 
     def _chunk_list(lst: list, n: int) -> Generator[list]:

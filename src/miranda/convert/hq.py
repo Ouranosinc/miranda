@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import json
-import logging.config
+import logging
 import os
 import re
 from pathlib import Path
@@ -17,9 +17,7 @@ import xarray as xr
 from xclim.core.units import units as u
 from xclim.core.units import units2pint
 
-from miranda.scripting import LOGGING_CONFIG
-
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.hq")
 
 __all__ = ["open_csv"]
 

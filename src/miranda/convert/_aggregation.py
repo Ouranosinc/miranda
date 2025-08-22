@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import logging.config
+import logging
 
 import xarray as xr
 from xclim.indices import tas
 
-from miranda.scripting import LOGGING_CONFIG
 from miranda.units import check_time_frequency
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.aggregation")
 
 __all__ = ["aggregate", "aggregations_possible"]
 
@@ -54,7 +53,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
     then the following operations are possible:
     - For derived temperature variables: max, mean, min
     """
-    logging.info("Determining potential upscaled climate variables.")
+    logger.info("Determining potential upscaled climate variables.")
 
     _, meaning = check_time_frequency(ds, minimum_continuous_period="1H")
     aggregation_legend = {}

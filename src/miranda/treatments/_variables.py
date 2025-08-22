@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging.config
+import logging
 
 import xarray as xr
 import xclim.core.units
@@ -9,6 +9,8 @@ from xclim.core import units
 from miranda.treatments.utils import _get_section_entry_key  # noqa
 from miranda.treatments.utils import _iter_entry_key  # noqa
 from miranda.units import check_time_frequency
+
+logger = logging.getLogger("miranda.treatments.variables")
 
 __all__ = [
     "cf_units_conversion",
@@ -59,13 +61,13 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     try:
                         offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
-                        logging.error(
+                        logger.error(
                             "Unable to parse the time frequency. Verify data integrity before retrying."
                         )
                         raise
 
                 msg = f"De-accumulating units for variable `{vv}`."
-                logging.info(msg)
+                logger.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = d[vv].diff(dim="time")
                     out = d[vv].where(
@@ -79,7 +81,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 # NOTE: This treatment is no longer needed in xclim v0.43.0+ but is kept for backwards compatibility
                 # frequency-based totals to time-based flux
                 msg = f"Performing amount-to-rate units conversion for variable `{vv}`."
-                logging.info(msg)
+                logger.info(msg)
                 with xr.set_options(keep_attrs=True):
                     out = units.amount2rate(d[vv])
                     d_out[vv] = out
@@ -116,7 +118,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d_out.attrs.update(dict(history=history))
         elif trans is False:
             msg = f"No transformations needed for `{vv}` (Explicitly set to False)."
-            logging.info(msg)
+            logger.info(msg)
             continue
 
     # Copy unconverted variables
@@ -134,7 +136,7 @@ def invert_value_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     for vv, inv_sign in _iter_entry_key(d, m, "variables", key, p):
         if inv_sign:
             msg = f"Inverting sign for `{vv}` (switching direction of values)."
-            logging.info(msg)
+            logger.info(msg)
             with xr.set_options(keep_attrs=True):
                 out = d[vv]
                 d_out[out.name] = -out
@@ -144,7 +146,7 @@ def invert_value_sign(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d_out.attrs.update(dict(history=history))
         elif inv_sign is False:
             msg = f"No sign inversion needed for `{vv}` in `{p}` (Explicitly set to False)."
-            logging.info(msg)
+            logger.info(msg)
             continue
 
     # Copy unconverted variables
@@ -206,11 +208,11 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 converted.append(vv)
             elif clip_values is False:
                 msg = f"No clipping of values needed for `{vv}` in `{p}` (Explicitly set to False)."
-                logging.info(msg)
+                logger.info(msg)
                 continue
             else:
                 msg = f"Unknown clipping values for `{vv}` in `{p}`."
-                logging.info(msg)
+                logger.info(msg)
                 continue
 
     # Copy unconverted variables

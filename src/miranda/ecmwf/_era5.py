@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import functools
-import logging.config
+import logging
 import multiprocessing
 import os
 import re
@@ -24,11 +24,9 @@ except ModuleNotFoundError:
     )
 
 from miranda.gis import subsetting_domains
-from miranda.scripting import LOGGING_CONFIG
 from miranda.units import check_time_frequency
 
-logging.config.dictConfig(LOGGING_CONFIG)
-
+logger = logging.getLogger("miranda.ecmwf.era5")
 
 __all__ = [
     "ERA5_PROJECT_NAMES",
