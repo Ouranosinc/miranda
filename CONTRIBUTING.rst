@@ -214,14 +214,14 @@ To run specific code style checks:
 .. code-block:: console
 
     python -m black --check src/miranda tests
-    python -m isort --check src/miranda tests
     python -m blackdoc --check src/miranda docs
     python -m ruff check src/miranda tests
     python -m flake8 src/miranda tests
     validate-docstrings src/miranda/**.py
 
 
-To get ``black``, ``isort``, ``blackdoc``, ``ruff``, ``flake8`` (with the ``flake8-rst-docstrings`` plugin), and ``numpydoc`` (for ``validate-docstrings``), simply install them with ``pip`` (or ``conda``) into your environment.
+To get ``black``, ``blackdoc``, ``ruff``, ``flake8`` (with the ``flake8-rst-docstrings`` plugin), and ``numpydoc`` (for ``validate-docstrings``), simply install them with ``pip`` (or ``conda``) into your environment.
+
 
 Translations
 ------------

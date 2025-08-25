@@ -53,6 +53,12 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Environment Caching
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            .tox
+          key: ${{ hashFiles('pyproject.toml', 'tox.ini') }}-${{ matrix.tox-env }}
       - name: Run lint and docs testing suite
         run: |
           python -m tox -e ${{ matrix.tox-env }}
@@ -129,6 +135,7 @@ jobs:
         uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2.0.5
         with:
           cache-downloads: true
+          cache-environment: true
           environment-file: environment-dev.yml
           create-args: >-
             python=${{ matrix.python-version }}

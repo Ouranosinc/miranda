@@ -4,10 +4,8 @@
 Changelog
 =========
 
-.. _changes_0.6.0:
-
-v0.6.0 (unreleased)
--------------------
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+--------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Aslı Beşe (:user:`aslibese`).
 
 Announcements
