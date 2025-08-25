@@ -365,12 +365,12 @@ def download_canhomt(
         Request timeout in seconds.
     n_workers : int, optional
         Number of workers to use. Not implemented.
-    
+
     Returns
     -------
     bool
         True if successful.
-    
+
     """
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
@@ -433,11 +433,11 @@ def download_ghcn(
         Request timeout in seconds.
     n_workers : int, optional
         Number of workers to use. Not implemented.
-    
+
     Returns
     -------
     bool
-        True if successful.    
+        True if successful.
     """
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if update_raw and working_folder.joinpath("raw").exists():
@@ -466,7 +466,7 @@ def download_ghcn(
             msg = f"Failed to download {len(errors)} stations. Retrying ntry={ntry}"
             logger.info(msg)
 
-            
+
 def get_station_meta(
     project: str,
     lon_bnds: list[float] | None = None,
@@ -483,6 +483,7 @@ def get_station_meta(
         Longitude boundaries.
     lat_bnds : list of float, optional
         Latitude boundaries.
+
     Returns
     -------
     pd.DataFrame
