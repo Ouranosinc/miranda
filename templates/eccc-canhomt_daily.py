@@ -4,11 +4,10 @@ import shutil
 from dask.diagnostics import ProgressBar
 from pint.facets.numpy.numpy_func import out_unit
 
-from miranda.convert.ghcn import (
-    convert_statdata_bychunks,
-    download_canhomt,
-    q_flag_dict,
+from miranda.convert.stationdata import (
+    convert_statdata_bychunks,  q_flag_dict
 )
+from miranda.eccc._homogenized import download_canhomt
 import xarray as xr
 
 
@@ -25,7 +24,7 @@ def main():
     start_year = 1800
     end_year = None
 
-    update_raw = False
+    update_raw = True
 
     # download station data
     download_canhomt(

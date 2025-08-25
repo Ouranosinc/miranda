@@ -3,8 +3,10 @@ from pathlib import Path
 import shutil
 from dask.diagnostics import ProgressBar
 
-from miranda.convert.ghcn import convert_statdata_bychunks, download_ghcn, q_flag_dict
+from miranda.convert.stationdata import convert_statdata_bychunks, q_flag_dict
+from miranda.ghcn import download_ghcn
 import xarray as xr
+
 
 
 def main():

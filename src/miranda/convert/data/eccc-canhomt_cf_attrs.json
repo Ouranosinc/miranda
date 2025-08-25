@@ -8,6 +8,7 @@
     "source": "CanHomT-daily",
     "institution": "GovCan",
     "organisation": "ECCC",
+    "version": "4.0",
     "processing_level": "raw",
     "type": "station-obs",
     "doi": "https://doi.org/10.1080/07055900.2025.2516796",
