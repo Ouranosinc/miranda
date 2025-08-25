@@ -2,6 +2,8 @@ import logging
 from pathlib import Path
 import shutil
 from dask.diagnostics import ProgressBar
+from pint.facets.numpy.numpy_func import out_unit
+
 from miranda.convert.ghcn import (
     convert_statdata_bychunks,
     download_canhomt,
@@ -18,7 +20,7 @@ def main():
     lon_bnds = [-80, -75]
     lat_bnds = [44, 45]
 
-    nstations = 100
+    n_stations = 100
 
     start_year = 1800
     end_year = None
@@ -32,7 +34,7 @@ def main():
         update_raw=update_raw,
     )
 
-    # convert ghcn data by chunks of nstations
+    # convert ghcn data by chunks of n_stations
     convert_statdata_bychunks(
         project="canhomt_dly",
         working_folder=working_folder,
@@ -40,21 +42,21 @@ def main():
         lat_bnds=lat_bnds,
         start_year=start_year,
         end_year=end_year,
-        nstations=nstations,
+        n_stations=n_stations,
         n_workers=6,
     )
 
     # combine zarrs
     for var1 in [v for v in working_folder.joinpath("zarr").iterdir() if v.is_dir()]:
-        outfolder = working_folder.joinpath(f"final/{var1.name}")
-        outfolder.mkdir(parents=True, exist_ok=True)
-        if outfolder.exists():
-            shutil.rmtree(outfolder)
+        out_folder = working_folder.joinpath(f"final/{var1.name}")
+        out_folder.mkdir(parents=True, exist_ok=True)
+        if out_folder.exists():
+            shutil.rmtree(out_folder)
         inzarrs = sorted(var1.glob("*.zarr"))
         ds = xr.concat(
             [xr.open_zarr(z, decode_timedelta=False) for z in inzarrs], dim="station"
         ).sortby(["station", "time"])
-        outzarr = outfolder.joinpath(
+        out_zarr = out_folder.joinpath(
             f'{var1.name}_day_GovCan_CamHomT_v4_{ds.time[0].dt.strftime("%Y%m%d").values}-{ds.time[-1].dt.strftime("%Y%m%d").values}.zarr'
         )
         # remove encoding
@@ -69,9 +71,9 @@ def main():
                 ds[c] = ds[c].astype(str)
         with ProgressBar():
             ds.chunk(dict(station=250, time=365 * 4 + 1)).to_zarr(
-                outzarr.with_suffix(".tmp.zarr"), mode="w"
+                out_zarr.with_suffix(".tmp.zarr"), mode="w"
             )
-        shutil.move(outzarr.with_suffix(".tmp.zarr"), outzarr)
+        shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)
 
 
 if __name__ == "__main__":
