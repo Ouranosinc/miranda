@@ -6,9 +6,9 @@ import hashlib
 import logging
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
-import shutil
 
 import cftime
 import pandas as pd
@@ -18,7 +18,12 @@ from pandas._libs import NaTType  # noqa
 
 logger = logging.getLogger("miranda.convert.utils")
 
-__all__ = ["date_parser", "find_version_hash", "get_station_meta", "_add_coords_to_dataset"]
+__all__ = [
+    "_add_coords_to_dataset",
+    "date_parser",
+    "find_version_hash",
+    "get_station_meta",
+]
 
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
@@ -47,6 +52,7 @@ q_flag_dict = {
         "I": "infilled data",
     },
 }
+
 
 def _add_coords_to_dataset(
     ds: xr.Dataset, df_stat: pd.DataFrame, float_flag=True
@@ -339,6 +345,7 @@ def get_station_meta(
 
     return station_df
 
+
 def _get_ghcn_stations(project: str) -> pd.DataFrame:
     """
     Get GHCN station metadata.
@@ -385,6 +392,7 @@ def _get_ghcn_stations(project: str) -> pd.DataFrame:
         raise ValueError(f"unknown project values {project}")
     return station_df
 
+
 def _get_canhomt_stations(project: str) -> pd.DataFrame:
     """
     Get CanHomT station metadata.
@@ -422,6 +430,7 @@ def _get_canhomt_stations(project: str) -> pd.DataFrame:
         raise ValueError(f"Unknown project value: {project}")
 
     return station_df
+
 
 def make_monotonous_time(ds: xr.Dataset, freq: str):
     """

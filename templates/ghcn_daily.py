@@ -8,7 +8,6 @@ from miranda.ghcn import download_ghcn
 import xarray as xr
 
 
-
 def main():
 
     logging.basicConfig(level=logging.INFO)

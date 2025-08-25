@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import calendar
 import logging
-from pathlib import Path
 import shutil
-import requests
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
@@ -17,7 +17,13 @@ from miranda.eccc._utils import cf_ahccd_metadata
 
 logger = logging.getLogger("miranda")
 
-__all__ = ["convert_ahccd", "convert_ahccd_fwf_files", "create_canhomt_xarray", "download_canhomt"]
+__all__ = [
+    "convert_ahccd",
+    "convert_ahccd_fwf_files",
+    "create_canhomt_xarray",
+    "download_canhomt",
+]
+
 
 def download_canhomt(
     project: str,
@@ -86,6 +92,7 @@ def download_canhomt(
             raise
     shutil.unpack_archive(out_file, out_folder, "gztar")
 
+
 def create_canhomt_xarray(
     in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str
 ) -> xr.Dataset | None:
@@ -148,7 +155,6 @@ def create_canhomt_xarray(
     if len(data) == 0:
         return None
     return xr.concat(data, dim="station")
-
 
 
 def convert_ahccd(
@@ -414,5 +420,3 @@ def convert_ahccd_fwf_files(
         else:
             ds_out[vv] = metadata[vv]
     return ds_out
-
-
