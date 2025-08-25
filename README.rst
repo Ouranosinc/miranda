@@ -23,13 +23,13 @@ Features
 --------
 
 Data collection functions for climate and forecast data hosted at:
-    * ECMWF (ERA5, ERA5-Land, TIGGE)
-    * ECCC (Canada) (Monthly Climate Summaries, ECCC GEOAPI - In development)
+    * ECMWF (Europe) (ERA5, ERA5-Land, TIGGE)
+    * ECCC (Canada) (Monthly Climate Summaries, ECCC GEOAPI) (In development)
     * NCAR (CORDEX-NA on AWS)
 
 Data conversion for `Climate and Forecasting (CF) <https://cfconventions.org/>`_ Variable and Metadata compliance:
-    * ECMWF (ERA5, ERA5-Land, TIGGE - In Development)
-    * ECCC (Canada) (Flat File Observations, Monthly Climate Summaries, Adjusted and Homogenized Climate Data, ECCC GEOAPI - In Development)
+    * ECMWF (Europe) (ERA5, ERA5-Land, TIGGE) (In Development)
+    * ECCC (Canada) (Flat File Observations, Monthly Climate Summaries, Adjusted and Homogenized Climate Data, ECCC GEOAPI) (In Development)
     * MELCC (Québec)
     * Hydro-Québec (In Development)
 
@@ -41,13 +41,13 @@ Database structuring and facets validation:
        * ECCC (Canada) (In Development)
        * Hydro-Québec (In Development)
     * Gridded-Observations:
-       * NRCAN (Canada) (Future)
-       * MELCC (Future)
+       * NRCAN (Canada) (In Development)
+       * MELCC (Québec) (In Development)
     * Reanalyses:
-       * ECMWF (ERA5, ERA5-Land, TIGGE)
-       * NASA (DayMET, AgMerra/AgCFSR, MERRA2) - In Development
-       * NCEP (CFSR/CFSv2) - In Development
-       * WFDEI-GEM-CaPa (University of Saskatchewan) - In Development
+       * ECCC (Canada) (CanSWE, CaSR, RDRS)
+       * ECMWF (Europe) (ERA5, ERA5-Land, TIGGE)
+       * NASA (DayMET, NEX-GDDP) (In Development)
+       * USask (Canada) (EMDNA)
 
 Installation
 ------------

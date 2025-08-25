@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import datetime
 import json
-import logging.config
+import logging
 import os
 import re
 from pathlib import Path
 
-from miranda.scripting import LOGGING_CONFIG
 from miranda.storage import report_file_size
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("miranda.convert.data_definitions")
 
 __all__ = [
     "eccc_rdrs_variables",
@@ -28,10 +27,8 @@ __all__ = [
     "gather_wfdei_gem_capa",
     "nasa_ag_variables",
     "nrcan_variables",
-    "project_institutes",
     "sc_earth_variables",
     "wfdei_gem_capa_variables",
-    "xarray_frequencies_to_cmip6like",
 ]
 
 _data_folder = Path(__file__).resolve().parent / "data"
@@ -65,39 +62,6 @@ wfdei_gem_capa_variables = json.load(
     _data_folder.joinpath("usask_cf_attrs.json").open()
 )["variables"].keys()
 
-project_institutes = {
-    "cfsr": "ncar",
-    "era5": "ecmwf",
-    "era5-land": "ecmwf",
-    "era5-land-monthly-means": "ecmwf",
-    "era5-monthly": "ecmwf",
-    "era5-pressure-levels": "ecmwf",
-    "era5-pressure-levels-preliminary-back-extension": "ecmwf",
-    "era5-pressure-monthly-means-levels-preliminary-back-extension": "ecmwf",
-    "era5-single-levels": "ecmwf",
-    "era5-single-levels-monthly-means": "ecmwf",
-    "era5-single-levels-monthly-means-preliminary-back-extension": "ecmwf",
-    "era5-single-levels-preliminary-back-extension": "ecmwf",
-    "merra2": "nasa",
-    "nrcan-gridded-10km": "nrcan",
-    "wfdei-gem-capa": "usask",
-    "rdrs-v21": "eccc",
-    "NEX-GDDP-CMIP6": "nasa",
-}
-
-# Manually map xarray frequencies to CMIP6/CMIP5 controlled vocabulary.
-# see: https://github.com/ES-DOC/pyessv-archive
-xarray_frequencies_to_cmip6like = {
-    "h": "hr",
-    "H": "hr",
-    "D": "day",
-    "W": "sem",
-    "M": "mon",
-    "Q": "qtr",  # TODO does this make sense? does not exist in cmip6 CV
-    "A": "yr",
-    "Y": "yr",
-}
-
 
 def _gather(
     name: str,
@@ -109,7 +73,7 @@ def _gather(
 ) -> dict[str, list[Path]]:
     source = Path(source).expanduser()
     msg = f"Gathering {name} files from: {source.as_posix()}"
-    logging.info(msg)
+    logger.info(msg)
     in_files = []
     for variable in variables:
         if suffix:
@@ -122,7 +86,7 @@ def _gather(
             in_files.extend(list(sorted(source.glob(pattern))))
     msg = f"Found {len(in_files)} files, totalling {report_file_size(in_files)}."
 
-    logging.info(msg)
+    logger.info(msg)
     return {name: in_files}
 
 
@@ -342,14 +306,14 @@ def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
     # GRNCH-ETS source data
     source_grnch = Path(path)
     msg = f"Gathering GRNCH from: {source_grnch.as_posix()}"
-    logging.info(msg)
+    logger.info(msg)
     in_files_grnch = list()
     for v in grnch_variables:
         for yyyy in range(1970, 2020):
             in_files_grnch.extend(list(source_grnch.rglob(f"{v}_{yyyy}.nc")))
     msg = f"Found {len(in_files_grnch)} files, totalling {report_file_size(in_files_grnch)}."
 
-    logging.info(msg)
+    logger.info(msg)
     return dict(cfsr=sorted(in_files_grnch))
 
 

@@ -24,7 +24,6 @@ import tempfile
 import time
 from calendar import monthrange
 from datetime import datetime as dt
-from logging import config
 from pathlib import Path
 from urllib.error import HTTPError
 
@@ -37,9 +36,12 @@ from xclim.core.units import convert_units_to
 
 from miranda.storage import file_size, report_file_size
 from miranda.units import GiB, MiB
-from miranda.utils import generic_extract_archive
+from miranda.utils import generic_extract_archive, group_by_length
 
 from ._utils import cf_station_metadata
+
+logger = logging.getLogger("miranda.eccc.raw")
+
 
 __all__ = [
     "aggregate_stations",
@@ -78,7 +80,7 @@ def _remove_duplicates(ds):
             f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
             f"for station {ds.station_id.values}. Assuming first value."
         )
-        logging.info(msg)
+        logger.info(msg)
     return ds.sel(time=~ds.get_index("time").duplicated())
 
 
@@ -119,7 +121,7 @@ def _convert_station_file(
         else:
             data_files = [fichier]
         msg = f"Processing file: {fichier}."
-        logging.info(msg)
+        logger.info(msg)
 
         size_limit = 1 * GiB
 
@@ -127,7 +129,7 @@ def _convert_station_file(
             if file_size(data) > size_limit and "dask" in sys.modules:
                 msg = f"File exceeds {report_file_size(size_limit)} - Using dask.dataframes."
 
-                logging.info(msg)
+                logger.info(msg)
                 pandas_reader = dd
                 using_dask_array = True
                 chunks = dict(blocksize=200 * MiB)
@@ -135,7 +137,7 @@ def _convert_station_file(
             else:
                 msg = f"File below {report_file_size(size_limit)} - Using pandas.dataframes."
 
-                logging.info(msg)
+                logger.info(msg)
                 pandas_reader = pd
                 chunks = dict()
                 using_dask_array = False
@@ -160,7 +162,7 @@ def _convert_station_file(
 
                 except FileNotFoundError:
                     msg = f"File {data} was not found."
-                    logging.error(msg)
+                    logger.error(msg)
                     errored_files.append(data)
                     return
 
@@ -169,7 +171,7 @@ def _convert_station_file(
                         f"File {data.name} was unable to be read. "
                         f"This is probably an issue with the file."
                     )
-                    logging.error(msg)
+                    logger.error(msg)
                     errored_files.append(data)
                     return
 
@@ -190,12 +192,12 @@ def _convert_station_file(
                     if not has_variable_codes:
                         msg = f"Variable `{nc_name}` not found for station code: {code} in file {data}. Continuing..."
 
-                        logging.info(msg)
+                        logger.info(msg)
                         continue
 
                     # Perform the data treatment
                     msg = f"Converting `{nc_name}` for station code: {code}."
-                    logging.info(msg)
+                    logger.info(msg)
 
                     # Dump the data into a DataFrame
                     df_var = df_code[df_code["code_var"] == variable_code].copy()
@@ -219,13 +221,13 @@ def _convert_station_file(
                         val = np.asarray(dfd.values, float)
                     except ValueError as e:
                         msg = f"Issues with {dfd}. Continuing..."
-                        logging.error(msg)
+                        logger.error(msg)
                         continue
                     try:
                         flag = np.asarray(dff.values, str)
                     except ValueError:
                         msg = f"Issues with {dff}. Continuing..."
-                        logging.error(msg)
+                        logger.error(msg)
                         continue
                     mask = np.isin(flag, missing_flags)
                     val[mask] = np.nan
@@ -325,7 +327,7 @@ def _convert_station_file(
 
                     if station_folder.joinpath(f_nc).exists():
                         msg = f"File `{f_nc}` already exists. Continuing..."
-                        logging.warning(msg)
+                        logger.warning(msg)
 
                     history = (
                         f"{dt.now().strftime('%Y-%m-%d %X')} converted from flat station file "
@@ -369,7 +371,7 @@ def _convert_station_file(
                     ds.attrs.update(global_attrs)
 
                     msg = f"Exporting to: {station_folder.joinpath(f_nc)}"
-                    logging.info(msg)
+                    logger.info(msg)
                     ds.to_netcdf(station_folder.joinpath(f_nc))
                     del ds
                     del val
@@ -447,7 +449,7 @@ def convert_flat_files(
             f"Collecting files for variable '{metadata['standard_name']}' "
             f"(filenames containing '{metadata['_table_name']}')."
         )
-        logging.info(msg)
+        logger.info(msg)
         list_files = list()
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
@@ -477,10 +479,10 @@ def convert_flat_files(
         if errored_files:
             msg = "Some files failed to be properly parsed:\n", ", ".join(errored_files)
 
-            logging.warning(msg)
+            logger.warning(msg)
 
     msg = f"Process completed in {time.time() - func_time:.2f} seconds"
-    logging.warning()
+    logger.warning(msg)
 
 
 def aggregate_stations(
@@ -557,10 +559,10 @@ def aggregate_stations(
         info = cf_station_metadata(variable_code)
         variable_name = info["nc_name"]
         msg = f"Merging `{variable_name}` using `{time_step}` time step."
-        logging.info(msg)
+        logger.info(msg)
 
         # Only perform aggregation on available data with corresponding metadata
-        logging.info("Performing glob and sort.")
+        logger.info("Performing glob and sort.")
         nc_list = [str(nc) for nc in source_files.joinpath(variable_name).rglob("*.nc")]
 
         if not groupings:
@@ -584,7 +586,7 @@ def aggregate_stations(
                 zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
                 msg = f"Found {len(zarrs_found)} intermediary aggregation files."
 
-                logging.info(msg)
+                logger.info(msg)
 
                 ds = xr.open_mfdataset(
                     zarrs_found,
@@ -630,21 +632,21 @@ def aggregate_stations(
                 valid_stations_count = len(valid_stations)
 
                 msg = f"Processing stations for variable `{variable_name}`."
-                logging.info(msg)
+                logger.info(msg)
 
                 if len(station_file_codes) == 0:
                     msg = f"No stations were found containing variable filename `{variable_name}`. Exiting."
-                    logging.error(msg)
+                    logger.error(msg)
                     return
 
                 msg = (
                     f"Files exist for {len(station_file_codes)} ECCC stations. "
                     f"Metadata found for {valid_stations_count} stations. "
                 )
-                logging.info(msg)
+                logger.info(msg)
 
                 # FIXME: Is this still needed?
-                # logging.info("Preparing the NetCDF time period.")
+                # logger.info("Preparing the NetCDF time period.")
                 # Create the time period timestamps
                 # year_start = ds.time.dt.year.min().values
                 # year_end = ds.time.dt.year.max().values
@@ -655,7 +657,7 @@ def aggregate_stations(
                 #     end=f"{year_end + 1}-01-01",
                 #     freq=mode[0].capitalize(),
                 # )[:-1]
-                # logging.info(
+                # logger.info(
                 #     f"Number of ECCC stations: {valid_stations_count}, time steps: {time_index.size}."
                 # )
 
@@ -692,10 +694,10 @@ def aggregate_stations(
 
         else:
             msg = f"No files found for variable: `{variable_name}`."
-            logging.info(msg)
+            logger.info(msg)
 
     runtime = f"Process completed in {time.time() - func_time:.2f} seconds"
-    logging.warning(runtime)
+    logger.warning(runtime)
 
 
 def _export_agg_nc(args):
@@ -722,7 +724,7 @@ def _tmp_zarr(
         f"Processing batch of files {iterable + 1}"
         f"{' of ' + str(group) if group is not None else ''}."
     )
-    logging.info(msg)
+    logger.info(msg)
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     try:
@@ -733,7 +735,7 @@ def _tmp_zarr(
         errored_nc_files = ", ".join([Path(f).name for f in nc])
         msg = f"Issues found with the following files: [{errored_nc_files}]: {e}"
 
-        logging.error(msg)
+        logger.error(msg)
         return
 
     ds = ds.assign_coords(
@@ -765,11 +767,11 @@ def _combine_years(
             f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
         )
 
-        logging.info(msg)
+        logger.info(msg)
     else:
         msg = f"No readings found for station code {Path(station_folder).name}. Continuing..."
 
-        logging.warning(msg)
+        logger.warning(msg)
         return
 
     # Remove range files if years are all present, otherwise default to range_file.
@@ -785,7 +787,7 @@ def _combine_years(
             year_start, year_end = int(groups[0].strip("_")), int(groups[1].strip("_"))
             range_files_found[f] = set(range(year_start, year_end))
         else:
-            logging.warning(
+            logger.warning(
                 "Years unable to be effectively parsed from series. Continuing with xarray solver..."
             )
             years_parsed = False
@@ -793,7 +795,7 @@ def _combine_years(
     if years_parsed:
         if len(range_files_found) > 0:
             msg = f"Overlapping single-year and multi-year files found for station code {station_folder}. Removing overlaps."
-            logging.warning(msg)
+            logger.warning(msg)
             for ranged_file, years in range_files_found.items():
                 if years.issubset(years_found.values()):
                     nc_files.remove(ranged_file)
@@ -802,16 +804,16 @@ def _combine_years(
                         try:
                             nc_files.remove(years_found[y])
                         except (KeyError, ValueError) as err:  # noqa: PERF203
-                            logging.error(err)
+                            logger.error(err)
                             continue
 
         year_range = min(years_found.keys()), max(years_found.keys())
         msg = f"Year(s) covered: {year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}."
-        logging.info(msg)
+        logger.info(msg)
 
     if _verbose:
         msg = f"Opening: {', '.join([p.name for p in nc_files])}"
-        logging.info(msg)
+        logger.info(msg)
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = Path(out_folder).joinpath(
         f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
@@ -828,14 +830,14 @@ def _combine_years(
     except ValueError:
         rejected.append(Path(station_folder).name)
         msg = f"Something went wrong at the assign_coords step for station {station_folder}. Continuing..."
-        logging.error(msg)
+        logger.error(msg)
         return
     if len(meta.indexes) > 1:
         raise ValueError("Found more than 1 station.")
     elif len(meta.indexes) == 0:
         rejected.append(Path(station_folder).name)
         msg = f"No metadata found for station code {station_folder}. Continuing..."
-        logging.warning(msg)
+        logger.warning(msg)
         return
 
     keep_coords = [
@@ -857,7 +859,7 @@ def _combine_years(
 
     if not outfile.exists():
         msg = f"Merging to {outfile.name}"
-        logging.info(msg)
+        logger.info(msg)
         comp = dict(zlib=True, complevel=5)
         encoding = {data_var: comp for data_var in ds.data_vars}
         encoding["time"] = {"dtype": "single"}
@@ -870,7 +872,7 @@ def _combine_years(
             )
     else:
         msg = f"Files exist for {outfile.name}. Continuing..."
-        logging.info(msg)
+        logger.info(msg)
 
 
 def merge_converted_variables(
@@ -921,12 +923,12 @@ def merge_converted_variables(
 
     for variable in variables_found:
         msg = f"Merging files found for variable: `{variable}`."
-        logging.info(msg)
+        logger.info(msg)
         station_dirs = [
             x for x in source_files.joinpath(variable).iterdir() if x.is_dir()
         ]
         msg = f"Number of stations found: {len(station_dirs)}."
-        logging.info(msg)
+        logger.info(msg)
 
         output_rep = output_folder.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
@@ -938,7 +940,7 @@ def merge_converted_variables(
                 f"Variable {variable} appears to have already been converted. Will be skipped. "
                 f"To force conversion of this variable, set `overwrite=True`."
             )
-            logging.warning(msg)
+            logger.warning(msg)
             continue
 
         manager = mp.Manager()
@@ -959,4 +961,4 @@ def merge_converted_variables(
 
         if rejected_stations:
             msg = f"Rejected station codes are the following: {', '.join(rejected_stations)}."
-            logging.warning(msg)
+            logger.warning(msg)
