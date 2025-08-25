@@ -2,7 +2,11 @@ import logging
 from pathlib import Path
 import shutil
 from dask.diagnostics import ProgressBar
-from miranda.convert.ghcn import convert_statdata_bychunks, download_canhomt, q_flag_dict
+from miranda.convert.ghcn import (
+    convert_statdata_bychunks,
+    download_canhomt,
+    q_flag_dict,
+)
 import xarray as xr
 
 
@@ -10,7 +14,6 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     working_folder = Path.home().joinpath("CanHomTV4/CanHomT_dlyV4")
-    
 
     lon_bnds = [-80, -75]
     lat_bnds = [44, 45]
@@ -28,7 +31,6 @@ def main():
         working_folder=working_folder,
         update_raw=update_raw,
     )
-
 
     # convert ghcn data by chunks of nstations
     convert_statdata_bychunks(

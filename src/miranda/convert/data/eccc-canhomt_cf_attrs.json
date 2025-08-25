@@ -1,4 +1,3 @@
-
 {
   "Header": {
     "Conventions": "CF-1.9",
@@ -7,7 +6,7 @@
     "keywords": "atmosphere, climatology, meteorology, temperature, homogenized",
     "id": "CanHomT",
     "source": "CanHomT-daily",
-    "institution": "GovCan",    
+    "institution": "GovCan",
     "organisation": "ECCC",
     "processing_level": "raw",
     "type": "station-obs",
@@ -65,5 +64,3 @@
     }
   }
 }
-
-

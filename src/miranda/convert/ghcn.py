@@ -6,7 +6,6 @@ import datetime as dt
 import logging.config
 import multiprocessing as mp
 import os
-
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -45,7 +44,7 @@ q_flag_dict = {
     },
     "canhomt_dly": {
         "I": "infilled data",
-    }
+    },
 }
 
 prj_dict = dict(
@@ -123,7 +122,10 @@ def get_ghcn_raw(
             continue
     return errors
 
-def _add_coords_to_dataset(ds: xr.Dataset, df_stat: pd.DataFrame, floatflag=True) -> xr.Dataset:
+
+def _add_coords_to_dataset(
+    ds: xr.Dataset, df_stat: pd.DataFrame, floatflag=True
+) -> xr.Dataset:
     """
     Add coordinates to the dataset from the station metadata.
 
@@ -141,21 +143,19 @@ def _add_coords_to_dataset(ds: xr.Dataset, df_stat: pd.DataFrame, floatflag=True
     xr.Dataset
         Dataset with added coordinates.
     """
-    
-    for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
+    for cc in [
+        c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]
+    ]:
         if cc not in ds.coords:
             ds = ds.assign_coords(
-                {
-                    cc: xr.DataArray(
-                        [df_stat[cc].values[0]], coords=ds.station.coords
-                    )
-                }
+                {cc: xr.DataArray([df_stat[cc].values[0]], coords=ds.station.coords)}
             )
     if floatflag:
         for vv in ds.data_vars:
             if ds[vv].dtype == "float64":
                 ds[vv] = ds[vv].astype("float32")
     return ds
+
 
 def create_canhomt_xarray(
     infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
@@ -181,30 +181,30 @@ def create_canhomt_xarray(
     """
     data = []
     statmeta
-    for cc in ['beginyear', 'endyear']:
+    for cc in ["beginyear", "endyear"]:
         statmeta[cc] = pd.to_datetime(statmeta[cc], format="%Y-%m")
     for station_id in statmeta.station_id:
         msg = f"Reading {station_id}"
         logging.info(msg)
         statfile = [f for f in infiles if f.name == f"{station_id}.csv"]
-        
+
         if statfile == []:
             msg = f"Station {station_id} not found in input files"
             logging.warning(msg)
             continue
         df = pd.read_csv(statfile[0])
-        
+
         df.columns = df.columns.str.lower()
-        df['station'] = station_id
+        df["station"] = station_id
         varlist = [k for k in varmeta.keys() if k in df.columns]
         if varlist:
             df["time"] = pd.to_datetime(df["time"], format="%Y-%m-%d")
             df = df.set_index(["station", "time"])
-            
+
             ds = df.to_xarray()
-            drop_vars = [v for v in ds.data_vars
-                    if v not in varlist and 'flag' not in v
-                ]
+            drop_vars = [
+                v for v in ds.data_vars if v not in varlist and "flag" not in v
+            ]
             ds = ds.drop_vars(drop_vars)
             df_stat = statmeta[statmeta.station_id == station_id]
             if len(df_stat) != 1:
@@ -212,17 +212,14 @@ def create_canhomt_xarray(
                     f"expected a single station metadata for {station_id.stem}"
                 )
             ds = _add_coords_to_dataset(ds, df_stat)
-            ds = ds.rename({f"{v}_flag": f"{v}_q_flag" for v in ds.data_vars if "flag" not in v})
+            ds = ds.rename(
+                {f"{v}_flag": f"{v}_q_flag" for v in ds.data_vars if "flag" not in v}
+            )
             data.append(ds)
-    
+
     if len(data) == 0:
-        return None 
+        return None
     return xr.concat(data, dim="station")
-
-
-
-            
-
 
 
 def create_ghcn_xarray(
@@ -346,6 +343,7 @@ def create_ghcn_xarray(
         return None
     return xr.concat(data, dim="station")
 
+
 def download_canhomt(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
@@ -396,7 +394,7 @@ def download_canhomt(
                     f.write(r.content)
             shutil.move(outfile.with_suffix(f".tmp{outfile.suffix}"), outfile)
         except OSError as e:
-            raise(e)
+            raise (e)
     shutil.unpack_archive(outfile, outfolder, "gztar")
 
     return True
@@ -431,9 +429,7 @@ def download_ghcn(
     n_workers : int, optional
         Number of workers to use. Not implemented.
     """
-    station_df = get_station_meta(
-        project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-    )
+    station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
@@ -483,7 +479,7 @@ def get_station_meta(
         station_df = _get_ghcn_stations(project=project)
     elif project == "canhomt_dly":
         station_df = _get_canhomt_stations(project=project)
-        
+
     # TODO ghcnh not implemented yet
     # elif project == "ghcnh":
     #     project
@@ -528,6 +524,7 @@ def get_station_meta(
 
     return station_df
 
+
 def _get_canhomt_stations(project: str) -> pd.DataFrame:
     """
     Get CanHomT station metadata.
@@ -544,28 +541,33 @@ def _get_canhomt_stations(project: str) -> pd.DataFrame:
     """
     if project == "canhomt_dly":
         station_url = "https://crd-data-donnees-rdc.ec.gc.ca/CDAS/products/CanHomTV4/Temp_Stations_Gen4_2024_monthly.csv"
-        
+
         try:
             station_df = pd.read_csv(
                 station_url,
             )
         except ValueError:
-            statfile = Path(__file__).parent.joinpath("data/eccc-canhomt_Temp_Stations_Gen4_2024_monthly.zip")
+            statfile = Path(__file__).parent.joinpath(
+                "data/eccc-canhomt_Temp_Stations_Gen4_2024_monthly.zip"
+            )
             station_df = pd.read_csv(
                 statfile,
             )
-        station_df = station_df.rename(columns={p: p.lower() for p in station_df.columns})
+        station_df = station_df.rename(
+            columns={p: p.lower() for p in station_df.columns}
+        )
         rename = {"name": "station_name", "id": "station_id", "ele": "elevation"}
-        station_df = station_df.rename(columns=rename) 
+        station_df = station_df.rename(columns=rename)
     else:
         raise ValueError(f"unknown project values {project}")
-    
+
     return station_df
 
-def _get_ghcn_stations(
-    project: str) -> pd.DataFrame:
+
+def _get_ghcn_stations(project: str) -> pd.DataFrame:
     """
     Get GHCN station metadata.
+
     Parameters
     ----------
     project : str
@@ -574,7 +576,7 @@ def _get_ghcn_stations(
     Returns
     -------
     pd.DataFrame
-        Station metadata.   
+        Station metadata.
     """
     if project == "ghcnd":
         station_url = "https://noaa-ghcn-pds.s3.amazonaws.com/ghcnd-stations.txt"
@@ -607,6 +609,7 @@ def _get_ghcn_stations(
     else:
         raise ValueError(f"unknown project values {project}")
     return station_df
+
 
 def convert_statdata_bychunks(
     project: str,
@@ -665,9 +668,7 @@ def convert_statdata_bychunks(
         }
     freq_dict = dict(h="hr", d="day")
     readme_url = None
-    station_df = get_station_meta(
-            project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-        )
+    station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if project == "ghcnd":
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
@@ -682,7 +683,7 @@ def convert_statdata_bychunks(
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
-    
+
     tz_file = Path(__file__).parent.joinpath(
         "data/timezones-with-oceans-now.shapefile.zip"
     )
@@ -742,21 +743,20 @@ def convert_statdata_bychunks(
 
             if var_attrs_new:
                 dsall_vars = None
-                if 'ghcn' in project:
+                if "ghcn" in project:
                     dsall_vars = create_ghcn_xarray(
                         infiles=ss,
                         varmeta=var_attrs_new,
                         statmeta=station_df,
                         project=project,
                     )
-                elif 'canhomt' in project:
+                elif "canhomt" in project:
                     dsall_vars = create_canhomt_xarray(
                         infiles=ss,
                         varmeta=var_attrs_new,
                         statmeta=station_df,
                         project=project,
                     )
-
 
                 if dsall_vars is None:
                     continue
