@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import shutil
 from dask.diagnostics import ProgressBar
-from miranda.convert.ghcn import convert_ghcn_bychunks, download_ghcn, q_flag_dict
+from miranda.convert.ghcn import convert_statdata_bychunks, download_ghcn, q_flag_dict
 import xarray as xr
 
 
@@ -29,7 +29,7 @@ def main():
     )
 
     # convert ghcn data by chunks of nstations
-    convert_ghcn_bychunks(
+    convert_statdata_bychunks(
         project="ghcnd",
         working_folder=working_folder,
         lon_bnds=lon_bnds,

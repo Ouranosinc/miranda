@@ -431,7 +431,7 @@ def download_ghcn(
     n_workers : int, optional
         Number of workers to use. Not implemented.
     """
-    station_df = _get_station_meta(
+    station_df = get_station_meta(
         project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
     )
     if update_raw and working_folder.joinpath("raw").exists():
