@@ -1,11 +1,11 @@
 from __future__ import annotations
-
 import datetime
 import re
 import urllib
 from pathlib import Path
 
 import pandas as pd
+
 
 "https://api.weather.gc.ca/collections/climate-daily/items?datetime=1840-03-01%2000:00:00/2021-06-02%2000:00:00&STN_ID=10761&f=json&limit=1500000&startindex=0"
 
@@ -19,7 +19,8 @@ def gather_eccc_stations(
     end_date: datetime.datetime | str | None = None,
     climate_id: str | None = None,
 ) -> pd.DataFrame:
-    """Collect ECCC station data from the Environment and Climate Change Canada API.
+    """
+    Collect ECCC station data from the Environment and Climate Change Canada API.
 
     Parameters
     ----------
@@ -40,14 +41,10 @@ def gather_eccc_stations(
     dates = [start_date, end_date]
     for i, date in enumerate(dates):
         if not date:
-            dates[i] = datetime.datetime(
-                year=1840, month=1, day=1, hour=0, minute=0, second=0
-            ).strftime("%Y-%m-%d %H:%M:%S")
+            dates[i] = datetime.datetime(year=1840, month=1, day=1, hour=0, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S")
         else:
             if re.match(r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$", date):
-                dates[i] = datetime.datetime.fromisoformat(date).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
+                dates[i] = datetime.datetime.fromisoformat(date).strftime("%Y-%m-%d %H:%M:%S")
         dates[i] = str(dates[i]).replace(" ", "%20")
     date_range = "/".join(dates)
 

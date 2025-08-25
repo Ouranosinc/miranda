@@ -59,10 +59,6 @@ def test_show_versions():
     ]
 
     assert isinstance(versions_found, str)
-    missing_deps = [
-        library for library in min_dependencies if f"{library} : None" in versions_found
-    ]
+    missing_deps = [library for library in min_dependencies if f"{library} : None" in versions_found]
     if missing_deps:
-        raise ImportError(
-            f"Missing dependencies: {', '.join(missing_deps)}. Try installing `miranda` or adjusting deps."
-        )
+        raise ImportError(f"Missing dependencies: {', '.join(missing_deps)}. Try installing `miranda` or adjusting deps.")

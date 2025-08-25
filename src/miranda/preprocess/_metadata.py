@@ -1,10 +1,10 @@
 from __future__ import annotations
-
 import logging
 from typing import Any
 
 from miranda import __version__ as __miranda_version__
 from miranda.treatments.utils import load_json_data_mappings
+
 
 __all__ = [
     "eccc_variable_metadata",
@@ -19,7 +19,8 @@ def eccc_variable_metadata(
     generation: int | None = None,
     metadata: dict | None = None,
 ) -> dict[str, Any]:
-    """Return the metadata for a given variable code and project.
+    """
+    Return the metadata for a given variable code and project.
 
     Parameters
     ----------
@@ -90,14 +91,12 @@ def eccc_variable_metadata(
                 header[field[1:]] = variable_name
         elif isinstance(header[field], dict) and generation:
             attr_treatment = header[field]["generation"]
-            if field in ["_citation" "_product"]:
+            if field in ["_citation_product"]:
                 for attribute, value in attr_treatment.items():
                     if attribute == generation:
                         header[field[1:]] = value
         else:
-            raise AttributeError(
-                f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
-            )
+            raise AttributeError(f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON.")
         to_delete.append(field)
 
     for field in to_delete:
@@ -109,7 +108,8 @@ def eccc_variable_metadata(
 def homogenized_column_definitions(
     variable_code: str,
 ) -> tuple[dict, list[tuple[int, int]], dict[str, type[str | int | float] | Any], int]:
-    """Return the column names, widths, and data types for the AHCCD fixed-width format data.
+    """
+    Return the column names, widths, and data types for the AHCCD fixed-width format data.
 
     Parameters
     ----------
@@ -142,7 +142,7 @@ def homogenized_column_definitions(
         column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
         ii = 9
         # 31 days in a month
-        for i in range(1, 32):
+        for _ in range(31):
             column_spaces.append((ii, ii + 7))
             ii += 7
             column_spaces.append((ii, ii + 1))
@@ -166,7 +166,7 @@ def homogenized_column_definitions(
         column_spaces = [(0, 4), (4, 5), (5, 7), (7, 8)]
         ii = 8
         # 31 days in a month
-        for i in range(1, 32):
+        for _ in range(31):
             column_spaces.append((ii, ii + 8))
             ii += 8
             column_spaces.append((ii, ii + 1))
@@ -176,10 +176,7 @@ def homogenized_column_definitions(
     else:
         raise KeyError
 
-    column_names = {
-        col.lower().split("(")[0].replace("%", "pct_").strip().replace(" ", "_"): col
-        for col in list(column_dtypes.keys())
-    }
+    column_names = {col.lower().split("(")[0].replace("%", "pct_").strip().replace(" ", "_"): col for col in list(column_dtypes.keys())}
 
     return column_names, column_spaces, column_dtypes, header_row
 

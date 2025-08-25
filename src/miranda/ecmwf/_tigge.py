@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import functools
 import logging
 import multiprocessing
@@ -7,6 +6,7 @@ import os
 from datetime import datetime as dt
 from datetime import timedelta as td
 from pathlib import Path
+
 
 logger = logging.getLogger("miranda.ecmwf.tigge")
 
@@ -26,12 +26,13 @@ def request_tigge(
     output_folder: os.PathLike | None = None,
     processes: int = 4,
 ) -> None:
-    """Request tigge data from ECMWF in grib format.
+    """
+    Request tigge data from ECMWF in grib format.
 
     Parameters
     ----------
     variables : list of str
-    providers : ist of str, optional
+    providers : list of str, optional
     forecast_type: {"pf", "cf"}
     times : list of str, optional
     dates : list of str. optional
@@ -58,18 +59,14 @@ def request_tigge(
         try:
             from ecmwfapi import ECMWFDataServer
         except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                f"{_request_direct_tigge.__name__} requires additional dependencies. "
-                "Please install them with `pip install miranda[remote]`."
-            )
+            msg = f"{_request_direct_tigge.__name__} requires additional dependencies. Please install them with `pip install miranda[remote]`."
+            logging.error(msg)
+            raise
 
         number_range = ""
         if nums:
             number_range = "/".join([str(n) for n in range(1, nums + 1)])
-        output_name = (
-            f"{variable_name}_{provider}_{'-'.join(time.split('/'))}_tigge_reanalysis_6h_"
-            f"{date.split('/')[0]}_{date.split('/')[-1]}.grib2"
-        )
+        output_name = f"{variable_name}_{provider}_{'-'.join(time.split('/'))}_tigge_reanalysis_6h_{date.split('/')[0]}_{date.split('/')[-1]}.grib2"
 
         # Note: This is only valid for ECMWF at the moment.
         steps = (
@@ -171,9 +168,7 @@ def request_tigge(
                         numbers = project_members[p]
                         num_dict[numbers] = numbers
 
-                    func = functools.partial(
-                        _request_direct_tigge, **config, **num_dict
-                    )
+                    func = functools.partial(_request_direct_tigge, **config, **num_dict)
 
                     logging.info([func, dt.now().strftime("%Y-%m-%d %X")])
 

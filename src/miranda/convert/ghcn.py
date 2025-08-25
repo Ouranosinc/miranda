@@ -1,7 +1,6 @@
 """Module to download and convert GHCN data to Zarr format."""
 
 from __future__ import annotations
-
 import datetime as dt
 import logging
 import multiprocessing as mp
@@ -21,6 +20,7 @@ from miranda.convert._data_corrections import (
     dataset_conversion,
     load_json_data_mappings,
 )
+
 
 logger = logging.getLogger("miranda.convert.ghcn")
 
@@ -118,9 +118,7 @@ def get_ghcn_raw(
     return errors
 
 
-def create_ghcn_xarray(
-    infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str
-) -> xr.Dataset | None:
+def create_ghcn_xarray(infiles: list, varmeta: dict, statmeta: pd.DataFrame, project: str) -> xr.Dataset | None:
     """
     Create a Zarr dump of DWD climate summary data.
 
@@ -141,7 +139,6 @@ def create_ghcn_xarray(
         Dataset.
     """
     data = []
-    statmeta
     for station_id in sorted(list(infiles)):
         msg = f"Reading {station_id.name}"
         logger.info(msg)
@@ -160,15 +157,9 @@ def create_ghcn_xarray(
                     ds1 = df.loc[df.element == var].to_xarray()
 
                     ds1 = ds1.rename({"data_value": var, "id": "station"})
-                    drop_vars = [
-                        v
-                        for v in ds1.data_vars
-                        if v not in varlist and v not in ["q_flag"]
-                    ]
+                    drop_vars = [v for v in ds1.data_vars if v not in varlist and v not in ["q_flag"]]
                     ds1 = ds1.drop_vars(drop_vars)
-                    ds1 = ds1.rename(
-                        {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
-                    )
+                    ds1 = ds1.rename({v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v})
 
                     dslist.append(ds1)
                 ds = xr.merge(dslist)
@@ -176,22 +167,10 @@ def create_ghcn_xarray(
                 del dslist
                 df_stat = statmeta[statmeta.station_id == station_id.stem]
                 if len(df_stat) != 1:
-                    raise ValueError(
-                        f"expected a single station metadata for {station_id.stem}"
-                    )
-                for cc in [
-                    c
-                    for c in df_stat.columns
-                    if c not in ["station_id", "geometry", "index_right"]
-                ]:
+                    raise ValueError(f"expected a single station metadata for {station_id.stem}")
+                for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
                     if cc not in ds.coords:
-                        ds = ds.assign_coords(
-                            {
-                                cc: xr.DataArray(
-                                    [df_stat[cc].values[0]], coords=ds.station.coords
-                                )
-                            }
-                        )
+                        ds = ds.assign_coords({cc: xr.DataArray([df_stat[cc].values[0]], coords=ds.station.coords)})
                 for vv in ds.data_vars:
                     if ds[vv].dtype == "float64":
                         ds[vv] = ds[vv].astype("float32")
@@ -284,9 +263,7 @@ def download_ghcn(
     n_workers : int, optional
         Number of workers to use. Not implemented.
     """
-    station_df = _get_ghcn_stations(
-        project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-    )
+    station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if update_raw and working_folder.joinpath("raw").exists():
         shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
@@ -455,14 +432,8 @@ def convert_ghcn_bychunks(
 
     var_attrs = load_json_data_mappings(project=project)["variables"]
     if cfvariable_list:
-        var_attrs = {
-            v: var_attrs[v]
-            for v in var_attrs
-            if var_attrs[v]["_cf_variable_name"] in cfvariable_list
-        }
-    freq_dict = dict(h="hr", d="day")
+        var_attrs = {v: var_attrs[v] for v in var_attrs if var_attrs[v]["_cf_variable_name"] in cfvariable_list}
     if project == "ghcnd":
-
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
 
         outchunks = dict(time=(365 * 4) + 1, station=nstations)
@@ -475,19 +446,13 @@ def convert_ghcn_bychunks(
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
-    station_df = _get_ghcn_stations(
-        project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds
-    )
-    tz_file = Path(__file__).parent.joinpath(
-        "data/timezones-with-oceans-now.shapefile.zip"
-    )
+    station_df = _get_ghcn_stations(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+    tz_file = Path(__file__).parent.joinpath("data/timezones-with-oceans-now.shapefile.zip")
 
     tz = gpd.read_file(tz_file).to_crs(epsg=4326)
     # clip to bbox for faster sjoin
     # Create a custom polygon
-    polygon = box(
-        lon_bnds[0] - 0.1, lat_bnds[0] - 0.1, lon_bnds[-1] + 0.1, lat_bnds[-1] + 0.1
-    )
+    polygon = box(lon_bnds[0] - 0.1, lat_bnds[0] - 0.1, lon_bnds[-1] + 0.1, lat_bnds[-1] + 0.1)
     poly_clip = gpd.GeoDataFrame([1], geometry=[polygon], crs=tz.crs)
     tz = tz.clip(poly_clip)
     station_df = gpd.GeoDataFrame(
@@ -519,18 +484,14 @@ def convert_ghcn_bychunks(
             yield lst[i : i + n]
 
     treated = []
-    file_list = sorted(
-        list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}"))
-    )
+    file_list = sorted(list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}")))
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, nstations)):
         if ii not in treated:
             var_attrs_new = {}
             for vv, meta in var_attrs.items():
                 cf_var = var_attrs[vv]["_cf_variable_name"]
-                outzarr = working_folder.joinpath(
-                    "zarr", cf_var, f"{project}_{ii}.zarr"
-                )
+                outzarr = working_folder.joinpath("zarr", cf_var, f"{project}_{ii}.zarr")
                 if not outzarr.exists() or update_from_raw:
                     var_attrs_new[vv] = meta
 
@@ -543,19 +504,13 @@ def convert_ghcn_bychunks(
                 )
                 if dsall_vars is None:
                     continue
-                dsall_vars = dsall_vars.sel(
-                    time=slice(str(start_date.year), str(end_date.year))
-                )
+                dsall_vars = dsall_vars.sel(time=slice(str(start_date.year), str(end_date.year)))
                 for kk, vv in var_attrs_new.items():
                     cf_var = var_attrs[kk]["_cf_variable_name"]
-                    outzarr = working_folder.joinpath(
-                        "zarr", cf_var, f"{project}_{ii}.zarr"
-                    )
+                    outzarr = working_folder.joinpath("zarr", cf_var, f"{project}_{ii}.zarr")
                     if kk not in dsall_vars.data_vars:
                         continue
-                    dsout = dsall_vars.drop_vars(
-                        [v for v in dsall_vars.data_vars if not v.startswith(kk)]
-                    )
+                    dsout = dsall_vars.drop_vars([v for v in dsall_vars.data_vars if not v.startswith(kk)])
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
@@ -571,9 +526,7 @@ def convert_ghcn_bychunks(
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
 
-                    desc_str = "; ".join(
-                        [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
-                    )
+                    desc_str = "; ".join([f"{k}:{v}" for k, v in q_flag_dict[project].items()])
                     desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
                     attrs = {
                         "flag_values": [c for c in q_flag_dict[project].keys()],

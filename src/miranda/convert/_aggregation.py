@@ -1,13 +1,13 @@
 """Aggregation module."""
 
 from __future__ import annotations
-
 import logging
 
 import xarray as xr
 from xclim.indices import tas
 
 from miranda.units import check_time_frequency
+
 
 logger = logging.getLogger("miranda.convert.aggregation")
 
@@ -22,7 +22,8 @@ _resampling_keys["year"] = "A"
 
 
 def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[str]]:
-    """Determine which aggregations are possible based on variables within a dataset.
+    """
+    Determine which aggregations are possible based on variables within a dataset.
 
     Parameters
     ----------
@@ -61,9 +62,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
     # Variables that are not present in the dataset but that can be derived
     for v in ["tas", "tdps", "hurs"]:
         if freq == meaning:
-            if not hasattr(ds, v) and (
-                hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")
-            ):
+            if not hasattr(ds, v) and (hasattr(ds, f"{v}max") and hasattr(ds, f"{v}min")):
                 aggregation_legend[f"_{v}"] = {"max", "mean", "min"}
                 aggregation_legend[f"{v}max"] = {"max", "mean", "min"}
                 aggregation_legend[f"{v}min"] = {"max", "mean", "min"}
@@ -120,7 +119,8 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
 
 
 def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
-    """Aggregate a dataset to a specified frequency.
+    """
+    Aggregate a dataset to a specified frequency.
 
     Parameters
     ----------

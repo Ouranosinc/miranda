@@ -1,7 +1,6 @@
 """Specialized conversion tools for Environment and Climate Change Canada / Meteorological Service of Canada data."""
 
 from __future__ import annotations
-
 import functools
 import logging
 import multiprocessing as mp
@@ -22,6 +21,7 @@ from miranda.preprocess._metadata import eccc_variable_metadata, obs_column_defi
 from miranda.treatments import find_project_variable_codes, load_json_data_mappings
 from miranda.vocabularies.eccc import obs_vocabularies
 
+
 __all__ = [
     "convert_station",
     "merge_converted_variables",
@@ -32,10 +32,7 @@ TABLE_DATE = dt.now().strftime("%d %B %Y")
 
 def _remove_duplicates(ds):
     if any(ds.get_index("time").duplicated()):
-        msg = (
-            f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
-            f"for station {ds.station_id.values}. Assuming first value."
-        )
+        msg = f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates for station {ds.station_id.values}. Assuming first value."
         logging.info(msg)
     return ds.sel(time=~ds.get_index("time").duplicated())
 
@@ -66,15 +63,8 @@ def convert_observation(
     if isinstance(data_source, list) or Path(data_source).is_file():
         archives.append(data_source)
     else:
-        tables = [
-            str(repository.keys())
-            for repository in obs_vocabularies
-            if code in repository.values()
-        ]
-        msg = (
-            f"Collecting files for variable '{variable}'. "
-            f"Filename patterns containing variable code '{code}: {', '.join(tables)}'."
-        )
+        tables = [str(repository.keys()) for repository in obs_vocabularies if code in repository.values()]
+        msg = f"Collecting files for variable '{variable}'. Filename patterns containing variable code '{code}: {', '.join(tables)}'."
         logging.info(msg)
         for table in tables:
             archives.extend([f for f in Path(data_source).rglob(f"{table}*.gz")])
@@ -85,7 +75,7 @@ def convert_observation(
 
     # Loop on the files
     errored_files = []
-    for file in archives:
+    for _file in archives:
         # FIXME: convert the file using the appropriate function
         pass
 
@@ -128,19 +118,17 @@ def convert_station(
             data,
             widths=column_widths,
             names=column_names,
-            dtype={
-                name: data_type for name, data_type in zip(column_names, column_dtypes)
-            },
+            dtype={name: data_type for name, data_type in zip(column_names, column_dtypes, strict=False)},
             assume_missing=True,
             **chunks,
         )
         if using_dask_array:
             df = client.persist(df)
 
-    except FileNotFoundError as e:
-        msg = f"File {data} was not found: {e}"
+    except FileNotFoundError as err:
+        msg = f"File {data} was not found."
         logging.error(msg)
-        raise FileNotFoundError(msg)
+        raise FileNotFoundError(msg) from err
 
     except UnicodeDecodeError as e:
         msg = f"File {data.name} was unable to be read. This is probably an issue with the file: {e}"
@@ -154,9 +142,7 @@ def convert_station(
 
         # Abort if the variable is not found
         if using_dask_array:
-            has_variable_codes = (
-                (df_code["code_var"] == variable_code).compute()
-            ).any()
+            has_variable_codes = ((df_code["code_var"] == variable_code).compute()).any()
         else:
             has_variable_codes = (df_code["code_var"] == variable_code).any()
         if not has_variable_codes:
@@ -352,7 +338,8 @@ def merge_stations(
     temp_directory: str | os.PathLike | None = None,
     n_workers: int = 1,
 ) -> None:
-    """Merge stations.
+    """
+    Merge stations.
 
     Parameters
     ----------
@@ -426,12 +413,8 @@ def merge_stations(
             groupings = max(n_workers**2, 4)
 
         if nc_list:
-            with tempfile.TemporaryDirectory(
-                prefix="eccc", dir=temp_directory
-            ) as temp_dir:
-                combinations = sorted(
-                    (ii, nc, temp_dir, len(nc_list)) for ii, nc in enumerate(nc_list)
-                )
+            with tempfile.TemporaryDirectory(prefix="eccc", dir=temp_directory) as temp_dir:
+                combinations = sorted((ii, nc, temp_dir, len(nc_list)) for ii, nc in enumerate(nc_list))
 
                 with mp.Pool(processes=n_workers) as pool:
                     pool.starmap(_tmp_zarr, combinations)
@@ -493,10 +476,7 @@ def merge_stations(
                     logging.error(msg)
                     return
 
-                msg = (
-                    f"Files exist for {len(station_file_codes)} ECCC stations. "
-                    f"Metadata found for {valid_stations_count} stations. "
-                )
+                msg = f"Files exist for {len(station_file_codes)} ECCC stations. Metadata found for {valid_stations_count} stations. "
                 logging.info(msg)
 
                 # FIXME: Is this still needed?
@@ -521,14 +501,11 @@ def merge_stations(
                 ds = ds.assign_coords(station=range(0, len(ds.station))).sortby("time")
                 if mf_dataset_freq is not None:
                     # output mf_dataset using resampling frequency
-                    _, datasets = zip(*ds.resample(time=mf_dataset_freq))
+                    _, datasets = zip(*ds.resample(time=mf_dataset_freq), strict=False)
                 else:
                     datasets = [ds]
 
-                paths = [
-                    f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
-                    for data in datasets
-                ]
+                paths = [f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc" for data in datasets]
 
                 # FIXME: chunks need to be dealt with
                 # chunks = [1, len(ds.time)]
@@ -538,7 +515,7 @@ def merge_stations(
                     # FIXME: looping seems to cause increasing memory over time use a pool of one or 2??
                     # for dataset, path in zip(datasets, paths):
                     #     _export_agg_nc(dataset,path)
-                    combs = zip(datasets, paths)
+                    combs = zip(datasets, paths, strict=False)
                     pool = mp.Pool(2)
                     pool.map(_export_agg_nc, combs)
                     pool.close()
@@ -574,26 +551,19 @@ def _tmp_zarr(
     tempdir: str | os.PathLike,
     group: int | None = None,
 ) -> None:
-    msg = (
-        f"Processing batch of files {iterable + 1}"
-        f"{' of ' + str(group) if group is not None else ''}."
-    )
+    msg = f"Processing batch of files {iterable + 1}{' of ' + str(group) if group is not None else ''}."
     logging.info(msg)
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     try:
-        ds = xr.open_mfdataset(
-            nc, combine="nested", concat_dim="station", preprocess=_remove_duplicates
-        )
+        ds = xr.open_mfdataset(nc, combine="nested", concat_dim="station", preprocess=_remove_duplicates)
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])
         msg = f"Issues found with the following files: [{errored_nc_files}]: {e}"
         logging.error(msg)
         return
 
-    ds = ds.assign_coords(
-        station_id=xr.DataArray(station_file_codes, dims="station").astype(str)
-    )
+    ds = ds.assign_coords(station_id=xr.DataArray(station_file_codes, dims="station").astype(str))
     if "flag" in ds.data_vars:
         ds1 = ds.drop_vars("flag").copy(deep=True)
         ds1["flag"] = ds.flag.astype(str)
@@ -616,9 +586,7 @@ def _combine_years(
 ) -> None:
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
     if len(nc_files):
-        msg = (
-            f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
-        )
+        msg = f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
         logging.info(msg)
     else:
         msg = f"No readings found for station code {Path(station_folder).name}. Continuing..."
@@ -644,10 +612,7 @@ def _combine_years(
             break
     if years_parsed:
         if len(range_files_found) > 0:
-            msg = (
-                f"Overlapping single-year and multi-year files found for station code {station_folder}. "
-                "Removing overlaps."
-            )
+            msg = f"Overlapping single-year and multi-year files found for station code {station_folder}. Removing overlaps."
             logging.warning(msg)
             for ranged_file, years in range_files_found.items():
                 if years.issubset(years_found.values()):
@@ -665,10 +630,7 @@ def _combine_years(
                             logging.warning(msg)
 
         year_range = min(years_found.keys()), max(years_found.keys())
-        msg = (
-            "Year(s) covered: "
-            f"{year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
-        )
+        msg = f"Year(s) covered: {year_range[0]}{'-' + str(year_range[1]) if year_range[0] != year_range[1] else ''}. "
         logging.info(msg)
 
     if _verbose:
@@ -676,8 +638,7 @@ def _combine_years(
         logging.info(msg)
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim="time")
     outfile = Path(out_folder).joinpath(
-        f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
-        f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
+        f"{nc_files[0].name.split(f'_{varia}_')[0]}_{varia}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
     )
 
     df_inv = xr.open_dataset(meta_file)
@@ -742,7 +703,8 @@ def merge_converted_variables(
     overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
-    """Merge converted variables into a single file per variable.
+    """
+    Merge converted variables into a single file per variable.
 
     Parameters
     ----------
@@ -773,27 +735,19 @@ def merge_converted_variables(
 
     variables_found = [x.name for x in source_files.iterdir() if x.is_dir()]
     if selected_variables:
-        variables_found = [
-            x
-            for x in variables_found
-            if x in [item["nc_name"] for item in selected_variables]
-        ]
+        variables_found = [x for x in variables_found if x in [item["nc_name"] for item in selected_variables]]
 
     for variable in variables_found:
         msg = f"Merging files found for variable: `{variable}`."
         logging.info(msg)
-        station_dirs = [
-            x for x in source_files.joinpath(variable).iterdir() if x.is_dir()
-        ]
+        station_dirs = [x for x in source_files.joinpath(variable).iterdir() if x.is_dir()]
         msg = f"Number of stations found: {len(station_dirs)}."
         logging.info(msg)
 
         output_rep = output_folder.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
 
-        if (
-            len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)
-        ) and not overwrite:
+        if (len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)) and not overwrite:
             msg = (
                 f"Variable {variable} appears to have already been converted. Will be skipped. "
                 f"To force conversion of this variable, set `overwrite=True`."

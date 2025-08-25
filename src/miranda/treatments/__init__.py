@@ -1,7 +1,6 @@
 """Treatments module."""
 
 from __future__ import annotations
-
 import datetime
 import logging
 
@@ -14,13 +13,15 @@ from miranda.treatments._variables import *
 from miranda.treatments.utils import *
 from miranda.units import check_time_frequency
 
+
 logger = logging.getLogger("miranda.treatments")
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
 
 
 def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
-    """Update xarray dataset and data_vars with project-specific metadata fields.
+    """
+    Update xarray dataset and data_vars with project-specific metadata fields.
 
     Parameters
     ----------
@@ -109,11 +110,7 @@ def metadata_conversion(d: xarray.Dataset, p: str, m: dict) -> xarray.Dataset:
         d.attrs.update(dict(version=f"v{VERSION}"))
 
     prev_history = d.attrs.get("history", "")
-    history = (
-        f"[{datetime.datetime.now()}] "
-        "Converted variables and modified metadata for CF-like compliance: "
-        f"{prev_history}".strip()
-    )
+    history = f"[{datetime.datetime.now()}] Converted variables and modified metadata for CF-like compliance: {prev_history}".strip()
     d.attrs.update(dict(history=history))
 
     return d

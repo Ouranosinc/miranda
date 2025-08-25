@@ -1,9 +1,9 @@
 from __future__ import annotations
-
 import logging
 
 import numpy as np
 import xarray as xr
+
 
 logger = logging.getLogger("miranda.gis")
 
@@ -20,10 +20,9 @@ _gis_import_error_message = (
 )
 
 
-def subset_domain(
-    ds: xr.Dataset | xr.DataArray, domain: str, **kwargs
-) -> xr.Dataset | xr.DataArray:
-    r"""Subset an xarray object according to a specific domain.
+def subset_domain(ds: xr.Dataset | xr.DataArray, domain: str, **kwargs) -> xr.Dataset | xr.DataArray:
+    r"""
+    Subset an xarray object according to a specific domain.
 
     Notes
     -----
@@ -43,7 +42,8 @@ def subset_domain(
         from clisops.core.subset import subset_bbox  # noqa
     except ModuleNotFoundError:
         msg = _gis_import_error_message.format(subset_domain.__name__)
-        raise ModuleNotFoundError(msg)
+        logger.error(msg)
+        raise
 
     region = subsetting_domains(domain)
     lon_values = np.array([region[1], region[3]])
@@ -55,7 +55,8 @@ def subset_domain(
 
 
 def subsetting_domains(domain: str) -> list:
-    """Provides the bounding box coordinates for specific domains.
+    """
+    Provides the bounding box coordinates for specific domains.
 
     Parameters
     ----------
@@ -129,7 +130,8 @@ def subsetting_domains(domain: str) -> list:
 
 
 def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
-    """Add the IPCC AR6 Regions to dataset.
+    """
+    Add the IPCC AR6 Regions to dataset.
 
     Parameters
     ----------
@@ -144,7 +146,7 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     except ImportError:
         msg = _gis_import_error_message.format(add_ar6_regions.__name__)
         logger.error(msg)
-        raise ImportError(msg)
+        raise
 
     mask = regionmask.defined_regions.ar6.all.mask(ds.cf["lon"], ds.cf["lat"])
     ds = ds.assign_coords(region=mask)

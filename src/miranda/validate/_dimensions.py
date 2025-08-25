@@ -8,6 +8,7 @@ from ._regex import (
     VALID_TIME_FREQUENCY_REGEX,
 )
 
+
 __all__ = ["cf_dimensions_schema"]
 
 CF_DIMENSION_TREATMENTS = [
@@ -48,9 +49,7 @@ def _time_units_in_dimensions(time_dict: dict):
     has_calculate_units = "_units" in time_dict
 
     if has_units and has_calculate_units:  # both true or both false
-        raise ValueError(
-            "Time dimension may contain either 'units' or '_units', but not both"
-        )
+        raise ValueError("Time dimension may contain either 'units' or '_units', but not both")
     return time_dict
 
 

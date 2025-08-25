@@ -1,7 +1,6 @@
 """Validate outputted metadata against CF-like schemas."""
 
 from __future__ import annotations
-
 import json
 import logging
 from pathlib import Path
@@ -14,6 +13,7 @@ from ._regex import (
     PROJECT_NAME_REGEX,
 )
 from ._variables import cf_variables_schema
+
 
 __all__ = [
     "cf_dimensions_schema",
@@ -51,9 +51,7 @@ def _institution_in_header(header_dict: dict):
     has_map_attrs = "_map_attrs" in header_dict
 
     if has_institution == has_map_attrs:  # both true or both false
-        raise ValueError(
-            "Header must contain either 'institution' or '_map_attrs', but not both"
-        )
+        raise ValueError("Header must contain either 'institution' or '_map_attrs', but not both")
 
     if has_institution:
         if not isinstance(header_dict["institution"], str):
@@ -61,9 +59,7 @@ def _institution_in_header(header_dict: dict):
 
     if has_map_attrs:
         map_attrs = header_dict["_map_attrs"]
-        if not isinstance(map_attrs, dict) or not any(
-            isinstance(k, str) and v == "institution" for k, v in map_attrs.items()
-        ):
+        if not isinstance(map_attrs, dict) or not any(isinstance(k, str) and v == "institution" for k, v in map_attrs.items()):
             raise ValueError("'_map_attrs' must be a dict of {str: 'institution'}")
 
     return header_dict
@@ -85,9 +81,7 @@ cf_header_schema = Schema(
                 "table_id": str,
                 Optional(Regex(PROJECT_NAME_REGEX)): str,
                 Optional("_frequency"): bool,
-                Optional(Regex(r"^_license$|^_licence$")): {
-                    str: Or(str, Schema({str: str}))
-                },
+                Optional(Regex(r"^_license$|^_licence$")): {str: Or(str, Schema({str: str}))},
                 Optional("_miranda_version"): bool,
                 Optional("_remove_attrs"): Or(
                     Schema(Regex(PROJECT_NAME_REGEX)),

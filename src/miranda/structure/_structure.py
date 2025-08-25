@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import hashlib
 import logging
 import multiprocessing
@@ -15,6 +14,7 @@ from schema import SchemaError
 from miranda.cv import VALIDATION_ENABLED
 from miranda.decode import Decoder, DecoderError, guess_project
 from miranda.io import discover_data
+
 
 if VALIDATION_ENABLED:
     from miranda.validate import validation_schemas
@@ -44,18 +44,14 @@ def _verify(hash_value: str, hash_file: os.PathLike) -> None:
         logger.error(msg)
 
 
-def generate_hash_file(
-    in_file: os.PathLike, out_file: os.PathLike, verify: bool = False
-) -> None:
+def generate_hash_file(in_file: os.PathLike, out_file: os.PathLike, verify: bool = False) -> None:
     if not Path(out_file).exists():
         hash_sha256_writer = hashlib.sha256()
         with Path(in_file).open("rb") as f:
             hash_sha256_writer.update(f.read())
         sha256sum = hash_sha256_writer.hexdigest()
 
-        print(
-            f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {Path(out_file).name}"
-        )
+        print(f"Writing sha256sum (starting: {sha256sum[:6]}) to file: {Path(out_file).name}")
         try:
             with Path(out_file).open("w") as f:
                 f.write(sha256sum)
@@ -113,13 +109,12 @@ def generate_hash_metadata(
 
 
 def create_version_hash_files(
-    input_files: (
-        str | os.PathLike | list[str | os.PathLike] | GeneratorType | None
-    ) = None,
+    input_files: (str | os.PathLike | list[str | os.PathLike] | GeneratorType | None) = None,
     facet_dict: dict | None = None,
     verify_hash: bool = False,
 ) -> None:
-    """Create version hashes based on files or a facets dictionary.
+    """
+    Create version hashes based on files or a facets dictionary.
 
     Parameters
     ----------
@@ -150,15 +145,13 @@ def create_version_hash_files(
     version_hash_paths = dict()
     for file, facets in facet_dict.items():
         version_hash_file = f"{Path(file).stem}.{facets['version']}"
-        version_hash_paths.update(
-            {Path(file): Path(file).parent.joinpath(version_hash_file)}
-        )
+        version_hash_paths.update({Path(file): Path(file).parent.joinpath(version_hash_file)})
 
     hash_func = partial(generate_hash_file, verify=verify_hash)
     with multiprocessing.Pool() as pool:
         pool.starmap(
             hash_func,
-            zip(version_hash_paths.keys(), version_hash_paths.values()),
+            zip(version_hash_paths.keys(), version_hash_paths.values(), strict=False),
         )
         pool.close()
         pool.join()
@@ -188,10 +181,9 @@ def _structure_datasets(
             print(f"{in_file.name} already exists at location. Continuing...")
 
 
-def parse_schema(
-    facets: dict, schema: str | os.PathLike | dict, top_folder: str = "datasets"
-) -> list:
-    """Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
+def parse_schema(facets: dict, schema: str | os.PathLike | dict, top_folder: str = "datasets") -> list:
+    """
+    Parse the schema from a YAML schema configuration and construct path using a dictionary of facets.
 
     Parameters
     ----------
@@ -211,7 +203,7 @@ def parse_schema(
             logger.error("Schema is not a valid facet-tree reference.")
             raise
 
-        for i, options in enumerate(parent):
+        for options in parent:
             if {"option", "structure", "value"}.issubset(options.keys()):
                 option = options["option"]
                 value = options["value"]
@@ -220,7 +212,7 @@ def parse_schema(
                     if facet_dict[option] == value:
                         return {"branch": value, "structure": options["structure"]}
                     continue
-        raise ValueError("Couldn\nt parse top level.")
+        raise ValueError("Could not parse top level.")
 
     def _parse_structure(branch_dict: dict, facet_dict: dict) -> list:
         structure = branch_dict.get("structure")
@@ -235,9 +227,7 @@ def parse_schema(
                     option = level["option"]
 
                     if option not in facet_dict and "value" in level:
-                        raise ValueError(
-                            f"Necessary facet not found for schema: `{option}`."
-                        )
+                        raise ValueError(f"Necessary facet not found for schema: `{option}`.")
 
                     is_true = level.get("is_true")
                     else_value = level.get("else")
@@ -284,7 +274,8 @@ def build_path_from_schema(
     top_folder: str = "datasets",
     validate: bool = True,
 ) -> Path | None:
-    """Build a filepath based on a valid data schema.
+    """
+    Build a filepath based on a valid data schema.
 
     Parameters
     ----------
@@ -304,9 +295,7 @@ def build_path_from_schema(
     Path or None
     """
     if schema is None:
-        schema = (
-            Path(__file__).parent.joinpath("configs").joinpath("ouranos_schema.yml")
-        )
+        schema = Path(__file__).parent.joinpath("configs").joinpath("ouranos_schema.yml")
 
     tree = parse_schema(facets, schema, top_folder)
     branch = tree[0]
@@ -320,18 +309,14 @@ def build_path_from_schema(
                 logger.error(msg)
                 return
         elif facets[branch] not in validation_schemas.keys():
-            msg = (
-                f"No appropriate data schemas found for file matching schema: {facets}",
-            )
+            msg = (f"No appropriate data schemas found for file matching schema: {facets}",)
             logger.error(
                 msg,
                 DecoderError,
             )
             return
     elif validate and not VALIDATION_ENABLED:
-        logger.warning(
-            "Facets validation requires pyessv-archive source files. Skipping validation checks."
-        )
+        logger.warning("Facets validation requires pyessv-archive source files. Skipping validation checks.")
 
     # Remove spaces in folder paths
     file_location = [str(facets[facet]).replace(" ", "-") for facet in tree]
@@ -351,7 +336,8 @@ def structure_datasets(
     verify_hashes: bool = False,
     suffix: str = "nc",
 ) -> dict[Path, Path]:
-    """Structure datasets.
+    """
+    Structure datasets.
 
     Parameters
     ----------
@@ -413,23 +399,13 @@ def structure_datasets(
         if set_version_hashes:
             version_hash_file = f"{Path(file).stem}.{facets['version']}"
             if Path(file).parent.joinpath(version_hash_file).exists():
-                existing_hashes.update(
-                    {
-                        Path(file).parent.joinpath(
-                            version_hash_file
-                        ): output_filepath.joinpath(version_hash_file)
-                    }
-                )
+                existing_hashes.update({Path(file).parent.joinpath(version_hash_file): output_filepath.joinpath(version_hash_file)})
             else:
-                version_hash_paths.update(
-                    {Path(file): output_filepath.joinpath(version_hash_file)}
-                )
+                version_hash_paths.update({Path(file): output_filepath.joinpath(version_hash_file)})
 
     if errored_files:
         if len(errored_files) < 10:
-            msg = (
-                f"Some files were unable to be structured: [{', '.join(errored_files)}]"
-            )
+            msg = f"Some files were unable to be structured: [{', '.join(errored_files)}]"
         else:
             msg = f"Many files were unable to be structured (n={len(errored_files)})"
         logger.warning(msg)
@@ -442,17 +418,14 @@ def structure_datasets(
         hash_func = partial(generate_hash_file, verify=verify_hashes)
         with multiprocessing.Pool() as pool:
             if existing_hashes:
-                print(
-                    f"Sha256sum signatures exist for {len(existing_hashes)} files. "
-                    f"Transferring them via `{method}` method."
-                )
+                print(f"Sha256sum signatures exist for {len(existing_hashes)} files. Transferring them via `{method}` method.")
                 pool.starmap(
                     getattr(shutil, method),
-                    zip(existing_hashes.keys(), existing_hashes.values()),
+                    zip(existing_hashes.keys(), existing_hashes.values(), strict=False),
                 )
             pool.starmap(
                 hash_func,
-                zip(version_hash_paths.keys(), version_hash_paths.values()),
+                zip(version_hash_paths.keys(), version_hash_paths.values(), strict=False),
             )
             pool.close()
             pool.join()
@@ -461,7 +434,8 @@ def structure_datasets(
     structure_func = partial(_structure_datasets, method=method, dry_run=dry_run)
     with multiprocessing.Pool() as pool:
         pool.starmap(
-            structure_func, zip(all_file_paths.keys(), all_file_paths.values())
+            structure_func,
+            zip(all_file_paths.keys(), all_file_paths.values(), strict=False),
         )
         pool.close()
         pool.join()

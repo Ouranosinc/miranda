@@ -1,14 +1,15 @@
 from __future__ import annotations
-
 import logging
 from collections.abc import Mapping
 from datetime import datetime as dt
+
 
 __all__ = ["cf_ahccd_metadata", "cf_station_metadata"]
 
 
 def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | str]:
-    """CF metadata for hourly station data.
+    """
+    CF metadata for hourly station data.
 
     Parameters
     ----------
@@ -835,10 +836,9 @@ def cf_station_metadata(variable_code: int | str) -> Mapping[str, int | float | 
     return variable
 
 
-def cf_ahccd_metadata(
-    code: str, gen: int
-) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
-    """CF compliant metadata for ECCC Adjusted and Homogenized Climate Data (AHCCD).
+def cf_ahccd_metadata(code: str, gen: int) -> (dict[str, int | float | str], dict, list[tuple[int, int]], int):
+    """
+    CF compliant metadata for ECCC Adjusted and Homogenized Climate Data (AHCCD).
 
     Parameters
     ----------
@@ -918,7 +918,7 @@ def cf_ahccd_metadata(
             ]
             column_spaces = [(0, 5), (5, 6), (6, 8), (8, 9)]
             ii = 9
-            for i in range(1, 32):
+            for _ in range(31):
                 column_spaces.append((ii, ii + 7))
                 ii += 7
                 column_spaces.append((ii, ii + 1))
@@ -942,7 +942,7 @@ def cf_ahccd_metadata(
             ]
             column_spaces = [(0, 4), (4, 5), (5, 7), (7, 8)]
             ii = 8
-            for i in range(1, 32):
+            for _ in range(31):
                 column_spaces.append((ii, ii + 8))
                 ii += 8
                 column_spaces.append((ii, ii + 1))
@@ -952,14 +952,7 @@ def cf_ahccd_metadata(
         else:
             raise KeyError
 
-        column_names = {
-            col.lower()
-            .split("(")[0]
-            .replace("%", "pct_")
-            .strip()
-            .replace(" ", "_"): col
-            for col in list(column_names)
-        }
+        column_names = {col.lower().split("(")[0].replace("%", "pct_").strip().replace(" ", "_"): col for col in list(column_names)}
 
         if gen == 3:
             _citation = (
@@ -978,8 +971,7 @@ def cf_ahccd_metadata(
             raise NotImplementedError(msg)
 
         global_attrs = dict(
-            title=f"{generation} Generation of Homogenized Daily {variable['variable']} "
-            "for Canada (Updated to December 2019)",
+            title=f"{generation} Generation of Homogenized Daily {variable['variable']} for Canada (Updated to December 2019)",
             history=f"{dt.today().strftime('%Y-%m-%d')}: Convert from original format to NetCDF",
             type="station_obs",
             institute="Environment and Climate Change Canada",

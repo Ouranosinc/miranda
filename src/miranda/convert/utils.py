@@ -1,7 +1,6 @@
 """Conversion Utilities submodule."""
 
 from __future__ import annotations
-
 import hashlib
 import logging
 import os
@@ -12,6 +11,7 @@ from typing import Any
 import cftime
 import pandas as pd
 from pandas._libs import NaTType  # noqa
+
 
 logger = logging.getLogger("miranda.convert.utils")
 
@@ -153,9 +153,7 @@ def date_parser(
             except ValueError:  # noqa: S110
                 pass
         else:
-            raise ValueError(
-                f"Can't parse date {d} with supported formats: [{', '.join(fmts)}]."
-            )
+            raise ValueError(f"Can't parse date {d} with supported formats: [{', '.join(fmts)}].")
         return s, match
 
     date_format = None
@@ -186,9 +184,7 @@ def date_parser(
             else:
                 break
         else:
-            raise ValueError(
-                f"Unable to parse cftime date {date}, even when moving back 2 days."
-            )
+            raise ValueError(f"Unable to parse cftime date {date}, even when moving back 2 days.")
     elif not isinstance(date, pd.Timestamp):
         date = pd.Timestamp(date)  # noqa
 
