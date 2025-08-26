@@ -4,7 +4,6 @@ import numpy as np
 
 
 class TestRDRSConversion:
-
     def test_get_drop_vars(self, multivariable_dataset, tmp_path):
         from miranda.convert.eccc_rdrs import _get_drop_vars
 

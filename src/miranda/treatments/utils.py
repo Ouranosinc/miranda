@@ -1,20 +1,18 @@
 """Utility functions for GIS operations."""
 
 from __future__ import annotations
-
 import inspect
 import json
 from pathlib import Path
 from typing import Any
+
 
 __all__ = [
     "load_json_data_mappings",
 ]
 
 
-def _get_section_entry_key(
-    meta: dict, entry: str, var: str, key: str, project: str
-) -> Any:
+def _get_section_entry_key(meta: dict, entry: str, var: str, key: str, project: str) -> Any:
     """
     Get a specific key from a section of the metadata.
 
@@ -74,9 +72,7 @@ def _iter_entry_key(ds, meta, entry, key, project) -> tuple[str, Any]:
         yield vv, val
 
 
-def load_json_data_mappings(
-    project: str, configurations: dict[str, Path] | None = None
-) -> dict[str, Any]:
+def load_json_data_mappings(project: str, configurations: dict[str, Path] | None = None) -> dict[str, Any]:
     """
     Load JSON mappings for supported dataset conversions.
 

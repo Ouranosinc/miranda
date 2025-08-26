@@ -1,17 +1,18 @@
 """IO Utilities module."""
 
 from __future__ import annotations
-
 import json
 import logging
 import os
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import dask
 import netCDF4 as nc  # noqa
 import xarray as xr
 import zarr
+
 
 logger = logging.getLogger("miranda.io.utils")
 
@@ -26,9 +27,7 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-name_configurations = json.load(
-    _data_folder.joinpath("ouranos_name_config.json").open("r", encoding="utf-8")
-)
+name_configurations = json.load(_data_folder.joinpath("ouranos_name_config.json").open("r", encoding="utf-8"))
 
 
 def name_output_file(
@@ -71,17 +70,10 @@ def name_output_file(
             facets["variable"] = data_vars
         elif len(ds_or_dict.data_vars) == 1:
             facets["variable"] = list(ds_or_dict.data_vars.keys())[0]
-        elif (
-            len(ds_or_dict.data_vars) == 2
-            and "rotated_pole" in ds_or_dict.data_vars.keys()
-        ):
-            facets["variable"] = [
-                v for v in ds_or_dict.data_vars if v != "rotated_pole"
-            ][0]
+        elif len(ds_or_dict.data_vars) == 2 and "rotated_pole" in ds_or_dict.data_vars.keys():
+            facets["variable"] = [v for v in ds_or_dict.data_vars if v != "rotated_pole"][0]
         else:
-            raise NotImplementedError(
-                f"Too many `data_vars` in Dataset: {', '.join(ds_or_dict.data_vars.keys())}."
-            )
+            raise NotImplementedError(f"Too many `data_vars` in Dataset: {', '.join(ds_or_dict.data_vars.keys())}.")
         for f in [
             "bias_adjust_project",
             "domain",
@@ -107,12 +99,8 @@ def name_output_file(
         else:
             raise KeyError("`frequency` not found.")
 
-        facets["time_start"], facets["time_end"] = (
-            ds_or_dict.time.isel(time=[0, -1]).dt.strftime(date_format).values
-        )
-        facets["year_start"], facets["year_end"] = ds_or_dict.time.isel(
-            time=[0, -1]
-        ).dt.year.values
+        facets["time_start"], facets["time_end"] = ds_or_dict.time.isel(time=[0, -1]).dt.strftime(date_format).values
+        facets["year_start"], facets["year_end"] = ds_or_dict.time.isel(time=[0, -1]).dt.year.values
     elif isinstance(ds_or_dict, dict):
         for f in [
             "bias_adjust_project",
@@ -145,9 +133,7 @@ def name_output_file(
 
     missing = []
     for k, v in facets.items():
-        if (
-            v is None and k in str_name
-        ):  # only missing if the facets is needed in the name
+        if v is None and k in str_name:  # only missing if the facets is needed in the name
             missing.append(k)
     if missing:
         raise ValueError(f"The following facets were not found: {' ,'.join(missing)}.")
@@ -161,10 +147,9 @@ def delayed_write(
     outfile: str | os.PathLike,
     output_format: str,
     overwrite: bool,
-    encode: bool = True,
     target_chunks: dict | None = None,
-    kwargs: dict | None = None,
-) -> dask.delayed:
+    **kwargs: Any,
+) -> dask.delayed.Delayed:
     """
     Stage a Dataset writing job using `dask.delayed` objects.
 
@@ -179,11 +164,9 @@ def delayed_write(
     overwrite : bool
         Whether to overwrite existing files.
         Default: False.
-    encode : bool
-        Whether to encode the chunks. Not currently implemented.
     target_chunks : dict
         The target chunks for the output file.
-    kwargs : dict
+    **kwargs : Any
         Additional keyword arguments.
 
     Returns
@@ -215,7 +198,6 @@ def delayed_write(
                     kwargs["mode"] = "a"
             elif output_format == "zarr":
                 ds = ds.chunk(target_chunks)
-                # if encode:
                 if "append_dim" not in kwargs.keys():
                     kwargs["encoding"][name] = {
                         "chunks": chunks,
@@ -299,9 +281,7 @@ def get_global_attrs(
     return data
 
 
-def sort_variables(
-    files: list[str | os.PathLike[str] | Path], variables: Sequence[str] | None
-) -> dict[str, list[Path]]:
+def sort_variables(files: list[str | os.PathLike[str] | Path], variables: Sequence[str] | None) -> dict[str, list[Path]]:
     """
     Sort all variables within supplied files for treatment.
 
@@ -322,9 +302,7 @@ def sort_variables(
     if variables:
         logger.info("Sorting variables into groups. This could take some time.")
         for variable in variables:
-            var_group = [
-                Path(file) for file in files if Path(file).name.startswith(variable)
-            ]
+            var_group = [Path(file) for file in files if Path(file).name.startswith(variable)]
             if not var_group:
                 msg = f"No files found for {variable}. Continuing..."
                 logger.warning(msg)

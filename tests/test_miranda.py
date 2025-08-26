@@ -1,7 +1,6 @@
 from __future__ import annotations
-
+import pathlib
 from importlib.util import find_spec
-from pathlib import Path
 
 import miranda
 
@@ -13,9 +12,13 @@ class TestMirandaVersion:
 
 def test_package_metadata():
     """Test the package metadata."""
-    project = find_spec("miranda").submodule_search_locations[0]
+    project = find_spec("miranda")
 
-    metadata = Path(project).resolve().joinpath("__init__.py")
+    assert project is not None
+    assert project.submodule_search_locations is not None
+    location = project.submodule_search_locations[0]
+
+    metadata = pathlib.Path(location).resolve().joinpath("__init__.py")
 
     with metadata.open() as f:
         contents = f.read()

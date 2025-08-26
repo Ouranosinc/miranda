@@ -19,9 +19,7 @@ obs_vocabularies["HLY01"].append(244)  # Precipitation type
 obs_vocabularies["HLY01"].append(260)  # Freezing fog
 
 obs_vocabularies["HLY01_RCS"] = obs_vocabularies["HLY01"].copy()
-obs_vocabularies["HLY01_RCS"].extend(
-    list(range(262, 281))
-)  # Reference Climate Surface (RCS) weather stations
+obs_vocabularies["HLY01_RCS"].extend(list(range(262, 281)))  # Reference Climate Surface (RCS) weather stations
 
 obs_vocabularies["HLY03"] = []
 obs_vocabularies["HLY03"].extend(list(range(123, 133)))  # Hourly rainfall

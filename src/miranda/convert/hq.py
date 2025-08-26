@@ -1,7 +1,6 @@
 """Hydro Quebec Weather Station Data Conversion module."""
 
 from __future__ import annotations
-
 import csv
 import datetime as dt
 import json
@@ -17,14 +16,13 @@ import xarray as xr
 from xclim.core.units import units as u
 from xclim.core.units import units2pint
 
+
 logger = logging.getLogger("miranda.convert.hq")
 
 __all__ = ["open_csv"]
 
 # CMOR-like attributes
-cmor = json.load(
-    Path(__file__).parent.joinpath("data").joinpath("hq_cf_attrs.json").open("r")
-)["variables"]
+cmor = json.load(Path(__file__).parent.joinpath("data").joinpath("hq_cf_attrs.json").open("r"))["variables"]
 
 fp = r"[-+]?\d*,\d+|\d+"
 
@@ -68,9 +66,7 @@ converters = {
 }
 
 
-def guess_variable(
-    meta: dict[str, Any], cf_table: dict | None
-) -> tuple[str, str | None]:
+def guess_variable(meta: dict[str, Any], cf_table: dict | None) -> tuple[str, str | None]:
     """
     Return the corresponding CMOR variable.
 
@@ -159,9 +155,7 @@ def extract_daily(path: str | os.PathLike[str]) -> tuple[dict, pd.DataFrame]:
 
         elif sec in csv_patterns:
             content = next(sections).strip()
-            m[sec] = list(
-                csv.reader(content.splitlines(), dialect="unix", delimiter=";")
-            )
+            m[sec] = list(csv.reader(content.splitlines(), dialect="unix", delimiter=";"))
 
     d = pd.read_csv(
         path,
@@ -177,9 +171,7 @@ def extract_daily(path: str | os.PathLike[str]) -> tuple[dict, pd.DataFrame]:
     return m, d
 
 
-def to_cf(
-    meta: dict[str, Any], data: pd.DataFrame, cf_table: dict[str, Any] | None = None
-) -> xr.DataArray:
+def to_cf(meta: dict[str, Any], data: pd.DataFrame, cf_table: dict[str, Any] | None = None) -> xr.DataArray:
     """
     Return CF-compliant metadata.
 
@@ -222,15 +214,11 @@ def to_cf(
 
     coords = {k: attrs.pop(k, np.nan) for k in ["lon", "lat", "elevation", "site"]}
     coords["time"] = data.index.values
-    cf_corrected = xr.DataArray(
-        data=x, dims="time", coords=coords, name=name, attrs=attrs
-    )
+    cf_corrected = xr.DataArray(data=x, dims="time", coords=coords, name=name, attrs=attrs)
     return cf_corrected
 
 
-def open_csv(
-    path: str | os.PathLike[str], cf_table: dict[str, Any] | None = cmor
-) -> xr.DataArray:
+def open_csv(path: str | os.PathLike[str], cf_table: dict[str, Any] | None = cmor) -> xr.DataArray:
     """
     Extract daily HQ meteo data and convert to xr.DataArray with CF-Convention attributes.
 

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import json
 import logging
 import os
@@ -14,6 +13,7 @@ from xarray.core.utils import Frozen
 from ._input import discover_data
 from .utils import delayed_write, get_global_attrs, get_time_attrs, sort_variables
 
+
 logger = logging.getLogger("miranda.io.rechunk")
 
 __all__ = [
@@ -24,15 +24,12 @@ __all__ = [
 ]
 
 _data_folder = Path(__file__).parent / "data"
-chunk_configurations = json.load(
-    _data_folder.joinpath("ouranos_chunk_config.json").open("r", encoding="utf-8")
-)
+chunk_configurations = json.load(_data_folder.joinpath("ouranos_chunk_config.json").open("r", encoding="utf-8"))
 
 
-def prepare_chunks_for_ds(
-    ds: xr.Dataset, chunks: dict[str, str | int]
-) -> dict[str, int]:
-    """Prepare the chunks to be used to write Dataset.
+def prepare_chunks_for_ds(ds: xr.Dataset, chunks: dict[str, str | int]) -> dict[str, int]:
+    """
+    Prepare the chunks to be used to write Dataset.
 
     This includes translating the time chunks, making sure chunks are not too small, and removing -1.
 
@@ -66,7 +63,8 @@ def prepare_chunks_for_ds(
 
 # Shamelessly stolen and modified from xscen
 def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
-    """Translate chunk specification for time into a number.
+    """
+    Translate chunk specification for time into a number.
 
     Notes
     -----
@@ -79,9 +77,7 @@ def translate_time_chunk(chunks: dict, calendar: str, timesize: int) -> dict:
         elif k == "time" and v is not None:
             if isinstance(v, str) and v.endswith("years"):
                 n = int(str(chunks["time"]).strip("years").strip())
-                n_t = n * {"noleap": 365, "360_day": 360, "all_leap": 366}.get(
-                    calendar, 365.25
-                )
+                n_t = n * {"noleap": 365, "360_day": 360, "all_leap": 366}.get(calendar, 365.25)
                 chunks[k] = int(n_t)
             elif v == -1:
                 chunks[k] = timesize
@@ -94,7 +90,8 @@ def fetch_chunk_config(
     dims: Sequence[str] | dict[str, int] | Frozen | tuple[Hashable],
     default_config: dict = chunk_configurations,
 ) -> dict[str, int]:
-    """Fetch data chunking configuration.
+    """
+    Fetch data chunking configuration.
 
     Parameters
     ----------
@@ -136,7 +133,8 @@ def rechunk_files(
     output_format: str = "netcdf",
     overwrite: bool = False,
 ) -> None:
-    """Rechunks dataset for better loading/reading performance.
+    """
+    Rechunks dataset for better loading/reading performance.
 
     Warnings
     --------
@@ -180,14 +178,10 @@ def rechunk_files(
     if target_chunks is None or time_step is None:
         test_file = next(input_folder.glob(f"*.{suffix}"))
         if project is None:
-            logger.warning(
-                "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
-            )
+            logger.warning("`project` and `target_chunks` not set. Attempting to find `project` from attributes")
             project = get_global_attrs(test_file).get("project")
             if not project:
-                raise ValueError(
-                    "`project` not found. Must pass either `project` or `target_chunks`."
-                )
+                raise ValueError("`project` not found. Must pass either `project` or `target_chunks`.")
 
         if time_step is None:
             time_step = get_global_attrs(test_file).get("frequency")
@@ -261,9 +255,7 @@ def rechunk_files(
             logger.info(msg)
             shutil.move(out, output_folder)
 
-        msg = (
-            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
-        )
+        msg = f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         logger.info(msg)
         continue
 

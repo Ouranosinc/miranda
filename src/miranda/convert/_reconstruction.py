@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import logging
 import os
 from collections.abc import Sequence
@@ -18,6 +17,7 @@ from miranda.vocabularies import project_institute, xarray_frequencies_to_cmip6l
 
 from ._aggregation import aggregate as aggregate_func
 from .corrections import dataset_corrections
+
 
 logger = logging.getLogger("miranda.convert.reconstruction")
 
@@ -50,7 +50,8 @@ def reanalysis_processing(
     n_workers: int = 4,
     **dask_kwargs,
 ) -> None:
-    """Reanalysis processing.
+    """
+    Reanalysis processing.
 
     Parameters
     ----------
@@ -108,7 +109,7 @@ def reanalysis_processing(
 
                 for var in variables:
                     # Select only for variable of interest
-                    multi_files = sorted(x for x in in_files if f"{var}_" in str(x))
+                    multi_files = sorted(str(x) for x in in_files if f"{var}_" in str(x))
 
                     if multi_files:
                         all_chunks = get_chunks_on_disk(multi_files[0])
@@ -134,9 +135,7 @@ def reanalysis_processing(
                         if aggregate:
                             time_freq = aggregate
                         else:
-                            parse_freq = calendar.parse_offset(
-                                xr.infer_freq(xr.open_dataset(multi_files[0]).time)
-                            )
+                            parse_freq = calendar.parse_offset(xr.infer_freq(xr.open_dataset(multi_files[0]).time))
                             time_freq = f"{parse_freq[0]}{xarray_frequencies_to_cmip6like[parse_freq[1]]}"
 
                         institute = project_institute(project)
@@ -156,9 +155,7 @@ def reanalysis_processing(
                         # Subsetting operations
                         if domain.lower() in ["global", "not-specified"]:
                             if start or end:
-                                ds = xr.open_mfdataset(multi_files, **xr_kwargs).sel(
-                                    time=slice(start, end)
-                                )
+                                ds = xr.open_mfdataset(multi_files, **xr_kwargs).sel(time=slice(start, end))
                             else:
                                 ds = xr.open_mfdataset(multi_files, **xr_kwargs)
                         else:
@@ -176,37 +173,24 @@ def reanalysis_processing(
                             dataset = aggregate_func(ds, freq="day")
                             freq = "YS"
                         else:
-                            out_variable = (
-                                list(ds.data_vars)[0]
-                                if len(list(ds.data_vars)) == 1
-                                else None
-                            )
+                            out_variable = list(ds.data_vars)[0] if len(list(ds.data_vars)) == 1 else None
                             dataset = {out_variable: ds}
                             freq = "MS"
 
                         if len(dataset) == 0:
-                            msg = (
-                                f"Daily aggregation methods for variable `{var}` are not supported. "
-                                "Continuing..."
-                            )
+                            msg = f"Daily aggregation methods for variable `{var}` are not supported. Continuing..."
                             logger.warning(msg)
 
                         for key in dataset.keys():
                             ds = dataset[key]
 
                             # TODO: What do we do about multivariable files. Are they even allowed?
-                            out_variable = (
-                                list(ds.data_vars)[0]
-                                if len(list(ds.data_vars)) == 1
-                                else None
-                            )
-                            file_name1 = file_name.replace(
-                                f"{var}_", f"{out_variable}_"
-                            )
+                            out_variable = list(ds.data_vars)[0] if len(list(ds.data_vars)) == 1 else None
+                            file_name1 = file_name.replace(f"{var}_", f"{out_variable}_")
 
                             msg = f"Writing out fixed files for {file_name1}."
                             logger.info(msg)
-                            years, datasets = zip(*ds.resample(time=freq))
+                            years, datasets = zip(*ds.resample(time=freq), strict=False)
                             if freq == "MS":
                                 format_str = "%Y-%m"
                                 iterable_chunks = 36
@@ -215,10 +199,7 @@ def reanalysis_processing(
                                 iterable_chunks = 10
 
                             out_filenames = [
-                                output_folder.joinpath(
-                                    f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}{suffix}"
-                                )
-                                for year in years
+                                output_folder.joinpath(f"{file_name1}_{xr.DataArray(year).dt.strftime(format_str).values}{suffix}") for year in years
                             ]
 
                             jobs = list()
@@ -227,16 +208,10 @@ def reanalysis_processing(
 
                                 logger.warning(msg)
                             for i, d in enumerate(datasets):
-                                if (
-                                    out_filenames[i].exists()
-                                    and out_filenames[i].is_file()
-                                    and overwrite
-                                ):
+                                if out_filenames[i].exists() and out_filenames[i].is_file() and overwrite:
                                     out_filenames[i].unlink()
 
-                                if not out_filenames[i].exists() or (
-                                    out_filenames[i].is_dir() and overwrite
-                                ):
+                                if not out_filenames[i].exists() or (out_filenames[i].is_dir() and overwrite):
                                     jobs.append(
                                         delayed_write(
                                             d,
@@ -248,14 +223,10 @@ def reanalysis_processing(
                                     )
 
                             if len(jobs) == 0:
-                                msg = (
-                                    f"All output files for `{var}` currently exist."
-                                    " To overwrite them, set `overwrite=True`. Continuing..."
-                                )
+                                msg = f"All output files for `{var}` currently exist. To overwrite them, set `overwrite=True`. Continuing..."
                                 logger.warning(msg)
                             else:
                                 chunked_jobs = chunk_iterables(jobs, iterable_chunks)
-                                msg = f"Writing out job chunk {iterations}."
                                 logger.info(msg)
                                 iterations = 0
                                 for chunk in chunked_jobs:

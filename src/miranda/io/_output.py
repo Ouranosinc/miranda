@@ -1,11 +1,11 @@
 """IO Output Operations module."""
 
 from __future__ import annotations
-
 import logging
 import os
 import shutil
 import time
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -18,6 +18,7 @@ from miranda.convert.utils import date_parser
 from ._input import discover_data
 from ._rechunk import fetch_chunk_config, prepare_chunks_for_ds, translate_time_chunk
 from .utils import delayed_write, get_global_attrs, name_output_file, sort_variables
+
 
 logger = logging.getLogger("miranda.io.output")
 
@@ -38,7 +39,8 @@ def write_dataset(
     overwrite: bool = False,
     compute: bool = True,
 ) -> dict[str, Path]:
-    """Write xarray object to NetCDf or Zarr with appropriate chunking regime.
+    """
+    Write xarray object to NetCDf or Zarr with appropriate chunking regime.
 
     Parameters
     ----------
@@ -75,7 +77,7 @@ def write_dataset(
 
     if overwrite and outfile_path.exists():
         msg = f"Removing existing {output_format} files for {outfile_path}."
-        logger.warning(msg)
+        warnings.warn(msg, stacklevel=2)
         if outfile_path.is_dir():
             shutil.rmtree(outfile_path)
         if outfile_path.is_file():
@@ -84,9 +86,7 @@ def write_dataset(
     if chunks is None and "frequency" in ds.attrs:
         freq = ds.attrs.get("frequency")
         if not freq:
-            raise ValueError(
-                "If 'chunks' are not provided, the 'frequency' attribute must be set."
-            )
+            raise ValueError("If 'chunks' are not provided, the 'frequency' attribute must be set.")
         if "lat" in ds.dims and "lon" in ds.dims:
             chunks = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
         elif "lat" not in ds.dims and "lon" not in ds.dims:
@@ -117,7 +117,8 @@ def write_dataset_dict(
     chunks: dict[str, int],
     **dask_kwargs,
 ):
-    r"""Write dataset from Miranda-formatted dataset.
+    r"""
+    Write dataset from Miranda-formatted dataset.
 
     Parameters
     ----------
@@ -171,13 +172,11 @@ def write_dataset_dict(
                 shutil.rmtree(tmp_path)
 
         elif outpath.exists() and not overwrite:
-            existing_ds = xr.open_dataset(
-                outpath, engine=output_format, decode_times=False
-            )
+            existing_ds = xr.open_dataset(outpath, engine=output_format, decode_times=False)
             if "time" in ds.dims and "time" in existing_ds.dims:
                 if ds.time.size > existing_ds.time.size:
                     msg = f"Dataset {variable} has more time points than existing file. Will overwrite {outpath.as_posix()}."
-                    logger.warning(msg)
+                    warnings.warn(msg, stacklevel=2)
 
                     tmp_path = None
                     if temp_folder:
@@ -197,7 +196,7 @@ def write_dataset_dict(
 
         else:
             msg = f"Skipping {outpath.as_posix()} as overwrite is False and time dimension is sufficient."
-            logger.warning(msg)
+            warnings.warn(msg, stacklevel=2)
 
 
 # FIXME: concat_rechunk and merge_rechunk could be collapsed into each other
@@ -208,7 +207,8 @@ def concat_rechunk_zarr(
     overwrite: bool = False,
     **dask_kwargs,
 ) -> None:
-    r"""Concatenate and rechunk zarr files.
+    r"""
+    Concatenate and rechunk zarr files.
 
     Parameters
     ----------
@@ -230,12 +230,8 @@ def concat_rechunk_zarr(
     list_zarr = sorted(list(input_folder.glob("*.zarr")))
 
     out_stem = "_".join(list_zarr[0].stem.split("_")[0:-1])
-    start_year = date_parser(
-        list_zarr[0].stem.split("_")[-1], output_type="datetime"
-    ).year
-    end_year = date_parser(
-        list_zarr[-1].stem.split("_")[-1], output_type="datetime"
-    ).year
+    start_year = date_parser(list_zarr[0].stem.split("_")[-1], output_type="datetime").year
+    end_year = date_parser(list_zarr[-1].stem.split("_")[-1], output_type="datetime").year
 
     out_zarr = output_folder.joinpath(f"{out_stem}_{start_year}_{end_year}.zarr")
 
@@ -249,19 +245,11 @@ def concat_rechunk_zarr(
         tmp_folder.mkdir(parents=True, exist_ok=True)
         chunks = dict()
         for year in years:
-            list_zarr1 = sorted(
-                [
-                    zarr_file
-                    for zarr_file in list_zarr
-                    if int(zarr_file.stem.split("_")[-1].split("-")[0][0:4]) in year
-                ]
-            )
+            list_zarr1 = sorted([zarr_file for zarr_file in list_zarr if int(zarr_file.stem.split("_")[-1].split("-")[0][0:4]) in year])
             # assert len(list_zarr1) / len(year) == 12
             ds = xr.open_mfdataset(list_zarr1, parallel=True, engine="zarr")
             if not chunks:
-                chunk_config = fetch_chunk_config(
-                    priority="time", freq=freq, dims=ds.dims
-                )
+                chunk_config = fetch_chunk_config(priority="time", freq=freq, dims=ds.dims)
                 chunks.update(
                     translate_time_chunk(
                         chunks=chunk_config,
@@ -289,9 +277,7 @@ def concat_rechunk_zarr(
         # write to final
         tmpzarrlist = sorted(list(tmp_zarr.parent.glob("*.zarr")))
         del ds
-        ds = xr.open_mfdataset(
-            tmpzarrlist, engine="zarr", parallel=True, combine="by_coords"
-        )
+        ds = xr.open_mfdataset(tmpzarrlist, engine="zarr", parallel=True, combine="by_coords")
         zarr_kwargs = None
         job = delayed_write(
             ds=ds,
@@ -317,7 +303,8 @@ def merge_rechunk_zarrs(
     suffix: str = "zarr",
     overwrite: bool = False,
 ) -> None:
-    """Merge and rechunk zarr files.
+    """
+    Merge and rechunk zarr files.
 
     Parameters
     ----------
@@ -351,14 +338,10 @@ def merge_rechunk_zarrs(
     variable_sorted = sort_variables(files_found, variables)
 
     if project is None and target_chunks is None:
-        logger.warning(
-            "`project` and `target_chunks` not set. Attempting to find `project` from attributes"
-        )
+        warnings.warn("`project` and `target_chunks` not set. Attempting to find `project` from attributes", stacklevel=2)
         project = get_global_attrs(files_found[0]).get("project")
         if not project:
-            raise ValueError(
-                "`project` not found. Must pass either `project` or `target_chunks`."
-            )
+            raise ValueError("`project` not found. Must pass either `project` or `target_chunks`.")
 
     if not freq:
         freq = get_global_attrs(files_found[0]).get("frequency")
@@ -367,9 +350,9 @@ def merge_rechunk_zarrs(
     if not target_chunks:
         try:
             target_chunks = chunk_defaults[freq]
-        except KeyError:
+        except KeyError as err:
             msg = f"Frequency not supported: `{freq}`."
-            raise NotImplementedError(msg)
+            raise NotImplementedError(msg) from err
 
     start = time.perf_counter()
 
@@ -384,7 +367,7 @@ def merge_rechunk_zarrs(
         if overwrite:
             if out_zarr.is_dir():
                 msg = f"Removing existing zarr files for {out_zarr.name}."
-                logger.warning(msg)
+                warnings.warn(msg, stacklevel=2)
                 shutil.rmtree(out_zarr)
         else:
             msg = f"Files exist: {out_zarr.name}. Skipping..."
@@ -396,9 +379,7 @@ def merge_rechunk_zarrs(
             del var.encoding["chunks"]
         ds.to_zarr(out_zarr, mode="w")
 
-        msg = (
-            f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
-        )
+        msg = f"{variable} rechunked in {(time.perf_counter() - start_var) / 3600:.2f} h."
         logger.info(msg)
     msg = f"All variables rechunked in {time.perf_counter() - start:.2f} s."
     logger.info(msg)

@@ -1,7 +1,6 @@
 """Data Validation module."""
 
 from __future__ import annotations
-
 import re
 
 import pandas as pd
@@ -9,6 +8,7 @@ from pandas._libs.tslibs import NaTType  # noqa
 from schema import Literal, Optional, Or, Regex, Schema
 
 from miranda.cv import VALIDATION_ENABLED
+
 
 __all__ = []
 
@@ -43,8 +43,7 @@ if VALIDATION_ENABLED:
             Optional(
                 Literal(
                     "activity",
-                    description="The common climate modelling activity. "
-                    "Derived from 'activity_id' in WCRP-CMIP CVs",
+                    description="The common climate modelling activity. Derived from 'activity_id' in WCRP-CMIP CVs",
                 )
             ): Or(*ACTIVITIES),
             Literal(
@@ -55,22 +54,19 @@ if VALIDATION_ENABLED:
             Optional(
                 Literal(
                     "driving_institution",
-                    description="Institute name of the global climate model driver data. "
-                    "Specific to regional climate model metadata.",
+                    description="Institute name of the global climate model driver data. Specific to regional climate model metadata.",
                 )
             ): str,
             Optional(
                 Literal(
                     "driving_model",
-                    description="Model name of the global climate model driver data. "
-                    "Specific to regional climate model metadata.",
+                    description="Model name of the global climate model driver data. Specific to regional climate model metadata.",
                 )
             ): str,
             Optional(
                 Literal(
                     "experiment",
-                    description="The common experiment name. "
-                    "Derived from 'experiment_id' in WCRP-CMIP CVs.",
+                    description="The common experiment name. Derived from 'experiment_id' in WCRP-CMIP CVs.",
                 )
             ): str,
             "frequency": Or(*WCRP_FREQUENCIES),
@@ -79,12 +75,8 @@ if VALIDATION_ENABLED:
             Optional("variable"): str,
             Optional("timedelta"): Or(pd.Timedelta, NaTType, "NaT"),
             Optional("date"): Or(Regex(BASIC_DT_VALIDATION, flags=int(re.I)), "fx"),
-            Optional("date_start"): Or(
-                Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"
-            ),
-            Optional("date_end"): Or(
-                Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"
-            ),
+            Optional("date_start"): Or(Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"),
+            Optional("date_end"): Or(Regex(DATE_VALIDATION, flags=int(re.I)), NaTType, "NaT"),
             Optional("processing_level"): Or(*PROCESSING_LEVELS),
             "format": Or("netcdf", "zarr"),
             Optional("version"): str,
@@ -141,9 +133,4 @@ if VALIDATION_ENABLED:
     validation_schemas = dict()
     validation_schemas["simulation"] = SIMULATION_SCHEMA
     validation_schemas["station-obs"] = STATION_OBS_SCHEMA
-    validation_schemas.update(
-        {
-            data_type: GRIDDED_SCHEMA
-            for data_type in ["forecast", "gridded-obs", "reconstruction"]
-        }
-    )
+    validation_schemas.update({data_type: GRIDDED_SCHEMA for data_type in ["forecast", "gridded-obs", "reconstruction"]})

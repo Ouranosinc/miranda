@@ -1,7 +1,6 @@
 """Miscellaneous Helper Utilities module."""
 
 from __future__ import annotations
-
 import gzip
 import logging
 import os
@@ -14,6 +13,7 @@ from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
+
 __all__ = [
     "HiddenPrints",
     "chunk_iterables",
@@ -24,6 +24,7 @@ __all__ = [
 ]
 
 from types import GeneratorType
+
 
 # For datetime validation
 ISO_8601 = (
@@ -175,9 +176,7 @@ def single_item_list(iterable: Iterable) -> bool:
     """
     iterator = iter(iterable)
     has_true = any(iterator)  # consume from "i" until first true or it's exhausted
-    has_another_true = any(
-        iterator
-    )  # carry on consuming until another true value / exhausted
+    has_another_true = any(iterator)  # carry on consuming until another true value / exhausted
     return has_true and not has_another_true  # True if exactly one true found
 
 
@@ -219,19 +218,13 @@ def generic_extract_archive(
                 elif file.suffix == ".tar":
                     with tarfile.open(arch, mode="r") as tar:
                         safe_extract(tar, path=output_dir)
-                        files.extend(
-                            [Path(output_dir).joinpath(f) for f in tar.getnames()]
-                        )
+                        files.extend([Path(output_dir).joinpath(f) for f in tar.getnames()])
                 elif file.suffix == ".zip":
                     with zipfile.ZipFile(arch, mode="r") as zf:
                         safe_extract(zf, path=output_dir)
-                        files.extend(
-                            [Path(output_dir).joinpath(f) for f in zf.namelist()]
-                        )
+                        files.extend([Path(output_dir).joinpath(f) for f in zf.namelist()])
                 elif file.suffix == ".gz":
-                    logging.warning(
-                        "GZIP file found. Can only extract one expected file."
-                    )
+                    logging.warning("GZIP file found. Can only extract one expected file.")
                     with (
                         gzip.open(arch, "rb") as gf,
                         Path(output_dir).joinpath(arch.stem).open("w") as f_out,
@@ -241,7 +234,7 @@ def generic_extract_archive(
                 elif file.suffix == ".7z":
                     msg = "7z file extraction is not supported at this time."
                     logging.warning(msg)
-                    warnings.warn(msg, UserWarning)
+                    warnings.warn(msg, UserWarning, stacklevel=2)
                 else:
                     msg = f'File extension "{file}") unknown'
                     logging.debug(msg)
@@ -258,15 +251,13 @@ def generic_extract_archive(
 ########################################################################################
 
 
-def list_paths_with_elements(
-    base_paths: str | list[str] | os.PathLike[str], elements: list[str]
-) -> list[dict]:
+def list_paths_with_elements(base_paths: str | list[str] | os.PathLike[str], elements: list[str]) -> list[dict]:
     """
     List a given path structure.
 
     Parameters
     ----------
-    base_paths : list of str
+    base_paths : str or list of str or os.PathLike
         List of paths from which to start the search.
     elements : list of str
         Ordered list of the expected elements.
@@ -289,15 +280,15 @@ def list_paths_with_elements(
     Obviously, 'path' should not be in the input list of elements.
     """
     # Make sure the base_paths input is a list of absolute path
-    paths = list()
+    paths = []
     if not hasattr(base_paths, "__iter__"):
         paths.append(base_paths)
     paths = map(os.path.abspath, base_paths)
     # If elements list is empty, return empty list (end of recursion).
     if not elements:
-        return list()
+        return []
 
-    paths_elements = list()
+    paths_elements = []
     for base_path in paths:
         try:
             path_content = [f for f in Path(base_path).iterdir()]
@@ -306,18 +297,16 @@ def list_paths_with_elements(
             logging.debug(msg)
             continue
         path_content.sort()
-        next_base_paths = [
-            Path(base_path).joinpath(path_item) for path_item in path_content
-        ]
+        next_base_paths = [Path(base_path).joinpath(path_item) for path_item in path_content]
         next_pe = list_paths_with_elements(next_base_paths, elements[1:])
         if next_pe:
-            for i, one_pe in enumerate(next_pe):
+            for i in range(len(next_pe)):
                 relative_path = next_pe[i]["path"].replace(base_path, "", 1)
                 new_element = relative_path.split("/")[1]
                 next_pe[i][elements[0]] = new_element
             paths_elements.extend(next_pe)
         elif len(elements) == 1:
-            for my_path, my_item in zip(next_base_paths, path_content):
+            for my_path, my_item in zip(next_base_paths, path_content, strict=False):
                 paths_elements.append({"path": my_path, elements[0]: my_item})
     return paths_elements
 
@@ -357,9 +346,7 @@ def read_privileges(location: str | Path, strict: bool = False) -> bool:
         return False
 
 
-def _is_within_directory(
-    directory: str | os.PathLike, target: str | os.PathLike
-) -> bool:
+def _is_within_directory(directory: str | os.PathLike, target: str | os.PathLike) -> bool:
     """
     Check if a target path is within a directory.
 
@@ -426,5 +413,6 @@ def safe_extract(
             if not _is_within_directory(path, member_path):
                 raise Exception("Attempted Path Traversal in Zip File")
         archive.extractall(path, members=members)  # noqa: S202
+
     else:
         raise TypeError("Archive must be a TarFile or ZipFile object.")

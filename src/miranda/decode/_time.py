@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pandas._libs.tslibs import NaTType  # noqa
 
+
 __all__ = [
     "FREQUENCY_TO_POTENTIAL_TIME_UNITS",
     "TIME_UNITS_TO_FREQUENCY",

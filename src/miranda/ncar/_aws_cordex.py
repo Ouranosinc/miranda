@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import ast
 import functools
 import json
@@ -15,16 +14,15 @@ from xclim.core import calendar as xcal  # noqa
 
 from miranda.gis import subsetting_domains
 
+
 try:
-    import intake  # noqa
-    import intake_esm  # noqa
-    import numcodecs  # noqa
-    import s3fs  # noqa
+    import intake
+    import intake_esm  # noqa: F401
+    import numcodecs  # noqa: F401
+    import s3fs  # noqa: F401
 except ImportError:
-    warnings.warn(
-        f"{__name__} functions require additional dependencies. "
-        "Please install them with `pip install miranda[remote]`."
-    )
+    intake = None
+    warnings.warn(f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[remote]`.", stacklevel=2)
 
 
 __all__ = [
@@ -56,19 +54,16 @@ _allowed_args = schema.Schema(
             )
         ),
         schema.Optional("frequency"): "day",
-        schema.Optional("scenario"): schema.Schema(
-            schema.Or(["eval", "hist", "rcp45", "rcp85", "hist-rcp45", "hist-rcp85"])
-        ),
+        schema.Optional("scenario"): schema.Schema(schema.Or(["eval", "hist", "rcp45", "rcp85", "hist-rcp45", "hist-rcp85"])),
         schema.Optional("grid"): schema.Or(["NAM-22i", "NAM-44i"]),
-        schema.Optional("bias_correction"): schema.Or(
-            ["raw", "mbcn-Daymet", "mbcn-gridMET"]
-        ),
+        schema.Optional("bias_correction"): schema.Or(["raw", "mbcn-Daymet", "mbcn-gridMET"]),
     }
 )
 
 
 def cordex_aws_calendar_correction(ds) -> xr.Dataset | None:
-    """AWS-stored CORDEX datasets are all on the same standard calendar, this converts
+    """
+    AWS-stored CORDEX datasets are all on the same standard calendar, this converts
     the data back to the original calendar, removing added NaNs.
 
     Credit: Pascal Bourgault (@aulemahal)
@@ -81,9 +76,7 @@ def cordex_aws_calendar_correction(ds) -> xr.Dataset | None:
         ds = xcal.convert_calendar(ds, "noleap")  # drops Feb 29th
         if orig_calendar == "360_day":
             time = xcal.date_range_like(ds.time, calendar="360_day")
-            ds = ds.where(
-                ~ds.time.dt.dayofyear.isin([31, 90, 151, 243, 304]), drop=True
-            )
+            ds = ds.where(~ds.time.dt.dayofyear.isin([31, 90, 151, 243, 304]), drop=True)
             if ds.time.size != time.size:
                 raise ValueError("Conversion of dataset to 360_day calendar failed.")
             ds["time"] = time
@@ -99,6 +92,9 @@ def cordex_aws_download(
     domain: str | None = None,
 ):
     """Download CORDEX interpolated grid for North America from Amazon S3."""
+    if intake is None:
+        msg = f"{__name__} functions require additional dependencies. Please install them with `pip install miranda[remote]`."
+        raise ImportError(msg)
 
     def _subset_preprocess(d: xr.Dataset, dom: list[float]) -> xr.Dataset:
         try:
@@ -107,19 +103,14 @@ def cordex_aws_download(
             n, w, s, e = subsetting_domains(dom)
             return subset_bbox(d, lon_bnds=[w, e], lat_bnds=[s, n])
         except ModuleNotFoundError:
-            msg = (
-                "This function requires the `clisops` library which is not installed. "
-                "Domain subsetting step will be skipped."
-            )
-            warnings.warn(msg)
+            msg = "This function requires the `clisops` library which is not installed. Domain subsetting step will be skipped."
+            warnings.warn(msg, stacklevel=2)
             return d
 
     schema.Schema(_allowed_args).validate(search)
 
     # Define the catalog description file location.
-    catalog_url = (
-        "https://ncar-na-cordex.s3-us-west-2.amazonaws.com/catalogs/aws-na-cordex.json"
-    )
+    catalog_url = "https://ncar-na-cordex.s3-us-west-2.amazonaws.com/catalogs/aws-na-cordex.json"
 
     # Interpret the "na-cordex-models" column as a list of values.
     col = intake.open_esm_datastore(
@@ -131,9 +122,7 @@ def cordex_aws_download(
 
     additional_kwargs = dict()
     if domain:
-        additional_kwargs["preprocess"] = functools.partial(
-            _subset_preprocess, dom=domain
-        )
+        additional_kwargs["preprocess"] = functools.partial(_subset_preprocess, dom=domain)
 
     dsets = col_subset.to_dataset_dict(
         zarr_kwargs={"consolidated": True},
@@ -170,11 +159,11 @@ def cordex_aws_download(
                             new_attrs[key] = mapped.get(str(member.values), "")
                     except JSONDecodeError:  # noqa: PERF203
                         new_attrs[key] = vals
-                    except TypeError:
+                    except TypeError as err:
                         if len(vals) == 1:
                             new_attrs[key] = vals[0]
                         else:
-                            raise RuntimeError()
+                            raise RuntimeError("Attribute mapping failed.") from err
 
                 if correct_times:
                     try:
@@ -184,7 +173,7 @@ def cordex_aws_download(
                         logging.warning(msg)
                         continue
 
-                years, datasets = zip(*ds.isel(member_id=i).groupby("time.year"))
+                years, datasets = zip(*ds.isel(member_id=i).groupby("time.year"), strict=False)
 
                 for d in datasets:
                     d.attrs.update(new_attrs)
@@ -192,9 +181,7 @@ def cordex_aws_download(
                 out_folder = target_folder.joinpath(f"{member.values}_{scen}")
                 out_folder.mkdir(exist_ok=True)
 
-                file_name_pattern = (
-                    f"{var_out}_{member.values}_day_{scen}_{grid}_{bias_correction}"
-                )
+                file_name_pattern = f"{var_out}_{member.values}_day_{scen}_{grid}_{bias_correction}"
 
                 msg = f"Writing out files for {file_name_pattern}."
                 logging.info()
@@ -204,11 +191,7 @@ def cordex_aws_download(
                     if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
                 ]
 
-                datasets = [
-                    d
-                    for y, d in zip(years, datasets)
-                    if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()
-                ]
+                datasets = [d for y, d in zip(years, datasets, strict=False) if not out_folder.joinpath(f"{file_name_pattern}_{y}.nc").exists()]
 
                 if len(datasets) == 0:
                     msg = f"All files currently exist for {scen} and {member.name}. Continuing..."
@@ -218,6 +201,4 @@ def cordex_aws_download(
                 msg = f"Final count of files: {len(datasets)}"
                 logging.info(msg)
 
-                xr.save_mfdataset(
-                    datasets, paths, engine="h5netcdf", format="NETCDF4_CLASSIC"
-                )
+                xr.save_mfdataset(datasets, paths, engine="h5netcdf", format="NETCDF4_CLASSIC")

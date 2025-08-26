@@ -1,7 +1,6 @@
 """Specialized conversion tools for Environment and Climate Change Canada / Meteorological Service of Canada data."""
 
 from __future__ import annotations
-
 import contextlib
 import logging
 import tempfile
@@ -12,6 +11,7 @@ from dask.diagnostics import ProgressBar
 
 from miranda.storage import file_size, report_file_size
 from miranda.utils import generic_extract_archive
+
 
 _data_folder = Path(__file__).parent / "configs"
 
