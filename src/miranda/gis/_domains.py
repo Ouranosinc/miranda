@@ -40,10 +40,10 @@ def subset_domain(ds: xr.Dataset | xr.DataArray, domain: str, **kwargs) -> xr.Da
     """
     try:
         from clisops.core.subset import subset_bbox  # noqa
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as err:
         msg = _gis_import_error_message.format(subset_domain.__name__)
         logger.error(msg)
-        raise
+        raise ModuleNotFoundError(msg) from err
 
     region = subsetting_domains(domain)
     lon_values = np.array([region[1], region[3]])
@@ -82,7 +82,7 @@ def subsetting_domains(domain: str) -> list:
     if region is not None:
         return region
 
-    raise NotImplementedError(domain)
+    raise NotImplementedError(f"The supplied domain is not supported: {domain}")
 
 
 # FIXME: This approach will not work with Fiona 1.9+
@@ -143,10 +143,10 @@ def add_ar6_regions(ds: xr.Dataset) -> xr.Dataset:
     """
     try:
         import regionmask  # noqa
-    except ImportError:
+    except ModuleNotFoundError as err:
         msg = _gis_import_error_message.format(add_ar6_regions.__name__)
         logger.error(msg)
-        raise
+        raise ModuleNotFoundError(msg) from err
 
     mask = regionmask.defined_regions.ar6.all.mask(ds.cf["lon"], ds.cf["lat"])
     ds = ds.assign_coords(region=mask)
