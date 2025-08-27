@@ -12,7 +12,6 @@
 # obtenu via http://climate.weather.gc.ca/index_e.html en cliquant sur 'about the data'
 #######################################################################
 from __future__ import annotations
-
 import contextlib
 import functools
 import logging
@@ -40,6 +39,7 @@ from miranda.utils import generic_extract_archive, group_by_length
 
 from ._utils import cf_station_metadata
 
+
 logger = logging.getLogger("miranda.eccc.raw")
 
 
@@ -62,9 +62,7 @@ def load_station_metadata(meta: str | os.PathLike) -> xr.Dataset:
             station_metadata_url = "https://api.weather.gc.ca/collections/climate-stations/items?f=json&limit=15000000"
             df_inv = gpd.read_file(station_metadata_url)
         except HTTPError as err:
-            raise RuntimeError(
-                f"Station metadata table unable to be fetched. Considering downloading directly: {err}"
-            )
+            raise RuntimeError("Station metadata table unable to be fetched. Considering downloading directly.") from err
     df_inv["LONGITUDE"] = df_inv.geometry.x
     df_inv["LATITUDE"] = df_inv.geometry.y
     df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)
@@ -76,10 +74,7 @@ def load_station_metadata(meta: str | os.PathLike) -> xr.Dataset:
 
 def _remove_duplicates(ds):
     if any(ds.get_index("time").duplicated()):
-        msg = (
-            f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates "
-            f"for station {ds.station_id.values}. Assuming first value."
-        )
+        msg = f"Found {ds.get_index('time').duplicated().sum()} duplicated time coordinates for station {ds.station_id.values}. Assuming first value."
         logger.info(msg)
     return ds.sel(time=~ds.get_index("time").duplicated())
 
@@ -150,10 +145,7 @@ def _convert_station_file(
                         data,
                         widths=column_widths,
                         names=column_names,
-                        dtype={
-                            name: data_type
-                            for name, data_type in zip(column_names, column_dtypes)
-                        },
+                        dtype={name: data_type for name, data_type in zip(column_names, column_dtypes, strict=False)},
                         assume_missing=True,
                         **chunks,
                     )
@@ -167,10 +159,7 @@ def _convert_station_file(
                     return
 
                 except UnicodeDecodeError:
-                    msg = (
-                        f"File {data.name} was unable to be read. "
-                        f"This is probably an issue with the file."
-                    )
+                    msg = f"File {data.name} was unable to be read. This is probably an issue with the file."
                     logger.error(msg)
                     errored_files.append(data)
                     return
@@ -182,13 +171,9 @@ def _convert_station_file(
 
                     # Abort if the variable is not found
                     if using_dask_array:
-                        has_variable_codes = (
-                            (df_code["code_var"] == variable_code).compute()
-                        ).any()
+                        has_variable_codes = ((df_code["code_var"] == variable_code).compute()).any()
                     else:
-                        has_variable_codes = (
-                            df_code["code_var"] == variable_code
-                        ).any()
+                        has_variable_codes = (df_code["code_var"] == variable_code).any()
                     if not has_variable_codes:
                         msg = f"Variable `{nc_name}` not found for station code: {code} in file {data}. Continuing..."
 
@@ -206,12 +191,8 @@ def _convert_station_file(
                     df_var = df_var.replace(missing_values, np.nan)
 
                     # Decode the values and flags
-                    dfd = df_var.loc[
-                        :, [f"D{i:0n}" for i in range(1, num_observations + 1)]
-                    ]
-                    dff = df_var.loc[
-                        :, [f"F{i:0n}" for i in range(1, num_observations + 1)]
-                    ]
+                    dfd = df_var.loc[:, [f"D{i:0n}" for i in range(1, num_observations + 1)]]
+                    dff = df_var.loc[:, [f"F{i:0n}" for i in range(1, num_observations + 1)]]
 
                     # Remove the "NaN" flag
                     dff = dff.fillna("")
@@ -219,7 +200,7 @@ def _convert_station_file(
                     # Use the flag to mask the values
                     try:
                         val = np.asarray(dfd.values, float)
-                    except ValueError as e:
+                    except ValueError:
                         msg = f"Issues with {dfd}. Continuing..."
                         logger.error(msg)
                         continue
@@ -238,10 +219,8 @@ def _convert_station_file(
                     # Create the DataArray
                     date_summations = dict(time=list())
                     if mode == "hourly":
-                        for index, row in df_var.iterrows():
-                            period = pd.Period(
-                                year=row.year, month=row.month, day=row.day, freq="D"
-                            )
+                        for _, row in df_var.iterrows():
+                            period = pd.Period(year=row.year, month=row.month, day=row.day, freq="D")
                             dates = pd.Series(
                                 pd.date_range(
                                     start=period.start_time,
@@ -255,7 +234,7 @@ def _convert_station_file(
                     elif mode == "daily":
                         value_days = list()
                         flag_days = list()
-                        for i, (index, row) in enumerate(df_var.iterrows()):
+                        for i, (_, row) in enumerate(df_var.iterrows()):
                             period = pd.Period(year=row.year, month=row.month, freq="M")
                             dates = pd.Series(
                                 pd.date_range(
@@ -266,23 +245,13 @@ def _convert_station_file(
                             )
                             date_summations["time"].extend(dates)
 
-                            value_days.extend(
-                                val[i][
-                                    range(monthrange(int(row.year), int(row.month))[1])
-                                ]
-                            )
-                            flag_days.extend(
-                                flag[i][
-                                    range(monthrange(int(row.year), int(row.month))[1])
-                                ]
-                            )
+                            value_days.extend(val[i][range(monthrange(int(row.year), int(row.month))[1])])
+                            flag_days.extend(flag[i][range(monthrange(int(row.year), int(row.month))[1])])
                         written_values = value_days
                         written_flags = flag_days
 
                     ds = xr.Dataset()
-                    da_val = xr.DataArray(
-                        written_values, coords=date_summations, dims=["time"]
-                    )
+                    da_val = xr.DataArray(written_values, coords=date_summations, dims=["time"])
 
                     if raw_units != units:
                         da_val.attrs["units"] = raw_units
@@ -300,9 +269,7 @@ def _convert_station_file(
                         variable_attributes["original_units"] = kwargs["original_units"]
                     da_val.attrs.update(variable_attributes)
 
-                    da_flag = xr.DataArray(
-                        written_flags, coords=date_summations, dims=["time"]
-                    )
+                    da_flag = xr.DataArray(written_flags, coords=date_summations, dims=["time"])
                     da_flag = da_flag.rename("flag")
                     flag_attributes = dict(
                         long_name="data flag",
@@ -321,24 +288,19 @@ def _convert_station_file(
                     station_folder.mkdir(parents=True, exist_ok=True)
 
                     f_nc = (
-                        f"{code}_{variable_code}_{nc_name}_"
-                        f"{start_year if start_year == end_year else '_'.join([str(start_year), str(end_year)])}.nc"
+                        f"{code}_{variable_code}_{nc_name}_{start_year if start_year == end_year else '_'.join([str(start_year), str(end_year)])}.nc"
                     )
 
                     if station_folder.joinpath(f_nc).exists():
                         msg = f"File `{f_nc}` already exists. Continuing..."
                         logger.warning(msg)
 
-                    history = (
-                        f"{dt.now().strftime('%Y-%m-%d %X')} converted from flat station file "
-                        f"(`{fichier.name}`) to n-dimensional array."
-                    )
+                    history = f"{dt.now().strftime('%Y-%m-%d %X')} converted from flat station file (`{fichier.name}`) to n-dimensional array."
 
                     # TODO: This info should eventually be sourced from a JSON definition
                     global_attrs = dict(
                         Conventions="CF-1.8",
-                        comment="Acquired on demand from data specialists at "
-                        "ECCC Climate Services / Services Climatiques.",
+                        comment="Acquired on demand from data specialists at ECCC Climate Services / Services Climatiques.",
                         contact="John Richard",
                         contact_email="climatcentre-climatecentral@ec.gc.ca",
                         domain="CAN",
@@ -399,7 +361,8 @@ def convert_flat_files(
     mode: str = "hourly",
     n_workers: int = 4,
 ) -> None:
-    """Convert flat formatted files.
+    """
+    Convert flat formatted files.
 
     Parameters
     ----------
@@ -445,10 +408,7 @@ def convert_flat_files(
         rep_nc.mkdir(parents=True, exist_ok=True)
 
         # Loop on the files
-        msg = (
-            f"Collecting files for variable '{metadata['standard_name']}' "
-            f"(filenames containing '{metadata['_table_name']}')."
-        )
+        msg = f"Collecting files for variable '{metadata['standard_name']}' (filenames containing '{metadata['_table_name']}')."
         logger.info(msg)
         list_files = list()
         if isinstance(source_files, list) or Path(source_files).is_file():
@@ -456,9 +416,7 @@ def convert_flat_files(
         else:
             glob_patterns = [g for g in metadata["_table_name"]]
             for pattern in glob_patterns:
-                list_files.extend(
-                    [f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()]
-                )
+                list_files.extend([f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()])
         manager = mp.Manager()
         errored_files = manager.list()
         converter_func = functools.partial(
@@ -496,7 +454,8 @@ def aggregate_stations(
     temp_directory: str | os.PathLike | None = None,
     n_workers: int = 1,
 ) -> None:
-    """Aggregate stations.
+    """
+    Aggregate stations.
 
     Parameters
     ----------
@@ -571,12 +530,8 @@ def aggregate_stations(
         if nc_list:
             nc_lists = group_by_length(nc_list, groupings)
 
-            with tempfile.TemporaryDirectory(
-                prefix="eccc", dir=temp_directory
-            ) as temp_dir:
-                combinations = sorted(
-                    (ii, nc, temp_dir, len(nc_lists)) for ii, nc in enumerate(nc_lists)
-                )
+            with tempfile.TemporaryDirectory(prefix="eccc", dir=temp_directory) as temp_dir:
+                combinations = sorted((ii, nc, temp_dir, len(nc_lists)) for ii, nc in enumerate(nc_lists))
 
                 with mp.Pool(processes=n_workers) as pool:
                     pool.starmap(_tmp_zarr, combinations)
@@ -639,10 +594,7 @@ def aggregate_stations(
                     logger.error(msg)
                     return
 
-                msg = (
-                    f"Files exist for {len(station_file_codes)} ECCC stations. "
-                    f"Metadata found for {valid_stations_count} stations. "
-                )
+                msg = f"Files exist for {len(station_file_codes)} ECCC stations. Metadata found for {valid_stations_count} stations. "
                 logger.info(msg)
 
                 # FIXME: Is this still needed?
@@ -667,14 +619,11 @@ def aggregate_stations(
                 ds = ds.assign_coords(station=range(0, len(ds.station))).sortby("time")
                 if mf_dataset_freq is not None:
                     # output mf_dataset using resampling frequency
-                    _, datasets = zip(*ds.resample(time=mf_dataset_freq))
+                    _, datasets = zip(*ds.resample(time=mf_dataset_freq), strict=False)
                 else:
                     datasets = [ds]
 
-                paths = [
-                    f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc"
-                    for data in datasets
-                ]
+                paths = [f"{file_out}_{data.time.dt.year.min().values}-{data.time.dt.year.max().values}.nc" for data in datasets]
 
                 # FIXME: chunks need to be dealt with
                 # chunks = [1, len(ds.time)]
@@ -684,7 +633,7 @@ def aggregate_stations(
                     # FIXME: looping seems to cause increasing memory over time use a pool of one or 2??
                     # for dataset, path in zip(datasets, paths):
                     #     _export_agg_nc(dataset,path)
-                    combs = zip(datasets, paths)
+                    combs = zip(datasets, paths, strict=False)
                     pool = mp.Pool(2)
                     pool.map(_export_agg_nc, combs)
                     pool.close()
@@ -720,17 +669,12 @@ def _tmp_zarr(
     tempdir: str | os.PathLike,
     group: int | None = None,
 ) -> None:
-    msg = (
-        f"Processing batch of files {iterable + 1}"
-        f"{' of ' + str(group) if group is not None else ''}."
-    )
+    msg = f"Processing batch of files {iterable + 1}{' of ' + str(group) if group is not None else ''}."
     logger.info(msg)
     station_file_codes = [Path(x).name.split("_")[0] for x in nc]
 
     try:
-        ds = xr.open_mfdataset(
-            nc, combine="nested", concat_dim={"station"}, preprocess=_remove_duplicates
-        )
+        ds = xr.open_mfdataset(nc, combine="nested", concat_dim={"station"}, preprocess=_remove_duplicates)
     except ValueError as e:
         errored_nc_files = ", ".join([Path(f).name for f in nc])
         msg = f"Issues found with the following files: [{errored_nc_files}]: {e}"
@@ -738,9 +682,7 @@ def _tmp_zarr(
         logger.error(msg)
         return
 
-    ds = ds.assign_coords(
-        station_id=xr.DataArray(station_file_codes, dims="station").astype(str)
-    )
+    ds = ds.assign_coords(station_id=xr.DataArray(station_file_codes, dims="station").astype(str))
     if "flag" in ds.data_vars:
         ds1 = ds.drop_vars("flag").copy(deep=True)
         ds1["flag"] = ds.flag.astype(str)
@@ -763,9 +705,7 @@ def _combine_years(
 ) -> None:
     nc_files = sorted(list(Path(station_folder).glob("*.nc")))
     if len(nc_files):
-        msg = (
-            f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
-        )
+        msg = f"Found {len(nc_files)} files for station code {Path(station_folder).name}."
 
         logger.info(msg)
     else:
@@ -787,9 +727,7 @@ def _combine_years(
             year_start, year_end = int(groups[0].strip("_")), int(groups[1].strip("_"))
             range_files_found[f] = set(range(year_start, year_end))
         else:
-            logger.warning(
-                "Years unable to be effectively parsed from series. Continuing with xarray solver..."
-            )
+            logger.warning("Years unable to be effectively parsed from series. Continuing with xarray solver...")
             years_parsed = False
             break
     if years_parsed:
@@ -816,8 +754,7 @@ def _combine_years(
         logger.info(msg)
     ds = xr.open_mfdataset(nc_files, combine="nested", concat_dim={"time"})
     outfile = Path(out_folder).joinpath(
-        f'{nc_files[0].name.split(f"_{varia}_")[0]}_{varia}_'
-        f"{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
+        f"{nc_files[0].name.split(f'_{varia}_')[0]}_{varia}_{ds.time.dt.year.min().values}-{ds.time.dt.year.max().values}.nc"
     )
 
     df_inv = xr.open_dataset(meta_file)
@@ -883,7 +820,8 @@ def merge_converted_variables(
     overwrite: bool = False,
     n_workers: int = 1,
 ) -> None:
-    """Merge converted variables.
+    """
+    Merge converted variables.
 
     Parameters
     ----------
@@ -915,27 +853,19 @@ def merge_converted_variables(
 
     variables_found = [x.name for x in source_files.iterdir() if x.is_dir()]
     if selected_variables:
-        variables_found = [
-            x
-            for x in variables_found
-            if x in [item["nc_name"] for item in selected_variables]
-        ]
+        variables_found = [x for x in variables_found if x in [item["nc_name"] for item in selected_variables]]
 
     for variable in variables_found:
         msg = f"Merging files found for variable: `{variable}`."
         logger.info(msg)
-        station_dirs = [
-            x for x in source_files.joinpath(variable).iterdir() if x.is_dir()
-        ]
+        station_dirs = [x for x in source_files.joinpath(variable).iterdir() if x.is_dir()]
         msg = f"Number of stations found: {len(station_dirs)}."
         logger.info(msg)
 
         output_rep = output_folder.joinpath(variable)
         Path(output_rep).mkdir(parents=True, exist_ok=True)
 
-        if (
-            len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)
-        ) and not overwrite:
+        if (len(list(output_rep.iterdir())) >= (len(meta.CLIMATE_IDENTIFIER) * 0.75)) and not overwrite:
             msg = (
                 f"Variable {variable} appears to have already been converted. Will be skipped. "
                 f"To force conversion of this variable, set `overwrite=True`."

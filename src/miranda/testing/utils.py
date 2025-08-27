@@ -1,7 +1,6 @@
 """Testing utilities module."""
 
 from __future__ import annotations
-
 import importlib.metadata as ilm
 import importlib.resources as ilr
 import logging
@@ -28,19 +27,11 @@ from xclim.testing.utils import show_versions as _show_versions
 
 import miranda
 
-try:
-    import pytest
-    from pytest_socket import SocketBlockedError
-except ImportError:
-    pytest = None
-    SocketBlockedError = None
 
 try:
     import pooch
 except ImportError:
-    warnings.warn(
-        "The `pooch` library is not installed. The default cache directory for testing data will not be set."
-    )
+    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.", stacklevel=2)
     pooch = None
 
 logger = logging.getLogger("miranda")
@@ -66,9 +57,7 @@ __all__ = [
 default_testdata_version = "v2025.5.16"
 """Default version of the testing data to use when fetching datasets."""
 
-default_testdata_repo_url = (
-    "https://raw.githubusercontent.com/Ouranosinc/miranda-testdata/"
-)
+default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/miranda-testdata/"
 """Default URL of the testing data repository to use when fetching datasets."""
 
 try:
@@ -77,9 +66,7 @@ try:
 except (AttributeError, TypeError):
     default_testdata_cache = None
 
-TESTDATA_REPO_URL = str(
-    os.getenv("MIRANDA_TESTDATA_REPO_URL", default_testdata_repo_url)
-)
+TESTDATA_REPO_URL = str(os.getenv("MIRANDA_TESTDATA_REPO_URL", default_testdata_repo_url))
 """
 Sets the URL of the testing data repository to use when fetching datasets.
 
@@ -206,9 +193,7 @@ def publish_release_notes(
         for title_expression, level in titles.items():
             found = re.findall(title_expression, changes)
             for grouping in found:
-                fixed_grouping = (
-                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
-                )
+                fixed_grouping = str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
                 search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
                 replacement = f"{'##' if level == '-' else '###'} {grouping[0]}"
                 changes = re.sub(search, replacement, changes)
@@ -253,16 +238,7 @@ def show_versions(
     def _get_miranda_dependencies():
         miranda_metadata = ilm.metadata("miranda")
         requires = miranda_metadata.get_all("Requires-Dist")
-        requires = [
-            req.split("[")[0]
-            .split(";")[0]
-            .split(">")[0]
-            .split("<")[0]
-            .split("=")[0]
-            .split("!")[0]
-            .strip()
-            for req in requires
-        ]
+        requires = [req.split("[")[0].split(";")[0].split(">")[0].split("<")[0].split("=")[0].split("!")[0].strip() for req in requires]
         sorted_deps = sorted(list(set(requires) - {"miranda"}))
 
         return ["miranda"] + sorted_deps
@@ -278,10 +254,7 @@ def show_versions(
 
 def testing_setup_warnings():
     """Warn users about potential incompatibilities between miranda and miranda-testdata versions."""
-    if (
-        re.match(r"^\d+\.\d+\.\d+$", miranda.__version__)
-        and TESTDATA_BRANCH != default_testdata_version
-    ):
+    if re.match(r"^\d+\.\d+\.\d+$", miranda.__version__) and TESTDATA_BRANCH != default_testdata_version:
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs
         if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
             warnings.warn(
@@ -289,6 +262,7 @@ def testing_setup_warnings():
                 f"branch of the testing data. It is possible that changes to the testing data may "
                 f"be incompatible with some assertions in this version. "
                 f"Please be sure to check {TESTDATA_REPO_URL} for more information.",
+                stacklevel=2,
             )
 
     if re.match(r"^v\d+\.\d+\.\d+", TESTDATA_BRANCH):
@@ -297,21 +271,18 @@ def testing_setup_warnings():
             time.ctime(Path(miranda.__file__).stat().st_mtime),
             "%a %b %d %H:%M:%S %Y",
         )
-        install_calendar_version = (
-            f"{install_date.year}.{install_date.month}.{install_date.day}"
-        )
+        install_calendar_version = f"{install_date.year}.{install_date.month}.{install_date.day}"
 
         if Version(TESTDATA_BRANCH) > Version(install_calendar_version):
             warnings.warn(
                 f"The installation date of `miranda` ({install_date.ctime()}) "
                 f"predates the last release of testing data ({TESTDATA_BRANCH}). "
                 "It is very likely that the testing data is incompatible with this build of `miranda`.",
+                stacklevel=2,
             )
 
 
-def load_registry(
-    branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
-) -> dict[str, str]:
+def load_registry(branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL) -> dict[str, str]:
     """
     Load the registry file for the test data.
 
@@ -339,19 +310,11 @@ def load_registry(
     if repo != default_testdata_repo_url:
         external_repo_name = urlparse(repo).path.split("/")[-2]
         external_branch_name = branch.split("/")[-1]
-        registry_file = Path(
-            str(
-                ilr.files("miranda").joinpath(
-                    f"testing/registry.{external_repo_name}.{external_branch_name}.txt"
-                )
-            )
-        )
+        registry_file = Path(str(ilr.files("miranda").joinpath(f"testing/registry.{external_repo_name}.{external_branch_name}.txt")))
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
     elif branch != default_testdata_version:
-        custom_registry_folder = Path(
-            str(ilr.files("miranda").joinpath(f"testing/{branch}"))
-        )
+        custom_registry_folder = Path(str(ilr.files("miranda").joinpath(f"testing/{branch}")))
         custom_registry_folder.mkdir(parents=True, exist_ok=True)
         registry_file = custom_registry_folder.joinpath("registry.txt")
         urlretrieve(remote_registry, registry_file)  # noqa: S310
@@ -424,9 +387,7 @@ def cassini(
         )
     if not repo.endswith("/"):
         repo = f"{repo}/"
-    remote = audit_url(
-        urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data")
-    )
+    remote = audit_url(urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data"))
 
     _cassini = pooch.create(
         path=cache_dir,
@@ -444,9 +405,7 @@ def cassini(
 
     # Overload the fetch method to add user-agent headers
     @wraps(_cassini.fetch_diversion)
-    def _fetch(
-        *args, **kwargs: bool | Callable
-    ) -> str:  # numpydoc ignore=GL08  # *args: str
+    def _fetch(*args, **kwargs: bool | Callable) -> str:  # numpydoc ignore=GL08  # *args: str
         def _downloader(
             url: str,
             output_file: str | IO,
@@ -570,10 +529,7 @@ def gather_testing_data(
         If the testing data is not found.
     """
     if _cache_dir is None:
-        raise ValueError(
-            "The cache directory must be set. "
-            "Please set the `cache_dir` parameter or the `MIRANDA_DATA_DIR` environment variable."
-        )
+        raise ValueError("The cache directory must be set. Please set the `cache_dir` parameter or the `MIRANDA_DATA_DIR` environment variable.")
     cache_dir = Path(_cache_dir)
 
     if worker_id == "master":

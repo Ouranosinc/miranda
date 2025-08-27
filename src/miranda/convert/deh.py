@@ -1,7 +1,6 @@
 """DEH Hydrograph Conversion module."""
 
 from __future__ import annotations
-
 import json
 import logging
 import os
@@ -12,14 +11,13 @@ import pandas as pd
 import xarray as xr
 from xclim.core.units import units as u
 
+
 logger = logging.getLogger("miranda.convert.deh")
 
 __all__ = ["open_txt"]
 
 # CMOR-like attributes
-cmor = json.load(
-    Path(__file__).parent.joinpath("data").joinpath("deh_cf_attrs.json").open()
-)[  # noqa
+cmor = json.load(Path(__file__).parent.joinpath("data").joinpath("deh_cf_attrs.json").open())[  # noqa
     "variable_entry"
 ]
 
@@ -56,9 +54,7 @@ def extract_daily(path: os.PathLike | str) -> tuple[dict, pd.DataFrame]:
     m = dict()
     for key in meta_patterns:
         # Various possible separators to take into account
-        m[meta_patterns[key]] = (
-            meta.split(key)[1].split(" \n")[0].split("\n")[0].split(" Régime")[0]
-        )
+        m[meta_patterns[key]] = meta.split(key)[1].split(" \n")[0].split("\n")[0].split(" Régime")[0]
 
     d = pd.read_csv(
         path,
@@ -129,9 +125,7 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
         """
         deg, minutes, seconds, _ = re.split("[°'\"]", coord)
         if float(deg) > 0:
-            return round(
-                float(deg) + float(minutes) / 60 + float(seconds) / (60 * 60), 6
-            )
+            return round(float(deg) + float(minutes) / 60 + float(seconds) / (60 * 60), 6)
         return round(float(deg) - (float(minutes) / 60 + float(seconds) / (60 * 60)), 6)
 
     coords = meta["coords"].split(" // ")
@@ -152,12 +146,8 @@ def to_cf(meta: dict, data: pd.DataFrame, cf_table: dict) -> xr.Dataset:
         },
     )
 
-    ds.attrs["institution"] = (
-        "Ministère de l'Environnement et de la Lutte contre les changements climatiques"
-    )
-    ds.attrs["source"] = (
-        "Hydrometric data <https://www.cehq.gouv.qc.ca/hydrometrie/historique_donnees/index.asp>"
-    )
+    ds.attrs["institution"] = "Ministère de l'Environnement et de la Lutte contre les changements climatiques"
+    ds.attrs["source"] = "Hydrometric data <https://www.cehq.gouv.qc.ca/hydrometrie/historique_donnees/index.asp>"
     ds.attrs["redistribution"] = "Redistribution policy unknown. For internal use only."
 
     return ds

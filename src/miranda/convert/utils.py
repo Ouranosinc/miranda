@@ -1,7 +1,6 @@
 """Conversion Utilities submodule."""
 
 from __future__ import annotations
-
 import hashlib
 import logging
 import os
@@ -15,6 +14,7 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from pandas._libs import NaTType  # noqa
+
 
 logger = logging.getLogger("miranda.convert.utils")
 
@@ -54,9 +54,7 @@ q_flag_dict = {
 }
 
 
-def _add_coords_to_dataset(
-    ds: xr.Dataset, df_stat: pd.DataFrame, float_flag=True
-) -> xr.Dataset:
+def _add_coords_to_dataset(ds: xr.Dataset, df_stat: pd.DataFrame, float_flag=True) -> xr.Dataset:
     """
     Add coordinates to the dataset from the station metadata.
 
@@ -74,13 +72,9 @@ def _add_coords_to_dataset(
     xr.Dataset
         Dataset with added coordinates.
     """
-    for cc in [
-        c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]
-    ]:
+    for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
         if cc not in ds.coords:
-            ds = ds.assign_coords(
-                {cc: xr.DataArray([df_stat[cc].values[0]], coords=ds.station.coords)}
-            )
+            ds = ds.assign_coords({cc: xr.DataArray([df_stat[cc].values[0]], coords=ds.station.coords)})
     if float_flag:
         for vv in ds.data_vars:
             if ds[vv].dtype == "float64":
@@ -223,9 +217,7 @@ def date_parser(
             except ValueError:  # noqa: S110
                 pass
         else:
-            raise ValueError(
-                f"Can't parse date {d} with supported formats: [{', '.join(fmts)}]."
-            )
+            raise ValueError(f"Can't parse date {d} with supported formats: [{', '.join(fmts)}].")
         return s, match
 
     date_format = None
@@ -256,9 +248,7 @@ def date_parser(
             else:
                 break
         else:
-            raise ValueError(
-                f"Unable to parse cftime date {date}, even when moving back 2 days."
-            )
+            raise ValueError(f"Unable to parse cftime date {date}, even when moving back 2 days.")
     elif not isinstance(date, pd.Timestamp):
         date = pd.Timestamp(date)  # noqa
 
@@ -415,15 +405,11 @@ def _get_canhomt_stations(project: str) -> pd.DataFrame:
                 station_url,
             )
         except ValueError:
-            statfile = Path(__file__).parent.joinpath(
-                "data/eccc-canhomt_Temp_Stations_Gen4_2024_monthly.zip"
-            )
+            statfile = Path(__file__).parent.joinpath("data/eccc-canhomt_Temp_Stations_Gen4_2024_monthly.zip")
             station_df = pd.read_csv(
                 statfile,
             )
-        station_df = station_df.rename(
-            columns={p: p.lower() for p in station_df.columns}
-        )
+        station_df = station_df.rename(columns={p: p.lower() for p in station_df.columns})
         rename = {"name": "station_name", "id": "station_id", "ele": "elevation"}
         station_df = station_df.rename(columns=rename)
     else:

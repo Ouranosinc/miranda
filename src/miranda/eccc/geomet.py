@@ -1,7 +1,6 @@
 """ECCC Geomet Module."""
 
 from __future__ import annotations
-
 import os
 from urllib.error import HTTPError
 
@@ -32,9 +31,7 @@ def load_station_metadata(meta: str | os.PathLike | None) -> xr.Dataset:
             station_metadata_url = "https://api.weather.gc.ca/collections/climate-stations/items?f=json&limit=15000000"
             df_inv = gpd.read_file(station_metadata_url)
         except HTTPError as err:
-            raise RuntimeError(
-                f"Station metadata table unable to be fetched. Considering downloading directly: {err}"
-            )
+            raise RuntimeError("Station metadata table unable to be fetched. Considering downloading directly.") from err
     df_inv["LONGITUDE"] = df_inv.geometry.x
     df_inv["LATITUDE"] = df_inv.geometry.y
     df_inv["ELEVATION"] = df_inv.ELEVATION.astype(float)

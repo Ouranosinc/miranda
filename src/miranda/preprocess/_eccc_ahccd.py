@@ -1,7 +1,6 @@
 """Adjusted and Homogenized Canadian Clime Data module."""
 
 from __future__ import annotations
-
 import calendar
 import logging
 from pathlib import Path
@@ -18,6 +17,7 @@ from miranda.preprocess._metadata import (
 )
 from miranda.treatments import find_project_variable_codes, load_json_data_mappings
 
+
 logger = logging.Logger("miranda")
 
 __all__ = ["convert_ahccd", "convert_ahccd_fwf_file", "merge_ahccd"]
@@ -30,7 +30,8 @@ def convert_ahccd_fwf_file(
     *,
     generation: int,
 ) -> xr.Dataset:
-    """Convert AHCCD fixed-width files.
+    """
+    Convert AHCCD fixed-width files.
 
     Parameters
     ----------
@@ -46,12 +47,8 @@ def convert_ahccd_fwf_file(
     configuration = load_json_data_mappings("eccc-ahccd")
     code = find_project_variable_codes(variable, configuration)
 
-    variable_meta, global_attrs = eccc_variable_metadata(
-        code, "eccc-ahccd", generation, configuration
-    )
-    column_names, column_spaces, column_dtypes, header = homogenized_column_definitions(
-        code
-    )
+    variable_meta, global_attrs = eccc_variable_metadata(code, "eccc-ahccd", generation, configuration)
+    column_names, column_spaces, column_dtypes, header = homogenized_column_definitions(code)
 
     df = pd.read_fwf(ff, header=header, colspecs=column_spaces, dtype=column_dtypes)
 
@@ -101,16 +98,9 @@ def convert_ahccd_fwf_file(
 
     # find invalid dates
     for y in time1.year.unique():
-        for m in (
-            ds[ds.index.get_level_values("Year") == y]
-            .index.get_level_values("Month")
-            .unique()
-        ):
+        for m in ds[ds.index.get_level_values("Year") == y].index.get_level_values("Month").unique():
             _, exp_ndays = calendar.monthrange(y, m)
-            ndays = (
-                (ds.index.get_level_values("Year") == y)
-                & (ds.index.get_level_values("Month") == m)
-            ).sum()
+            ndays = ((ds.index.get_level_values("Year") == y) & (ds.index.get_level_values("Month") == m)).sum()
             if ndays > np.int(exp_ndays):
                 print(f"year {y}, month {m}, ndays={ndays}, exp_ndays={exp_ndays}")
                 raise RuntimeError("Unknown days present.")
@@ -165,7 +155,8 @@ def convert_ahccd(
     merge: bool = False,
     overwrite: bool = False,
 ) -> None:
-    """Convert Adjusted and Homogenized Canadian Climate Dataset files.
+    """
+    Convert Adjusted and Homogenized Canadian Climate Dataset files.
 
     Parameters
     ----------
@@ -186,9 +177,7 @@ def convert_ahccd(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     code = find_project_variable_codes(variable, configuration)
-    variable_meta, global_attrs = eccc_variable_metadata(
-        code, "eccc-ahccd", generation, configuration
-    )
+    variable_meta, global_attrs = eccc_variable_metadata(code, "eccc-ahccd", generation, configuration)
     (
         column_names,
         column_spaces,
@@ -203,9 +192,7 @@ def convert_ahccd(
         station_meta = "ahccd_gen2_precipitation.csv"
     else:
         raise NotImplementedError(f"Code '{code} for generation {gen}.")
-    metadata_source = (
-        Path(__file__).resolve().parent.joinpath("configs").joinpath(station_meta)
-    )
+    metadata_source = Path(__file__).resolve().parent.joinpath("configs").joinpath(station_meta)
 
     if "tas" in variable:
         metadata = pd.read_csv(metadata_source, header=2)
@@ -216,9 +203,7 @@ def convert_ahccd(
         metadata.columns = column_names.keys()
         for index, row in metadata.iterrows():
             if isinstance(row["stnid"], str):
-                metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].replace(
-                    " ", ""
-                )
+                metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].replace(" ", "")
     else:
         raise KeyError(f"{variable} does not include 'pr' or 'tas'.")
 
@@ -232,9 +217,7 @@ def convert_ahccd(
             metadata_st = metadata[metadata["stnid"] == station_id]
 
             if len(metadata_st) == 1:
-                ds_out = convert_ahccd_fwf_file(
-                    ff, metadata_st, variable, generation=generation
-                )
+                ds_out = convert_ahccd_fwf_file(ff, metadata_st, variable, generation=generation)
                 ds_out.attrs = global_attrs
 
                 write_dataset(
@@ -275,9 +258,7 @@ def merge_ahccd(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Merge individual stations to single .nc file
-    ds_ahccd = xr.open_mfdataset(
-        list(data_source.glob(glob_pattern)), concat_dim="station", combine="nested"
-    )
+    ds_ahccd = xr.open_mfdataset(list(data_source.glob(glob_pattern)), concat_dim="station", combine="nested")
 
     for coord in ds_ahccd.coords:
         # xarray object datatypes mix string and int (e.g. station) convert to string for merged nc files

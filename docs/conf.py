@@ -12,6 +12,7 @@
 import datetime
 import os
 import sys
+from typing import Any
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -255,7 +256,7 @@ htmlhelp_basename = "mirandadoc"
 
 # -- Options for LaTeX output --------------------------------------------------
 
-latex_elements = {
+latex_elements: dict[str, Any] = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').

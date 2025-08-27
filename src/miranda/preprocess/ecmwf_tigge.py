@@ -1,7 +1,6 @@
 """ECMWF TIGGE Conversion module."""
 
 from __future__ import annotations
-
 import itertools as it
 import logging
 import multiprocessing
@@ -12,6 +11,7 @@ from pathlib import Path
 
 import xarray
 from dask.diagnostics import ProgressBar
+
 
 __all__ = ["tigge_convert"]
 
@@ -62,9 +62,7 @@ def tigge_convert(
             with ProgressBar():
                 msg = f"Converting `{infile.name}`."
                 logging.info(msg)
-                ds.to_netcdf(
-                    tf.name, format="NETCDF4", engine="h5netcdf", encoding=encoding
-                )
+                ds.to_netcdf(tf.name, format="NETCDF4", engine="h5netcdf", encoding=encoding)
 
             shutil.move(
                 tf.name,

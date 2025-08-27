@@ -15,11 +15,8 @@ from miranda.validate import (
 
 
 class TestValidateJSON:
-
     @pytest.mark.xfail(raises=SchemaError, strict=False)
-    @pytest.mark.parametrize(
-        "project, configuration", ([(k, v) for k, v in CONFIG_FILES.items()])
-    )
+    @pytest.mark.parametrize("project, configuration", ([(k, v) for k, v in CONFIG_FILES.items()]))
     def test_converter_files(self, project, configuration):
         """Test that the converter configurations are valid JSON according to existing schemas."""
         try:
@@ -33,15 +30,12 @@ class TestValidateJSON:
                 "NEX-GDDP-CMIP6",
             ]:
                 # These projects have a different schema that is not yet implemented
-                assert "Schema is not CF-compliant. No validation is possible." in str(
-                    e
-                )
+                assert "Schema is not CF-compliant. No validation is possible." in str(e)
             else:
                 raise e
 
 
 class TestHeaderSchema:
-
     def test_valid_header_schema(self):
         valid_header_input = {
             "title": "Test Dataset",
@@ -82,7 +76,6 @@ class TestHeaderSchema:
 
 
 class TestVariablesSchema:
-
     def test_valid_variables_schema(self):
         valid_variable_input = {
             "some-variable": {
@@ -113,7 +106,6 @@ class TestVariablesSchema:
 
 
 class TestDimensionsSchema:
-
     def test_valid_dimensions_schema(self):
         valid_dimensions_input = {
             "time": {
@@ -185,13 +177,9 @@ class TestDimensionsSchema:
     def test_invalid_real_data_dimensions(self, cassini, name, file, expected_error):
         ds = xr.open_dataset(cassini.fetch(file))
         if name == "ECMWF":
-            ds = ds.rename_dims(
-                {"latitude": "lat", "longitude": "lon", "valid_time": "time"}
-            )
+            ds = ds.rename_dims({"latitude": "lat", "longitude": "lon", "valid_time": "time"})
 
-        dimensions = {
-            dim: ds[dim].attrs for dim in ds.dims if dim in ["time", "lat", "lon"]
-        }
+        dimensions = {dim: ds[dim].attrs for dim in ds.dims if dim in ["time", "lat", "lon"]}
 
         try:
             assert cf_dimensions_schema.validate(dimensions)
@@ -200,7 +188,6 @@ class TestDimensionsSchema:
 
 
 class TestURLValidation:
-
     def test_valid_url(self):
         valid_urls = [
             "http://example.com",
@@ -224,6 +211,4 @@ class TestURLValidation:
         ]
 
         for url in invalid_urls:
-            assert (
-                url_validate(url) is None
-            ), f"URL validation should have failed for: {url}"
+            assert url_validate(url) is None, f"URL validation should have failed for: {url}"

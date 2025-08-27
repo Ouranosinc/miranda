@@ -1,13 +1,15 @@
 """Utility functions for GIS operations."""
 
 from __future__ import annotations
-
 import datetime
 import logging
 import warnings
 
 import numpy as np
 import xarray as xr
+
+
+logger = logging.getLogger("miranda.gis.utils")
 
 __all__ = [
     "conservative_regrid",
@@ -48,9 +50,7 @@ def _simple_fix_dims(d: xr.Dataset | xr.DataArray) -> xr.Dataset | xr.DataArray:
     return d
 
 
-def conservative_regrid(
-    ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | xr.Dataset
-) -> xr.DataArray | xr.Dataset:
+def conservative_regrid(ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | xr.Dataset) -> xr.DataArray | xr.Dataset:
     """
     Perform a conservative_normed regridding.
 
@@ -69,10 +69,8 @@ def conservative_regrid(
     try:
         import xesmf as xe  # noqa
     except ModuleNotFoundError:
-        raise ModuleNotFoundError(
-            "This function requires the `xesmf` library which is not installed. "
-            "Regridding step will be skipped."
-        )
+        logger.error("This function requires the `xesmf` library which is not installed. Regridding step will be skipped.")
+        raise
 
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
@@ -83,11 +81,7 @@ def conservative_regrid(
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
 
-    ds.attrs["history"] = (
-        f"{datetime.datetime.now()}:"
-        f"Regridded dataset using xesmf with method: {method}. "
-        f"{ds.attrs.get('history')}".strip()
-    )
+    ds.attrs["history"] = f"{datetime.datetime.now()}:Regridded dataset using xesmf with method: {method}. {ds.attrs.get('history')}".strip()
     return ds
 
 
@@ -121,9 +115,7 @@ def threshold_mask(
             mask_variable = list(mask.data_vars)[0]
             mask = mask[mask_variable]
         else:
-            raise ValueError(
-                "More than one data variable found in land-sea mask. Supply a DataArray instead."
-            )
+            raise ValueError("More than one data variable found in land-sea mask. Supply a DataArray instead.")
     else:
         mask_variable = mask.name
 
@@ -144,11 +136,8 @@ def threshold_mask(
             lat_bnds=lat_bounds,
         ).load()
     except ModuleNotFoundError:
-        log_msg = (
-            "This function requires the `clisops` library which is not installed. "
-            "subsetting step will be skipped."
-        )
-        warnings.warn(log_msg)
+        log_msg = "This function requires the `clisops` library which is not installed. subsetting step will be skipped."
+        warnings.warn(log_msg, stacklevel=2)
         mask_subset = mask.load()
 
     if mask_subset.dtype == bool:

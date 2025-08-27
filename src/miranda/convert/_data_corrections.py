@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import datetime
 import json
 import logging
@@ -23,6 +22,7 @@ from miranda.units import check_time_frequency
 
 from .utils import date_parser, find_version_hash
 
+
 logger = logging.getLogger("miranda.convert.data_corrections")
 
 VERSION = datetime.datetime.now().strftime("%Y.%m.%d")
@@ -39,7 +39,8 @@ __all__ = [
 
 
 def load_json_data_mappings(project: str) -> dict[str, Any]:
-    """Load JSON mappings for supported dataset conversions.
+    """
+    Load JSON mappings for supported dataset conversions.
 
     Parameters
     ----------
@@ -52,73 +53,39 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
     data_folder = Path(__file__).resolve().parent / "data"
 
     if project == "canhomt_dly":
-        metadata_definition = json.load(
-            data_folder.joinpath("eccc-canhomt_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("eccc-canhomt_cf_attrs.json").open("r"))
     elif project == "ghcnd":
-        metadata_definition = json.load(
-            data_folder.joinpath("ghcnd_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("ghcnd_cf_attrs.json").open("r"))
     elif project == "ghcnh":
-        metadata_definition = json.load(
-            data_folder.joinpath("ghcnh_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("ghcnh_cf_attrs.json").open("r"))
     elif project.startswith("era5"):
-        metadata_definition = json.load(
-            data_folder.joinpath("ecmwf_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("ecmwf_cf_attrs.json").open("r"))
     elif project in ["rdrs-v21"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
-        metadata_definition = json.load(
-            data_folder.joinpath("nasa_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("nasa_cf_attrs.json").open("r"))
     elif project in ["cordex", "cmip5", "cmip6"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("cmip_ouranos_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("cmip_ouranos_attrs.json").open("r"))
     elif project == "ets-grnch":
-        metadata_definition = json.load(
-            data_folder.joinpath("ets_grnch_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("ets_grnch_cf_attrs.json").open("r"))
     elif project == "wfdei-gem-capa":
-        metadata_definition = json.load(
-            data_folder.joinpath("usask_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("usask_cf_attrs.json").open("r"))
     elif project.startswith("melcc"):
-        metadata_definition = json.load(
-            data_folder.joinpath("melcc_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("melcc_cf_attrs.json").open("r"))
     elif project.startswith("ec"):
-        metadata_definition = json.load(
-            data_folder.joinpath("eccc_canswe_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("eccc_canswe_cf_attrs.json").open("r"))
     elif project in ["NEX-GDDP-CMIP6"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("nex-gddp-cmip6_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("nex-gddp-cmip6_attrs.json").open("r"))
     elif project in ["ESPO-G6-R2"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("espo-g6-r2_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("espo-g6-r2_attrs.json").open("r"))
     elif project in ["ESPO-G6-E5L"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("espo-g6-e5l_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("espo-g6-e5l_attrs.json").open("r"))
     elif project in ["EMDNA"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("emdna_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("emdna_cf_attrs.json").open("r"))
     elif project in ["ORRC-v10", "ORRC-v11"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("ouranos_orrc_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("ouranos_orrc_cf_attrs.json").open("r"))
     elif project in ["casr-v31"]:
-        metadata_definition = json.load(
-            data_folder.joinpath("eccc_casr_cf_attrs.json").open("r")
-        )
+        metadata_definition = json.load(data_folder.joinpath("eccc_casr_cf_attrs.json").open("r"))
     else:
         msg = f"Project `{project}` not supported."
         raise NotImplementedError(msg)
@@ -165,17 +132,12 @@ def _simple_fix_dims(d: xr.Dataset | xr.DataArray) -> xr.Dataset | xr.DataArray:
     return d
 
 
-def conservative_regrid(
-    ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | xr.Dataset
-) -> xr.DataArray | xr.Dataset:
+def conservative_regrid(ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | xr.Dataset) -> xr.DataArray | xr.Dataset:
     """Perform a conservative_normed regridding"""
     try:
         import xesmf as xe  # noqa
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(
-            "This function requires the `xesmf` library which is not installed. "
-            "Regridding step will be skipped."
-        )
+    except ModuleNotFoundError as err:
+        raise ModuleNotFoundError("This function requires the `xesmf` library which is not installed. Regridding step will be skipped.") from err
 
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
@@ -187,11 +149,7 @@ def conservative_regrid(
     regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
     ds = regridder(ds)
 
-    ds.attrs["history"] = (
-        f"{datetime.datetime.now()}:"
-        f"Regridded dataset using xesmf with method: {method}. "
-        f"{ds.attrs.get('history')}".strip()
-    )
+    ds.attrs["history"] = f"{datetime.datetime.now()}:Regridded dataset using xesmf with method: {method}. {ds.attrs.get('history')}".strip()
     return ds
 
 
@@ -201,7 +159,8 @@ def threshold_mask(
     mask: xr.Dataset | xr.DataArray,
     mask_cutoff: float | bool = False,
 ) -> xr.Dataset | xr.DataArray:
-    """Land-Sea mask operations.
+    """
+    Land-Sea mask operations.
 
     Parameters
     ----------
@@ -220,9 +179,7 @@ def threshold_mask(
             mask_variable = list(mask.data_vars)[0]
             mask = mask[mask_variable]
         else:
-            raise ValueError(
-                "More than one data variable found in land-sea mask. Supply a DataArray instead."
-            )
+            raise ValueError("More than one data variable found in land-sea mask. Supply a DataArray instead.")
     else:
         mask_variable = mask.name
 
@@ -243,11 +200,8 @@ def threshold_mask(
             lat_bnds=lat_bounds,
         ).load()
     except ModuleNotFoundError:
-        log_msg = (
-            "This function requires the `clisops` library which is not installed. "
-            "subsetting step will be skipped."
-        )
-        warnings.warn(log_msg)
+        log_msg = "This function requires the `clisops` library which is not installed. subsetting step will be skipped."
+        warnings.warn(log_msg, stacklevel=2)
         mask_subset = mask.load()
 
     if mask_subset.dtype == bool:
@@ -293,16 +247,15 @@ def correct_time_entries(
     d = d.assign_coords({field: time})
 
     prev_history = d.attrs.get("history", "")
-    history = (
-        f"Time index recalculated in preprocessing step ({days_since}). {prev_history}"
-    )
+    history = f"Time index recalculated in preprocessing step ({days_since}). {prev_history}"
     d.attrs.update(dict(history=history))
 
     return d
 
 
 def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.Dataset:
-    """Correct variable names.
+    """
+    Correct variable names.
 
     Parameters
     ----------
@@ -326,7 +279,8 @@ def correct_var_names(d: xr.Dataset, split: str = "_", location: int = 0) -> xr.
 
 
 def preprocessing_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
-    """Corrections function dispatcher to ensure minimal dataset validity on open.
+    """
+    Corrections function dispatcher to ensure minimal dataset validity on open.
 
     Parameters
     ----------
@@ -348,13 +302,9 @@ def preprocessing_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
         preprocess_ops = []
         for field in correction_fields:
             if field == "_variable_name":
-                preprocess_ops.append(
-                    partial(correct_var_names, **correction_fields[field])
-                )
+                preprocess_ops.append(partial(correct_var_names, **correction_fields[field]))
             if field == "_time":
-                preprocess_ops.append(
-                    partial(correct_time_entries, **correction_fields[field])
-                )
+                preprocess_ops.append(partial(correct_time_entries, **correction_fields[field]))
         if preprocess_ops:
             corrector = partial(_preprocess_correct, ops=preprocess_ops)
             return corrector(ds)
@@ -391,9 +341,7 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_section_entry_key(
-        m, "dimensions", "time", "_ensure_correct_time", p
-    )
+    expected_period = _get_section_entry_key(m, "dimensions", "time", "_ensure_correct_time", p)
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
@@ -405,9 +353,7 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     try:
                         offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
-                        logger.error(
-                            "Unable to parse the time frequency. Verify data integrity before retrying."
-                        )
+                        logger.error("Unable to parse the time frequency. Verify data integrity before retrying.")
                         raise
 
                 msg = f"De-accumulating units for variable `{vv}`."
@@ -452,9 +398,7 @@ def _transform(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         elif op == "/":
                             d_out[vv] = units.pint_multiply(d[vv], 1 / value)
                         else:
-                            raise NotImplementedError(
-                                f"Op transform doesn't implement the «{op}» operator."
-                            )
+                            raise NotImplementedError(f"Op transform doesn't implement the «{op}» operator.")
                 converted.append(vv)
             else:
                 msg = f"Unknown transformation: {trans}"
@@ -482,9 +426,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_section_entry_key(
-        m, "dimensions", "time", "_ensure_correct_time", p
-    )
+    expected_period = _get_section_entry_key(m, "dimensions", "time", "_ensure_correct_time", p)
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
@@ -495,9 +437,7 @@ def _offset_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 try:
                     offset, offset_meaning = check_time_frequency(d, **time_freq)
                 except TypeError:
-                    logger.error(
-                        "Unable to parse the time frequency. Verify data integrity before retrying."
-                    )
+                    logger.error("Unable to parse the time frequency. Verify data integrity before retrying.")
                     raise
 
             msg = f"Offsetting data for `{vv}` by `{offset[0]} {offset_meaning}(s)`."
@@ -583,13 +523,9 @@ def _clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 context = clip_values.get("context", None)
                 for op, value in clip_values.items():
                     if op == "min":
-                        min_value = xclim.core.units.convert_units_to(
-                            value, d[vv], context
-                        )
+                        min_value = xclim.core.units.convert_units_to(value, d[vv], context)
                     if op == "max":
-                        max_value = xclim.core.units.convert_units_to(
-                            value, d[vv], context
-                        )
+                        max_value = xclim.core.units.convert_units_to(value, d[vv], context)
                 msg = f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
                 logger.info(msg)
                 with xr.set_options(keep_attrs=True):
@@ -626,11 +562,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         return d
 
     if "time" not in list(d.variables.keys()):
-        msg = (
-            "No time dimension among data variables: "
-            f"{' ,'.join([str(v) for v in d.variables.keys()])}. "
-            "Continuing..."
-        )
+        msg = f"No time dimension among data variables: {' ,'.join([str(v) for v in d.variables.keys()])}. Continuing..."
         logger.info(msg)
         return d
 
@@ -638,9 +570,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         freq_found = xr.infer_freq(d.time)
         if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
-                msg = (
-                    "Time frequency could not be found. There may be missing timesteps."
-                )
+                msg = "Time frequency could not be found. There may be missing timesteps."
                 if m["dimensions"]["time"].get(strict_time):
                     raise ValueError(msg)
                 else:
@@ -681,9 +611,7 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         logger.info(msg)
 
         with xr.set_options(keep_attrs=True):
-            d_out = d.assign_coords(
-                time=d.time.resample(time=freq_found).mean(dim="time").time
-            )
+            d_out = d.assign_coords(time=d.time.resample(time=freq_found).mean(dim="time").time)
 
         if any(d_out.time != d.time):
             prev_history = d.attrs.get("history", "")
@@ -696,7 +624,8 @@ def _ensure_correct_time(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
 # For renaming and reordering lat and lon dims
 def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    """Rename dimensions to CF to their equivalents.
+    """
+    Rename dimensions to CF to their equivalents.
 
     Parameters
     ----------
@@ -714,15 +643,13 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     rename_dims = dict()
     for dim in d.dims:
         if dim in m["dimensions"].keys():
-            cf_name = _get_section_entry_key(
-                m, "dimensions", dim, "_cf_dimension_name", p
-            )
+            cf_name = _get_section_entry_key(m, "dimensions", dim, "_cf_dimension_name", p)
             if cf_name:
                 rename_dims[dim] = cf_name
     if rename_dims:
         d = d.rename(rename_dims)
         prev_history = d.attrs.get("history", "")
-        history = f"Renamed dimensons ({'; '.join([f'{k} : {i}' for k, i in rename_dims.items()])}). {prev_history}"
+        history = f"Renamed dimensions ({'; '.join([f'{k} : {i}' for k, i in rename_dims.items()])}). {prev_history}"
         d.attrs.update(dict(history=history))
     for new in ["lon", "lat"]:
         if new == "lon" and "lon" in d.coords:
@@ -769,7 +696,8 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
 
 def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    """Add variable metadata and remove nonstandard entries.
+    """
+    Add variable metadata and remove nonstandard entries.
 
     Parameters
     ----------
@@ -800,9 +728,7 @@ def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             d[var].attrs.update(var_descriptions[var])
 
     # Rename data variables
-    for orig_var_name, cf_name in _iter_entry_key(
-        d, m, "variables", "_cf_variable_name", None
-    ):
+    for orig_var_name, cf_name in _iter_entry_key(d, m, "variables", "_cf_variable_name", None):
         if cf_name is not None:
             d = d.rename({orig_var_name: cf_name})
             d[cf_name].attrs.update(dict(original_variable=orig_var_name))
@@ -816,7 +742,8 @@ def variable_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
 
 def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
-    """Update xarray dataset and data_vars with project-specific metadata fields.
+    """
+    Update xarray dataset and data_vars with project-specific metadata fields.
 
     Parameters
     ----------
@@ -875,9 +802,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         elif isinstance(header[field], dict):
             attr_treatment = header[field][p]
         else:
-            raise AttributeError(
-                f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON."
-            )
+            raise AttributeError(f"Attribute treatment configuration for field `{field}` is not properly configured. Verify JSON.")
 
         if field == "_map_attrs":
             for attribute, mapping in attr_treatment.items():
@@ -905,11 +830,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         d.attrs.update(dict(version=f"v{VERSION}"))
 
     prev_history = d.attrs.get("history", "")
-    history = (
-        f"[{datetime.datetime.now()}] "
-        "Converted variables and modified metadata for CF-like compliance: "
-        f"{prev_history}".strip()
-    )
+    history = f"[{datetime.datetime.now()}] Converted variables and modified metadata for CF-like compliance: {prev_history}".strip()
     d.attrs.update(dict(history=history))
 
     return d
@@ -952,13 +873,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 
 
 def dataset_conversion(
-    input_files: (
-        str
-        | os.PathLike
-        | Sequence[str | os.PathLike]
-        | Iterator[os.PathLike]
-        | xr.Dataset
-    ),
+    input_files: (str | os.PathLike | Sequence[str | os.PathLike] | Iterator[os.PathLike] | xr.Dataset),
     project: str,
     domain: str | None = None,
     mask: xr.Dataset | xr.DataArray | None = None,
@@ -968,7 +883,8 @@ def dataset_conversion(
     preprocess: Callable | str | None = "auto",
     **xr_kwargs,
 ) -> xr.Dataset | xr.DataArray:
-    r"""Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
+    r"""
+    Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
     Parameters
     ----------
@@ -1020,9 +936,7 @@ def dataset_conversion(
         preprocess_kwargs = dict()
         if preprocess:
             if preprocess == "auto":
-                preprocess_kwargs.update(
-                    preprocess=partial(preprocessing_corrections, project=project)
-                )
+                preprocess_kwargs.update(preprocess=partial(preprocessing_corrections, project=project))
             elif isinstance(preprocess, Callable):
                 preprocess_kwargs.update(preprocess=preprocess)
 

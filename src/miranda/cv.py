@@ -1,10 +1,10 @@
 """ESGF Controlled Vocabulary module."""
 
 from __future__ import annotations
-
 import warnings
 
 from miranda.utils import HiddenPrints
+
 
 with HiddenPrints():
     try:
@@ -12,9 +12,7 @@ with HiddenPrints():
 
         VALIDATION_ENABLED = True
     except OSError:
-        warnings.warn(
-            "Source files for pyessv-archive files not present. Data validation checks will be skipped."
-        )
+        warnings.warn("Source files for pyessv-archive files not present. Data validation checks will be skipped.", stacklevel=2)
         VALIDATION_ENABLED = False
 
 if VALIDATION_ENABLED:

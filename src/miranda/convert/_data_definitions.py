@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import datetime
 import json
 import logging
@@ -8,6 +7,7 @@ import re
 from pathlib import Path
 
 from miranda.storage import report_file_size
+
 
 logger = logging.getLogger("miranda.convert.data_definitions")
 
@@ -35,32 +35,19 @@ _data_folder = Path(__file__).resolve().parent / "data"
 
 
 eccc_rdrs_variables = {}
-eccc_rdrs_variables["raw"] = [
-    v
-    for v in json.load(
-        _data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8")
-    )["variables"].keys()
-]
+eccc_rdrs_variables["raw"] = [v for v in json.load(_data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8"))["variables"].keys()]
 eccc_rdrs_variables["cf"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(
-        _data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8")
-    )["variables"].values()
+    for attrs in json.load(_data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8"))["variables"].values()
     if "_cf_variable_name" in attrs
 ]
 
-era5_variables = json.load(
-    _data_folder.joinpath("ecmwf_cf_attrs.json").open("r", encoding="utf-8")
-)["variables"].keys()
+era5_variables = json.load(_data_folder.joinpath("ecmwf_cf_attrs.json").open("r", encoding="utf-8"))["variables"].keys()
 grnch_variables = ["T", "Tmin", "Tmax", "P"]
 nrcan_variables = ["tasmin", "tasmax", "pr"]
-nasa_ag_variables = json.load(
-    _data_folder.joinpath("nasa_cf_attrs.json").open("r", encoding="utf-8")
-)["variables"].keys()
+nasa_ag_variables = json.load(_data_folder.joinpath("nasa_cf_attrs.json").open("r", encoding="utf-8"))["variables"].keys()
 sc_earth_variables = ["prcp", "tdew", "tmean", "trange", "wind"]
-wfdei_gem_capa_variables = json.load(
-    _data_folder.joinpath("usask_cf_attrs.json").open()
-)["variables"].keys()
+wfdei_gem_capa_variables = json.load(_data_folder.joinpath("usask_cf_attrs.json").open())["variables"].keys()
 
 
 def _gather(
@@ -96,7 +83,8 @@ def gather_ecmwf(
     back_extension: bool = False,
     monthly_means: bool = False,
 ) -> dict[str, list[Path]]:
-    """Gather ECMWF source data.
+    """
+    Gather ECMWF source data.
 
     Parameters
     ----------
@@ -109,18 +97,15 @@ def gather_ecmwf(
     -------
     dict[str, list[pathlib.Path]]
     """
-    name = (
-        f"{project}"
-        f"{'-monthly-means' if monthly_means else ''}"
-        f"{'-preliminary-back-extension' if back_extension else ''}"
-    )
+    name = f"{project}{'-monthly-means' if monthly_means else ''}{'-preliminary-back-extension' if back_extension else ''}"
     glob_pattern = "".join(["{variable}", f"_*_{name}_*.nc"])
 
     return _gather(name, era5_variables, source=path, glob_pattern=glob_pattern)
 
 
 def gather_agmerra(path: str | os.PathLike) -> dict[str, list[Path]]:
-    """Gather agMERRA source data.
+    """
+    Gather agMERRA source data.
 
     Parameters
     ----------
@@ -130,13 +115,12 @@ def gather_agmerra(path: str | os.PathLike) -> dict[str, list[Path]]:
     -------
     dict[str, list[pathlib.Path]]
     """
-    return _gather(
-        "merra", nasa_ag_variables, source=path, glob_pattern="AgMERRA_*_{variable}.nc4"
-    )
+    return _gather("merra", nasa_ag_variables, source=path, glob_pattern="AgMERRA_*_{variable}.nc4")
 
 
 def gather_agcfsr(path: str | os.PathLike) -> dict[str, list[Path]]:
-    """Gather agCFSR source data.
+    """
+    Gather agCFSR source data.
 
     Parameters
     ----------
@@ -146,13 +130,12 @@ def gather_agcfsr(path: str | os.PathLike) -> dict[str, list[Path]]:
     -------
     dict[str, list[pathlib.Path]]
     """
-    return _gather(
-        "cfsr", nasa_ag_variables, source=path, glob_pattern="AgCFSR_*_{variable}.nc4"
-    )
+    return _gather("cfsr", nasa_ag_variables, source=path, glob_pattern="AgCFSR_*_{variable}.nc4")
 
 
 def gather_nrcan_gridded_obs(path: str | os.PathLike) -> dict[str, list[Path]]:
-    """Gather NRCan Gridded Observations source data.
+    """
+    Gather NRCan Gridded Observations source data.
 
     Parameters
     ----------
@@ -162,13 +145,12 @@ def gather_nrcan_gridded_obs(path: str | os.PathLike) -> dict[str, list[Path]]:
     -------
     dict(str, list[pathlib.Path])
     """
-    return _gather(
-        "nrcan", nrcan_variables, source=path, glob_pattern="*{variable}_*.nc"
-    )
+    return _gather("nrcan", nrcan_variables, source=path, glob_pattern="*{variable}_*.nc")
 
 
 def gather_wfdei_gem_capa(path: str | os.PathLike) -> dict[str, list[Path]]:
-    """Gather WFDEI-GEM-CaPa source data.
+    """
+    Gather WFDEI-GEM-CaPa source data.
 
     Parameters
     ----------
@@ -187,7 +169,8 @@ def gather_wfdei_gem_capa(path: str | os.PathLike) -> dict[str, list[Path]]:
 
 
 def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
-    """Gather SC-Earth source data
+    """
+    Gather SC-Earth source data
 
     Parameters
     ----------
@@ -205,10 +188,9 @@ def gather_sc_earth(path: str | os.PathLike) -> dict[str, list[Path]]:
     )
 
 
-def gather_eccc_rdrs(
-    name: str, path: str | os.PathLike, suffix: str, key: str
-) -> dict[str, dict[str, list[Path]]]:
-    """Gather RDRS processed source data.
+def gather_eccc_rdrs(name: str, path: str | os.PathLike, suffix: str, key: str) -> dict[str, dict[str, list[Path]]]:
+    """
+    Gather RDRS processed source data.
 
     Parameters
     ----------
@@ -246,7 +228,8 @@ def gather_raw_rdrs_by_years(
     path: str | os.PathLike,
     project: str,
 ) -> dict[str, dict[str, list[Path]]]:
-    """Gather raw RDRS files for preprocessing.
+    """
+    Gather raw RDRS files for preprocessing.
 
     Parameters
     ----------
@@ -262,14 +245,11 @@ def gather_raw_rdrs_by_years(
     path = Path(path)
     year_sets = dict()
     for year in range(1950, datetime.datetime.now().year + 1):
-
         dec_prev_year_files = []
         this_year_files = []
 
-        for file in path.glob(f"*.nc"):
-            match = re.search(
-                r"(\d{10})", file.name
-            )  # search for 10 digits (YYYYMMDDHH)
+        for file in path.glob("*.nc"):
+            match = re.search(r"(\d{10})", file.name)  # search for 10 digits (YYYYMMDDHH)
             if match:
                 date_str = match.group(1)
                 dt = datetime.datetime.strptime(date_str, "%Y%m%d%H")
@@ -293,7 +273,8 @@ def gather_raw_rdrs_by_years(
 
 
 def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
-    """Gather raw ETS-GRNCH files for preprocessing.
+    """
+    Gather raw ETS-GRNCH files for preprocessing.
 
     Parameters
     ----------
@@ -320,7 +301,8 @@ def gather_grnch(path: str | os.PathLike) -> dict[str, list[Path]]:
 def gather_nex(
     path: str | os.PathLike,
 ) -> dict[str, list[Path]]:
-    """Gather raw NEX files for preprocessing.
+    """
+    Gather raw NEX files for preprocessing.
 
     Put all files that should be contained in one dataset in one entry of the dictionary.
 
@@ -347,7 +329,8 @@ def gather_nex(
 def gather_emdna(
     path: str | os.PathLike,
 ) -> dict[str, list[Path]]:
-    """Gather raw EMDNA files for preprocessing.
+    """
+    Gather raw EMDNA files for preprocessing.
 
     Put all files with the same member together.
 
@@ -364,9 +347,7 @@ def gather_emdna(
     # 100 members
     members = [f"{i:03d}" for i in range(1, 101)]
     for member in members:
-        member_dict[member] = list(
-            sorted(source.glob(f"EMDNA_estimate/*/EMDNA_*.{member}.nc4"))
-        )
+        member_dict[member] = list(sorted(source.glob(f"EMDNA_estimate/*/EMDNA_*.{member}.nc4")))
 
     # OI
     member_dict["OI"] = list(sorted(source.glob("OI_estimate/*.nc4")))

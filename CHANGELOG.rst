@@ -4,10 +4,8 @@
 Changelog
 =========
 
-.. _changes_0.6.0:
-
-v0.6.0 (unreleased)
--------------------
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+--------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Aslı Beşe (:user:`aslibese`).
 
 Announcements
@@ -23,6 +21,7 @@ Announcements
 * `miranda` now leverages `pooch` to fetch and cache testing datasets from `miranda-testdata <https://github.com/Ouranosinc/miranda-testdata>`_:
     * ``miranda.testing.cassini`` is used to create an instance of `Cassini` for fetching testing data.
     * ``miranda.testing.registry.txt`` is a text file containing the list of datasets available in `miranda-testdata`.
+* `miranda` has dropped `black`, `isort` and `blackdocs`, and now relies solely on `ruff` and `flake8`/`flake8-rst-docstrings` for linting and formatting.
 
 New features
 ^^^^^^^^^^^^
@@ -74,6 +73,8 @@ Internal changes
     * ``multivariable_dataset``: `pytest` fixture for generating an artificial `xarray` multivariable dataset.
 * The `tox.ini` and `pyproject.toml` dependency pins have been synchronized.
 * `schema` schemas have been defined for all conversion JSON files, and are now used to validate the JSON files as part of the testing suite.
+* The code formatting now follows `ruff` standards, and `black`, `isort`, and `blackdocs` have been removed from the project. The `pre-commit` configuration has been updated accordingly. Line lengths have been increased from 88 to 150.
+* `pre-commit` hook versions have been updated and new hooks have been added for checking variable spelling and security issues. Hooks for `mypy` and `vulture` have been staged for eventual inclusion in the CI testing suite.
 
 .. _changes_0.5.0:
 
