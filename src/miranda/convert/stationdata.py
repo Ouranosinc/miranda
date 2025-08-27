@@ -22,7 +22,6 @@ from miranda.convert.utils import (
     write_zarr,
 )
 from miranda.eccc._homogenized import create_canhomt_xarray
-from miranda.ghcn import *
 from miranda.ghcn import create_ghcn_xarray
 
 
@@ -80,7 +79,6 @@ def convert_statdata_bychunks(
     var_attrs = load_json_data_mappings(project=project)["variables"]
     if cfvariable_list:
         var_attrs = {v: var_attrs[v] for v in var_attrs if var_attrs[v]["_cf_variable_name"] in cfvariable_list}
-    freq_dict = dict(h="hr", d="day")
     readme_url = None
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if project == "ghcnd":
