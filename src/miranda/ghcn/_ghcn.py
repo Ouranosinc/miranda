@@ -1,18 +1,12 @@
 from __future__ import annotations
-
-import datetime as dt
 import logging
-import multiprocessing as mp
 import os
 import shutil
-from collections.abc import Generator
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
 import xarray as xr
-from dask.diagnostics import ProgressBar
 from numpy import nan
 
 from miranda.convert.utils import (
@@ -21,6 +15,7 @@ from miranda.convert.utils import (
     prj_dict,
     q_flag_dict,
 )
+
 
 all = [
     "create_ghcn_xarray",
@@ -100,9 +95,7 @@ def get_ghcn_raw(
     return errors
 
 
-def create_ghcn_xarray(
-    in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str
-) -> xr.Dataset | None:
+def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
     """
     Create a Zarr dump of DWD climate summary data.
 
@@ -141,15 +134,9 @@ def create_ghcn_xarray(
                     ds1 = df.loc[df.element == var].to_xarray()
 
                     ds1 = ds1.rename({"data_value": var, "id": "station"})
-                    drop_vars = [
-                        v
-                        for v in ds1.data_vars
-                        if v not in varlist and v not in ["q_flag"]
-                    ]
+                    drop_vars = [v for v in ds1.data_vars if v not in varlist and v not in ["q_flag"]]
                     ds1 = ds1.drop_vars(drop_vars)
-                    ds1 = ds1.rename(
-                        {v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v}
-                    )
+                    ds1 = ds1.rename({v: f"{var}_{v}" for v in ds1.data_vars if "flag" in v})
 
                     dslist.append(ds1)
                 ds = xr.merge(dslist)
@@ -157,9 +144,7 @@ def create_ghcn_xarray(
                 del dslist
                 df_stat = station_meta[station_meta.station_id == station_id.stem]
                 if len(df_stat) != 1:
-                    raise ValueError(
-                        f"expected a single station metadata for {station_id.stem}"
-                    )
+                    raise ValueError(f"expected a single station metadata for {station_id.stem}")
                 ds = _add_coords_to_dataset(ds, df_stat, float_flag=False)
 
                 data.append(ds)

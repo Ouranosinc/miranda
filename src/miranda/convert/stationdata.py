@@ -1,7 +1,6 @@
 """Module to convert station data to Zarr format."""
 
 from __future__ import annotations
-
 import datetime as dt
 import logging
 import multiprocessing as mp
@@ -11,18 +10,11 @@ from collections.abc import Generator
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import pandas as pd
-import requests
-import xarray as xr
-from dask.diagnostics import ProgressBar
-from numpy import nan
-
 from miranda.convert._data_corrections import (
     dataset_conversion,
     load_json_data_mappings,
 )
 from miranda.convert.utils import (
-    _add_coords_to_dataset,
     get_station_meta,
     make_monotonous_time,
     prj_dict,
@@ -32,6 +24,7 @@ from miranda.convert.utils import (
 from miranda.eccc._homogenized import create_canhomt_xarray
 from miranda.ghcn import *
 from miranda.ghcn import create_ghcn_xarray
+
 
 logger = logging.getLogger("miranda.convert.stationdata")
 
@@ -86,11 +79,7 @@ def convert_statdata_bychunks(
 
     var_attrs = load_json_data_mappings(project=project)["variables"]
     if cfvariable_list:
-        var_attrs = {
-            v: var_attrs[v]
-            for v in var_attrs
-            if var_attrs[v]["_cf_variable_name"] in cfvariable_list
-        }
+        var_attrs = {v: var_attrs[v] for v in var_attrs if var_attrs[v]["_cf_variable_name"] in cfvariable_list}
     freq_dict = dict(h="hr", d="day")
     readme_url = None
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
@@ -109,16 +98,12 @@ def convert_statdata_bychunks(
         msg = f"Unknown project {project}"
         raise ValueError(msg)
 
-    tz_file = Path(__file__).parent.joinpath(
-        "data/timezones-with-oceans-now.shapefile.zip"
-    )
+    tz_file = Path(__file__).parent.joinpath("data/timezones-with-oceans-now.shapefile.zip")
 
     tz = gpd.read_file(tz_file).to_crs(epsg=4326)
     # clip to bbox for faster sjoin
     # Create a custom polygon
-    polygon = box(
-        lon_bnds[0] - 0.1, lat_bnds[0] - 0.1, lon_bnds[-1] + 0.1, lat_bnds[-1] + 0.1
-    )
+    polygon = box(lon_bnds[0] - 0.1, lat_bnds[0] - 0.1, lon_bnds[-1] + 0.1, lat_bnds[-1] + 0.1)
     poly_clip = gpd.GeoDataFrame([1], geometry=[polygon], crs=tz.crs)
     tz = tz.clip(poly_clip)
     station_df = gpd.GeoDataFrame(
@@ -150,9 +135,7 @@ def convert_statdata_bychunks(
             yield lst[i : i + n]
 
     treated = []
-    file_list = sorted(
-        list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}"))
-    )
+    file_list = sorted(list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}")))
     file_list = [f for f in file_list if f.stem in station_df.station_id.tolist()]
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, n_stations)):
@@ -160,9 +143,7 @@ def convert_statdata_bychunks(
             var_attrs_new = {}
             for vv, meta in var_attrs.items():
                 cf_var = var_attrs[vv]["_cf_variable_name"]
-                outzarr = working_folder.joinpath(
-                    "zarr", cf_var, f"{project}_{ii}.zarr"
-                )
+                outzarr = working_folder.joinpath("zarr", cf_var, f"{project}_{ii}.zarr")
                 if not outzarr.exists() or update_from_raw:
                     var_attrs_new[vv] = meta
 
@@ -185,19 +166,13 @@ def convert_statdata_bychunks(
 
                 if dsall_vars is None:
                     continue
-                dsall_vars = dsall_vars.sel(
-                    time=slice(str(start_date.year), str(end_date.year))
-                )
+                dsall_vars = dsall_vars.sel(time=slice(str(start_date.year), str(end_date.year)))
                 for kk, vv in var_attrs_new.items():
                     cf_var = var_attrs[kk]["_cf_variable_name"]
-                    outzarr = working_folder.joinpath(
-                        "zarr", cf_var, f"{project}_{ii}.zarr"
-                    )
+                    outzarr = working_folder.joinpath("zarr", cf_var, f"{project}_{ii}.zarr")
                     if kk not in dsall_vars.data_vars:
                         continue
-                    dsout = dsall_vars.drop_vars(
-                        [v for v in dsall_vars.data_vars if not v.startswith(kk)]
-                    )
+                    dsout = dsall_vars.drop_vars([v for v in dsall_vars.data_vars if not v.startswith(kk)])
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
@@ -213,9 +188,7 @@ def convert_statdata_bychunks(
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
 
-                    desc_str = "; ".join(
-                        [f"{k}:{v}" for k, v in q_flag_dict[project].items()]
-                    )
+                    desc_str = "; ".join([f"{k}:{v}" for k, v in q_flag_dict[project].items()])
                     if readme_url is not None:
                         desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
                     attrs = {
