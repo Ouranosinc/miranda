@@ -4,8 +4,24 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
---------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+    --------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.6.0:
+
+`v0.6.0 <https://github.com/Ouranosinc/miranda/tree/v0.6.0>`_ (2025-08-28)
+--------------------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Aslı Beşe (:user:`aslibese`).
 
 Announcements
@@ -31,12 +47,12 @@ New features
 * ECMWF: Added support for the `era5-single-levels-monthly-means` project.
 * ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`'cp'`, `'cape'`), and wind speed (`'u'`, `'v'`).
 * Aggregation operations now support more variables (`'hur'`, `'hurs'`, `'huss'`, `'rlds'`, `'ta'`, `'tdp'`, `'ua'`, `'uas'`, `'va'`, `'vas'`)
-* Minimum values of `"0 kg m2 s-1"` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
+* Minimum values of ``"0 kg m2 s-1"`` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
 * Added a new configuration for converting the NRCAN gridded climate dataset (`NRCANmet`).
-* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_` schemas.
+* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_ schemas.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -55,7 +71,7 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Transformation docstrings are now only updated when the transformation is actually applied.
-* Added a missing helper function to `miranda.units` (`group_by_length`) that was mistakenly removed in a previous change.
+* Added a missing helper function to `miranda.units` (``group_by_length``) that was mistakenly removed in a previous change.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -78,8 +94,8 @@ Internal changes
 
 .. _changes_0.5.0:
 
-v0.5.0 (2023-06-19)
--------------------
+`v0.5.0 <https://github.com/Ouranosinc/miranda/tree/v0.5.0>`_ (2023-06-19)
+--------------------------------------------------------------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
@@ -101,8 +117,8 @@ Internal changes
 
 .. _changes_0.4.0:
 
-v0.4.0 (2023-03-30)
--------------------
+`v0.4.0 <https://github.com/Ouranosinc/miranda/tree/v0.4.0>`_ (2023-03-30)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`).
 
 New features
@@ -135,8 +151,8 @@ Internal changes
 
 .. _changes_0.3.0:
 
-v0.3.0 (2022-11-24)
--------------------
+`v0.3.0 <https://github.com/Ouranosinc/miranda/tree/v0.3.0>`_ (2022-11-24)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Travis Logan (:user:`tlogan2000`), Gabriel Rondeau-Genesse (:user:`RondeauG`), and Sébastien Biner (:user:`sbiner`).
 
 Announcements
