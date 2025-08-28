@@ -12,7 +12,6 @@
 #
 #####################################################################
 from __future__ import annotations
-
 import json
 import logging
 from collections import defaultdict
@@ -23,22 +22,16 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+
 __all__ = ["daily_summaries_to_netcdf", "extract_daily_summaries"]
 
-eccc_metadata = json.load(
-    Path(__file__)
-    .resolve()
-    .parent.joinpath("configs")
-    .joinpath("eccc-obs-summary_attrs.json")
-    .open()
-)["variable_entry"]
+eccc_metadata = json.load(Path(__file__).resolve().parent.joinpath("configs").joinpath("eccc-obs-summary_attrs.json").open())["variable_entry"]
 
 
 # Searches a location for the station data, then calls the needed scripts to read and assembles the data using pandas
-def extract_daily_summaries(
-    path_station: Path | str, rm_flags: bool = False, file_suffix: str = ".csv"
-) -> dict:
-    """Extract daily climate summaries from ECCC CSV files.
+def extract_daily_summaries(path_station: Path | str, rm_flags: bool = False, file_suffix: str = ".csv") -> dict:
+    """
+    Extract daily climate summaries from ECCC CSV files.
 
     Parameters
     ----------
@@ -67,7 +60,8 @@ def extract_daily_summaries(
 
 #
 def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
-    """Convert daily climate summaries to NetCDF files.
+    """
+    Convert daily climate summaries to NetCDF files.
 
     Uses xarray to transform the 'station' from find_and_extract_dly into a CF-Convention netCDF file
 
@@ -83,9 +77,7 @@ def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
     None
     """
     # first, transform the Date/Time to a 'days since' format
-    time = station["data"]["Date/Time"] - np.array(
-        "1950-01-01T00:00", dtype="datetime64"
-    )
+    time = station["data"]["Date/Time"] - np.array("1950-01-01T00:00", dtype="datetime64")
     time = time.astype("timedelta64[s]").astype(float) / 86400
 
     # we use expand_dims twice to 'add' longitude and latitude dimensions to the station data
@@ -102,9 +94,7 @@ def daily_summaries_to_netcdf(station: dict, path_output: Path | str) -> None:
 
         da = xr.DataArray(
             np.expand_dims(
-                np.expand_dims(
-                    station["data"][original_field] * scale_factor + add_offset, axis=1
-                ),
+                np.expand_dims(station["data"][original_field] * scale_factor + add_offset, axis=1),
                 axis=2,
             ),
             [
@@ -189,7 +179,8 @@ def _read_multiple_daily_summaries(
     files: list[str | Path] | Generator[Path],
     rm_flags: bool = False,
 ) -> dict:
-    """Read multiple daily summary files.
+    """
+    Read multiple daily summary files.
 
     Notes
     -----
@@ -223,33 +214,17 @@ def _read_multiple_daily_summaries(
             station = pd.read_csv(summary)
             station_data.append(station)
 
-        station_summary_full = pd.DataFrame(
-            station_data
-        )  # FIXME: Find the way to combine list of dataframes into one
+        station_summary_full = pd.DataFrame(station_data)  # FIXME: Find the way to combine list of dataframes into one
 
         # change the Date/Time column to a datetime64 type
-        station_summary_full["Date/Time"] = pd.to_datetime(
-            station_summary_full["Date/Time"]
-        )
+        station_summary_full["Date/Time"] = pd.to_datetime(station_summary_full["Date/Time"])
 
         # if wanted, remove the quality and flag columns
         if rm_flags:
-            index_quality = [
-                i
-                for i, s in enumerate(station_summary_full.columns.values)
-                if "Quality" in s
-            ]
-            station_summary_full = station_summary_full.drop(
-                station_summary_full.columns.values[index_quality], axis="columns"
-            )
-            index_flag = [
-                i
-                for i, s in enumerate(station_summary_full.columns.values)
-                if "Flag" in s
-            ]
-            station_summary_full = station_summary_full.drop(
-                station_summary_full.columns.values[index_flag], axis="columns"
-            )
+            index_quality = [i for i, s in enumerate(station_summary_full.columns.values) if "Quality" in s]
+            station_summary_full = station_summary_full.drop(station_summary_full.columns.values[index_quality], axis="columns")
+            index_flag = [i for i, s in enumerate(station_summary_full.columns.values) if "Flag" in s]
+            station_summary_full = station_summary_full.drop(station_summary_full.columns.values[index_flag], axis="columns")
 
         # combine everything in a single Dict
         all_stations[station_code] = station_summary_full
@@ -258,11 +233,12 @@ def _read_multiple_daily_summaries(
 
 
 def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
-    """Read station summary information from CSV header.
+    """
+    Read station summary information from CSV header.
 
     Notes
     -----
-    Climate Services Canada has changed the way they store metadata and no longer store this infor in the CSV heading.
+    Climate Services Canada has changed the way they store metadata and no longer store this information in the CSV heading.
 
     Parameters
     ----------
@@ -291,32 +267,14 @@ def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
 
     # Does a bunch of stuff, but basically finds the right line, then cleans up the string
     station_meta = {
-        "name": lines[search_header[0]]
-        .split(",")[1]
-        .replace('"', "")
-        .replace("\n", ""),
-        "province": lines[search_header[1]]
-        .split(",")[1]
-        .replace('"', "")
-        .replace("\n", ""),
-        "latitude": float(
-            lines[search_header[2]].split(",")[1].replace('"', "").replace("\n", "")
-        ),
-        "longitude": float(
-            lines[search_header[3]].split(",")[1].replace('"', "").replace("\n", "")
-        ),
-        "elevation": float(
-            lines[search_header[4]].split(",")[1].replace('"', "").replace("\n", "")
-        ),
+        "name": lines[search_header[0]].split(",")[1].replace('"', "").replace("\n", ""),
+        "province": lines[search_header[1]].split(",")[1].replace('"', "").replace("\n", ""),
+        "latitude": float(lines[search_header[2]].split(",")[1].replace('"', "").replace("\n", "")),
+        "longitude": float(lines[search_header[3]].split(",")[1].replace('"', "").replace("\n", "")),
+        "elevation": float(lines[search_header[4]].split(",")[1].replace('"', "").replace("\n", "")),
         "ID": lines[search_header[5]].split(",")[1].replace('"', "").replace("\n", ""),
-        "WMO_ID": lines[search_header[6]]
-        .split(",")[1]
-        .replace('"', "")
-        .replace("\n", ""),
-        "TC_ID": lines[search_header[7]]
-        .split(",")[1]
-        .replace('"', "")
-        .replace("\n", ""),
+        "WMO_ID": lines[search_header[6]].split(",")[1].replace('"', "").replace("\n", ""),
+        "TC_ID": lines[search_header[7]].split(",")[1].replace('"', "").replace("\n", ""),
     }
 
     data = pd.read_csv(file, header=search_header[8] - 2)

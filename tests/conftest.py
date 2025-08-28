@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import logging
 import os
 from collections.abc import Callable
@@ -14,16 +13,13 @@ from miranda.testing.utils import (
     TESTDATA_BRANCH,
     TESTDATA_CACHE_DIR,
     TESTDATA_REPO_URL,
-)
-from miranda.testing.utils import cassini as _cassini
-from miranda.testing.utils import (
     default_testdata_cache,
     gather_testing_data,
-)
-from miranda.testing.utils import open_dataset as _open_dataset
-from miranda.testing.utils import (
     testing_setup_warnings,
 )
+from miranda.testing.utils import cassini as _cassini
+from miranda.testing.utils import open_dataset as _open_dataset
+
 
 logger = logging.getLogger("miranda")
 
@@ -63,9 +59,7 @@ def cassini(threadsafe_data_dir, worker_id):
     return _cassini(
         repo=TESTDATA_REPO_URL,
         branch=TESTDATA_BRANCH,
-        cache_dir=(
-            TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
-        ),
+        cache_dir=(TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
     )
 
 
@@ -75,9 +69,7 @@ def open_dataset(threadsafe_data_dir, worker_id):
         cassini_kwargs = {
             "branch": TESTDATA_BRANCH,
             "repo": TESTDATA_REPO_URL,
-            "cache_dir": (
-                TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
-            ),
+            "cache_dir": (TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
         }
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
@@ -109,9 +101,7 @@ def gather_session_data(request, cassini, worker_id):
             try:
                 flag.unlink()
             except FileNotFoundError:
-                logger.info(
-                    "Teardown race condition occurred: .data_written flag already removed. Lucky!"
-                )
+                logger.info("Teardown race condition occurred: .data_written flag already removed. Lucky!")
                 pass
 
     request.addfinalizer(remove_data_written_flag)

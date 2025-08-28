@@ -1,7 +1,6 @@
 """Environment and Climate Change Canada Data Conversion module."""
 
 from __future__ import annotations
-
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +8,7 @@ import pandas as pd
 import xarray as xr
 
 from .corrections import dataset_corrections
+
 
 __all__ = ["convert_canswe"]
 
@@ -95,7 +95,5 @@ def convert_canswe(file: str | Path, output: str | Path):
     ds.attrs["frequency"] = "day"
     date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
     for var in ["snd", "snw"]:
-        ds[[var, f"data_flag_{var}", f"qc_flag_{var}"]].to_netcdf(
-            Path(output) / f"{var}_CanSWE_day_{date}.nc"
-        )
+        ds[[var, f"data_flag_{var}", f"qc_flag_{var}"]].to_netcdf(Path(output) / f"{var}_CanSWE_day_{date}.nc")
     ds[["sd"]].to_netcdf(Path(output) / f"sd_CanSWE_day_{date}.nc")

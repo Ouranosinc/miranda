@@ -1,13 +1,13 @@
 """Special Time Units-Handling submodule."""
 
 from __future__ import annotations
-
 import logging
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from xclim.core.calendar import parse_offset
+
 
 KiB = int(pow(2, 10))
 MiB = int(pow(2, 20))
@@ -62,10 +62,7 @@ def check_time_frequency(
             freq = d.attrs["freq"]
         elif "freq" in d.time.attrs:
             freq = d.time.attrs["freq"]
-        elif (
-            (d.time.diff("time") < pd.Timedelta(32, "D"))
-            & (d.time.diff("time") > pd.Timedelta(27, "D"))
-        ).all():
+        elif ((d.time.diff("time") < pd.Timedelta(32, "D")) & (d.time.diff("time") > pd.Timedelta(27, "D"))).all():
             freq = "1M"
         else:
             if expected_period:
@@ -75,19 +72,15 @@ def check_time_frequency(
                 problem_periods = []
 
                 if e_period != "M" and min_period != "M":
-                    if pd.Timedelta(expected_period) > pd.Timedelta(
-                        minimum_continuous_period
-                    ):
+                    if pd.Timedelta(expected_period) > pd.Timedelta(minimum_continuous_period):
                         minimum_continuous_period = expected_period
                 elif e_period == "M":
                     if pd.Timedelta(minimum_continuous_period) < pd.Timedelta(28, "D"):
                         minimum_continuous_period = expected_period
 
-                time_periods, datasets = zip(
-                    *d.time.resample(time=minimum_continuous_period)
-                )
+                time_periods, datasets = zip(*d.time.resample(time=minimum_continuous_period), strict=False)
 
-                for period, ds_part in zip(time_periods, datasets):
+                for period, ds_part in zip(time_periods, datasets, strict=False):
                     if len(ds_part) == 1:
                         msg = f"Skipping {np.datetime_as_string(period)!s}."
                         logging.info(msg)
@@ -103,23 +96,14 @@ def check_time_frequency(
                     if f is None:
                         problem_periods.append(str(np.datetime_as_string(period)))
 
-                    if (
-                        (d.time.diff("time") < pd.Timedelta(32, "D"))
-                        & (d.time.diff("time") > pd.Timedelta(27, "D"))
-                    ).all():
+                    if ((d.time.diff("time") < pd.Timedelta(32, "D")) & (d.time.diff("time") > pd.Timedelta(27, "D"))).all():
                         f = "1M"
                     collected_freqs.append(f)
 
                 if problem_periods:
-                    raise ValueError(
-                        "Dataset contains internally discontinuous time periods: "
-                        f"{' ,'.join(problem_periods)}."
-                    )
+                    raise ValueError(f"Dataset contains internally discontinuous time periods: {' ,'.join(problem_periods)}.")
                 if len(set(collected_freqs)) > 1:
-                    raise ValueError(
-                        "Somehow, dataset contains mixed frequencies: "
-                        f"{' ,'.join(collected_freqs)}."
-                    )
+                    raise ValueError(f"Somehow, dataset contains mixed frequencies: {' ,'.join(collected_freqs)}.")
                 freq = set(collected_freqs).pop()
             else:
                 raise ValueError("Dataset time component may be discontinuous.")

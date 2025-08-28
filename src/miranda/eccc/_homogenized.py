@@ -1,21 +1,150 @@
 """Adjusted and Homogenized Canadian Clime Data module."""
 
 from __future__ import annotations
-
 import calendar
 import logging
+import os
+import shutil
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from ._utils import cf_ahccd_metadata
+from miranda.convert.utils import _add_coords_to_dataset
+from miranda.eccc._utils import cf_ahccd_metadata
+
 
 logger = logging.getLogger("miranda")
 
-__all__ = ["convert_ahccd", "convert_ahccd_fwf_files"]
+__all__ = [
+    "convert_ahccd",
+    "convert_ahccd_fwf_files",
+    "create_canhomt_xarray",
+    "download_canhomt",
+]
+
+
+def download_canhomt(
+    project: str,
+    working_folder: str | os.PathLike[str] | None = None,
+    update_raw: bool = False,
+    timeout: int | None = None,
+    retry: int = 5,
+    n_workers: int | None = None,  # FIXME: Not implemented yet
+) -> None:
+    """
+    Download CanHomT data.
+
+    Parameters
+    ----------
+    project : {"canhomt_dly"}
+        Project name.
+    working_folder : str or os.PathLink[str], optional
+        Temporary files folder.
+    update_raw : bool
+        Whether to update the raw files or not.
+    timeout : int, optional
+        Request timeout in seconds.
+    retry : int
+        Number of retries.
+    n_workers : int, optional
+        Number of workers to use. Not implemented.
+
+    Raises
+    ------
+    ValueError
+        If the project name is unknown.
+    OSError
+        If there is an error downloading the data.
+    """
+    if update_raw and working_folder.joinpath("raw").exists():
+        shutil.rmtree(working_folder.joinpath("raw"))
+    working_folder.mkdir(parents=True, exist_ok=True)
+
+    out_folder = working_folder.joinpath("raw")
+    out_folder.mkdir(parents=True, exist_ok=True)
+
+    if project in ["canhomt_dly"]:
+        url = "https://crd-data-donnees-rdc.ec.gc.ca/CDAS/products/CanHomTV4/CanHomT_dlyV4.tar.gz"
+        out_file = out_folder / "CanHomT_dlyV4.tar.gz"
+    else:
+        msg = f"unknown project type : {project}. Supported projects are ['canhomt_dly']"
+        raise ValueError(msg)
+
+    for _ in range(retry):
+        if out_file.exists() and not update_raw:
+            break
+        try:
+            msg = f"Downloading {url}"
+            logging.info(msg)
+            with requests.get(url, timeout=(5, timeout)) as r:
+                r.raise_for_status()
+                with Path(out_file.with_suffix(f".tmp{out_file.suffix}")).open("wb") as f:
+                    f.write(r.content)
+            shutil.move(out_file.with_suffix(f".tmp{out_file.suffix}"), out_file)
+            break
+        except OSError:
+            raise
+    shutil.unpack_archive(out_file, out_folder, "gztar")
+
+
+def create_canhomt_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
+    """
+    Create a xarray dataset from CanHomT raw .csv files.
+
+    Parameters
+    ----------
+    in_files : list
+        A list of input files.
+    variable_meta : dict
+        Variable metadata.
+    station_meta : pd.DataFrame
+        Station metadata.
+    project : str
+        Project name.
+
+    Returns
+    -------
+    xr.Dataset, optional
+        Dataset.
+    """
+    data = []
+    for cc in ["beginyear", "endyear"]:
+        station_meta[cc] = pd.to_datetime(station_meta[cc], format="%Y-%m")
+    for station_id in station_meta.station_id:
+        msg = f"Reading {station_id}"
+        logging.info(msg)
+        statfile = [f for f in in_files if f.name == f"{station_id}.csv"]
+
+        if statfile == []:
+            msg = f"Station {station_id} not found in input files"
+            logging.warning(msg)
+            continue
+        df = pd.read_csv(statfile[0])
+
+        df.columns = df.columns.str.lower()
+        df["station"] = station_id
+        varlist = [k for k in variable_meta.keys() if k in df.columns]
+        if varlist:
+            df["time"] = pd.to_datetime(df["time"], format="%Y-%m-%d")
+            df = df.set_index(["station", "time"])
+
+            ds = df.to_xarray()
+            drop_vars = [v for v in ds.data_vars if v not in varlist and "flag" not in v]
+            ds = ds.drop_vars(drop_vars)
+            df_stat = station_meta[station_meta.station_id == station_id]
+            if len(df_stat) != 1:
+                raise ValueError(f"expected a single station metadata for {station_id.stem}")
+            ds = _add_coords_to_dataset(ds, df_stat)
+            ds = ds.rename({f"{v}_flag": f"{v}_q_flag" for v in ds.data_vars if "flag" not in v})
+            data.append(ds)
+
+    if len(data) == 0:
+        return None
+    return xr.concat(data, dim="station")
 
 
 def convert_ahccd(
@@ -24,7 +153,8 @@ def convert_ahccd(
     variable: str,
     generation: int | None = None,
 ) -> None:
-    """Convert Adjusted and Homogenized Canadian Climate Dataset files.
+    """
+    Convert Adjusted and Homogenized Canadian Climate Dataset files.
 
     Parameters
     ----------
@@ -40,12 +170,8 @@ def convert_ahccd(
     output_dir = Path(output_dir).resolve().joinpath(variable)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
-        variable
-    )
-    var, col_names, col_spaces, header_row, global_attrs = cf_ahccd_metadata(
-        code, generation
-    )
+    code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(variable)
+    var, col_names, col_spaces, header_row, global_attrs = cf_ahccd_metadata(code, generation)
     gen = {2: "Second", 3: "Third"}.get(generation)
     if generation == 3 and code in {"dx", "dn", "dm"}:
         meta = "ahccd_gen3_temperature.csv"
@@ -67,9 +193,7 @@ def convert_ahccd(
         cols_specs = col_spaces
         for index, row in metadata.iterrows():
             if isinstance(row["stnid"], str):
-                metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].replace(
-                    " ", ""
-                )
+                metadata.loc[index, "stnid"] = metadata.loc[index, "stnid"].replace(" ", "")
     else:
         raise KeyError(f"{variable} does not include 'pr' or 'tas'.")
 
@@ -86,9 +210,7 @@ def convert_ahccd(
                 metadata_st = metadata[metadata["stnid"] == stid]
 
             if len(metadata_st) == 1:
-                ds_out = convert_ahccd_fwf_files(
-                    ff, metadata_st, variable, generation, cols_specs, var
-                )
+                ds_out = convert_ahccd_fwf_files(ff, metadata_st, variable, generation, cols_specs, var)
                 ds_out.attrs = global_attrs
 
                 ds_out.to_netcdf(outfile, engine="h5netcdf")
@@ -100,16 +222,12 @@ def convert_ahccd(
     # merge individual stations to single .nc file
     # variable
     ncfiles = list(output_dir.glob("*.nc"))
-    outfile = output_dir.parent.joinpath(
-        "merged_stations", f"ahccd_gen{generation}_{variable}.nc"
-    )
+    outfile = output_dir.parent.joinpath("merged_stations", f"ahccd_gen{generation}_{variable}.nc")
 
     if not outfile.exists():
         logger.info("merging stations :", variable)
         with ProgressBar():
-            ds_ahccd = xr.open_mfdataset(
-                ncfiles, concat_dim="station", combine="nested"
-            ).load()
+            ds_ahccd = xr.open_mfdataset(ncfiles, concat_dim="station", combine="nested").load()
 
             for coord in ds_ahccd.coords:
                 # xarray object datatypes mix string and int (e.g. stnid) convert to string for merged nc files
@@ -124,9 +242,7 @@ def convert_ahccd(
                     logger.info(v)
                     ds_ahccd[v] = ds_ahccd[v].astype(str)
 
-            ds_ahccd[f"{variable}_flag"].attrs[
-                "long_name"
-            ] = f"{ds_ahccd[f'{variable}'].attrs['long_name']} flag"
+            ds_ahccd[f"{variable}_flag"].attrs["long_name"] = f"{ds_ahccd[f'{variable}'].attrs['long_name']} flag"
             ds_ahccd.lon.attrs["units"] = "degrees_east"
             ds_ahccd.lon.attrs["long_name"] = "longitude"
             ds_ahccd.lat.attrs["units"] = "degrees_north"
@@ -138,9 +254,7 @@ def convert_ahccd(
                 ds_ahccd[clean_name].attrs["long_name"] = orig_name
 
             outfile.parent.mkdir(parents=True, exist_ok=True)
-            ds_ahccd.to_netcdf(
-                outfile, engine="h5netcdf", format="NETCDF4_CLASSIC", mode="w"
-            )
+            ds_ahccd.to_netcdf(outfile, engine="h5netcdf", format="NETCDF4_CLASSIC", mode="w")
 
             del ds_ahccd
     for nc in outfile.parent.glob("*.nc"):
@@ -157,7 +271,8 @@ def convert_ahccd_fwf_files(
     cols_specs: list[tuple[int, int]] | None = None,
     attrs: dict | None = None,
 ) -> xr.Dataset:
-    """Convert AHCCD fixed-width files.
+    """
+    Convert AHCCD fixed-width files.
 
     Parameters
     ----------
@@ -172,9 +287,7 @@ def convert_ahccd_fwf_files(
     -------
     xarray.Dataset
     """
-    code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(
-        variable
-    )
+    code = dict(tasmax="dx", tasmin="dn", tas="dm", pr="dt", prsn="ds", prlp="dr").get(variable)
 
     if attrs is None:
         attrs, _, _, _, _ = cf_ahccd_metadata(code, generation)
@@ -223,16 +336,9 @@ def convert_ahccd_fwf_files(
 
     # find invalid dates
     for y in time1.year.unique():
-        for m in (
-            ds[ds.index.get_level_values("Year") == y]
-            .index.get_level_values("Month")
-            .unique()
-        ):
+        for m in ds[ds.index.get_level_values("Year") == y].index.get_level_values("Month").unique():
             _, exp_ndays = calendar.monthrange(y, m)
-            ndays = (
-                (ds.index.get_level_values("Year") == y)
-                & (ds.index.get_level_values("Month") == m)
-            ).sum()
+            ndays = ((ds.index.get_level_values("Year") == y) & (ds.index.get_level_values("Month") == m)).sum()
             if ndays > np.int(exp_ndays):
                 print(f"year {y}, month {m}, ndays={ndays}, exp_ndays={exp_ndays}")
                 raise RuntimeError("Unknown days present.")

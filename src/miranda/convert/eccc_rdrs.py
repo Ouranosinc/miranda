@@ -1,7 +1,6 @@
 """Environment and Climate Change Canada RDRS conversion tools."""
 
 from __future__ import annotations
-
 import logging
 import os
 import pathlib
@@ -19,6 +18,7 @@ from miranda.units import check_time_frequency
 from ._aggregation import aggregate
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
 from .corrections import dataset_conversion
+
 
 logger = logging.getLogger("miranda.convert.eccc_rdrs")
 
@@ -102,15 +102,10 @@ def convert_rdrs(
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
     var_attrs = load_json_data_mappings(project, CONFIG_FILES)["variables"]
-    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][
-        project
-    ]
+    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][project]
     if cfvariable_list:
         var_attrs = {
-            v: var_attrs[v]
-            for v in var_attrs
-            if "_cf_variable_name" in var_attrs[v]
-            and var_attrs[v]["_cf_variable_name"] in cfvariable_list
+            v: var_attrs[v] for v in var_attrs if "_cf_variable_name" in var_attrs[v] and var_attrs[v]["_cf_variable_name"] in cfvariable_list
         }
     freq_dict = dict(h="hr", d="day")
 
@@ -149,25 +144,17 @@ def convert_rdrs(
                     ds_allvars = ds1
                     if out_freq is None:
                         out_freq, meaning = check_time_frequency(ds1)
-                        out_freq = (
-                            f"{out_freq[0]}{freq_dict[out_freq[1]]}"
-                            if meaning == "hour"
-                            else freq_dict[out_freq[1]]
-                        )
+                        out_freq = f"{out_freq[0]}{freq_dict[out_freq[1]]}" if meaning == "hour" else freq_dict[out_freq[1]]
                     ds_allvars.attrs["frequency"] = out_freq
                 else:
-                    ds_allvars = xr.concat(
-                        [ds_allvars, ds1], data_vars="minimal", dim="time"
-                    )
+                    ds_allvars = xr.concat([ds_allvars, ds1], data_vars="minimal", dim="time")
             ds_allvars = ds_allvars.sel(time=f"{year}")
             # This is the heart of the conversion utility; We could apply this to multiple projects.
             for month in unique(ds_allvars.time.dt.month):
                 ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
                 for short_var in var_attrs.keys():
                     real_var_name = var_name_map[short_var]
-                    drop_vars = _get_drop_vars(
-                        ncfiles[0], keep_vars=[real_var_name, "rotated_pole"]
-                    )
+                    drop_vars = _get_drop_vars(ncfiles[0], keep_vars=[real_var_name, "rotated_pole"])
                     ds_out = ds_month.drop_vars(drop_vars)
                     ds_out = ds_out.rename({real_var_name: short_var})
                     ds_out = ds_out.assign_coords(rotated_pole=ds_out["rotated_pole"])
@@ -182,15 +169,9 @@ def convert_rdrs(
                     if "level" in ds_corr.dims:
                         ds_corr = ds_corr.squeeze()
                         ds_corr = ds_corr.drop_vars(["a", "b", "level"])
-                    chunks = fetch_chunk_config(
-                        priority="time", freq=out_freq, dims=ds_corr.dims
-                    )
+                    chunks = fetch_chunk_config(priority="time", freq=out_freq, dims=ds_corr.dims)
                     chunks["time"] = len(ds_corr.time)
-                    cf_var = (
-                        var_attrs[short_var]["_cf_variable_name"]
-                        if var_attrs[short_var]["_cf_variable_name"]
-                        else short_var
-                    )
+                    cf_var = var_attrs[short_var]["_cf_variable_name"] if var_attrs[short_var]["_cf_variable_name"] else short_var
                     write_dataset_dict(
                         {cf_var: ds_corr},
                         output_folder=output_folder.joinpath(out_freq),
@@ -257,7 +238,7 @@ def rdrs_to_daily(
     if process_variables:
         for vv in [f for f in files.keys() if f not in process_variables]:
             files.pop(vv)
-    for vv, zarrs in files.items():
+    for zarrs in files.values():
         zarrs = sorted(zarrs)
         if not year_start:
             year_start = xr.open_zarr(zarrs[0]).time.dt.year.min().values
@@ -268,9 +249,7 @@ def rdrs_to_daily(
             if len(infiles) != 12:
                 msg = f"Found {len(infiles)} input files for {year}. The year is incomplete."
                 logger.warning(msg)
-            out_variables = aggregate(
-                xr.open_mfdataset(infiles, engine="zarr"), freq="day"
-            )
+            out_variables = aggregate(xr.open_mfdataset(infiles, engine="zarr"), freq="day")
             dims = set(next(iter(out_variables.values())).dims)
             chunks = fetch_chunk_config(priority="time", freq="day", dims=dims)
             chunks["time"] = len(out_variables[list(out_variables.keys())[0]].time)

@@ -11,7 +11,7 @@ sphinx:
   fail_on_warning: false  # FIXME: set to true once xclim version > 0.57.0 (see: https://github.com/Ouranosinc/xclim/pull/2188)
 
 build:
-  os: ubuntu-24.04
+  os: "ubuntu-24.04"
   tools:
     python: "mambaforge-23.11"
   jobs:

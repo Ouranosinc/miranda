@@ -12,12 +12,12 @@ Functions:
 """
 
 from __future__ import annotations
-
 import logging
 import subprocess  # noqa: S404
 from functools import reduce
 from pathlib import Path
 from types import GeneratorType
+
 
 __all__ = [
     "DiskSpaceError",
@@ -67,8 +67,8 @@ class FileMeta:
         if (-1 == size) and self._path.exists():
             try:
                 self.size = self._path.stat().st_size
-            except OSError:
-                raise DiskSpaceError(f"Cannot get size of {self._path.name}.")
+            except OSError as err:
+                raise DiskSpaceError(f"Cannot get size of {self._path.name}.") from err
         elif -1 == size:
             self.size = 0
         else:
@@ -146,15 +146,9 @@ class StorageState:
 
         # Parse the df output, handling possible conversion errors
         try:
-            self.capacity = (
-                int(df_output_split[1]) * 1000 if capacity == -1 else capacity
-            )
-            self.used_space = (
-                int(df_output_split[2]) * 1000 if used_space == -1 else used_space
-            )
-            self.free_space = (
-                int(df_output_split[3]) * 1000 if free_space == -1 else free_space
-            )
+            self.capacity = int(df_output_split[1]) * 1000 if capacity == -1 else capacity
+            self.used_space = int(df_output_split[2]) * 1000 if used_space == -1 else used_space
+            self.free_space = int(df_output_split[3]) * 1000 if free_space == -1 else free_space
         except (ValueError, IndexError) as e:
             raise DiskSpaceError("df output could not be parsed as expected.") from e
 
@@ -230,17 +224,11 @@ def size_division(
             file_count = 1
             flag_skip = 0
             for file_divided in division:
-                if check_name_repetition and (
-                    Path(file_divided._path).name == Path(file_divide._path).name
-                ):
+                if check_name_repetition and (Path(file_divided._path).name == Path(file_divide._path).name):
                     flag_skip = 1
                 size = size + file_divided.size
                 file_count = file_count + 1
-            if (
-                (size > size_limit != 0)
-                or (file_count > file_limit != 0)
-                or flag_skip == 1
-            ):
+            if (size > size_limit != 0) or (file_count > file_limit != 0) or flag_skip == 1:
                 continue
             elif preserve_order and (i != len(divisions) - 1):
                 continue
@@ -253,14 +241,7 @@ def size_division(
 
 
 def file_size(
-    file_path_or_bytes_or_dict: (
-        Path
-        | str
-        | int
-        | list[str | Path]
-        | GeneratorType
-        | dict[str, Path | list[Path]]
-    ),
+    file_path_or_bytes_or_dict: (Path | str | int | list[str | Path] | GeneratorType | dict[str, Path | list[Path]]),
 ) -> int:
     """
     Return size of object in bytes.
@@ -318,14 +299,7 @@ def file_size(
 
 
 def report_file_size(
-    file_path_or_bytes_or_dict: (
-        Path
-        | str
-        | int
-        | list[str | Path]
-        | GeneratorType
-        | dict[str, Path | list[Path]]
-    ),
+    file_path_or_bytes_or_dict: (Path | str | int | list[str | Path] | GeneratorType | dict[str, Path | list[Path]]),
     use_binary: bool = True,
     significant_digits: int = 2,
 ) -> str:

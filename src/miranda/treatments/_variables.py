@@ -1,14 +1,16 @@
 from __future__ import annotations
-
 import logging
 
 import xarray as xr
 import xclim.core.units
 from xclim.core import units
 
-from miranda.treatments.utils import _get_section_entry_key  # noqa
-from miranda.treatments.utils import _iter_entry_key  # noqa
+from miranda.treatments.utils import (
+    _get_section_entry_key,  # noqa
+    _iter_entry_key,  # noqa
+)
 from miranda.units import check_time_frequency
+
 
 logger = logging.getLogger("miranda.treatments.variables")
 
@@ -29,9 +31,7 @@ def correct_unit_names(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         if val:
             d[var].attrs["units"] = val
             prev_history = d.attrs.get("history", "")
-            history = (
-                f"Corrected units name for variable `{var}` to `{val}`. {prev_history}"
-            )
+            history = f"Corrected units name for variable `{var}` to `{val}`. {prev_history}"
             d.attrs.update(dict(history=history))
 
     return d
@@ -46,9 +46,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_section_entry_key(
-        m, "dimensions", "time", "_ensure_correct_time", p
-    )
+    expected_period = _get_section_entry_key(m, "dimensions", "time", "_ensure_correct_time", p)
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 
@@ -60,9 +58,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                     try:
                         offset, offset_meaning = check_time_frequency(d, **time_freq)
                     except TypeError:
-                        logger.error(
-                            "Unable to parse the time frequency. Verify data integrity before retrying."
-                        )
+                        logger.error("Unable to parse the time frequency. Verify data integrity before retrying.")
                         raise
 
                 msg = f"De-accumulating units for variable `{vv}`."
@@ -105,9 +101,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                         elif op == "/":
                             d_out[vv] = units.pint_multiply(d[vv], 1 / value)
                         else:
-                            raise NotImplementedError(
-                                f"Op transform doesn't implement the «{op}» operator."
-                            )
+                            raise NotImplementedError(f"Op transform doesn't implement the «{op}» operator.")
                 converted.append(vv)
             else:
                 raise NotImplementedError(f"Unknown transformation: {trans}")
@@ -117,9 +111,7 @@ def transform_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             continue
 
         prev_history = d.attrs.get("history", "")
-        history = (
-            f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
-        )
+        history = f"Transformed variable `{vv}` values using method `{trans}`. {prev_history}"
         d_out.attrs.update(dict(history=history))
 
     # Copy unconverted variables
@@ -191,13 +183,9 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 context = clip_vals.get("context", None)
                 for op, value in clip_vals.items():
                     if op == "min":
-                        min_value = xclim.core.units.convert_units_to(
-                            value, d[vv], context
-                        )
+                        min_value = xclim.core.units.convert_units_to(value, d[vv], context)
                     if op == "max":
-                        max_value = xclim.core.units.convert_units_to(
-                            value, d[vv], context
-                        )
+                        max_value = xclim.core.units.convert_units_to(value, d[vv], context)
                 msg = f"Clipping min/max values for `{vv}` ({min_value}/{max_value})."
                 logger.info(msg)
                 with xr.set_options(keep_attrs=True):
@@ -229,7 +217,8 @@ def clip_values(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
 
 def variable_conversion(d: xr.Dataset, p: str | None, m: dict) -> xr.Dataset:
-    """Add variable metadata and remove nonstandard entries.
+    """
+    Add variable metadata and remove nonstandard entries.
 
     Parameters
     ----------
@@ -260,9 +249,7 @@ def variable_conversion(d: xr.Dataset, p: str | None, m: dict) -> xr.Dataset:
             d[var].attrs.update(var_descriptions[var])
 
     # Rename data variables
-    for orig_var_name, cf_name in _iter_entry_key(
-        d, m, "variables", "_cf_variable_name", p
-    ):
+    for orig_var_name, cf_name in _iter_entry_key(d, m, "variables", "_cf_variable_name", p):
         if cf_name is not None:
             d = d.rename({orig_var_name: cf_name})
             d[cf_name].attrs.update(dict(original_variable=orig_var_name))

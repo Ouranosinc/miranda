@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import datetime
 import functools
 import logging
@@ -15,16 +14,17 @@ from typing import Any
 
 import xarray as xr
 
+
 try:
     from cdsapi import Client  # noqa
 except ModuleNotFoundError:
     warnings.warn(
-        "ERA5 downloading capabilities requires additional dependencies. "
-        "Please install them with `pip install miranda[remote]`."
+        "ERA5 downloading capabilities requires additional dependencies. Please install them with `pip install miranda[remote]`.", stacklevel=2
     )
 
 from miranda.gis import subsetting_domains
 from miranda.units import check_time_frequency
+
 
 logger = logging.getLogger("miranda.ecmwf.era5")
 
@@ -64,7 +64,8 @@ def request_era5(
     url: str | None = None,
     key: str | None = None,
 ) -> None:
-    """Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
+    """
+    Request ERA5/ERA5-Land from Copernicus Data Store in NetCDF4 format.
 
     Parameters
     ----------
@@ -126,9 +127,7 @@ def request_era5(
         v10="10m_v_component_of_wind",
     )
 
-    era5_single_levels = variable_reference[
-        "era5-land", "era5-land-monthly-means"
-    ].copy()
+    era5_single_levels = variable_reference["era5-land", "era5-land-monthly-means"].copy()
     del era5_single_levels["sde"]  # sde is not available for era5
     era5_single_levels.update(
         msl="mean_sea_level_pressure", sd="snow_depth", ptype="precipitation_type"
@@ -170,9 +169,7 @@ def request_era5(
 
     for project_name, request_code in project_names.items():
         if year_start is None:
-            if "preliminary-back-extension" in project_name or project_name.startswith(
-                "era5-land"
-            ):
+            if "preliminary-back-extension" in project_name or project_name.startswith("era5-land"):
                 project_year_start = 1940
             else:
                 project_year_start = 1959
@@ -201,9 +198,7 @@ def request_era5(
                 if y < today.year:
                     yearmonth.append((y, months))
                 elif two_months_ago.year == today.year:
-                    yearmonth.append(
-                        (y, [str(d).zfill(2) for d in range(1, two_months_ago.month)])
-                    )
+                    yearmonth.append((y, [str(d).zfill(2) for d in range(1, two_months_ago.month)]))
             else:
                 for m in months:
                     request_date = datetime.date(y, int(m), today.day)
@@ -220,11 +215,7 @@ def request_era5(
 
         v_requested = dict()
         try:
-            variable_reference = next(
-                var_list
-                for k, var_list in variable_reference.items()
-                if project_name in k
-            )
+            variable_reference = next(var_list for k, var_list in variable_reference.items() if project_name in k)
         except StopIteration:
             return
 
@@ -331,11 +322,7 @@ def _request_direct_era(
             format="netcdf",
         )
 
-        if (
-            "reanalysis-era5-single-levels" in project
-            or "reanalysis-era5-pressure-levels" in project
-            or "monthly-means" in project
-        ):
+        if "reanalysis-era5-single-levels" in project or "reanalysis-era5-pressure-levels" in project or "monthly-means" in project:
             request_kwargs.update(dict(product_type=product))
 
         if pressure_levels:
@@ -351,15 +338,13 @@ def _request_direct_era(
             else:
                 request_kwargs.update(dict(pressure_level=pressure_levels))
 
-        netcdf_name = (
-            f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}"
-            f"_{product.replace('_', '-')}_{domain.upper()}_{year_month}.nc"
-        )
+        netcdf_name = f"{var}_{timestep}_ecmwf_{'-'.join(project.split('-')[1:])}_{product.replace('_', '-')}_{domain.upper()}_{year_month}.nc"
         __request(netcdf_name, project, request_kwargs, client)
 
 
 def rename_era5_files(path: os.PathLike | str) -> None:
-    """Rename badly named ERA5 files.
+    """
+    Rename badly named ERA5 files.
 
     Notes
     -----
@@ -396,10 +381,7 @@ def rename_era5_files(path: os.PathLike | str) -> None:
             freq_parts = check_time_frequency(ds)
             freq = f"{freq_parts[0]}{freq_parts[1]}"
         except ValueError:
-            msg = (
-                f"Unable to parse the time frequency for variable `{var_name}` "
-                f"in file `{f.name}`. Verify data integrity before retrying."
-            )
+            msg = f"Unable to parse the time frequency for variable `{var_name}` in file `{f.name}`. Verify data integrity before retrying."
             logging.error(msg)
             continue
 

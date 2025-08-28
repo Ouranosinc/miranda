@@ -1,7 +1,6 @@
 """MELCC (Québec) Weather Stations data conversion module."""
 
 from __future__ import annotations
-
 import datetime as dt
 import logging
 import os
@@ -26,6 +25,7 @@ from miranda import __version__
 from miranda.convert.corrections import dataset_corrections
 from miranda.treatments import metadata_conversion
 from miranda.treatments.utils import load_json_data_mappings
+
 
 logger = logging.getLogger("miranda.convert.melcc")
 
@@ -124,20 +124,14 @@ def list_tables(db_file: str | os.PathLike[str]) -> list[str]:
             capture_output=True,
             encoding="utf-8",
         )
-    except subprocess.CalledProcessError as e:
-        raise ValueError(
-            f"Calling mdb-tables on {db_file} failed with code {e.returncode}: {e.stderr}"
-        )
+    except subprocess.CalledProcessError as err:
+        raise ValueError(f"Calling mdb-tables on {db_file} failed with code {err.returncode}: {err.stderr}") from err
     if res.returncode != 0:
-        raise ValueError(
-            f"Calling mdb-tables on {db_file} failed with code {res.returncode}: {res.stderr}"
-        )
+        raise ValueError(f"Calling mdb-tables on {db_file} failed with code {res.returncode}: {res.stderr}")
     return res.stdout.lower().strip().split()
 
 
-def read_table(
-    db_file: str | os.PathLike[str], tab: str | os.PathLike
-) -> xarray.Dataset:
+def read_table(db_file: str | os.PathLike[str], table: str | os.PathLike) -> xarray.Dataset:
     """
     Read a MySQL table into an xarray object.
 
@@ -145,7 +139,7 @@ def read_table(
     ----------
     db_file : str or os.PathLike
         The database file.
-    tab : str or os.PathLike
+    table : str or os.PathLike
         The table to read.
 
     Returns
@@ -160,15 +154,15 @@ def read_table(
                 "-T",
                 "%Y-%m-%dT%H:%M:%S",
                 _validate_db_file(db_file),
-                tab.upper(),
+                table.upper(),
             ],
             capture_output=True,
             encoding="utf-8",
             check=True,
         )
-    except subprocess.CalledProcessError as e:
-        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
-        raise ValueError(msg)
+    except subprocess.CalledProcessError as err:
+        msg = f"Calling mdb-export on {db_file} failed with code {err.returncode}: {err.stderr}"
+        raise ValueError(msg) from err
     df = (
         pd.read_csv(
             StringIO(res.stdout),
@@ -189,7 +183,7 @@ def read_table(
     )
     nat = df.index.get_level_values("time").isnull().sum()
     if nat > 0:
-        msg = f"{nat} values dropped because of unparseable timestamps (probably data from before 1900)."
+        msg = f"{nat} values dropped because of unparsable timestamps (probably data from before 1900)."
 
         logger.warning(msg)
         df = df[df.index.get_level_values("time").notnull()]
@@ -223,9 +217,9 @@ def read_stations(db_file: str | os.PathLike) -> pd.DataFrame:
             encoding="utf-8",
             check=True,
         )
-    except subprocess.CalledProcessError as e:
-        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
-        raise ValueError(msg)
+    except subprocess.CalledProcessError as err:
+        msg = f"Calling mdb-export on {db_file} failed with code {err.returncode}: {err.stderr}"
+        raise ValueError(msg) from err
 
     df = pd.read_csv(
         StringIO(res.stdout),
@@ -283,9 +277,9 @@ def read_definitions(db_file: str) -> pd.DataFrame:
             encoding="utf-8",
             check=True,
         )
-    except subprocess.CalledProcessError as e:
-        msg = f"Calling mdb-export on {db_file} failed with code {e.returncode}: {e.stderr}"
-        raise ValueError(msg)
+    except subprocess.CalledProcessError as err:
+        msg = f"Calling mdb-export on {db_file} failed with code {err.returncode}: {err.stderr}"
+        raise ValueError(msg) from err
     definitions = (
         pd.read_csv(StringIO(res.stdout))
         .rename(
@@ -335,12 +329,12 @@ def convert_mdb(
     """
     outs = {}
     tables = list_tables(database)
-    for tab in tables:
-        if table.startswith("gdb") or tab.startswith("~"):
+    for table in tables:
+        if table.startswith("gdb") or table.startswith("~"):
             continue
-        msg = f"Parsing {database}:{tab}."
+        msg = f"Parsing {database}:{table}."
         logger.info(msg)
-        meta = parse_var_code(tab)
+        meta = parse_var_code(table)
         code = meta["melcc_code"]
         existing = list(output.glob(f"*_{code}_MELCC_{meta['freq']}_*.nc"))
         if existing and not overwrite:
@@ -352,23 +346,21 @@ def convert_mdb(
             logger.info(msg)
             outs[(vname, code)] = file
             continue
-        raw = read_table(database, tab)
+        raw = read_table(database, table)
         if np.prod(list(raw.dims.values())) == 0:
             # If any dimension is 0.
             logger.warning("The table is empty.")
             continue
         vv = meta.pop("var_name")
 
-        raw = raw.rename({tab: vv, f"{tab}_flag": f"{vv}_flag"})
+        raw = raw.rename({table: vv, f"{table}_flag": f"{vv}_flag"})
         raw.attrs["frequency"] = meta.pop("freq")
         raw[vv].attrs.update(**meta)
 
-        if tab.lower() not in definitions.index:
-            warnings.warn(
-                f"The {code} variable wasn't defined in the definition table."
-            )
+        if table.lower() not in definitions.index:
+            warnings.warn(f"The {code} variable wasn't defined in the definition table.", stacklevel=2)
         else:
-            dd = definitions.loc[tab]
+            dd = definitions.loc[table]
             raw[vv].attrs.update(**dd)
 
         raw[f"{vv}_flag"] = raw[f"{vv}_flag"].fillna(0).astype(np.int32)
@@ -386,23 +378,15 @@ def convert_mdb(
             msg = f"The following station number were not found in the station list : {sorted(list(extra_stations))}"
 
             logger.error(msg)
-            raw = xr.merge([raw, xr.Dataset().assign(station=stations)]).sel(
-                station=raw.station
-            )
+            raw = xr.merge([raw, xr.Dataset().assign(station=stations)]).sel(station=raw.station)
         else:
             raw = raw.assign_coords(station=stat)
 
         ds = dataset_corrections(raw, "melcc-obs")
-        new_var_name = list(
-            filter(lambda k: not k.endswith("_flag"), ds.data_vars.keys())
-        )[0]
-        ds.attrs["history"] = (
-            f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{tab} to netCDF."
-        )
+        new_var_name = list(filter(lambda k: not k.endswith("_flag"), ds.data_vars.keys()))[0]
+        ds.attrs["history"] = f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Conversion from {database.name}:{table} to netCDF."
         date = "-".join(ds.indexes["time"][[0, -1]].strftime("%Y%m"))
-        outs[(new_var_name, code)] = (
-            output / f"{new_var_name}_{code}_MELCC_{raw.attrs['frequency']}_{date}.nc"
-        )
+        outs[(new_var_name, code)] = output / f"{new_var_name}_{code}_MELCC_{raw.attrs['frequency']}_{date}.nc"
         ds.to_netcdf(outs[(new_var_name, code)])
     return outs
 
@@ -473,37 +457,31 @@ def concat(
     logger.info(msg)
     # Magic one-liner to parse all date_start and date_end entries from the file names.
     dates_start, dates_end = list(
-        zip(*[map(int, Path(file).stem.split("_")[-1].split("-")) for file in files])
+        zip(
+            *[map(int, Path(file).stem.split("_")[-1].split("-")) for file in files],
+            strict=False,
+        )
     )
-    outpath = (
-        Path(output_folder)
-        / f"{vv}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
-    )
+    outpath = Path(output_folder) / f"{vv}_{melcc}_{freq}_{min(dates_start):06d}-{max(dates_end):06d}.nc"
     if outpath.is_file() and not overwrite:
         msg = f"Already done in {outpath}. Skipping."
         logger.info(msg)
         return outpath
 
     dss = dict()
-    for i, file in enumerate(files):
+    for file in files:
         ds = xr.open_dataset(file, chunks={"time": 1000})
         for crd in ds.coords.values():
             crd.load()
         if list(sorted(ds.data_vars.keys())) != [vv, f"{vv}_flag"]:
-            raise ValueError(
-                f"Unexpected variables in {file}. Got {ds.data_vars.keys()}, expected {vv} and {vv}_flag."
-            )
+            raise ValueError(f"Unexpected variables in {file}. Got {ds.data_vars.keys()}, expected {vv} and {vv}_flag.")
 
         priority = ds[vv].attrs["priority"]
         if priority in dss:
-            raise ValueError(
-                f"Variable {vv} of {file} has the same priority ({priority}) than another file of the same file list."
-            )
+            raise ValueError(f"Variable {vv} of {file} has the same priority ({priority}) than another file of the same file list.")
         dss[priority] = ds
 
-    ds_all = xr.merge(
-        [ds.coords.to_dataset() for ds in dss.values()], combine_attrs="drop_conflicts"
-    )
+    ds_all = xr.merge([ds.coords.to_dataset() for ds in dss.values()], combine_attrs="drop_conflicts")
     for var in [vv, f"{vv}_flag"]:
         ds_all[var] = xr.concat(
             [ds[var] for ds in dss.values()],
@@ -522,9 +500,7 @@ def concat(
         **{f"priority={i}": ds for i, ds in dss.items()},
     )
     instruments = [dss[p][vv].melcc_code for p in sorted(dss)]
-    ds_merged[vv].attrs["melcc_code"] = (
-        "Merged sources in ascending priority : " + " ,".join(map(str, instruments))
-    )
+    ds_merged[vv].attrs["melcc_code"] = "Merged sources in ascending priority : " + " ,".join(map(str, instruments))
 
     ds_merged.attrs.update(
         source="info-climat-merged",
@@ -535,9 +511,7 @@ def concat(
     return outpath
 
 
-def convert_snow_table(
-    file: str | os.PathLike[str] | Path, output: str | os.PathLike[str] | Path
-) -> None:
+def convert_snow_table(file: str | os.PathLike[str] | Path, output: str | os.PathLike[str] | Path) -> None:
     """
     Convert snow data given through an Excel file.
 
@@ -574,16 +548,9 @@ def convert_snow_table(
 
     # Periods
     logger.info("Parsing observation periods.")
-    periods = pd.read_excel(
-        file, sheet_name="Périodes standards", names=["start", "end", "middle"]
-    )
+    periods = pd.read_excel(file, sheet_name="Périodes standards", names=["start", "end", "middle"])
     periods = periods[["start", "end"]].to_xarray()
-    periods = (
-        periods.to_array()
-        .rename(variable="bnds", index="num_period")
-        .drop_vars("bnds")
-        .rename("period_bnds")
-    )
+    periods = periods.to_array().rename(variable="bnds", index="num_period").drop_vars("bnds").rename("period_bnds")
     periods.attrs.update(
         description=(
             "Bounds of the sampling periods of the MELCC. "
@@ -677,28 +644,21 @@ def convert_snow_table(
     # Save
     logger.info("Saving to files.")
     for vv in ["sd", "snd", "snw"]:
-        ds[[vv, f"{vv}_flag"]].to_netcdf(
-            output / f"{vv}_{ds[vv].melcc_code}_MELCC_2sem_{date}.nc"
-        )
+        ds[[vv, f"{vv}_flag"]].to_netcdf(output / f"{vv}_{ds[vv].melcc_code}_MELCC_2sem_{date}.nc")
 
 
 if __name__ == "__main__":
     argparser = ArgumentParser(
-        description="Convert MS Access data to netCDF. Requires mdbtools to be installed. "
-        "By default, a single netCDF is created for each data table."
+        description="Convert MS Access data to netCDF. Requires mdbtools to be installed. By default, a single netCDF is created for each data table."
     )
-    argparser.add_argument(
-        "-v", "--verbose", help="Increase verbosity of the script.", action="store_true"
-    )
+    argparser.add_argument("-v", "--verbose", help="Increase verbosity of the script.", action="store_true")
     argparser.add_argument(
         "-c",
         "--concat",
         help="Merge all variables with the same frequency in individual datasets, according to their priority.",
         action="store_true",
     )
-    argparser.add_argument(
-        "-o", "--output", help="Output folder where to put the netCDFs.", default="."
-    )
+    argparser.add_argument("-o", "--output", help="Output folder where to put the netCDFs.", default=".")
     argparser.add_argument(
         "--raw-output",
         help="Output folder where to put the non-merged netCDFs.",
@@ -713,9 +673,7 @@ if __name__ == "__main__":
         "metafile",
         help="Path to the MDB file containing the station and variable information.",
     )
-    argparser.add_argument(
-        "folder", help="Path to a folder including many *.mdb files to convert."
-    )
+    argparser.add_argument("folder", help="Path to a folder including many *.mdb files to convert.")
     args = argparser.parse_args()
 
     if args.verbose:
@@ -730,10 +688,10 @@ if __name__ == "__main__":
 
     if args.concat:
         new_vars = defaultdict(list)
-        for (new_var, table), path in outputs.items():
+        for (new_var, _), path in outputs.items():
             new_vars[new_var].append(path)
 
-        for new_var, fichiers in new_vars.items():
+        for fichiers in new_vars.values():
             try:
                 concat(fichiers, args.output, overwrite=not args.skip_existing)
             except Exception as err:  # noqa: PERF203,BLE001

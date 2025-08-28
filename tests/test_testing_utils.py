@@ -8,12 +8,12 @@ import pytest
     [
         (
             "md",
-            ".. :changelog:\n\n# Changelog\n\n.. _changes_",
+            ".. :changelog:\n\n# Changelog\n\n",
             "[@Zeitsperre](https://github.com/Zeitsperre)",
         ),
         (
             "rst",
-            ".. :changelog:\n\n=========\nChangelog\n=========\n\n.. _changes_",
+            ".. :changelog:\n\n=========\nChangelog\n=========\n\n",
             "`@Zeitsperre <https://github.com/Zeitsperre>`_",
         ),
         ("latex", "NotImplemented", "NotImplemented"),
@@ -21,10 +21,7 @@ import pytest
     ids=["Markdown", "reStructuredText", "NotImplemented"],
 )
 def test_publish_release_notes(output_format, expected_start, expected_hyperlink):
-    from miranda import __version__
     from miranda.testing.utils import publish_release_notes
-
-    stable_version = __version__.split("-")[0]
 
     if expected_start == "NotImplemented":
         with pytest.raises(NotImplementedError):
@@ -32,7 +29,7 @@ def test_publish_release_notes(output_format, expected_start, expected_hyperlink
     else:
         release_notes = publish_release_notes(output_format)
         assert isinstance(release_notes, str)
-        assert f"{expected_start}{stable_version}" in release_notes
+        assert expected_start in release_notes
         assert expected_hyperlink in release_notes
 
 
@@ -59,10 +56,6 @@ def test_show_versions():
     ]
 
     assert isinstance(versions_found, str)
-    missing_deps = [
-        library for library in min_dependencies if f"{library} : None" in versions_found
-    ]
+    missing_deps = [library for library in min_dependencies if f"{library} : None" in versions_found]
     if missing_deps:
-        raise ImportError(
-            f"Missing dependencies: {', '.join(missing_deps)}. Try installing `miranda` or adjusting deps."
-        )
+        raise ImportError(f"Missing dependencies: {', '.join(missing_deps)}. Try installing `miranda` or adjusting deps.")

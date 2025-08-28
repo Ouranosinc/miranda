@@ -1,9 +1,9 @@
 """Validate URLs."""
 
 from __future__ import annotations
-
 import re
 import typing
+
 
 __all__ = ["url_validate"]
 

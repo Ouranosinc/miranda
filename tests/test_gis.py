@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+
 try:
     import regionmask
 except ImportError:
@@ -16,16 +17,11 @@ except ImportError:
 
 
 class TestDomains:
-
     @pytest.mark.skipif(regionmask is None, reason="regionmask not installed")
     def test_ar6_regions(self, cassini):
         from miranda.gis._domains import add_ar6_regions
 
-        ds = xr.open_dataset(
-            cassini.fetch(
-                "CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
-            )
-        )
+        ds = xr.open_dataset(cassini.fetch("CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
         ar6 = add_ar6_regions(ds)
 
         assert "region" in ar6.coords
@@ -34,11 +30,7 @@ class TestDomains:
     def test_ar6_regions_no_regionmask(self, cassini):
         from miranda.gis._domains import add_ar6_regions
 
-        ds = xr.open_dataset(
-            cassini.fetch(
-                "CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
-            )
-        )
+        ds = xr.open_dataset(cassini.fetch("CMIP6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
 
         with pytest.raises(
             ImportError,

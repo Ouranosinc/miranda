@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import logging
 import warnings
 from typing import Any
@@ -11,6 +10,7 @@ from xclim.core.calendar import parse_offset
 from miranda.treatments.utils import _get_section_entry_key, _iter_entry_key  # noqa
 from miranda.units import check_time_frequency
 
+
 __all__ = [
     "dimensions_compliance",
     "ensure_correct_time_frequency",
@@ -20,7 +20,8 @@ __all__ = [
 
 
 def find_project_variable_codes(code: str, configuration: dict[str, Any]) -> str:
-    """Find the variable code for a given variable name and project.
+    """
+    Find the variable code for a given variable name and project.
 
     Parameters
     ----------
@@ -45,7 +46,8 @@ def find_project_variable_codes(code: str, configuration: dict[str, Any]) -> str
         else:
             warnings.warn(
                 f"Variable `{variable_code}` does not have accompanying `variable_name`. "
-                f"Verify JSON. Continuing with `{variable_code}` as `variable_name`."
+                f"Verify JSON. Continuing with `{variable_code}` as `variable_name`.",
+                stacklevel=2,
             )
             variable_codes[variable_code] = variable_code
 
@@ -60,7 +62,8 @@ def find_project_variable_codes(code: str, configuration: dict[str, Any]) -> str
 
 
 def dimensions_compliance(ds: xr.Dataset, project: str, metadata: dict) -> xr.Dataset:
-    """Rename dimensions to CF to their equivalents and reorder them if needed.
+    """
+    Rename dimensions to CF to their equivalents and reorder them if needed.
 
     Parameters
     ----------
@@ -78,9 +81,7 @@ def dimensions_compliance(ds: xr.Dataset, project: str, metadata: dict) -> xr.Da
     rename_dims = dict()
     for dim in ds.dims:
         if dim in metadata["dimensions"].keys():
-            cf_name = _get_section_entry_key(
-                metadata, "dimensions", dim, "_cf_dimension_name", project
-            )
+            cf_name = _get_section_entry_key(metadata, "dimensions", dim, "_cf_dimension_name", project)
             if cf_name:
                 rename_dims[dim] = cf_name
 
@@ -95,9 +96,7 @@ def dimensions_compliance(ds: xr.Dataset, project: str, metadata: dict) -> xr.Da
                 lon1 = ds.lon.where(ds.lon <= 180.0, ds.lon - 360.0)
                 ds[new] = lon1
 
-        coord_precision = _get_section_entry_key(
-            metadata, "dimensions", new, "_precision", project
-        )
+        coord_precision = _get_section_entry_key(metadata, "dimensions", new, "_precision", project)
         if coord_precision is not None:
             ds[new] = ds[new].round(coord_precision)
 
@@ -142,15 +141,11 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     if "time" not in m["dimensions"].keys():
         msg = f"No time corrections listed for project `{p}`. Continuing..."
-        warnings.warn(msg)
+        warnings.warn(msg, stacklevel=2)
         return d
 
     if "time" not in list(d.variables.keys()):
-        msg = (
-            "No time dimension among data variables: "
-            f"{' ,'.join([str(v) for v in d.variables.keys()])}. "
-            "Continuing..."
-        )
+        msg = f"No time dimension among data variables: {' ,'.join([str(v) for v in d.variables.keys()])}. Continuing..."
         logging.info(msg)
         return d
 
@@ -158,13 +153,11 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         freq_found = xr.infer_freq(d.time)
         if strict_time in m["dimensions"]["time"].keys():
             if not freq_found:
-                msg = (
-                    "Time frequency could not be found. There may be missing timesteps."
-                )
+                msg = "Time frequency could not be found. There may be missing timesteps."
                 if m["dimensions"]["time"].get(strict_time):
                     raise ValueError(msg)
                 else:
-                    warnings.warn(f"{msg} Continuing...")
+                    warnings.warn(f"{msg} Continuing...", stacklevel=2)
                     return d
 
         correct_time_entry = m["dimensions"]["time"][key]
@@ -175,11 +168,11 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             if isinstance(correct_times, list):
                 correct_times = [parse_offset(t)[1] for t in correct_times]
             if correct_times is None:
-                warnings.warn(f"No expected times set for specified project `{p}`.")
+                warnings.warn(f"No expected times set for specified project `{p}`.", stacklevel=2)
         elif isinstance(correct_time_entry, list):
             correct_times = correct_time_entry
         else:
-            warnings.warn("No expected times set for family of projects.")
+            warnings.warn("No expected times set for family of projects.", stacklevel=2)
             return d
 
         if freq_found not in correct_times:
@@ -196,9 +189,7 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         msg = f"Resampling dataset with time frequency: {freq_found}."
         logging.info(msg)
         with xr.set_options(keep_attrs=True):
-            d_out = d.assign_coords(
-                time=d.time.resample(time=freq_found).mean(dim="time").time
-            )
+            d_out = d.assign_coords(time=d.time.resample(time=freq_found).mean(dim="time").time)
             d_out.time.attrs.update(d.time.attrs)
 
         prev_history = d.attrs.get("history", "")
@@ -217,9 +208,7 @@ def offset_time_dimension(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     offset, offset_meaning = None, None
 
     time_freq = dict()
-    expected_period = _get_section_entry_key(
-        m, "dimensions", "time", "_ensure_correct_time", p
-    )
+    expected_period = _get_section_entry_key(m, "dimensions", "time", "_ensure_correct_time", p)
     if isinstance(expected_period, str):
         time_freq["expected_period"] = expected_period
 

@@ -39,6 +39,4 @@ def test_multivariable_dataset(multivariable_dataset):
     assert isinstance(ds, xr.Dataset)
     assert all(var in ds for var in variables)
     assert ds.attrs["title"] == "Multivariable Test Time Series"
-    assert (
-        ds.attrs["description"] == "This is a test time series with multiple variables."
-    )
+    assert ds.attrs["description"] == "This is a test time series with multiple variables."

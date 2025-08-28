@@ -1,7 +1,6 @@
 """Dataset corrections submodule."""
 
 from __future__ import annotations
-
 import datetime
 import pathlib
 from collections.abc import Callable, Iterator, Sequence
@@ -25,6 +24,7 @@ from miranda.treatments import (
     variable_conversion,
 )
 from miranda.treatments.utils import load_json_data_mappings
+
 
 __all__ = ["CONFIG_FILES", "CONFIG_FOLDER", "dataset_conversion", "dataset_corrections"]
 
@@ -103,13 +103,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
 
 
 def dataset_conversion(
-    input_files: (
-        str
-        | pathlib.Path
-        | Sequence[str | pathlib.Path]
-        | Iterator[pathlib.Path]
-        | xr.Dataset
-    ),
+    input_files: (str | pathlib.Path | Sequence[str | pathlib.Path] | Iterator[pathlib.Path] | xr.Dataset),
     project: str,
     domain: str | None = None,
     mask: xr.Dataset | xr.DataArray | None = None,
@@ -173,9 +167,7 @@ def dataset_conversion(
         preprocess_kwargs = dict()
         if preprocess:
             if preprocess == "auto":
-                preprocess_kwargs.update(
-                    preprocess=partial(preprocessing_corrections, project=project)
-                )
+                preprocess_kwargs.update(preprocess=partial(preprocessing_corrections, project=project))
             elif isinstance(preprocess, Callable):
                 preprocess_kwargs.update(preprocess=preprocess)
 
