@@ -336,6 +336,7 @@ def get_station_meta(
     return station_df
 
 
+# FIXME: Needs to be moved to different module in a future version
 def _get_ghcn_stations(project: str) -> pd.DataFrame:
     """
     Get GHCN station metadata.
