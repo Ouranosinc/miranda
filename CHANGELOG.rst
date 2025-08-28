@@ -25,6 +25,7 @@ Announcements
 
 New features
 ^^^^^^^^^^^^
+* Conversion for `CanHomTv4 daily` ECCC 4th generation of the adjusted and homogenized station.
 * Conversions for variables in the `GHCN-D` weather station network dataset are now supported.
 * Conversion support has been added for the `ORRC`, `CaSR v3.1`, and `RDRS v2.1` datasets.
 * ECMWF: Added support for the `era5-single-levels-monthly-means` project.

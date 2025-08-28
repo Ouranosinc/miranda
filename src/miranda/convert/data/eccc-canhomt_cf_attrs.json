@@ -1,0 +1,68 @@
+{
+  "Header": {
+    "_miranda_version": true,
+    "Conventions": "CF-1.9",
+    "title": "CanHomT-Daily",
+    "summary": "Canada’s Fourth Generation of Homogenized Surface Air Temperature - Daily Data",
+    "keywords": "atmosphere, climatology, meteorology, temperature, homogenized",
+    "id": "CanHomT",
+    "source": "CanHomT-daily",
+    "institution": "GovCan",
+    "organisation": "ECCC",
+    "version": "4.0",
+    "processing_level": "raw",
+    "type": "station-obs",
+    "doi": "https://doi.org/10.1080/07055900.2025.2516796",
+    "contact": "dccah-ahccd@ec.gc.ca",
+    "documentation": "https://crd-data-donnees-rdc.ec.gc.ca/CDAS/products/CanHomTV4/",
+    "license": "https://climate.weather.gc.ca/prods_servs/attachment1_e.html",
+    "license_type": "permissive",
+    "organization": "ECCC",
+    "realm": "atmos"
+  },
+  "dimensions": {
+    "lat": {
+      "_cf_dimension_name": "lat",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "lon": {
+      "_cf_dimension_name": "lon",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "tmax": {
+      "_cf_variable_name": "tasmax",
+      "_corrected_units": "degC",
+      "cell_methods": "time: max (interval: 1 day)",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tmin": {
+      "_cf_variable_name": "tasmin",
+      "_corrected_units": "degC",
+      "cell_methods": "time: min (interval: 1 day)",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "tmean": {
+      "_cf_variable_name": "tas",
+      "_corrected_units": "degC",
+      "cell_methods": "time: mean (interval: 1 day)",
+      "long_name": "Daily Mean Near-Surface Air Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    }
+  }
+}
