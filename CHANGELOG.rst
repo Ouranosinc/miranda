@@ -94,8 +94,8 @@ Internal changes
 
 .. _changes_0.5.0:
 
-v0.5.0 (2023-06-19)
--------------------
+`v0.5.0 <https://github.com/Ouranosinc/miranda/tree/v0.5.0>`_ (2023-06-19)
+--------------------------------------------------------------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
@@ -117,8 +117,8 @@ Internal changes
 
 .. _changes_0.4.0:
 
-v0.4.0 (2023-03-30)
--------------------
+`v0.4.0 <https://github.com/Ouranosinc/miranda/tree/v0.4.0>`_ (2023-03-30)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`).
 
 New features
@@ -151,8 +151,8 @@ Internal changes
 
 .. _changes_0.3.0:
 
-v0.3.0 (2022-11-24)
--------------------
+`v0.3.0 <https://github.com/Ouranosinc/miranda/tree/v0.3.0>`_ (2022-11-24)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Travis Logan (:user:`tlogan2000`), Gabriel Rondeau-Genesse (:user:`RondeauG`), and Sébastien Biner (:user:`sbiner`).
 
 Announcements
