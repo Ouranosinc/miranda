@@ -1,5 +1,6 @@
 {
   "Header": {
+    "_miranda_version": true,
     "Conventions": "CF-1.9",
     "title": "CanHomT-Daily",
     "summary": "Canada’s Fourth Generation of Homogenized Surface Air Temperature - Daily Data",
