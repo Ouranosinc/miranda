@@ -71,10 +71,10 @@ def convert_statdata_bychunks(
     try:
         import geopandas as gpd
         from shapely.geometry import box
-    except ImportError:
+    except ModuleNotFoundError as err:
         msg = "GNCN conversion requires the GIS libraries. Install them with `$ pip install miranda[gis]`."
         logger.error(msg)
-        raise
+        raise ModuleNotFoundError(msg) from err
 
     var_attrs = load_json_data_mappings(project=project)["variables"]
     if cfvariable_list:
