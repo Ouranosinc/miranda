@@ -31,12 +31,12 @@ New features
 * ECMWF: Added support for the `era5-single-levels-monthly-means` project.
 * ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`'cp'`, `'cape'`), and wind speed (`'u'`, `'v'`).
 * Aggregation operations now support more variables (`'hur'`, `'hurs'`, `'huss'`, `'rlds'`, `'ta'`, `'tdp'`, `'ua'`, `'uas'`, `'va'`, `'vas'`)
-* Minimum values of `"0 kg m2 s-1"` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
+* Minimum values of ``"0 kg m2 s-1"`` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
 * Added a new configuration for converting the NRCAN gridded climate dataset (`NRCANmet`).
-* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_` schemas.
+* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_ schemas.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -55,7 +55,7 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Transformation docstrings are now only updated when the transformation is actually applied.
-* Added a missing helper function to `miranda.units` (`group_by_length`) that was mistakenly removed in a previous change.
+* Added a missing helper function to `miranda.units` (``group_by_length``) that was mistakenly removed in a previous change.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
