@@ -31,7 +31,7 @@ CONFIG_FILES = {
     "ORRC-v11": "ouranos_orrc_cf_attrs.json",
 }
 for k, v in CONFIG_FILES.items():
-    CONFIG_FILES[k] = str(CONFIG_FOLDER / v)
+    CONFIG_FILES[k] = Path(CONFIG_FOLDER / v)
 
 
 # __all__ = ["convert_rdrs", "rdrs_to_daily"]
