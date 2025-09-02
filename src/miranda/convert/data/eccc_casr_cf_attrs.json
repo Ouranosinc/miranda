@@ -317,6 +317,42 @@
       "long_name": "Meteorological Wind Direction (20m)",
       "standard_name": "wind_from_direction",
       "units": "deg"
+    },
+    "P_FR0_SFC": {
+      "_units_context": "hydro",
+      "_cf_variable_name": "prfr", 
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Freezing Rain using a density of 1000 kg/m³.",
+      "long_name": "Freezing Rain",
+      "standard_name": "freezing_rain",
+      "units": "kg m-2 s-1"
+    },
+    "P_PE0_SFC": {
+      "_units_context": "hydro",
+      "_cf_variable_name": "prrp", 
+      "_clip_values": {
+        "all": {
+          "context": "hydro",
+          "min": "0 kg m-2 s-1"
+        }
+      },
+      "_transformation": {
+        "casr-v31": "amount2rate"
+      },
+      "cell_methods": "time: mean (interval: 1 hour)",
+      "comments": "Converted from Total Refrozen Rain using a density of 1000 kg/m³.",
+      "long_name": "Refrozen Rain",
+      "standard_name": "refrozen_rain",
+      "units": "kg m-2 s-1"
     }
   }
 }
