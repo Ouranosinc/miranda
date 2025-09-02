@@ -320,7 +320,7 @@
     },
     "P_FR0_SFC": {
       "_units_context": "hydro",
-      "_cf_variable_name": "prfr", 
+      "_cf_variable_name": "prfr",
       "_clip_values": {
         "all": {
           "context": "hydro",
@@ -338,7 +338,7 @@
     },
     "P_PE0_SFC": {
       "_units_context": "hydro",
-      "_cf_variable_name": "prrp", 
+      "_cf_variable_name": "prrp",
       "_clip_values": {
         "all": {
           "context": "hydro",
