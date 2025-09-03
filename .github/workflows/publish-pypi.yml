@@ -1,4 +1,4 @@
-name: Publish Python 🐍 distributions 📦 to PyPI
+name: "Publish Python 🐍 distributions 📦 to PyPI"
 
 on:
   release:
@@ -24,8 +24,10 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             files.pythonhosted.org:443
+            fulcio.sigstore.dev:443
             github.com:443
             pypi.org:443
+            ruf-repo-cdn.sigstore.dev:443
             upload.pypi.org:443
 
       - name: Checkout Repository
