@@ -85,6 +85,7 @@
       "cell_methods": "time: point",
       "description": "Surface coordinate (10000) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
       "long_name": "Model vertical grid coordinate at the surface",
+      "_standard_name": false,
       "units": "m"
     },
     "P_HR_1.5m": {
@@ -246,7 +247,7 @@
       "_cf_variable_name": "cfia",
       "cell_methods": "time: point",
       "long_name": "Analysis: Confidence Index of CaPA 24h Analysis at surface",
-      "standard_name": "Confidence Index of CaPA 24h Analysis",
+      "_standard_name": false,
       "units": "%"
     },
     "P_GZ_09975": {
@@ -254,6 +255,7 @@
       "cell_methods": "time: point",
       "description": "Corresponding coordinate (09975) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
       "long_name": "Model vertical grid coordinate",
+      "_standard_name": false,
       "units": "m"
     },
     "P_HR_09975": {
