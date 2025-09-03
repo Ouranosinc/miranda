@@ -91,6 +91,7 @@ Internal changes
 * `schema` schemas have been defined for all conversion JSON files, and are now used to validate the JSON files as part of the testing suite.
 * The code formatting now follows `ruff` standards, and `black`, `isort`, and `blackdocs` have been removed from the project. The `pre-commit` configuration has been updated accordingly. Line lengths have been increased from 88 to 150.
 * `pre-commit` hook versions have been updated and new hooks have been added for checking variable spelling and security issues. Hooks for `mypy` and `vulture` have been staged for eventual inclusion in the CI testing suite.
+* Allow some variables that are lacking a ``standard_name`` attribute to be converted if ``_standard_name`` is explicitly set as ``False``.
 
 .. _changes_0.5.0:
 

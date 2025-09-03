@@ -26,6 +26,48 @@ __all__ = [
 LICENSES_TYPES = ["open", "permissive", "proprietary", "restricted"]
 
 
+def _source_in_header(header_dict: dict):
+    """
+    Check for source in the header
+
+    Parameters
+    ----------
+    header_dict : dict
+        The Schema dictionary for the header.
+
+    Returns
+    -------
+    Schema
+        The validated header Schema dictionary.
+
+    Raises
+    ------
+    ValueError
+        If the header dict has neither "source" nor {"_source": project_name}
+        If the header dict contains both "source" and {"_source": project_name}
+    """
+    if not header_dict or not isinstance(header_dict, dict):
+        raise ValueError("'time' must be present and be a dictionary.")
+
+    # Must contain either 'source' or '_source', but not both
+    has_source = "source" in header_dict
+    has_dynamic_source = "_source" in header_dict
+
+    if has_source and has_dynamic_source:  # both true or both false
+        raise ValueError("Time dimension may contain either 'units' or '_units', but not both")
+
+    if has_source:
+        if not isinstance(header_dict["source"], str):
+            raise ValueError("'source' must be a string")
+
+    if has_dynamic_source:
+        dynamic_source = header_dict["_source"]
+        if not isinstance(dynamic_source, dict) or not any(isinstance(k, str) and isinstance(v, str) for k, v in dynamic_source.items()):
+            raise ValueError("'_source' must be a dict of {str: str}")
+
+    return header_dict
+
+
 def _institution_in_header(header_dict: dict):
     """
     Check for institution metadata in header.
@@ -70,7 +112,6 @@ cf_header_schema = Schema(
         Schema(
             {
                 "Conventions": Regex(CF_CONVENTIONS_REGEX),
-                "source": str,
                 "type": str,  # FIXME: Should this be constrained to specific values? e.g., "simulation", "observation", etc.
                 "processing_level": Or("raw", "biasadjusted"),
                 Optional(Regex(r"^license$|^licence$")): str,
@@ -91,6 +132,7 @@ cf_header_schema = Schema(
             }
         ),
         _institution_in_header,
+        _source_in_header,
     ),
     name="header_schema",
 )
