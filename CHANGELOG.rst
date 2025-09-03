@@ -20,7 +20,7 @@ Changelog
 
 .. _changes_0.6.0:
 
-`v0.6.0 <https://github.com/Ouranosinc/miranda/tree/v0.6.0>`_ (2025-08-28)
+`v0.6.0 <https://github.com/Ouranosinc/miranda/tree/v0.6.0>`_ (2025-09-03)
 --------------------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Aslı Beşe (:user:`aslibese`).
 
@@ -44,7 +44,7 @@ New features
 * Conversion for `CanHomTv4 daily` ECCC 4th generation of the adjusted and homogenized station.
 * Conversions for variables in the `GHCN-D` weather station network dataset are now supported.
 * Conversion support has been added for the `ORRC`, `CaSR v3.1`, and `RDRS v2.1` datasets.
-* ECMWF: Added support for the `era5-single-levels-monthly-means` project.
+* ECMWF: Added support for the `"era5-single-levels-monthly-means"` project.
 * ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`'cp'`, `'cape'`), and wind speed (`'u'`, `'v'`).
 * Aggregation operations now support more variables (`'hur'`, `'hurs'`, `'huss'`, `'rlds'`, `'ta'`, `'tdp'`, `'ua'`, `'uas'`, `'va'`, `'vas'`)
 * Minimum values of ``"0 kg m2 s-1"`` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
@@ -75,11 +75,11 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
+* `miranda` now has a security policy (``SECURITY.md``) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
 * `miranda` now applies the `numpydoc` documentation style to all publicly-exposed docstrings.
 * GitHub Workflows now use commit hashes for both running GitHub Actions and installing Python dependencies from PyPI.
-* `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
-* Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
+* `miranda` now has a ``CODE_OF_CONDUCT.md`` file for setting community standards and expectations.
+* Now using the GitHub Ouranos bot for automatic version bumping via ``bump-version.yml`` GitHub Workflow.
 * Adjusted calls using `os.path` to use `pathlib` for better cross-platform compatibility.
 * Added new `pytest` fixtures for the new `miranda-testdata` repository:
     * ``cassini``: `pytest` fixture for fetching local filepaths of cached testing data.
@@ -87,7 +87,7 @@ Internal changes
     * ``era5_precip``: `pytest` fixture fetching and opening a zip file containing a subset of the ERA5 precipitation dataset.
     * ``timeseries``: `pytest` fixture for generating an artificial CF-compliant time series dataset using `xclim` and `xarray`.
     * ``multivariable_dataset``: `pytest` fixture for generating an artificial `xarray` multivariable dataset.
-* The `tox.ini` and `pyproject.toml` dependency pins have been synchronized.
+* The ``tox.ini`` and ``pyproject.toml`` dependency pins have been synchronized.
 * `schema` schemas have been defined for all conversion JSON files, and are now used to validate the JSON files as part of the testing suite.
 * The code formatting now follows `ruff` standards, and `black`, `isort`, and `blackdocs` have been removed from the project. The `pre-commit` configuration has been updated accordingly. Line lengths have been increased from 88 to 150.
 * `pre-commit` hook versions have been updated and new hooks have been added for checking variable spelling and security issues. Hooks for `mypy` and `vulture` have been staged for eventual inclusion in the CI testing suite.
