@@ -4,8 +4,24 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
---------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+    --------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.6.0:
+
+`v0.6.0 <https://github.com/Ouranosinc/miranda/tree/v0.6.0>`_ (2025-09-03)
+--------------------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Aslı Beşe (:user:`aslibese`).
 
 Announcements
@@ -28,15 +44,15 @@ New features
 * Conversion for `CanHomTv4 daily` ECCC 4th generation of the adjusted and homogenized station.
 * Conversions for variables in the `GHCN-D` weather station network dataset are now supported.
 * Conversion support has been added for the `ORRC`, `CaSR v3.1`, and `RDRS v2.1` datasets.
-* ECMWF: Added support for the `era5-single-levels-monthly-means` project.
+* ECMWF: Added support for the `"era5-single-levels-monthly-means"` project.
 * ECMWF: Added support for ocean variables (`sst`, `siconc`), convective precipitation variables (`'cp'`, `'cape'`), and wind speed (`'u'`, `'v'`).
 * Aggregation operations now support more variables (`'hur'`, `'hurs'`, `'huss'`, `'rlds'`, `'ta'`, `'tdp'`, `'ua'`, `'uas'`, `'va'`, `'vas'`)
-* Minimum values of `"0 kg m2 s-1"` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
+* Minimum values of ``"0 kg m2 s-1"`` has been set for both `'tp'` and `'sf'` variables in ERA5 and ERA5-Land projects.
 * Project user and developer documentation has been greatly expanded. All public functions and modules now have `numpy`-based docstrings.
 * The `miranda` library now uses a `src` layout for better packaging and distribution.
 * `ruff` checks and formatting standards have been adopted for the entire codebase.
 * Added a new configuration for converting the NRCAN gridded climate dataset (`NRCANmet`).
-* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_` schemas.
+* Conversion configuration JSON files are now validated against `schema <https://github.com/keleshev/schema>`_ schemas.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -55,15 +71,15 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Transformation docstrings are now only updated when the transformation is actually applied.
-* Added a missing helper function to `miranda.units` (`group_by_length`) that was mistakenly removed in a previous change.
+* Added a missing helper function to `miranda.units` (``group_by_length``) that was mistakenly removed in a previous change.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* `miranda` now has a security policy (`SECURITY.md`) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
+* `miranda` now has a security policy (``SECURITY.md``) for disclosing sensitive issues using secure communication channels. This has also been added to the documentation.
 * `miranda` now applies the `numpydoc` documentation style to all publicly-exposed docstrings.
 * GitHub Workflows now use commit hashes for both running GitHub Actions and installing Python dependencies from PyPI.
-* `miranda` now has a `CODE_OF_CONDUCT.md` file for setting community standards and expectations.
-* Now using the GitHub Ouranos bot for automatic version bumping via `bump-version.yml`.
+* `miranda` now has a ``CODE_OF_CONDUCT.md`` file for setting community standards and expectations.
+* Now using the GitHub Ouranos bot for automatic version bumping via ``bump-version.yml`` GitHub Workflow.
 * Adjusted calls using `os.path` to use `pathlib` for better cross-platform compatibility.
 * Added new `pytest` fixtures for the new `miranda-testdata` repository:
     * ``cassini``: `pytest` fixture for fetching local filepaths of cached testing data.
@@ -71,7 +87,7 @@ Internal changes
     * ``era5_precip``: `pytest` fixture fetching and opening a zip file containing a subset of the ERA5 precipitation dataset.
     * ``timeseries``: `pytest` fixture for generating an artificial CF-compliant time series dataset using `xclim` and `xarray`.
     * ``multivariable_dataset``: `pytest` fixture for generating an artificial `xarray` multivariable dataset.
-* The `tox.ini` and `pyproject.toml` dependency pins have been synchronized.
+* The ``tox.ini`` and ``pyproject.toml`` dependency pins have been synchronized.
 * `schema` schemas have been defined for all conversion JSON files, and are now used to validate the JSON files as part of the testing suite.
 * The code formatting now follows `ruff` standards, and `black`, `isort`, and `blackdocs` have been removed from the project. The `pre-commit` configuration has been updated accordingly. Line lengths have been increased from 88 to 150.
 * `pre-commit` hook versions have been updated and new hooks have been added for checking variable spelling and security issues. Hooks for `mypy` and `vulture` have been staged for eventual inclusion in the CI testing suite.
@@ -79,8 +95,8 @@ Internal changes
 
 .. _changes_0.5.0:
 
-v0.5.0 (2023-06-19)
--------------------
+`v0.5.0 <https://github.com/Ouranosinc/miranda/tree/v0.5.0>`_ (2023-06-19)
+--------------------------------------------------------------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
@@ -102,8 +118,8 @@ Internal changes
 
 .. _changes_0.4.0:
 
-v0.4.0 (2023-03-30)
--------------------
+`v0.4.0 <https://github.com/Ouranosinc/miranda/tree/v0.4.0>`_ (2023-03-30)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`).
 
 New features
@@ -136,8 +152,8 @@ Internal changes
 
 .. _changes_0.3.0:
 
-v0.3.0 (2022-11-24)
--------------------
+`v0.3.0 <https://github.com/Ouranosinc/miranda/tree/v0.3.0>`_ (2022-11-24)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Travis Logan (:user:`tlogan2000`), Gabriel Rondeau-Genesse (:user:`RondeauG`), and Sébastien Biner (:user:`sbiner`).
 
 Announcements
