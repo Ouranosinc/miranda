@@ -596,6 +596,17 @@
       "original_long_name": "V component of wind",
       "standard_name": "northward_wind",
       "units": "m s-1"
+    },
+    "skt": {
+      "_cf_variable_name": "ts",
+      "_corrected_units": false,
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "time: point",
+      "description": "This parameter is the temperature of the surface of the Earth. The skin temperature is the theoretical temperature that is required to satisfy the surface energy balance. It represents the temperature of the uppermost surface layer, which has no heat capacity and so can respond instantaneously to changes in surface fluxes. ",
+      "long_name": "Surface Temperature",
+      "standard_name": "surface_temperature",
+      "units": "K"
     }
   }
 }
