@@ -69,7 +69,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
 
     # Operations available for variables that are present in the dataset
     for variable in ds.data_vars:
-        if variable in ["tas", "ta", "tdps", "tdp", "hurs", "hur"]:
+        if variable in ["tas", "ta", "tdps", "tdp", "hurs", "hur", "ts"]:
             aggregation_legend[variable] = {"max", "mean", "min"}
         elif variable in ["sfcWind"]:
             aggregation_legend[variable] = {"max", "mean"}
