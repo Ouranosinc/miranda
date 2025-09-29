@@ -101,8 +101,10 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             "swe",
             "sweLand",
             "ua",
+            "ua100m"
             "uas",
             "va",
+            "va100m",
             "vas",
             "winddir",
             "z",
