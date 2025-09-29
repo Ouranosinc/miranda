@@ -4,19 +4,16 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
-    --------------------------------------------------------------
+.. _changes_0.7.0:
+    
+`v0.7.0 <https://github.com/Ouranosinc/miranda>`_ (unreleased)
+--------------------------------------------------------------
+Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`).
 
-    Contributors:
+New features
+^^^^^^^
+* Added support for converting `GHCN-Hourly` weather station network dataset.
 
-    Changes
-    ^^^^^^^
-    * No change.
-
-    Fixes
-    ^^^^^
-    * No change.
 
 .. _changes_0.6.0:
 
