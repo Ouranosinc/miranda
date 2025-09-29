@@ -173,11 +173,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                     ]
 
                     # FIXME: This is never referenced
-                    drop_cols = [
-                        c
-                        for c in df.columns
-                        if c not in varlist and c not in flaglist and c not in coordlist
-                    ]
+                    drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
                     df = df.drop(columns=drop_cols)
                     if varlist:
                         for col in ["year", "month", "day", "hour"]:
@@ -190,35 +186,17 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                         for var in varlist:
                             ds1 = df[[var, f"{var}_quality_code"]].to_xarray()
 
-                            ds1 = ds1.rename(
-                                {"station_id": "station", f"{var}_quality_code": f"{var}_flag"}
-                            )
+                            ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code": f"{var}_flag"})
                             if ds1[f"{var}_flag"].dtype == "float":
                                 ds1[f"{var}_flag"] = ds1[f"{var}_flag"].round().astype(str)
-                                ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(
-                                    ds1[f"{var}_flag"] != "nan", ""
-                                )
+                                ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(ds1[f"{var}_flag"] != "nan", "")
                             else:
                                 df1 = df[[var, f"{var}_quality_code"]].copy()
-                                df1["num_str"] = (
-                                    pd.to_numeric(df1[f"{var}_quality_code"], errors="coerce")
-                                    .round()
-                                    .astype(str)
-                                )
+                                df1["num_str"] = pd.to_numeric(df1[f"{var}_quality_code"], errors="coerce").round().astype(str)
                                 df1.loc[
-                                    df1[f"{var}_quality_code"].apply(
-                                        lambda x: isinstance(x, str)
-                                    ),
+                                    df1[f"{var}_quality_code"].apply(lambda x: isinstance(x, str)),
                                     "num_str",
-                                ] = df1[
-                                    df1[f"{var}_quality_code"].apply(
-                                        lambda x: isinstance(x, str)
-                                    )
-                                ][
-                                    f"{var}_quality_code"
-                                ].astype(
-                                    str
-                                )
+                                ] = df1[df1[f"{var}_quality_code"].apply(lambda x: isinstance(x, str))][f"{var}_quality_code"].astype(str)
                                 df1 = df1.drop(columns=[f"{var}_quality_code"])
                                 df1 = df1.rename(columns={"num_str": f"{var}_quality_code"})
                                 ds1 = df1.to_xarray()
@@ -228,34 +206,17 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                                         f"{var}_quality_code": f"{var}_flag",
                                     }
                                 )
-                                ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(
-                                    ds1[f"{var}_flag"] != "nan", ""
-                                )
+                                ds1[f"{var}_flag"] = ds1[f"{var}_flag"].where(ds1[f"{var}_flag"] != "nan", "")
                             dslist.append(ds1)
                         ds = xr.merge(dslist)
 
                         del dslist
-                        df_stat = station_meta[
-                            station_meta.station_id
-                            == station_id.stem.split("_", 1)[1].split("_por")[0]
-                        ]
+                        df_stat = station_meta[station_meta.station_id == station_id.stem.split("_", 1)[1].split("_por")[0]]
                         if len(df_stat) != 1:
-                            raise ValueError(
-                                f"expected a single station metadata for {station_id.stem}"
-                            )
-                        for cc in [
-                            c
-                            for c in df_stat.columns
-                            if c not in ["station_id", "geometry", "index_right"]
-                        ]:
+                            raise ValueError(f"expected a single station metadata for {station_id.stem}")
+                        for cc in [c for c in df_stat.columns if c not in ["station_id", "geometry", "index_right"]]:
                             if cc not in ds.coords:
-                                ds = ds.assign_coords(
-                                    {
-                                        cc: xr.DataArray(
-                                            df_stat[cc].values, coords=ds.station.coords
-                                        )
-                                    }
-                                )
+                                ds = ds.assign_coords({cc: xr.DataArray(df_stat[cc].values, coords=ds.station.coords)})
                         for vv in ds.data_vars:
                             if ds[vv].dtype == "float64":
                                 ds[vv] = ds[vv].astype("float32")

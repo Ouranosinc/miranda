@@ -183,9 +183,7 @@ def convert_statdata_bychunks(
                     )
                     flg_var = [v for v in ds_corr.data_vars if str(v).endswith("_flag")]
                     if len(flg_var) != 1:
-                        msg = (
-                            f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
-                        )
+                        msg = f"Expected 1 flag variable found {len(flg_var)} : {flg_var}"
                         raise ValueError(msg)
                     ds_corr = ds_corr.rename({flg_var[0]: f"{cf_var}_q_flag"})
 
