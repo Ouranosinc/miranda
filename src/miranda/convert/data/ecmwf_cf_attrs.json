@@ -502,7 +502,7 @@
       "_invert_sign": false,
       "_transformation": false,
       "cell_methods": "time: point",
-      "comments": "Care should be taken when comparing model parameters with observations, because observations are often local to a particular point in space and time, rather than representing averages over a model grid box..",
+      "comments": "Care should be taken when comparing model parameters with observations, because observations are often local to a particular point in space and time, rather than representing averages over a model grid box.",
       "description": "This parameter is the eastward component of the 100 m wind. It is the horizontal speed of air moving towards the east, at a height of 100 metres above the surface of the Earth, in metres per second.",
       "long_name": "Eastward Wind at 100m",
       "standard_name": "eastward_wind",
