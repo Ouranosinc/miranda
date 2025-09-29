@@ -30,6 +30,7 @@
   },
   "variables": {
     "precipitation": {
+      "_units_context": "hydro",
       "_cf_variable_name": "pr",
       "_corrected_units": "mm",
       "_transformation": "amount2rate",
