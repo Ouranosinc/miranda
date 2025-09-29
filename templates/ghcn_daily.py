@@ -10,8 +10,9 @@ import xarray as xr
 
 def main():
 
+    project = "ghcnd"
     logging.basicConfig(level=logging.INFO)
-    working_folder = Path.home().joinpath("ghcnd")
+    working_folder = Path.home().joinpath(project)
     start_year = 1981
     end_year = 2020
 
@@ -23,7 +24,7 @@ def main():
 
     # download station data
     download_ghcn(
-        project="ghcnd",
+        project=project,
         working_folder=working_folder,
         lon_bnds=lon_bnds,
         lat_bnds=lat_bnds,
@@ -32,7 +33,7 @@ def main():
 
     # convert ghcn data by chunks of n_stations
     convert_statdata_bychunks(
-        project="ghcnd",
+        project=project,
         working_folder=working_folder,
         lon_bnds=lon_bnds,
         lat_bnds=lat_bnds,
@@ -54,7 +55,7 @@ def main():
             [xr.open_zarr(z, decode_timedelta=False) for z in in_zarrs], dim="station"
         ).sortby(["station", "time"])
         out_zarr = out_folder.joinpath(
-            f'{var1.name}_day_NOAA_ghcnd_{ds.time[0].dt.strftime("%Y%m%d").values}-{ds.time[-1].dt.strftime("%Y%m%d").values}.zarr'
+            f'{var1.name}_day_NOAA_{project}_{ds.time[0].dt.strftime("%Y%m%d").values}-{ds.time[-1].dt.strftime("%Y%m%d").values}.zarr'
         )
         # remove encoding
         for c in ds.coords:
