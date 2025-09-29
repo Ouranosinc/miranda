@@ -28,7 +28,7 @@ __all__ = [
 prj_dict = dict(
     ghcnd=dict(freq="daily", filetype=".csv"),
     canhomt_dly=dict(freq="daily", filetype=".csv"),
-    # ghcnh=dict(freq="hourly", filetype=".psv"), # TODO ghcnh not implemented yet
+    ghcnh=dict(freq="hourly", filetype=".psv"),
 )
 
 q_flag_dict = {
@@ -292,38 +292,36 @@ def get_station_meta(
         station_df = _get_canhomt_stations(project=project)
 
     # TODO ghcnh not implemented yet
-    # elif project == "ghcnh":
-    #     project
-    #     station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
-    #     dtypes = {
-    #         "station_id": str,
-    #         "lat": float,
-    #         "lon": float,
-    #         "elevation": float,
-    #         "state": str,
-    #         "station_name": str,
-    #         "gsn_flag": str,
-    #         "hcn_flag": str,
-    #         "wmo_id": str,
-    #     }
-    #     try:
-    #         station_df = pd.read_fwf(
-    #             station_url,
-    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-    #             names=[d for d in dtypes.keys()],
-    #             converters=dtypes,
-    #         )
-    #     except ValueError:
-    #         statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
-    #         station_df = pd.read_fwf(
-    #             statfile,
-    #             widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-    #             names=[d for d in dtypes.keys()],
-    #             converters=dtypes,
-    #         )
+    elif project == "ghcnh":
+        project
+        station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
+        dtypes = {
+            "station_id": str,
+            "lat": float,
+            "lon": float,
+            "elevation": float,
+            "state": str,
+            "station_name": str,
+            "gsn_flag": str,
+            "hcn_flag": str,
+            "wmo_id": str,
+        }
+        try:
+            station_df = pd.read_fwf(
+                station_url,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
+        except ValueError:
+            statfile = Path(__file__).parent.joinpath("data/ghcnh-station-list.txt")
+            station_df = pd.read_fwf(
+                statfile,
+                widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
+                names=[d for d in dtypes.keys()],
+                converters=dtypes,
+            )
 
-    # logger.info("ghcnh not implemented yet")
-    # exit()
     else:
         raise ValueError(f"unknown project values {project}")
     if lon_bnds:  # and lat_bnds:
