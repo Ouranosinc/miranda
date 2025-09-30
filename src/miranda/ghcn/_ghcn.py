@@ -152,6 +152,53 @@ def _process_ghcnh(
         return ds
     return None
 
+def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
+    """
+    Create a Zarr dump of DWD climate summary data.
+
+    Parameters
+    ----------
+    in_files : list
+        A list of input files.
+    variable_meta : dict
+        Variable metadata.
+    station_meta : pd.DataFrame
+        Station metadata.
+    project : str
+        Project name.
+
+    Returns
+    -------
+    xr.Dataset, optional
+        Dataset.
+    """
+    data = []
+    for station_id in sorted(list(in_files)):
+        msg = f"Reading {station_id.name}"
+        logger.info(msg)
+        if project in prj_dict:
+            try:
+                if project == "ghcnd":
+                    ds = _process_ghcnd(station_id, variable_meta, station_meta, logger)
+                elif project == "ghcnh":
+                    ds = _process_ghcnh(station_id, variable_meta, station_meta, logger)
+                else:
+                    msg = f"Unknown project {project}"
+                    raise ValueError(msg)
+                if ds is not None:
+                    data.append(ds)
+            except Exception as e:
+                msg = f"Failed to read data for {station_id.name} : {e} ... continuing"
+                logger.warning(msg)
+                continue
+        else:
+            msg = f"Unknown project {project}"
+            raise ValueError(msg)
+
+    if len(data) == 0:
+        return None
+    return xr.concat(data, dim="station")
+
 def get_ghcn_raw(
     station_ids: list,
     station_type: str,
@@ -175,6 +222,8 @@ def get_ghcn_raw(
         Request timeout in seconds. Default is 10.
     update_raw : bool
         Whether to update raw data.
+    n_workers : int, optional
+        Number of parallel workers to use. If None or 1, no parallelism is used
 
     Returns
     -------
@@ -230,55 +279,6 @@ def get_ghcn_raw(
                 errors.append(err)
     return errors
 
-
-def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
-    """
-    Create a Zarr dump of DWD climate summary data.
-
-    Parameters
-    ----------
-    in_files : list
-        A list of input files.
-    variable_meta : dict
-        Variable metadata.
-    station_meta : pd.DataFrame
-        Station metadata.
-    project : str
-        Project name.
-
-    Returns
-    -------
-    xr.Dataset, optional
-        Dataset.
-    """
-    data = []
-    for station_id in sorted(list(in_files)):
-        msg = f"Reading {station_id.name}"
-        logger.info(msg)
-        if project in prj_dict:
-            try:
-                if project == "ghcnd":
-                    ds = _process_ghcnd(station_id, variable_meta, station_meta, logger)
-                elif project == "ghcnh":
-                    ds = _process_ghcnh(station_id, variable_meta, station_meta, logger)
-                else:
-                    msg = f"Unknown project {project}"
-                    raise ValueError(msg)
-                if ds is not None:
-                    data.append(ds)
-            except Exception as e:
-                msg = f"Failed to read data for {station_id.name} : {e} ... continuing"
-                logger.warning(msg)
-                continue
-        else:
-            msg = f"Unknown project {project}"
-            raise ValueError(msg)
-
-    if len(data) == 0:
-        return None
-    return xr.concat(data, dim="station")
-
-
 def download_ghcn(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
@@ -309,7 +309,7 @@ def download_ghcn(
     retry : int
         Number of retries.
     n_workers : int, optional
-        Number of workers to use. Not implemented.
+        Number of parallel workers to use. If None or 1, no parallelism is used
 
     Raises
     ------
