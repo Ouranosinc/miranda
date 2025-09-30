@@ -25,12 +25,8 @@ all = [
 
 logger = logging.getLogger("miranda.ghcn")
 
-def _process_ghcnd(
-    station_id: Path,
-    variable_meta: dict,
-    station_meta: pd.DataFrame,
-    logger: logging.Logger
-) -> xr.Dataset | None:
+
+def _process_ghcnd(station_id: Path, variable_meta: dict, station_meta: pd.DataFrame, logger: logging.Logger) -> xr.Dataset | None:
     """
     Process a single GHCN-Daily (ghcnd) station file into an xarray.Dataset.
 
@@ -76,12 +72,8 @@ def _process_ghcnd(
         return ds
     return None
 
-def _process_ghcnh(
-    station_id: Path,
-    variable_meta: dict,
-    station_meta: pd.DataFrame,
-    logger: logging.Logger
-) -> xr.Dataset | None:
+
+def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataFrame, logger: logging.Logger) -> xr.Dataset | None:
     """
     Process a single GHCN-Hourly (ghcnh) station file into an xarray.Dataset.
 
@@ -106,8 +98,16 @@ def _process_ghcnh(
     varlist = [k for k in variable_meta.keys() if k in df.columns]
     flaglist = [f"{k}_quality_code" for k in varlist]
     coordlist = [
-        "station_id", "station_name", "year", "month", "day", "hour", "minute",
-        "latitude", "longitude", "elevation",
+        "station_id",
+        "station_name",
+        "year",
+        "month",
+        "day",
+        "hour",
+        "minute",
+        "latitude",
+        "longitude",
+        "elevation",
     ]
     drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
     df = df.drop(columns=drop_cols)
@@ -199,6 +199,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
         return None
     return xr.concat(data, dim="station")
 
+
 def get_ghcn_raw(
     station_ids: list,
     station_type: str,
@@ -238,6 +239,7 @@ def get_ghcn_raw(
         raise ValueError("outfolder must be provided")
 
     import concurrent.futures
+
     out_folder.mkdir(parents=True, exist_ok=True)
     errors = []
 
