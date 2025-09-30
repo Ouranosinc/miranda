@@ -29,6 +29,7 @@ def main():
         lon_bnds=lon_bnds,
         lat_bnds=lat_bnds,
         update_raw=update_raw,
+        n_workers=4,
     )
 
     # convert ghcn data by chunks of n_stations
