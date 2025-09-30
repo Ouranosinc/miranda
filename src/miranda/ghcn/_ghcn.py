@@ -158,6 +158,7 @@ def get_ghcn_raw(
     out_folder: Path,
     timeout: int = 10,
     update_raw: bool = False,
+    n_workers: int | None = None,
 ) -> list[str]:
     """
     Download raw GHCN data.
@@ -187,15 +188,14 @@ def get_ghcn_raw(
     if out_folder is None:
         raise ValueError("outfolder must be provided")
 
+    import concurrent.futures
     out_folder.mkdir(parents=True, exist_ok=True)
     errors = []
-    for station_id in station_ids:
-        if station_type == "daily":
-            # url = f"https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{station_id}.csv"
-            url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
 
+    def download_one_station(station_id):
+        if station_type == "daily":
+            url = f"https://noaa-ghcn-pds.s3.amazonaws.com/csv/by_station/{station_id}.csv"
             outfile = out_folder / f"{station_id}.csv"
-        # TODO ghcnh not implemented yet
         elif station_type == "hourly":
             url = f"https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-station/GHCNh_{station_id}_por.psv"
             outfile = out_folder / f"GHCNh_{station_id}_por.psv"
@@ -204,7 +204,7 @@ def get_ghcn_raw(
             raise ValueError(msg)
 
         if outfile.exists() and not update_raw:
-            continue
+            return None
         try:
             msg = f"Downloading {url}"
             logger.info(msg)
@@ -213,11 +213,21 @@ def get_ghcn_raw(
                 with Path(outfile.with_suffix(f".tmp{outfile.suffix}")).open("wb") as f:
                     f.write(r.content)
             shutil.move(outfile.with_suffix(f".tmp{outfile.suffix}"), outfile)
+            return None
         except OSError:
-            errors.append(station_id)
             msg = f"Failed to download from URL: {url} .. continuing"
             logger.info(msg)
-            continue
+            return station_id
+
+    if n_workers is not None and n_workers > 1:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as executor:
+            results = list(executor.map(download_one_station, station_ids))
+        errors = [sid for sid in results if sid is not None]
+    else:
+        for station_id in station_ids:
+            err = download_one_station(station_id)
+            if err is not None:
+                errors.append(err)
     return errors
 
 
@@ -327,6 +337,7 @@ def download_ghcn(
             out_folder=out_folder,
             update_raw=update_raw,
             timeout=timeout,
+            n_workers=n_workers,
         )
         if len(errors) == 0:
             break
