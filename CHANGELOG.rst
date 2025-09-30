@@ -4,7 +4,6 @@
 Changelog
 =========
 
-.. _changes_0.7.0:
 
 `v0.7.0 <https://github.com/Ouranosinc/miranda>`_ (unreleased)
 --------------------------------------------------------------
