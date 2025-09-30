@@ -152,6 +152,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         return ds
     return None
 
+
 def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
     """
     Create a Zarr dump of DWD climate summary data.
@@ -280,6 +281,7 @@ def get_ghcn_raw(
             if err is not None:
                 errors.append(err)
     return errors
+
 
 def download_ghcn(
     project: str,
