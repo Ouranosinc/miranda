@@ -293,7 +293,6 @@ def get_station_meta(
 
     # TODO ghcnh not implemented yet
     elif project == "ghcnh":
-        project
         station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
         dtypes = {
             "station_id": str,
