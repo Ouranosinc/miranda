@@ -150,7 +150,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                         ds = _add_coords_to_dataset(ds, df_stat, float_flag=False)
 
                         data.append(ds)
-                
+
                 elif project == "ghcnh":
                     df = pd.read_csv(station_id, delimiter="|", low_memory=False)
                     df.columns = df.columns.str.lower()
@@ -172,7 +172,6 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                         "elevation",
                     ]
 
-                    
                     drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
                     df = df.drop(columns=drop_cols)
                     if varlist:
