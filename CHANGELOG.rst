@@ -5,7 +5,7 @@ Changelog
 =========
 
 
-`v0.7.0 <https://github.com/Ouranosinc/miranda>`_ (unreleased)
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
 --------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`).
 
