@@ -10,7 +10,7 @@ import xarray as xr
 
 def main():
 
-    project = "ghcnd"
+    project = "ghcnh"
     logging.basicConfig(level=logging.INFO)
     working_folder = Path.home().joinpath(project)
     start_year = 1981

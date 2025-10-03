@@ -84,11 +84,9 @@ def convert_statdata_bychunks(
     if project == "ghcnd":
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
         out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
-    # TODO ghcnh not implemented yet
-    # elif project == "ghcnh":
-    #     readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-    #     out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
-    # logger.info("ghcnh not implemented yet")
+    elif project == "ghcnh":
+        readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
+        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
     # exit()
     elif project == "canhomt_dly":
         out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
@@ -134,7 +132,7 @@ def convert_statdata_bychunks(
 
     treated = []
     file_list = sorted(list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}")))
-    file_list = [f for f in file_list if f.stem in station_df.station_id.tolist()]
+    file_list = [f for f in file_list if any([c in f.stem for c in station_df.station_id.tolist()])]
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, n_stations)):
         if ii not in treated:
@@ -181,21 +179,34 @@ def convert_statdata_bychunks(
                         add_version_hashes=False,
                         overwrite=update_from_raw,
                     )
-                    ds_corr = ds_corr.rename({f"{kk}_q_flag": f"{cf_var}_q_flag"})
+                    flag_var = [v for v in ds_corr.data_vars if str(v).endswith("_flag")]
+                    if len(flag_var) != 1:
+                        msg = f"Expected 1 flag variable found {len(flag_var)} for {flag_var}."
+                        raise ValueError(msg)
+                    ds_corr = ds_corr.rename({flag_var[0]: f"{cf_var}_q_flag"})
+
                     for vv in ds_corr.data_vars:
                         if ds_corr[vv].dtype == "float64":
                             ds_corr[vv] = ds_corr[vv].astype("float32")
 
-                    desc_str = "; ".join([f"{k}:{v}" for k, v in q_flag_dict[project].items()])
-                    if readme_url is not None:
-                        desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
-                    attrs = {
-                        "flag_values": [c for c in q_flag_dict[project].keys()],
-                        "flag_meanings": [c for c in q_flag_dict[project].values()],
-                        "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
-                        "long_name": f"Quality flag for {cf_var}",
-                        "description": desc_str,
-                    }
+                    if project == "ghcnh":
+                        desc_str = f"See the readme file for information of quality flag codes (Table 3) : {readme_url}"
+                        attrs = {
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}",
+                            "description": desc_str,
+                        }
+                    else:
+                        desc_str = "; ".join([f"{k}:{v}" for k, v in q_flag_dict[project].items()])
+                        if readme_url is not None:
+                            desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
+                        attrs = {
+                            "flag_values": [c for c in q_flag_dict[project].keys()],
+                            "flag_meanings": [c for c in q_flag_dict[project].values()],
+                            "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
+                            "long_name": f"Quality flag for {cf_var}.",
+                            "description": desc_str,
+                        }
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
