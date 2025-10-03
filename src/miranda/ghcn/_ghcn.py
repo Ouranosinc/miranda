@@ -121,6 +121,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         dslist = []
         for var in varlist:
             ds1 = df[[var, f"{var}_quality_code"]].to_xarray()
+            ds1[var] = ds1[var].astype("float32")
             ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code": f"{var}_flag"})
             if ds1[f"{var}_flag"].dtype == "float":
                 ds1[f"{var}_flag"] = ds1[f"{var}_flag"].round().astype(str)
@@ -188,7 +189,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                     raise ValueError(msg)
                 if ds is not None:
                     data.append(ds)
-            except (OSError, ValueError, KeyError) as e:
+            except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
                 msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
                 logger.warning(msg)
                 continue
