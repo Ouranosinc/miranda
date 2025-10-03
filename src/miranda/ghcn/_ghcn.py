@@ -198,7 +198,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
 
     if len(data) == 0:
         return None
-    return xr.concat(data, dim="station")
+    return xr.concat(data, dim="station", join="outer")
 
 
 def get_ghcn_raw(
