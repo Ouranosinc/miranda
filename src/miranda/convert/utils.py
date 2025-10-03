@@ -291,7 +291,6 @@ def get_station_meta(
     elif project == "canhomt_dly":
         station_df = _get_canhomt_stations(project=project)
 
-    # TODO ghcnh not implemented yet
     elif project == "ghcnh":
         station_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.txt"
         dtypes = {
@@ -322,7 +321,7 @@ def get_station_meta(
             )
 
     else:
-        raise ValueError(f"unknown project values {project}")
+        raise ValueError(f"Unknown project values for {project}.")
     if lon_bnds:  # and lat_bnds:
         bbx_mask = station_df["lon"].between(lon_bnds[0], lon_bnds[1])
         station_df = station_df[bbx_mask]
