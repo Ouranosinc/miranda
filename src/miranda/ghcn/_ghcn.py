@@ -188,7 +188,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                     raise ValueError(msg)
                 if ds is not None:
                     data.append(ds)
-            except (OSError, ValueError, KeyError) as e:
+            except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
                 msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
                 logger.warning(msg)
                 continue
