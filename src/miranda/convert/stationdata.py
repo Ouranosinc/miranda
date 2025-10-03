@@ -172,7 +172,7 @@ def convert_statdata_bychunks(
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
-
+                    dsout[kk] = dsout[kk].astype("float32")
                     ds_corr = dataset_conversion(
                         dsout,
                         project=project,
