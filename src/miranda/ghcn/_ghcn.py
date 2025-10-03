@@ -67,7 +67,7 @@ def _process_ghcnd(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         del dslist
         df_stat = station_meta[station_meta.station_id == station_id.stem]
         if len(df_stat) != 1:
-            raise ValueError(f"expected a single station metadata for {station_id.stem}")
+            raise ValueError(f"Expected a single station metadata for {station_id.stem}.")
         ds = _add_coords_to_dataset(ds, df_stat, float_flag=False)
         return ds
     return None
@@ -193,7 +193,7 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
                 logger.warning(msg)
                 continue
         else:
-            msg = f"Unknown project {project}"
+            msg = f"Unknown project: {project}."
             raise ValueError(msg)
 
     if len(data) == 0:
@@ -348,5 +348,5 @@ def download_ghcn(
             msg = f"Failed to download {len(errors)} stations. Retrying ({try_iter + 1}/{retry})"
             logger.info(msg)
     else:
-        msg = f"Failed to download stations {errors} after {retry} retries....skipping."
+        msg = f"Failed to download stations {errors} after {retry} retries. Skipping."
         logger.error(msg)
