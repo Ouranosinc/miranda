@@ -319,8 +319,6 @@ def download_ghcn(
     ------
     ValueError
         If the project name is unknown.
-    OSError
-        If there is an error downloading the data.
     """
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if update_raw and working_folder.joinpath("raw").exists():
@@ -350,6 +348,5 @@ def download_ghcn(
             msg = f"Failed to download {len(errors)} stations. Retrying ({try_iter + 1}/{retry})"
             logger.info(msg)
     else:
-        msg = f"Failed to download stations after {retry} retries. Giving up."
+        msg = f"Failed to download stations {errors} after {retry} retries....skipping."
         logger.error(msg)
-        raise RuntimeError(msg)
