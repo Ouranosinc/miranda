@@ -435,7 +435,7 @@ def make_monotonous_time(ds: xr.Dataset, freq: str):
     if freq == "daily":
         time1 = pd.date_range(ds.time[0].values, ds.time[-1].values, freq="D")
     elif freq == "hourly":
-        time1 = pd.date_range(ds.time[0].values, ds.time[-1].values, freq="H")
+        time1 = pd.date_range(ds.time[0].values, ds.time[-1].values, freq="h")
     else:
         raise ValueError(f"Unknown frequency {freq}")
     dsnew = xr.Dataset(coords=dict(time=time1, station=ds.station))
