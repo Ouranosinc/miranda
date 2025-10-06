@@ -171,6 +171,10 @@ def convert_statdata_bychunks(
                     dsout = dsall_vars.drop_vars([v for v in dsall_vars.data_vars if not v.startswith(kk)])
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
+                    if len(dsout.station) == 0 or len(dsout.time) == 0:
+                        msg = f"No data found for variable {kk} for stations in the specified region and time period."
+                        logger.warning(msg)
+                        continue
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
                     dsout[kk] = dsout[kk].astype("float32")
                     ds_corr = dataset_conversion(
