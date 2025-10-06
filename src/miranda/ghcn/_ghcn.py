@@ -157,7 +157,7 @@ def _filter_vars_time(ds: xr.Dataset, varlist: list | None, start_date: pd.Times
     keep_vars = [vv for vv in ds.data_vars if any([vv.startswith(v) for v in varlist])]
     ds = ds.drop_vars([v for v in ds.data_vars if v not in keep_vars])
     ds = ds.sel(time=slice(str(start_date.year), str(end_date.year)))
-    if len(dsout.station) == 0 or len(dsout.time) == 0:
+    if len(ds.station) == 0 or len(ds.time) == 0:
         return None
     return ds
 
