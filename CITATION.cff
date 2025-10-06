@@ -1,0 +1,23 @@
+# This CITATION.cff file was generated with cffinit and templated with cookiecutter.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: "1.2.0"
+title: "miranda"
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: "software"
+authors:
+  - given-names: 'Trevor James'
+    family-names: 'Smith'
+    email: 'smith.trevorj@ouranos.ca'
+    orcid: 'https://orcid.org/0000-0001-5393-8359'
+contact:
+  - given-names: 'Trevor James'
+    family-names: 'Smith'
+    email: 'smith.trevorj@ouranos.ca'
+    orcid: 'https://orcid.org/0000-0001-5393-8359'
+repository-code: "https://github.com/Ouranosinc/miranda"
+abstract: "Python utilities for climate data collection, conversion, and management."
+license: "Apache-2.0"
+version: "0.6.1-dev.5"
