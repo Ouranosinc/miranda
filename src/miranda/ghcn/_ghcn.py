@@ -153,12 +153,23 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         return ds
     return None
 
+def _filter_vars_time(ds: xr.Dataset, varlist: list | None, start_date: pd.Timestamp, end_date: pd.Timestamp) -> xr.Dataset:
+    keep_vars = [vv for vv in ds.data_vars if any([vv.startswith(v) for v in varlist])]
+    ds = ds.drop_vars([v for v in ds.data_vars if v not in keep_vars])
+    ds = ds.sel(time=slice(str(start_date.year), str(end_date.year)))
+    if len(dsout.station) == 0 or len(dsout.time) == 0:
+        return None
+    return ds
+
 
 def create_ghcn_xarray(
     in_files: list,
     variable_meta: dict,
     station_meta: pd.DataFrame,
     project: str,
+    start_date: str | pd.Timestamp,
+    end_date: str | pd.Timestamp,
+    varlist: list = None,
     n_workers: int | None = None,
 ) -> xr.Dataset | None:
     """
@@ -174,6 +185,12 @@ def create_ghcn_xarray(
         Station metadata.
     project : str
         Project name.
+    start_date: str or pd.Timestamp
+        Start date of the data to be processed.
+    end_date : str or pd.Timestamp
+        End date of the data to be processed.
+    varlist : list
+        List of variables to keep, if None, all variables are kept.
     n_workers : int, optional
         Number of parallel workers to use. If None or 1, no parallelism is used
 
@@ -208,6 +225,7 @@ def create_ghcn_xarray(
                 station_id = futures[fut]
                 try:
                     ds = fut.result()
+                    ds = _filter_vars_time(ds, varlist, start_date, end_date)
                     if ds is not None:
                         data.append(ds)
                 except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
@@ -218,6 +236,7 @@ def create_ghcn_xarray(
         for station_id in station_list:
             try:
                 ds = _process_one(station_id)
+                ds = _filter_vars_time(ds, varlist, start_date, end_date)
                 if ds is not None:
                     data.append(ds)
             except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:

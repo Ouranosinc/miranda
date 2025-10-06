@@ -151,6 +151,9 @@ def convert_statdata_bychunks(
                         variable_meta=var_attrs_new,
                         station_meta=station_df,
                         project=project,
+                        start_date=start_date,
+                        end_date=end_date,
+                        varlist=list(var_attrs_new.keys()),
                         n_workers=n_workers,
                     )
                 elif "canhomt" in project:
