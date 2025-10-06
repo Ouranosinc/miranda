@@ -109,8 +109,6 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     usecols = coordlist + varlist + flaglist
     df = pd.read_csv(station_id, delimiter="|", low_memory=False, usecols=usecols)
     df.columns = df.columns.str.lower()
-    drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
-    df = df.drop(columns=drop_cols)
     varlist = [k for k in variable_meta.keys() if k in df.columns]
     if varlist:
         for col in ["year", "month", "day", "hour"]:
