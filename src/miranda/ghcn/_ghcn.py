@@ -154,7 +154,13 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     return None
 
 
-def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
+def create_ghcn_xarray(
+    in_files: list,
+    variable_meta: dict,
+    station_meta: pd.DataFrame,
+    project: str,
+    n_workers: int | None = None,
+) -> xr.Dataset | None:
     """
     Create a Zarr dump of DWD climate summary data.
 
@@ -168,34 +174,56 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
         Station metadata.
     project : str
         Project name.
+    n_workers : int, optional
+        Number of parallel workers to use. If None or 1, no parallelism is used
 
     Returns
     -------
     xr.Dataset, optional
         Dataset.
     """
-    data = []
-    for station_id in sorted(list(in_files)):
+    import concurrent.futures
+
+    def _process_one(station_id: Path) -> xr.Dataset | None:
         msg = f"Reading {station_id.name}"
         logger.info(msg)
-        if project in prj_dict:
+        if project not in prj_dict:
+            raise ValueError(f"Unknown project {project}")
+        if project == "ghcnd":
+            return _process_ghcnd(station_id, variable_meta, station_meta, logger)
+        elif project == "ghcnh":
+            return _process_ghcnh(station_id, variable_meta, station_meta, logger)
+        else:
+            raise ValueError(f"Unknown project {project}")
+
+    station_list = sorted(list(in_files))
+    data: list[xr.Dataset] = []
+
+    if n_workers is not None and n_workers > 1:
+        futures: dict[concurrent.futures.Future, Path] = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as executor:
+            for station_id in station_list:
+                futures[executor.submit(_process_one, station_id)] = station_id
+            for fut in concurrent.futures.as_completed(list(futures.keys())):
+                station_id = futures[fut]
+                try:
+                    ds = fut.result()
+                    if ds is not None:
+                        data.append(ds)
+                except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
+                    msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
+                    logger.warning(msg)
+                    continue
+    else:
+        for station_id in station_list:
             try:
-                if project == "ghcnd":
-                    ds = _process_ghcnd(station_id, variable_meta, station_meta, logger)
-                elif project == "ghcnh":
-                    ds = _process_ghcnh(station_id, variable_meta, station_meta, logger)
-                else:
-                    msg = f"Unknown project {project}"
-                    raise ValueError(msg)
+                ds = _process_one(station_id)
                 if ds is not None:
                     data.append(ds)
             except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
                 msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
                 logger.warning(msg)
                 continue
-        else:
-            msg = f"Unknown project: {project}."
-            raise ValueError(msg)
 
     if len(data) == 0:
         return None
