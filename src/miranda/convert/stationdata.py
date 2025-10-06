@@ -151,6 +151,7 @@ def convert_statdata_bychunks(
                         variable_meta=var_attrs_new,
                         station_meta=station_df,
                         project=project,
+                        n_workers=n_workers,
                     )
                 elif "canhomt" in project:
                     dsall_vars = create_canhomt_xarray(
