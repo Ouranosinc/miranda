@@ -153,6 +153,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         return ds
     return None
 
+
 def _filter_vars_time(ds: xr.Dataset, varlist: list | None, start_date: pd.Timestamp, end_date: pd.Timestamp) -> xr.Dataset:
     keep_vars = [vv for vv in ds.data_vars if any([vv.startswith(v) for v in varlist])]
     ds = ds.drop_vars([v for v in ds.data_vars if v not in keep_vars])
