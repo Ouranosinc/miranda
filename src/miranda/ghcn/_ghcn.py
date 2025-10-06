@@ -201,7 +201,7 @@ def create_ghcn_xarray(
 
     if n_workers is not None and n_workers > 1:
         futures: dict[concurrent.futures.Future, Path] = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers*2) as executor:
             for station_id in station_list:
                 futures[executor.submit(_process_one, station_id)] = station_id
             for fut in concurrent.futures.as_completed(list(futures.keys())):
