@@ -93,24 +93,25 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     xr.Dataset or None
         The processed dataset, or None if no variables found.
     """
-    df = pd.read_csv(station_id, delimiter="|", low_memory=False)
-    df.columns = df.columns.str.lower()
-    varlist = [k for k in variable_meta.keys() if k in df.columns]
-    flaglist = [f"{k}_quality_code" for k in varlist]
+    varlist = [k for k in variable_meta.keys()]
+    flaglist = [f"{k}_Quality_Code" for k in varlist]
     coordlist = [
-        "station_id",
-        "station_name",
-        "year",
-        "month",
-        "day",
-        "hour",
-        "minute",
-        "latitude",
-        "longitude",
-        "elevation",
+        "Station_ID",
+        "Station_name",
+        "Year",
+        "Month",
+        "Day",
+        "Hour",
+        "Latitude",
+        "Longitude",
+        "Elevation",
     ]
+    usecols = coordlist + varlist + flaglist
+    df = pd.read_csv(station_id, delimiter="|", low_memory=False, usecols=usecols)
+    df.columns = df.columns.str.lower()
     drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
     df = df.drop(columns=drop_cols)
+    varlist = [k for k in variable_meta.keys() if k in df.columns]
     if varlist:
         for col in ["year", "month", "day", "hour"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
