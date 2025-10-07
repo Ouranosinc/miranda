@@ -469,5 +469,8 @@ def write_zarr(
     """
     if not out_zarr.exists() or overwrite:
         with ProgressBar():
+            for vv in ds.data_vars:
+                if ds[vv].dtype == object:
+                    ds[vv] = ds[vv].astype(str)
             ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
         shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)
