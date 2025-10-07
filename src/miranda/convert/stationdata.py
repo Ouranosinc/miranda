@@ -39,6 +39,7 @@ def convert_statdata_bychunks(
     n_workers: int = 4,
     n_stations: int = 100,
     update_from_raw: bool = False,
+    zarr_format: int = 2,
 ) -> None:
     """
     Convert GHCN or CanHomT station data to Zarr format.
@@ -67,6 +68,8 @@ def convert_statdata_bychunks(
         Number of stations to process. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
+    zarr_format : int
+        Zarr format version (2 or 3). Default is 2.
     """
     try:
         import geopandas as gpd
@@ -218,7 +221,7 @@ def convert_statdata_bychunks(
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
-                    jobs.append((ds_corr, outzarr, out_chunks))
+                    jobs.append((ds_corr, outzarr, out_chunks, zarr_format))
                     if len(jobs) >= n_workers:
                         pool = mp.Pool(n_workers)
                         pool.starmap(write_zarr, jobs)

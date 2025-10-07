@@ -448,7 +448,9 @@ def write_zarr(
     ds: xr.Dataset,
     out_zarr: Path,
     chunks: dict,
+    zarr_format: int = 2,
     overwrite: bool = False,
+    
 ) -> None:
     """
     Write Zarr file.
@@ -461,10 +463,12 @@ def write_zarr(
         Output Zarr file.
     chunks : dict
         Chunk sizes.
+    zarr_format : int
+        Zarr format version (2 or 3). Default is 2.
     overwrite : bool
         Whether to overwrite. Default is False.
     """
     if not out_zarr.exists() or overwrite:
         with ProgressBar():
-            ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w")
+            ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
         shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)
