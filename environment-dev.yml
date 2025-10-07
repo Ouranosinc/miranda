@@ -34,7 +34,7 @@ dependencies:
   - pip >=25.2
   - bump-my-version >=1.2.3
   - coverage >=7.5.0
-  - deptry >=0.23.1
+  - deptry >=0.23.0
   - flake8 >=7.3.0
   - flake8-rst-docstrings >=0.3.1
   - flit >=3.11.0,<4.0
