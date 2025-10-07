@@ -450,7 +450,6 @@ def write_zarr(
     chunks: dict,
     zarr_format: int = 2,
     overwrite: bool = False,
-    
 ) -> None:
     """
     Write Zarr file.
