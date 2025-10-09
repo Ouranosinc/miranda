@@ -369,8 +369,6 @@ def download_ghcn(
         If the project name is unknown.
     """
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
-    if update_raw and working_folder.joinpath("raw").exists():
-        shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
 
     out_folder = working_folder.joinpath("raw")
