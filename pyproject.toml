@@ -142,7 +142,6 @@ replace = """\
 ..
     `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
     --------------------------------------------------------------
-
     Contributors:
 
     Changes
@@ -158,6 +157,13 @@ replace = """\
 `v{new_version} <https://github.com/Ouranosinc/miranda/tree/v{new_version}>`_ ({now:%Y-%m-%d})
 --------------------------------------------------------------------------
 """
+
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+include_bumps = ["release"]
+search = "version: \"[0-9]+\\.[0-9]+\\.[0-9]\""
+regex = true
+replace = "version: {new_version}"
 
 [[tool.bumpversion.files]]
 filename = "src/miranda/__init__.py"

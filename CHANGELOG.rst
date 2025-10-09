@@ -4,7 +4,6 @@
 Changelog
 =========
 
-
 `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
 --------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`), Trevor James Smith (:user:`Zeitsperre`).
