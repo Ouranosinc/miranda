@@ -43,7 +43,7 @@ def _process_ghcnd(station_id: Path, variable_meta: dict, station_meta: pd.DataF
 
     Returns
     -------
-    xr.Dataset or None
+    xr.Dataset, optional
         The processed dataset, or None if no variables found.
     """
     df = pd.read_csv(station_id)
@@ -90,7 +90,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
 
     Returns
     -------
-    xr.Dataset or None
+    xr.Dataset, optional
         The processed dataset, or None if no variables found.
     """
     varlist = [k for k in variable_meta.keys()]
@@ -153,7 +153,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     return None
 
 
-def _filter_vars_time(ds: xr.Dataset, varlist: list | None, start_date: pd.Timestamp, end_date: pd.Timestamp) -> xr.Dataset:
+def _filter_vars_time(ds: xr.Dataset, varlist: list | None, start_date: pd.Timestamp, end_date: pd.Timestamp) -> xr.Dataset | None:
     keep_vars = [vv for vv in ds.data_vars if any([vv.startswith(v) for v in varlist])]
     ds = ds.drop_vars([v for v in ds.data_vars if v not in keep_vars])
     ds = ds.sel(time=slice(str(start_date.year), str(end_date.year)))
@@ -169,7 +169,7 @@ def create_ghcn_xarray(
     project: str,
     start_date: str | pd.Timestamp,
     end_date: str | pd.Timestamp,
-    varlist: list = None,
+    varlist: list | None = None,
     n_workers: int | None = None,
 ) -> xr.Dataset | None:
     """
@@ -239,10 +239,10 @@ def create_ghcn_xarray(
                 ds = _filter_vars_time(ds, varlist, start_date, end_date)
                 if ds is not None:
                     data.append(ds)
-            except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
+            except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:  # noqa: PERF203
                 msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
                 logger.warning(msg)
-                continue
+                continue  # noqa: PERF203
 
     if len(data) == 0:
         return None
@@ -378,6 +378,7 @@ def download_ghcn(
 
     station_ids = station_df["station_id"].tolist()
 
+    errors = 0
     for try_iter in range(retry):
         errors = get_ghcn_raw(
             station_ids=station_ids,
