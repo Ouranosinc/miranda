@@ -2,7 +2,7 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: "1.2.0"
-title: "miranda"
+title: "miranda: Python utilities for climate data collection, conversion, and management"
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
@@ -27,6 +27,7 @@ contact:
     email: 'smith.trevorj@ouranos.ca'
     orcid: 'https://orcid.org/0000-0001-5393-8359'
 repository-code: "https://github.com/Ouranosinc/miranda"
+doi: "10.5281/zenodo.17048365"
 abstract: "Python utilities for climate data collection, conversion, and management."
 license: "Apache-2.0"
 version: "0.6.0"
