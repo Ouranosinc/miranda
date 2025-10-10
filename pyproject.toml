@@ -15,12 +15,12 @@ maintainers = [
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.10.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
@@ -54,22 +54,23 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "bump-my-version >=0.28.0",
+  "bump-my-version >=1.2.3",
   "coverage >=7.5.0",
-  "flake8 >=7.2.0",
-  "flake8-rst-docstrings >=0.3.0",
+  "flake8 >=7.3.0",
+  "flake8-rst-docstrings >=0.3.1",
   "flit >=3.11.0,<4.0",
-  "mypy >=1.14.1",
-  "numpydoc >=1.8.0",
+  "mypy >=1.18.2",
+  "numpydoc >=1.9.0",
   "pooch >=1.8.0",
-  "pip >=25.1.1",
+  "pip >=25.2",
   "pooch >=1.8.0",
   "pre-commit >=3.5.0",
   "pytest >=8.3.2",
   "pytest-cov >=5.0.0",
   "pytest-xdist >=3.2.0",
-  "ruff >=0.12.0",
-  "tox >=4.26.0",
+  "ruff >=0.13.3",
+  "tox >=4.30.3",
+  "vulture >=2.14",
   "watchdog >=4.0.0"
 ]
 docs = [
@@ -79,7 +80,7 @@ docs = [
   "ipython",
   "jupyter_client",
   "nbsphinx >=0.9.5",
-  "sphinx >=7.1.0,<8.2.0",
+  "sphinx >=7.1.0,<8.2",
   "sphinx-intl",
   "sphinx-mdinclude",
   "sphinx_codeautolink >=0.16.2",
@@ -141,7 +142,6 @@ replace = """\
 ..
     `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
     --------------------------------------------------------------
-
     Contributors:
 
     Changes
@@ -159,6 +159,13 @@ replace = """\
 """
 
 [[tool.bumpversion.files]]
+filename = "CITATION.cff"
+include_bumps = ["release"]
+search = "version: \"[0-9]+\\.[0-9]+\\.[0-9]\""
+regex = true
+replace = "version: {new_version}"
+
+[[tool.bumpversion.files]]
 filename = "src/miranda/__init__.py"
 search = "__version__ = \"{current_version}\""
 replace = "__version__ = \"{new_version}\""
@@ -172,6 +179,11 @@ replace = "__version__ = \"{new_version}\""
 filename = ".cruft.json"
 search = "\"version\": \"{current_version}\""
 replace = "\"version\": \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+search = "version: \"{current_version}\""
+replace = "version: \"{new_version}\""
 
 [tool.bumpversion.parts.build]
 independent = false
@@ -194,6 +206,10 @@ source = ["src/miranda/", "*/site-packages/miranda/"]
 omit = ["tests/*.py"]
 relative_files = true
 source = ["miranda"]
+
+[tool.deptry]
+extend_exclude = ["docs"]
+pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.flit.sdist]
 include = [

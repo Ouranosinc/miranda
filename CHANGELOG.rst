@@ -4,15 +4,23 @@
 Changelog
 =========
 
-
 `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
 --------------------------------------------------------------
-Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`).
+Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
 ^^^^^^^
 * Added support for converting `GHCN-Hourly` weather station network dataset.
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated the `cookiecutter-pypackage` template to the latest version using `cruft`:
+    * Updated `pre-commit` hooks and versions.
+    * Updated `tox` configuration to use `tox=4.30.3`.
+    * Updated `pyproject.toml` to use `PEP 639 <https://peps.python.org/pep-0639/>`_ for specifying license.
+    * `miranda` now uses `deptry` for checking dependency usage.
+    * Dependencies have been adjusted in `pyproject.toml`, `environment-*.yml` and `tox.ini` to use modern versions.
+    * Contributor Covenant has been updated to version 3.0.
 
 .. _changes_0.6.0:
 
