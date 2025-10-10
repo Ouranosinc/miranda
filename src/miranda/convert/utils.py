@@ -435,7 +435,7 @@ def make_monotonous_time(ds: xr.Dataset, freq: str):
     if freq == "daily":
         time1 = pd.date_range(ds.time[0].values, ds.time[-1].values, freq="D")
     elif freq == "hourly":
-        time1 = pd.date_range(ds.time[0].values, ds.time[-1].values, freq="H")
+        time1 = pd.date_range(ds.time[0].values, ds.time[-1].values, freq="h")
     else:
         raise ValueError(f"Unknown frequency {freq}")
     dsnew = xr.Dataset(coords=dict(time=time1, station=ds.station))
@@ -448,6 +448,7 @@ def write_zarr(
     ds: xr.Dataset,
     out_zarr: Path,
     chunks: dict,
+    zarr_format: int = 2,
     overwrite: bool = False,
 ) -> None:
     """
@@ -461,10 +462,15 @@ def write_zarr(
         Output Zarr file.
     chunks : dict
         Chunk sizes.
+    zarr_format : int
+        Zarr format version (2 or 3). Default is 2.
     overwrite : bool
         Whether to overwrite. Default is False.
     """
     if not out_zarr.exists() or overwrite:
         with ProgressBar():
-            ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w")
+            for vv in ds.data_vars:
+                if ds[vv].dtype == object:
+                    ds[vv] = ds[vv].astype(str)
+            ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
         shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)

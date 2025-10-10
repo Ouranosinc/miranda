@@ -43,7 +43,7 @@ def _process_ghcnd(station_id: Path, variable_meta: dict, station_meta: pd.DataF
 
     Returns
     -------
-    xr.Dataset or None
+    xr.Dataset, optional
         The processed dataset, or None if no variables found.
     """
     df = pd.read_csv(station_id)
@@ -90,27 +90,26 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
 
     Returns
     -------
-    xr.Dataset or None
+    xr.Dataset, optional
         The processed dataset, or None if no variables found.
     """
-    df = pd.read_csv(station_id, delimiter="|", low_memory=False)
+    varlist = [k for k in variable_meta.keys()]
+    flaglist = [f"{k}_Quality_Code" for k in varlist]
+    coordlist = [
+        "Station_ID",
+        "Station_name",
+        "Year",
+        "Month",
+        "Day",
+        "Hour",
+        "Latitude",
+        "Longitude",
+        "Elevation",
+    ]
+    usecols = coordlist + varlist + flaglist
+    df = pd.read_csv(station_id, delimiter="|", low_memory=False, usecols=usecols)
     df.columns = df.columns.str.lower()
     varlist = [k for k in variable_meta.keys() if k in df.columns]
-    flaglist = [f"{k}_quality_code" for k in varlist]
-    coordlist = [
-        "station_id",
-        "station_name",
-        "year",
-        "month",
-        "day",
-        "hour",
-        "minute",
-        "latitude",
-        "longitude",
-        "elevation",
-    ]
-    drop_cols = [c for c in df.columns if c not in varlist and c not in flaglist and c not in coordlist]
-    df = df.drop(columns=drop_cols)
     if varlist:
         for col in ["year", "month", "day", "hour"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -121,6 +120,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         dslist = []
         for var in varlist:
             ds1 = df[[var, f"{var}_quality_code"]].to_xarray()
+            ds1[var] = ds1[var].astype("float32")
             ds1 = ds1.rename({"station_id": "station", f"{var}_quality_code": f"{var}_flag"})
             if ds1[f"{var}_flag"].dtype == "float":
                 ds1[f"{var}_flag"] = ds1[f"{var}_flag"].round().astype(str)
@@ -153,7 +153,25 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     return None
 
 
-def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.DataFrame, project: str) -> xr.Dataset | None:
+def _filter_vars_time(ds: xr.Dataset, varlist: list | None, start_date: pd.Timestamp, end_date: pd.Timestamp) -> xr.Dataset | None:
+    keep_vars = [vv for vv in ds.data_vars if any([vv.startswith(v) for v in varlist])]
+    ds = ds.drop_vars([v for v in ds.data_vars if v not in keep_vars])
+    ds = ds.sel(time=slice(str(start_date.year), str(end_date.year)))
+    if len(ds.station) == 0 or len(ds.time) == 0:
+        return None
+    return ds
+
+
+def create_ghcn_xarray(
+    in_files: list,
+    variable_meta: dict,
+    station_meta: pd.DataFrame,
+    project: str,
+    start_date: str | pd.Timestamp,
+    end_date: str | pd.Timestamp,
+    varlist: list | None = None,
+    n_workers: int | None = None,
+) -> xr.Dataset | None:
     """
     Create a Zarr dump of DWD climate summary data.
 
@@ -167,34 +185,64 @@ def create_ghcn_xarray(in_files: list, variable_meta: dict, station_meta: pd.Dat
         Station metadata.
     project : str
         Project name.
+    start_date: str or pd.Timestamp
+        Start date of the data to be processed.
+    end_date : str or pd.Timestamp
+        End date of the data to be processed.
+    varlist : list
+        List of variables to keep, if None, all variables are kept.
+    n_workers : int, optional
+        Number of parallel workers to use. If None or 1, no parallelism is used
 
     Returns
     -------
     xr.Dataset, optional
         Dataset.
     """
-    data = []
-    for station_id in sorted(list(in_files)):
+    import concurrent.futures
+
+    def _process_one(station_id: Path) -> xr.Dataset | None:
         msg = f"Reading {station_id.name}"
         logger.info(msg)
-        if project in prj_dict:
+        if project not in prj_dict:
+            raise ValueError(f"Unknown project {project}")
+        if project == "ghcnd":
+            return _process_ghcnd(station_id, variable_meta, station_meta, logger)
+        elif project == "ghcnh":
+            return _process_ghcnh(station_id, variable_meta, station_meta, logger)
+        else:
+            raise ValueError(f"Unknown project {project}")
+
+    station_list = sorted(list(in_files))
+    data: list[xr.Dataset] = []
+
+    if n_workers is not None and n_workers > 1:
+        futures: dict[concurrent.futures.Future, Path] = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers * 2) as executor:
+            for station_id in station_list:
+                futures[executor.submit(_process_one, station_id)] = station_id
+            for fut in concurrent.futures.as_completed(list(futures.keys())):
+                station_id = futures[fut]
+                try:
+                    ds = fut.result()
+                    ds = _filter_vars_time(ds, varlist, start_date, end_date)
+                    if ds is not None:
+                        data.append(ds)
+                except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:
+                    msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
+                    logger.warning(msg)
+                    continue
+    else:
+        for station_id in station_list:
             try:
-                if project == "ghcnd":
-                    ds = _process_ghcnd(station_id, variable_meta, station_meta, logger)
-                elif project == "ghcnh":
-                    ds = _process_ghcnh(station_id, variable_meta, station_meta, logger)
-                else:
-                    msg = f"Unknown project {project}"
-                    raise ValueError(msg)
+                ds = _process_one(station_id)
+                ds = _filter_vars_time(ds, varlist, start_date, end_date)
                 if ds is not None:
                     data.append(ds)
-            except (OSError, ValueError, KeyError) as e:
+            except (pd.errors.EmptyDataError, xr.MergeError, TypeError, AttributeError, IndexError, OSError, ValueError, KeyError) as e:  # noqa: PERF203
                 msg = f"Failed to read data for {station_id.name} : {type(e).__name__}: {e} ... continuing"
                 logger.warning(msg)
-                continue
-        else:
-            msg = f"Unknown project: {project}."
-            raise ValueError(msg)
+                continue  # noqa: PERF203
 
     if len(data) == 0:
         return None
@@ -321,8 +369,6 @@ def download_ghcn(
         If the project name is unknown.
     """
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
-    if update_raw and working_folder.joinpath("raw").exists():
-        shutil.rmtree(working_folder.joinpath("raw"))
     working_folder.mkdir(parents=True, exist_ok=True)
 
     out_folder = working_folder.joinpath("raw")
@@ -332,6 +378,7 @@ def download_ghcn(
 
     station_ids = station_df["station_id"].tolist()
 
+    errors = 0
     for try_iter in range(retry):
         errors = get_ghcn_raw(
             station_ids=station_ids,
