@@ -39,6 +39,7 @@ def convert_statdata_bychunks(
     n_workers: int = 4,
     n_stations: int = 100,
     update_from_raw: bool = False,
+    zarr_format: int = 2,
 ) -> None:
     """
     Convert GHCN or CanHomT station data to Zarr format.
@@ -67,6 +68,8 @@ def convert_statdata_bychunks(
         Number of stations to process. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
+    zarr_format : int
+        Zarr format version (2 or 3). Default is 2.
     """
     try:
         import geopandas as gpd
@@ -151,6 +154,10 @@ def convert_statdata_bychunks(
                         variable_meta=var_attrs_new,
                         station_meta=station_df,
                         project=project,
+                        start_date=start_date,
+                        end_date=end_date,
+                        varlist=list(var_attrs_new.keys()),
+                        n_workers=n_workers,
                     )
                 elif "canhomt" in project:
                     dsall_vars = create_canhomt_xarray(
@@ -171,8 +178,12 @@ def convert_statdata_bychunks(
                     dsout = dsall_vars.drop_vars([v for v in dsall_vars.data_vars if not v.startswith(kk)])
                     allnull_stat = dsout[kk].isnull().sum(dim="time") == len(dsout.time)
                     dsout = dsout.sel(station=~allnull_stat)
+                    if len(dsout.station) == 0 or len(dsout.time) == 0:
+                        msg = f"No data found for variable {kk} for stations in the specified region and time period."
+                        logger.warning(msg)
+                        continue
                     dsout = make_monotonous_time(dsout, freq=prj_dict[project]["freq"])
-
+                    dsout[kk] = dsout[kk].astype("float32")
                     ds_corr = dataset_conversion(
                         dsout,
                         project=project,
@@ -210,7 +221,7 @@ def convert_statdata_bychunks(
 
                     ds_corr[f"{cf_var}_q_flag"].attrs = attrs
 
-                    jobs.append((ds_corr, outzarr, out_chunks))
+                    jobs.append((ds_corr, outzarr, out_chunks, zarr_format))
                     if len(jobs) >= n_workers:
                         pool = mp.Pool(n_workers)
                         pool.starmap(write_zarr, jobs)
