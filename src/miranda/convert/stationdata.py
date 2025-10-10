@@ -135,10 +135,10 @@ def convert_statdata_bychunks(
 
     treated = []
     file_list = sorted(list(working_folder.joinpath("raw").rglob(f"*{prj_dict[project]['filetype']}")))
-    file_list = [f for f in file_list if any([c in f.stem for c in station_df.station_id.tolist()])]
     jobs = []
     for ii, ss in enumerate(_chunk_list(file_list, n_stations)):
         if ii not in treated:
+            ss = [f for f in ss if any([c in f.stem for c in station_df.station_id.tolist()])]
             var_attrs_new = {}
             for vv, meta in var_attrs.items():
                 cf_var = var_attrs[vv]["_cf_variable_name"]
