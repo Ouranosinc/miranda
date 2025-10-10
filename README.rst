@@ -3,13 +3,13 @@ Miranda |logo|
 ==============
 
 +----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi|                                              |
+| Versions                   | |pypi| |conda|                                      |
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |versions|                                   |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |ossf-score|                              |
+| Open Source                | |license| |ossf-score| |zenodo|                     |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |pre-commit|                                 |
+| Coding Standards           | |ruff| |pre-commit| |ossf-bp|                       |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -89,10 +89,9 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://github.com/Ouranosinc/miranda/actions
         :alt: Build Status
 
-..
-    .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/miranda.svg
-            :target: https://anaconda.org/conda-forge/miranda
-            :alt: Conda-forge Build Version
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/python-miranda.svg
+        :target: https://anaconda.org/conda-forge/python-miranda
+        :alt: Conda-forge Build Version
 
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/miranda/badge.svg
         :target: https://coveralls.io/github/Ouranosinc/miranda
@@ -106,10 +105,9 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://github.com/Ouranosinc/miranda/blob/main/LICENSE
         :alt: License
 
-..
-    .. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/9945/badge
-            :target: https://bestpractices.coreinfrastructure.org/projects/9945
-            :alt: Open Source Security Foundation Best Practices
+.. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/11291/badge
+        :target: https://bestpractices.coreinfrastructure.org/projects/11291
+        :alt: Open Source Security Foundation Best Practices
 
 .. |ossf-score| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/miranda/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/miranda
@@ -138,3 +136,7 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. |versions| image:: https://img.shields.io/pypi/pyversions/miranda.svg
         :target: https://pypi.python.org/pypi/miranda
         :alt: Supported Python Versions
+
+.. |zenodo| image:: https://zenodo.org/badge/203830590.svg
+        :target: https://zenodo.org/badge/latestdoi/203830590
+        :alt: DOI

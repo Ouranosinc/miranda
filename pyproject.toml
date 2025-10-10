@@ -112,6 +112,7 @@ all = [
 [project.urls]
 "Homepage" = "https://miranda.readthedocs.io/"
 "Changelog" = "https://miranda.readthedocs.io/en/stable/changelog.html"
+"Citation" = "https://doi.org/10.5281/zenodo.17048365"
 "About Ouranos" = "https://ouranos.ca/en/"
 "Issue tracker" = "https://github.com/Ouranosinc/miranda/issues"
 "Source" = "https://github.com/Ouranosinc/miranda/"
@@ -179,11 +180,6 @@ replace = "__version__ = \"{new_version}\""
 filename = ".cruft.json"
 search = "\"version\": \"{current_version}\""
 replace = "\"version\": \"{new_version}\""
-
-[[tool.bumpversion.files]]
-filename = "CITATION.cff"
-search = "version: \"{current_version}\""
-replace = "version: \"{new_version}\""
 
 [tool.bumpversion.parts.build]
 independent = false

@@ -9,7 +9,7 @@ Changelog
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
-^^^^^^^
+^^^^^^^^^^^^
 * Added support for converting `GHCN-Hourly` weather station network dataset.
 
 Internal changes
