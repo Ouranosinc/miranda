@@ -33,8 +33,7 @@ jobs:
         tox-env:
           - lint
           - docs
-        python-version:
-          - "3.x"
+        python-version: [ "3.13" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -77,7 +76,7 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
-          disable-sudo: true
+          disable-sudo: false
           egress-policy: audit
       - name: Checkout Repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -88,11 +87,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install GDAL
-        if: "endsWith(matrix.tox-env, '-full')"
+      - name: Install GDAL and HDF5
         run: |
           sudo apt-get update
-          sudo apt-get install libgdal-dev
+          sudo apt-get install -y libgdal-dev libhdf5-dev
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt

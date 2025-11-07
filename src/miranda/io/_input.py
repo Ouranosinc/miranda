@@ -3,8 +3,6 @@ import logging
 import pathlib
 from types import GeneratorType
 
-import netCDF4 as nc  # noqa
-
 
 logger = logging.getLogger("miranda.io.input")
 
