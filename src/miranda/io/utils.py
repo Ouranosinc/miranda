@@ -9,10 +9,16 @@ from pathlib import Path
 from typing import Any
 
 import dask
-import netCDF4 as nc  # noqa
+import h5netcdf
 import xarray as xr
 import zarr
 
+
+nc = None
+try:
+    import netCDF4 as nc  # noqa: F401,N813
+except ImportError:  # noqa: S110
+    pass
 
 logger = logging.getLogger("miranda.io.utils")
 
@@ -268,10 +274,16 @@ def get_global_attrs(
 
     if isinstance(file, Path):
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            with nc.Dataset(file, mode="r") as ds:
-                data = dict()
-                for k in ds.ncattrs():
-                    data[k] = getattr(ds, k)
+            if nc is not None:
+                with nc.Dataset(file, mode="r") as ds:
+                    data = dict()
+                    for k in ds.ncattrs():
+                        data[k] = getattr(ds, k)
+            else:
+                with h5netcdf.File(file, mode="r") as ds:
+                    data = dict()
+                    for k in ds.attrs:
+                        data[k] = ds.attrs[k]
         elif file.is_dir() and file.suffix == ".zarr":
             with zarr.open(file, mode="r") as ds:  # noqa
                 data = ds.attrs.asdict()
@@ -332,12 +344,18 @@ def get_chunks_on_disk(file: str | os.PathLike[str] | Path) -> dict[str, int]:
     file = Path(file)
 
     if file.suffix.lower() in [".nc", ".nc4"]:
-        with nc.Dataset(file) as ds:
-            for v in ds.variables:
-                chunks[v] = dict()
-                for ii, dim in enumerate(ds[v].dimensions):
-                    if ds[v].chunking():
-                        chunks[v][dim] = ds[v].chunking()[ii]
+        if nc is not None:
+            with nc.Dataset(file) as ds:
+                for v in ds.variables:
+                    chunks[v] = dict()
+                    for ii, dim in enumerate(ds[v].dimensions):
+                        if ds[v].chunking():
+                            chunks[v][dim] = ds[v].chunking()[ii]
+        else:
+            with h5netcdf.File(file, mode="r") as ds:
+                data = dict()
+                for k in ds.attrs:
+                    data[k] = ds.attrs[k]
     elif file.suffix.lower() == "zarr" and file.is_dir():
         with zarr.open(file, "r") as ds:  # noqa
             for v in ds.arrays():
