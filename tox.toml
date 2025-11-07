@@ -1,0 +1,57 @@
+envlist = [
+  "lint",
+  "py3.{10,11,12,13,14}",
+  "docs"
+]
+skip_missing_interpreters = true
+
+[env.docs]
+extras = ["docs"]
+commands = [
+  ["mkdir", "{envtmpdir}/.esdoc"],
+  ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
+  ["make", "autodoc"],
+  ["make", "--directory=docs", "clean", "html"]
+]
+commands_post = []
+
+[env.lint]
+skip_install = true
+deps = [
+  "flake8 >= 7.3.0",
+  "flake8-rst-docstrings >= 0.4.0",
+  "ruff >= 0.14.3",
+  "numpydoc >= 1.9.0"
+]
+commands_pre = []
+commands = [["make", "lint"]]
+commands_post = []
+allowlist_externals = ["make"]
+
+[env_run_base]
+setenv = {HOME = "{envtmpdir}", PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=miranda --cov-report=lcov", PYTHONPATH = "{toxinidir}"}
+passenv = ["CI", "GITHUB_*", "MIRANDA_*", "READTHEDOCS"]
+extras = ["dev", "gis", "remote"]
+download = true
+install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
+commands_pre = [
+  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--no-deps", "--force-reinstall", "--no-binary", "h5py", "h5py>=3.12.1"],
+  ["pip", "list"],
+  ["pip", "check"]
+]
+commands = [
+  ["mkdir", "{envtmpdir}/.esdoc"],
+  ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
+  ["pytest", "{posargs}"]
+]
+commands_post = [
+  ["coverage", "report"]
+]
+allowlist_externals = ["git", "mkdir"]
+
+[gh.python]
+"3.10" = ["py3.10"]
+"3.11" = ["py3.11"]
+"3.12" = ["py3.12"]
+"3.13" = ["py3.13"]
+"3.14" = ["py3.14"]
