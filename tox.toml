@@ -7,6 +7,10 @@ skip_missing_interpreters = true
 
 [env.docs]
 extras = ["docs"]
+commands_pre = [
+  ["pip", "list"],
+  ["pip", "check"]
+]
 commands = [
   ["mkdir", "{envtmpdir}/.esdoc"],
   ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
