@@ -33,8 +33,7 @@ jobs:
         tox-env:
           - lint
           - docs
-        python-version:
-          - "3.13"
+        python-version: [ "3.13" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -89,7 +88,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install GDAL and HDF5
-        if: "endsWith(matrix.tox-env, '-full')"
         run: |
           sudo apt-get update
           sudo apt-get install -y libgdal-dev libhdf5-dev
