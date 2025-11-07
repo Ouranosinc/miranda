@@ -18,6 +18,7 @@ commands = [
   ["make", "--directory=docs", "clean", "html"]
 ]
 commands_post = []
+allowlist_externals = ["git", "make", "mkdir"]
 
 [env.lint]
 skip_install = true
