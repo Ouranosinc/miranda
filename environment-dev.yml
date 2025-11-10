@@ -36,7 +36,7 @@ dependencies:
   - coverage >=7.5.0
   - deptry >=0.23.0
   - flake8 >=7.3.0
-  - flake8-rst-docstrings >=0.3.1
+  - flake8-rst-docstrings >=0.4.0
   - flit >=3.11.0,<4.0
   - mypy >=1.18.2
   - numpydoc >=1.9.0

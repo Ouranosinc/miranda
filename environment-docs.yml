@@ -8,7 +8,7 @@ dependencies:
   - ipython
   - ipykernel
   - nbsphinx >=0.9.5
-  - sphinx >=7.1.0,<8.2.0
+  - sphinx >=7.1.0,<8.2
   - sphinx-codeautolink >=0.16.2
   - sphinx-copybutton
   - sphinx-intl
