@@ -11,6 +11,7 @@ Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:u
 New features
 ^^^^^^^^^^^^
 * Added support for converting `GHCN-Hourly` weather station network dataset.
+* Conversion support has been added for the CaSR v3.2 dataset.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
