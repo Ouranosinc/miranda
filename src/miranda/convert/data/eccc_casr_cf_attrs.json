@@ -2,27 +2,36 @@
   "Header": {
     "Conventions": "CF-1.8",
     "_Remarks": {
-      "casr-v31": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period."
+      "casr-v31": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
+      "casr-v32": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period."
     },
     "_contact": {
-      "casr-v31": ""
+      "casr-v31": "",
+      "casr-v32": ""
     },
     "_doi": {
-      "casr-v31": "https://doi.org/10.5194/hess-25-4917-2021"
+      "casr-v31": "https://doi.org/10.5194/hess-25-4917-2021",
+      "casr-v32": "https://doi.org/10.5194/hess-25-4917-2021"
     },
     "_miranda_version": true,
     "_remove_attrs": {
       "casr-v31": [
         "",
         ""
+      ],
+      "casr-v32": [
+        "",
+        ""
       ]
     },
     "source": "CaSR",
     "_version": {
-      "casr-v31": "v3.1"
+      "casr-v31": "v3.1",
+      "casr-v32": "v3.2"
     },
     "_prefix": {
-      "casr-v31": "CaSR_v3.1_"
+      "casr-v31": "CaSR_v3.1_",
+      "casr-v32": "CaSR_v3.2_"
     },
     "institution": "GovCan",
     "licence_type": "open",
@@ -30,7 +39,7 @@
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "2025-02-13",
+    "table_date": "2025-11-17",
     "table_id": "eccc",
     "terms_of_use": "Canadian Surface Reanalysis data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
     "type": "reconstruction"
@@ -38,7 +47,8 @@
   "dimensions": {
     "time": {
       "_ensure_correct_time": {
-        "casr-v31": "h"
+        "casr-v31": "h",
+        "casr-v32": "h"
       },
       "_strict_time": true,
       "axis": "T",
@@ -58,7 +68,8 @@
       },
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_transformation": {
-        "casr-v31": "amount2rate"
+        "casr-v31": "amount2rate",
+        "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
@@ -98,7 +109,8 @@
     "P_HU_1.5m": {
       "_cf_variable_name": "huss",
       "_corrected_units": {
-        "casr-v31": "kg kg-1"
+        "casr-v31": "kg kg-1",
+        "casr-v32": "kg kg-1"
       },
       "cell_methods": "time: point",
       "long_name": "Near-Surface Specific Humidity (1.5m)",
@@ -108,7 +120,8 @@
     "P_P0_SFC": {
       "_cf_variable_name": "ps",
       "_corrected_units": {
-        "casr-v31": "mbar"
+        "casr-v31": "mbar",
+        "casr-v32": "mbar"
       },
       "cell_methods": "time: point",
       "long_name": "Surface Air Pressure",
@@ -118,7 +131,8 @@
     "P_PN_SFC": {
       "_cf_variable_name": "psl",
       "_corrected_units": {
-        "casr-v31": "mbar"
+        "casr-v31": "mbar",
+        "casr-v32": "mbar"
       },
       "cell_methods": "time: point",
       "long_name": "Sea Level Pressure",
@@ -136,7 +150,8 @@
       },
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
       "_transformation": {
-        "casr-v31": "amount2rate"
+        "casr-v31": "amount2rate",
+        "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
@@ -148,7 +163,8 @@
     "P_TD_1.5m": {
       "_cf_variable_name": "tdps",
       "_corrected_units": {
-        "casr-v31": "degC"
+        "casr-v31": "degC",
+        "casr-v32": "degC"
       },
       "cell_methods": "time: point",
       "long_name": "1.5 metre dewpoint temperature",
@@ -158,7 +174,8 @@
     "P_TT_1.5m": {
       "_cf_variable_name": "tas",
       "_corrected_units": {
-        "casr-v31": "degC"
+        "casr-v31": "degC",
+        "casr-v32": "degC"
       },
       "cell_methods": "time: point",
       "long_name": "1.5 metre temperature",
@@ -217,7 +234,8 @@
         }
       },
       "_transformation": {
-        "casr-v31": "amount2rate"
+        "casr-v31": "amount2rate",
+        "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Liquid Precipitation using a density of 1000 kg/m³.",
@@ -235,7 +253,8 @@
         }
       },
       "_transformation": {
-        "casr-v31": "amount2rate"
+        "casr-v31": "amount2rate",
+        "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Snow amount using a density of 1000 kg/m³.",
@@ -269,7 +288,8 @@
     "P_HU_09975": {
       "_cf_variable_name": "hus",
       "_corrected_units": {
-        "casr-v31": "kg kg-1"
+        "casr-v31": "kg kg-1",
+        "casr-v32": "kg kg-1"
       },
       "cell_methods": "time: point",
       "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
@@ -280,7 +300,8 @@
     "P_TD_09975": {
       "_cf_variable_name": "tdp",
       "_corrected_units": {
-        "casr-v31": "degC"
+        "casr-v31": "degC",
+        "casr-v32": "degC"
       },
       "cell_methods": "time: point",
       "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
@@ -330,7 +351,8 @@
         }
       },
       "_transformation": {
-        "casr-v31": "amount2rate"
+        "casr-v31": "amount2rate",
+        "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Freezing Rain using a density of 1000 kg/m³.",
@@ -348,7 +370,8 @@
         }
       },
       "_transformation": {
-        "casr-v31": "amount2rate"
+        "casr-v31": "amount2rate",
+        "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
       "comments": "Converted from Total Refrozen Rain using a density of 1000 kg/m³.",
