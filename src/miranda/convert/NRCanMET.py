@@ -1,0 +1,39 @@
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+import xarray as xr
+import os
+
+from miranda.convert._data_corrections import (
+    dataset_conversion,
+    load_json_data_mappings,
+)
+
+
+__all__ = ["convert_NRCanMET"]
+
+def convert_NRCanMET(infile: str | Path, engine: str = "h5netcdf") -> xr.Dataset:
+    """
+    Convert the NRCanMET netCDF files to production-ready CF-compliant netCDFs.
+
+    Parameters
+    ----------
+    infolder : str or Path
+        The path to the NRCanMET netCDF files.
+    outfolder : str or Path
+        The output directory.
+    """
+    if isinstance(infile, str):
+        infile = Path(infile)
+    
+    ds = xr.open_dataset(infile, chunks={}, engine=engine)
+    if 'crs' in ds.data_vars:
+        ds = ds.assign_coords(crs=ds.crs)
+    ds = dataset_conversion(
+        ds, project="NRCanMET")
+    return ds
+
+
+
+    
