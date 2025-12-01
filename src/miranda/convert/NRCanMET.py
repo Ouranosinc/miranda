@@ -11,7 +11,7 @@ from miranda.convert._data_corrections import (
 __all__ = ["convert_NRCanMET"]
 
 
-def convert_NRCanMET(infile: str | Path, engine: str = "h5netcdf") -> xr.Dataset:
+def convert_nrcanmet(infile: str | Path, engine: str = "h5netcdf") -> xr.Dataset:
     """
     Convert the NRCanMET netCDF files to production-ready CF-compliant netCDFs.
 
