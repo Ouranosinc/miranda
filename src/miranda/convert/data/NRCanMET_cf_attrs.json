@@ -56,7 +56,7 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
-    "pcp":  {
+    "pcp": {
       "_units_context": "hydro",
       "_cf_variable_name": "pr",
       "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",

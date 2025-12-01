@@ -62,7 +62,7 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(data_folder.joinpath("ecmwf_cf_attrs.json").open("r"))
     elif project in ["rdrs-v21"]:
         metadata_definition = json.load(data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r"))
-    elif project in ['nrcanmet', 'NRCanMET']:
+    elif project in ["nrcanmet", "NRCanMET"]:
         metadata_definition = json.load(data_folder.joinpath("NRCanMET_cf_attrs.json").open("r"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(data_folder.joinpath("nasa_cf_attrs.json").open("r"))
