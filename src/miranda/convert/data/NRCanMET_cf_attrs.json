@@ -1,0 +1,69 @@
+{
+  "Header": {
+    "_miranda_version": true,
+    "Conventions": "CF-1.9",
+    "title": "NRCanMET",
+    "keywords": "atmosphere, climatology, meteorology, temperature, precipitation",
+    "id": "NRCanMET",
+    "source": "NRCanMET-daily",
+    "frequency": "day",
+    "institution": "GovCan",
+    "organisation": "NRCAN",
+    "version": "2025",
+    "processing_level": "raw",
+    "type": "reconstruction",
+    "contact": "dan.mckenney@nrcan-rncan.gc.ca",
+    "documentation": "https://cfs.nrcan.gc.ca/projects/3",
+    "license": "https://open.canada.ca/en/open-government-licence-canada",
+    "license_type": "permissive",
+    "realm": "atmos"
+  },
+  "dimensions:": {
+    "lat": {
+      "axis": "Y",
+      "long_name": "Latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "lon": {
+      "_cf_dimension_name": "lon",
+      "axis": "X",
+      "long_name": "Longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "time": {
+      "axis": "T",
+      "calendar": "standard",
+      "long_name": "Time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "maxt": {
+      "_cf_variable_name": "tasmax",
+      "cell_methods": "time: maximum (interval: 1 day)",
+      "long_name": "Maximum Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "mint": {
+      "_cf_variable_name": "tasmin",
+      "cell_methods": "time: minimum (interval: 1 day)",
+      "long_name": "Minimum Temperature",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
+    "pcp":  {
+      "_units_context": "hydro",
+      "_cf_variable_name": "pr",
+      "_corrected_standard_name": "lwe_thickness_of_precipitation_amount",
+      "_transformation": "amount2rate",
+      "cell_methods": "time: mean (interval: 1 day)",
+      "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
+      "long_name": "Precipitation",
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1"
+    }
+  }
+}
