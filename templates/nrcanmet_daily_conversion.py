@@ -7,9 +7,9 @@ from miranda.convert.nrcanmet import convert_nrcanmet
 from miranda.convert._data_corrections import load_json_data_mappings
 
 def main():
-    infolder = Path.home().joinpath("data/NRCanMET/netcdf")
-    outfolder = Path.home().joinpath("data/miranda_output/NRCanMET/")
-    project = "NRCanMET"
+    infolder = Path.home().joinpath("data/nrcanmet/netcdf")
+    outfolder = Path.home().joinpath("data/miranda_output/nrcanmet/")
+    project = "nrcanmet"
     for var in load_json_data_mappings(project=project)['variables']:
         print(f"Variable to convert: {var}")
         # only convert 1 year for template example
