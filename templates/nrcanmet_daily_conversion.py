@@ -3,7 +3,7 @@ import shutil
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from miranda.convert.NRCanMET import convert_nrcanmet
+from miranda.convert.nrcanmet import convert_nrcanmet
 from miranda.convert._data_corrections import load_json_data_mappings
 
 def main():
@@ -46,4 +46,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

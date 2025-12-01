@@ -1,3 +1,4 @@
+"""NRCANmet (ANUSPLIN) interpolated station data conversion module."""
 from __future__ import annotations
 from pathlib import Path
 
@@ -8,7 +9,7 @@ from miranda.convert._data_corrections import (
 )
 
 
-__all__ = ["convert_NRCanMET"]
+__all__ = ["convert_nrcanmet"]
 
 
 def convert_nrcanmet(infile: str | Path, engine: str = "h5netcdf") -> xr.Dataset:
