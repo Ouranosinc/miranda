@@ -18,7 +18,7 @@
     "license_type": "permissive",
     "realm": "atmos"
   },
-  "dimensions:": {
+  "dimensions": {
     "lat": {
       "axis": "Y",
       "long_name": "Latitude",
@@ -41,6 +41,7 @@
   },
   "variables": {
     "maxt": {
+      "_corrected_units": "degC",
       "_cf_variable_name": "tasmax",
       "cell_methods": "time: maximum (interval: 1 day)",
       "long_name": "Maximum Temperature",
@@ -48,6 +49,7 @@
       "units": "K"
     },
     "mint": {
+      "_corrected_units": "degC",
       "_cf_variable_name": "tasmin",
       "cell_methods": "time: minimum (interval: 1 day)",
       "long_name": "Minimum Temperature",
