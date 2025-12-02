@@ -53,8 +53,10 @@ q_flag_dict = {
     },
 }
 
+
 def _assign_coords_to_dataset(ds: xr.Dataset, list_coords: list[str] | str | None = None) -> xr.Dataset:
-    """Promote one or more data variables to coordinates on an xarray Dataset.
+    """
+    Promote one or more data variables to coordinates on an xarray Dataset.
 
     For each name in ``list_coords`` this function will check whether the
     name exists in ``ds.data_vars`` and is not already present in
@@ -87,10 +89,9 @@ def _assign_coords_to_dataset(ds: xr.Dataset, list_coords: list[str] | str | Non
 
     Example
     -------
-    >>> ds = xr.Dataset({'lon': (('station',), [10.0]), 'temp': (('station','time'), [[1.]] )},
-    ...                 coords={'station': [0], 'time': ['2020-01-01']})
-    >>> ds = _assign_coords_to_dataset(ds, 'lon')
-    >>> 'lon' in ds.coords
+    >>> ds = xr.Dataset({"lon": (("station",), [10.0]), "temp": (("station", "time"), [[1.0]])}, coords={"station": [0], "time": ["2020-01-01"]})
+    >>> ds = _assign_coords_to_dataset(ds, "lon")
+    >>> "lon" in ds.coords
     True
     """
     if list_coords is None:
@@ -101,6 +102,7 @@ def _assign_coords_to_dataset(ds: xr.Dataset, list_coords: list[str] | str | Non
         if cc in ds.data_vars and cc not in ds.coords:
             ds = ds.assign_coords({cc: ds[cc]})
     return ds
+
 
 def _add_coords_to_dataset(ds: xr.Dataset, df_stat: pd.DataFrame, float_flag=True) -> xr.Dataset:
     """
