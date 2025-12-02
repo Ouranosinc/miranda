@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 from pathlib import Path
-
 import xarray as xr
 
-from miranda.convert._data_corrections import (
-    dataset_conversion,
-)
+from miranda.convert._data_corrections import dataset_conversion
+from miranda.convert.utils import _assign_coords_to_dataset
 
 
 __all__ = ["convert_nrcanmet"]
@@ -26,9 +24,6 @@ def convert_nrcanmet(infile: str | Path, engine: str = "h5netcdf") -> xr.Dataset
     """
     if isinstance(infile, str):
         infile = Path(infile)
-
-    ds = xr.open_dataset(infile, chunks={}, engine=engine)
-    if "crs" in ds.data_vars:
-        ds = ds.assign_coords(crs=ds.crs)
+    ds = xr.open_mfdataset([infile], chunks={}, engine=engine, preprocess=_assign_coords_to_dataset)
     ds = dataset_conversion(ds, project="NRCanMET")
     return ds
