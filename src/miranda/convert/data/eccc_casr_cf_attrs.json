@@ -221,7 +221,7 @@
       "_cf_variable_name": "snwLand",
       "cell_methods": "time: point",
       "long_name": "Snow Water Equivalent on Land",
-      "standard_name": "lwe_thickness_of_surface_snow_amount",
+      "standard_name": "surface_snow_amount",
       "units": "kg m-2"
     },
     "P_RN0_SFC": {
