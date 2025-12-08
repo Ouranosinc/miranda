@@ -54,6 +54,7 @@ CONFIG_FILES = {
     "nrcan-gridded-obs": "nrcan_gridded_obs_cf_attrs.json",
     "rdrs-v21": "eccc_rdrs_cf_attrs.json",
     "casr-v31": "eccc_casr_cf_attrs.json",
+    "casr-v32": "eccc_casr_cf_attrs.json",
     "ORRC-v10": "ouranos_orrc_cf_attrs.json",
     "ORRC-v11": "ouranos_orrc_cf_attrs.json",
 }
