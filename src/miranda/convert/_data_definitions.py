@@ -35,10 +35,10 @@ _data_folder = Path(__file__).resolve().parent / "data"
 
 
 eccc_rdrs_variables = {}
-eccc_rdrs_variables["raw"] = [v for v in json.load(_data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8"))["variables"].keys()]
+eccc_rdrs_variables["raw"] = [v for v in json.load(_data_folder.joinpath("eccc_casr_cf_attrs.json").open("r", encoding="utf-8"))["variables"].keys()]
 eccc_rdrs_variables["cf"] = [
     attrs["_cf_variable_name"]
-    for attrs in json.load(_data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r", encoding="utf-8"))["variables"].values()
+    for attrs in json.load(_data_folder.joinpath("eccc_casr_cf_attrs.json").open("r", encoding="utf-8"))["variables"].values()
     if "_cf_variable_name" in attrs
 ]
 
