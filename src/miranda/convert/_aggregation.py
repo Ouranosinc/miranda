@@ -3,6 +3,7 @@
 from __future__ import annotations
 import logging
 
+import numpy as np
 import xarray as xr
 from xclim.indices import tas
 
@@ -76,6 +77,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
         # The following variables are expected as fluxes
         elif variable in [
             "CAPE",
+            "cfia",
             "evspsblpot",
             "hfls",
             "hfss",
@@ -98,8 +100,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             "sndLand",
             "snr",
             "snw",
-            "swe",
-            "sweLand",
+            "snwLand",
             "ua",
             "ua100m",
             "uas",
@@ -173,9 +174,32 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
 
             with xr.set_options(keep_attrs=True):
                 r = _ds[variable].resample(time=xarray_agg)
-            ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
-            method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
-            ds_out[transformed].attrs["cell_methods"] = method
-            aggregated[transformed] = ds_out
+                use_snapshot = False
+                snapshot_hour = None
+                if op == "mean" and "time" in _ds[variable].dims and _ds[variable].time.size > 1:
+                    # check if data is only available at a single hour each day
+                    other_dims = [d for d in _ds[variable].dims if d != "time"]
+                    valid_per_time = _ds[variable].notnull().any(dim=other_dims) 
+                    valid_by_hour = (
+                        valid_per_time
+                        .groupby(valid_per_time.time.dt.hour)
+                        .any("time")
+                        .compute()
+                    )
+                    hours_with_data = valid_by_hour["hour"].values[valid_by_hour.values]
+                    if hours_with_data.size == 1:
+                        use_snapshot = True
+                        snapshot_hour = hours_with_data[0]
+                if use_snapshot:
+                    # only keep valid data at the detected hour and save as daily values
+                    mask_hour = _ds[variable].time.dt.hour == snapshot_hour
+                    daily_data = _ds[variable].where(mask_hour, drop=True)
+                    ds_out[transformed] = daily_data.resample(time="D").first(keep_attrs=True)
+                    ds_out[transformed].attrs["cell_methods"] = f"time: point"
+                else:
+                    ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
+                    method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
+                    ds_out[transformed].attrs["cell_methods"] = method
+                aggregated[transformed] = ds_out
 
     return aggregated
