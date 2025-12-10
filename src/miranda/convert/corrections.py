@@ -16,13 +16,13 @@ from miranda.treatments import (
     correct_unit_names,
     dimensions_compliance,
     ensure_correct_time_frequency,
+    get_daily_snapshot,
     invert_value_sign,
     metadata_conversion,
     offset_time_dimension,
     preprocessing_corrections,
     transform_values,
     variable_conversion,
-    get_daily_snapshot, 
 )
 from miranda.treatments.utils import load_json_data_mappings
 
@@ -92,7 +92,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = get_daily_snapshot(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
     ds = metadata_conversion(ds, project, metadata_definition)
-    
+
     ds.attrs["history"] = (
         f"{datetime.datetime.now()}: "
         f"Variables converted from original files using miranda.convert.{dataset_corrections.__name__}. "

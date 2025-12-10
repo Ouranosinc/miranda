@@ -167,7 +167,7 @@ def convert_rdrs(
                         add_version_hashes=False,
                         overwrite=overwrite,
                     )
-                    
+
                     # Code to handle _use_snapshot attribute: will write directly to `day` subfolder
                     modfreq_flg = False
                     out_freq1 = None
@@ -178,14 +178,14 @@ def convert_rdrs(
                             modfreq_flg = True
                             out_freq1, meaning1 = check_time_frequency(ds_corr, minimum_continuous_period="1h")
                             out_freq1 = f"{out_freq1[0]}{freq_dict[out_freq1[1]]}" if meaning1 == "hour" else freq_dict[out_freq1[1].lower()]
-                        
+
                     if "level" in ds_corr.dims:
                         ds_corr = ds_corr.squeeze()
                         ds_corr = ds_corr.drop_vars(["a", "b", "level"])
                     chunks = fetch_chunk_config(priority="time", freq=out_freq, dims=ds_corr.dims)
                     chunks["time"] = len(ds_corr.time)
                     cf_var = var_attrs[short_var]["_cf_variable_name"] if var_attrs[short_var]["_cf_variable_name"] else short_var
-                    outfolder1 = output_folder.joinpath(out_freq1) if modfreq_flg else output_folder.joinpath(out_freq) 
+                    outfolder1 = output_folder.joinpath(out_freq1) if modfreq_flg else output_folder.joinpath(out_freq)
                     write_dataset_dict(
                         {cf_var: ds_corr},
                         output_folder=outfolder1,
