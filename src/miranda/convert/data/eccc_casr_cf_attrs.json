@@ -211,6 +211,7 @@
       "units": "deg"
     },
     "P_SD_LAND": {
+      "_use_snapshot": true,
       "_cf_variable_name": "sndLand",
       "cell_methods": "time: point",
       "long_name": "Snow Depth on Land",
@@ -218,6 +219,7 @@
       "units": "m"
     },
     "P_SWE_LAND": {
+      "_use_snapshot": true,
       "_cf_variable_name": "snwLand",
       "cell_methods": "time: point",
       "long_name": "Snow Water Equivalent on Land",
@@ -263,6 +265,7 @@
       "units": "kg m-2 s-1"
     },
     "A_CFIA_SFC": {
+      "_use_snapshot": true,
       "_cf_variable_name": "cfia",
       "cell_methods": "time: point",
       "long_name": "Analysis: Confidence Index of CaPA 24h Analysis at surface",
