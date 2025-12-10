@@ -15,8 +15,8 @@ __all__ = [
     "dimensions_compliance",
     "ensure_correct_time_frequency",
     "find_project_variable_codes",
-    "offset_time_dimension",
     "get_daily_snapshot",
+    "offset_time_dimension",
 ]
 
 
@@ -200,6 +200,7 @@ def ensure_correct_time_frequency(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     return d
 
+
 def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     """
     Get a single hour snapshot per day from a sub-daily dataset.
@@ -219,22 +220,23 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     converted = []
     for vv in d.data_vars:
         if vv in m["variables"].keys():
-            #clip_values = _get_section_entry_key(m, "variables", vv, key, p)
+            # clip_values = _get_section_entry_key(m, "variables", vv, key, p)
             snapvalue = _get_section_entry_key(m, "variables", vv, key, p)
             if isinstance(snapvalue, int) and snapvalue is not True:
                 mask_hour = d.time.dt.hour == int(snapvalue)
                 d = d.sel(time=mask_hour)
             elif snapvalue is True:
-                # if True, we assumme data is only available at a single hour each day : 
+                # if True, we assumme data is only available at a single hour each day :
                 # ex. CaSR snow depth is padded with NaNs
                 d = d.dropna(dim="time", how="all")
             else:
                 raise ValueError(f"Invalid _use_snapshot value: {snapvalue}.")
-            if xr.infer_freq(d.time) == "D": # "After applying snapshot, the time frequency must be daily."
+            if xr.infer_freq(d.time) == "D":  # "After applying snapshot, the time frequency must be daily."
                 return d
             else:
                 msg = f"After applying snapshot, the time frequency is not daily. Found frequency: {xr.infer_freq(d.time)}."
                 raise ValueError(msg)
+
 
 def offset_time_dimension(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     """Offset time dimension using listed frequency."""
