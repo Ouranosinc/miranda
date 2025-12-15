@@ -208,7 +208,7 @@
       "cell_methods": "time: point",
       "long_name": "Near-Surface Meteorological Wind Direction (10m)",
       "standard_name": "wind_from_direction",
-      "units": "deg"
+      "units": "degree"
     },
     "P_SD_LAND": {
       "_use_snapshot": true,
