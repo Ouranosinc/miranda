@@ -342,7 +342,7 @@
       "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "Meteorological Wind Direction (20m)",
       "standard_name": "wind_from_direction",
-      "units": "deg"
+      "units": "degree"
     },
     "P_FR0_SFC": {
       "_units_context": "hydro",
