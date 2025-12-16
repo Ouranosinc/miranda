@@ -210,6 +210,7 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     ds : xarray.Dataset
         The dataset.
     snapvalue : int or bool
+        The timestep to extract when int or apply dropna when True
 
     Returns
     -------
@@ -217,7 +218,7 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         The dataset with the snapshot hour applied.
     """
     key = "_use_snapshot"
-    converted = []
+
     for vv in d.data_vars:
         if vv in m["variables"].keys():
             # clip_values = _get_section_entry_key(m, "variables", vv, key, p)
