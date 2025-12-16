@@ -226,14 +226,14 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 mask_hour = d.time.dt.hour == int(snapvalue)
                 d = d.sel(time=mask_hour)
             elif snapvalue is True:
-                # if True, we assumme data is only available at a single hour each day :
+                # if True, we assume data is only available at a single hour each day :
                 # ex. CaSR snow depth is padded with NaNs
                 d = d.dropna(dim="time", how="all")
             else:
                 raise ValueError(f"Invalid _use_snapshot value: {snapvalue}.")
     if xr.infer_freq(d.time) == "D":  # "After applying snapshot, the time frequency must be daily."
         # anchor time on day start
-        d['time'] = d.resample(time='D').mean().time.values
+        d["time"] = d.resample(time="D").mean().time.values
         d.attrs["frequency"] = "day"
         return d
     else:
