@@ -232,6 +232,8 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
             else:
                 raise ValueError(f"Invalid _use_snapshot value: {snapvalue}.")
     if xr.infer_freq(d.time) == "D":  # "After applying snapshot, the time frequency must be daily."
+        # anchor time on day start
+        d['time'] = d.resample(time='D').mean().time.values
         d.attrs["frequency"] = "day"
         return d
     else:
