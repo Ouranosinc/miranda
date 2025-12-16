@@ -221,7 +221,7 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
 
     for vv in d.data_vars:
         if vv in m["variables"].keys():
-            # clip_values = _get_section_entry_key(m, "variables", vv, key, p)
+            
             snapvalue = _get_section_entry_key(m, "variables", vv, key, p)
             if isinstance(snapvalue, int) and snapvalue is not True:
                 mask_hour = d.time.dt.hour == int(snapvalue)
