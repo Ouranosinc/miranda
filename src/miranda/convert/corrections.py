@@ -16,6 +16,7 @@ from miranda.treatments import (
     correct_unit_names,
     dimensions_compliance,
     ensure_correct_time_frequency,
+    get_daily_snapshot,
     invert_value_sign,
     metadata_conversion,
     offset_time_dimension,
@@ -85,13 +86,11 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = invert_value_sign(ds, project, metadata_definition)
     ds = cf_units_conversion(ds, metadata_definition)
     ds = clip_values(ds, project, metadata_definition)
-
     ds = dimensions_compliance(ds, project, metadata_definition)
     ds = ensure_correct_time_frequency(ds, project, metadata_definition)
     ds = offset_time_dimension(ds, project, metadata_definition)
-
+    ds = get_daily_snapshot(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
-
     ds = metadata_conversion(ds, project, metadata_definition)
 
     ds.attrs["history"] = (

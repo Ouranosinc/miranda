@@ -76,6 +76,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
         # The following variables are expected as fluxes
         elif variable in [
             "CAPE",
+            "cfia",
             "evspsblpot",
             "hfls",
             "hfss",
@@ -98,8 +99,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             "sndLand",
             "snr",
             "snw",
-            "swe",
-            "sweLand",
+            "snwLand",
             "ua",
             "ua100m",
             "uas",

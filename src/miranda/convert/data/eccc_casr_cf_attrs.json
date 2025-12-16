@@ -208,9 +208,10 @@
       "cell_methods": "time: point",
       "long_name": "Near-Surface Meteorological Wind Direction (10m)",
       "standard_name": "wind_from_direction",
-      "units": "deg"
+      "units": "degree"
     },
     "P_SD_LAND": {
+      "_use_snapshot": true,
       "_cf_variable_name": "sndLand",
       "cell_methods": "time: point",
       "long_name": "Snow Depth on Land",
@@ -218,10 +219,11 @@
       "units": "m"
     },
     "P_SWE_LAND": {
+      "_use_snapshot": true,
       "_cf_variable_name": "snwLand",
       "cell_methods": "time: point",
       "long_name": "Snow Water Equivalent on Land",
-      "standard_name": "lwe_thickness_of_surface_snow_amount",
+      "standard_name": "surface_snow_amount",
       "units": "kg m-2"
     },
     "P_RN0_SFC": {
@@ -263,6 +265,7 @@
       "units": "kg m-2 s-1"
     },
     "A_CFIA_SFC": {
+      "_use_snapshot": true,
       "_cf_variable_name": "cfia",
       "cell_methods": "time: point",
       "long_name": "Analysis: Confidence Index of CaPA 24h Analysis at surface",
@@ -339,7 +342,7 @@
       "description": "The approximate 20 metre level is more specifically 99.75% of the atmosphere based on pressure elevation, where 100% is the surface. \nThe true height needs to be inferred using the corresponding fields on the Charney-Phillips vertical grid (zcrd09975 - zcrd1000) (https://doi.org/10.1175/MWR-D-13-00255.1)",
       "long_name": "Meteorological Wind Direction (20m)",
       "standard_name": "wind_from_direction",
-      "units": "deg"
+      "units": "degree"
     },
     "P_FR0_SFC": {
       "_units_context": "hydro",
