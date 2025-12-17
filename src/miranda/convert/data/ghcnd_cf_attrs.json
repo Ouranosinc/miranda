@@ -117,11 +117,11 @@
     },
     "awdr": {
       "_cf_variable_name": "winddir",
-      "_corrected_units": "degrees",
+      "_corrected_units": "degree",
       "cell_methods": "time: mean (interval: 1 day)",
       "long_name": "Near-Surface Wind Direction",
       "standard_name": "wind_from_direction",
-      "units": "degrees"
+      "units": "degree"
     },
     "aslp": {
       "_cf_variable_name": "psl",
