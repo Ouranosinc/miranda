@@ -224,8 +224,8 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         if vv in m["variables"].keys():
             snapvalue = _get_section_entry_key(m, "variables", vv, key, p)
             if snapvalue is None:
-                continue  
-            processed = True # at least one variable is processed
+                continue
+            processed = True  # at least one variable is processed
             if isinstance(snapvalue, int) and snapvalue is not True:
                 mask_hour = d.time.dt.hour == int(snapvalue)
                 d = d.sel(time=mask_hour)
@@ -235,12 +235,12 @@ def get_daily_snapshot(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
                 d = d.dropna(dim="time", how="all")
             else:
                 raise ValueError(f"Invalid _use_snapshot value: {snapvalue}.")
-            
+
     if not processed:
         msg = f"No snapshot processing needed for any variable in `{p}`."
         logging.info(msg)
         return d
-    
+
     if xr.infer_freq(d.time) == "D":  # "After applying snapshot, the time frequency must be daily."
         # anchor time on day start
         d["time"] = d.resample(time="D").mean().time.values
