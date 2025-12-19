@@ -240,6 +240,7 @@ def variable_conversion(d: xr.Dataset, p: str | None, m: dict) -> xr.Dataset:
         "_invert_sign",
         "_offset_time",
         "_transformation",
+        "_use_snapshot",
     ]
     for var in d.variables:
         if var in var_descriptions.keys():

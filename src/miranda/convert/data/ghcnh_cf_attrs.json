@@ -85,11 +85,11 @@
     },
     "wind_direction": {
       "_cf_variable_name": "winddir",
-      "_corrected_units": "degrees",
+      "_corrected_units": "degree",
       "cell_methods": "time: mean",
       "long_name": "Near-Surface Wind Direction",
       "standard_name": "wind_from_direction",
-      "units": "degrees"
+      "units": "degree"
     },
     "sea_level_pressure": {
       "_cf_variable_name": "psl",
