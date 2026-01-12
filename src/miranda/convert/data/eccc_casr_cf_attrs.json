@@ -212,17 +212,17 @@
     },
     "P_SD_LAND": {
       "_use_snapshot": true,
-      "_cf_variable_name": "sndLand",
-      "cell_methods": "time: point",
-      "long_name": "Snow Depth on Land",
+      "_cf_variable_name": "snd",
+      "cell_methods": "time: point area: mean where land",
+      "long_name": "Snow Depth",
       "standard_name": "surface_snow_thickness",
       "units": "m"
     },
     "P_SWE_LAND": {
       "_use_snapshot": true,
-      "_cf_variable_name": "snwLand",
-      "cell_methods": "time: point",
-      "long_name": "Snow Water Equivalent on Land",
+      "_cf_variable_name": "snw",
+      "cell_methods": "time: point area: mean where land",
+      "long_name": "Surface Snow Amount",
       "standard_name": "surface_snow_amount",
       "units": "kg m-2"
     },
