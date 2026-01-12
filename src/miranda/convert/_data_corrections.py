@@ -786,7 +786,7 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
     if frequency:
         if not time_varying:
             header["frequency"] = "fx"
-            msg = f"Dataset is time-invariant. Setting `frequency='fx'`."
+            msg = "Dataset is time-invariant. Setting `frequency='fx'`."
             logger.info(msg)
         else:
             if isinstance(frequency, bool):
