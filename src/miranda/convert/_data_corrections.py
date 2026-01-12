@@ -685,6 +685,9 @@ def dims_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         cf_name = dim_descriptions[dim].get("_cf_dimension_name")
         if cf_name is not None and cf_name in d.dims:
             d[cf_name].attrs.update(dict(original_variable=dim))
+        elif cf_name is None and dim not in d.dims:
+            # to handle time invariant variables
+            continue
         else:
             # variable name already follows CF standards
             cf_name = dim
@@ -779,16 +782,22 @@ def metadata_conversion(d: xr.Dataset, p: str, m: dict) -> xr.Dataset:
         del header["_miranda_version"]
 
     frequency = m["Header"].get("_frequency")
+    time_varying = ("time" in d.dims) or ("time" in d.coords) or ("time" in d.variables)
     if frequency:
-        if isinstance(frequency, bool):
-            _, m["Header"]["frequency"] = check_time_frequency(d)
-        elif isinstance(frequency, dict):
-            if p in frequency.keys():
-                m["Header"]["frequency"] = check_time_frequency(d)
+        if not time_varying:
+            header["frequency"] = "fx"
+            msg = "Dataset is time-invariant. Setting `frequency='fx'`."
+            logger.info(msg)
         else:
-            logger.warning("`frequency` not set for project. Not appending.")
-    if "_frequency" in m["Header"]:
-        del m["Header"]["_frequency"]
+            if isinstance(frequency, bool):
+                _, m["Header"]["frequency"] = check_time_frequency(d)
+            elif isinstance(frequency, dict):
+                if p in frequency.keys():
+                    m["Header"]["frequency"] = check_time_frequency(d)
+            else:
+                logger.warning("`frequency` not set for project. Not appending.")
+        if "_frequency" in m["Header"]:
+            del m["Header"]["_frequency"]
 
     # Conditional handling of global attributes based on project name
     for field in [f for f in header if f.startswith("_")]:
