@@ -41,10 +41,7 @@
     "realm": "atmos",
     "table_date": "2026-01-14",
     "table_id": "eccc",
-    "_terms_of_use": {
-      "casr-v31": "Original data source: https://hpfx.collab.science.gc.ca/~scar700/rcas-casr/data/CaSRv3.1/",
-      "casr-v32": "Original data source: https://hpfx.collab.science.gc.ca/~scar700/rcas-casr/data/CaSRv3.2/"
-    },
+    "description": "Original data source: https://hpfx.collab.science.gc.ca/~scar700/rcas-casr/",
     "type": "reconstruction"
   },
   "dimensions": {
