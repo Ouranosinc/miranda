@@ -2,8 +2,8 @@
   "Header": {
     "Conventions": "CF-1.8",
     "_Remarks": {
-      "casr-v31": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
-      "casr-v32": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'RDRS_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period."
+      "casr-v31": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.1 contains two variables for precipitation: 'CaSR_v3.1_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.1_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'CaSR_v3.1_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period.",
+      "casr-v32": "Original variable names are following the convention <Product>_<Type:A=Analysis,P=Prediction>_<ECCC name>_<Level/Tile/Category>. Variables with level '10000' are at surface level. The height [m] of variables with level '0XXXX' needs to be inferrred using the corresponding fields of geopotential height (GZ_0XXXX-GZ_10000). The variables UUC, VVC, UVC, and WDC are not modelled but inferred from UU and VV for convenience of the users. Precipitation (PR) is reported as 6-hr accumulations for CaPA_fine and CaPA_coarse. Precipitation (PR) are accumulations since beginning of the forecast for GEPS, GDPS, REPS, RDPS, HRDPS, and CaLDAS. The re-analysis product CaSR_v3.2 contains two variables for precipitation: 'CaSR_v3.2_P_PR0_SFC' is the model precipitation (trial field used by CaPA) and 'CaSR_v3.2_A_PR0_SFC' is precipitations adjusted with CaPA 24h precipitation (as in 'CaSR_v3.2_P_PR0_SFC'). Please be aware that the baseflow 'O1' of the current version of WCPS is not reliable during the spring melt period."
     },
     "_contact": {
       "casr-v31": "",
@@ -34,14 +34,14 @@
       "casr-v32": "CaSR_v3.2_"
     },
     "institution": "GovCan",
-    "licence_type": "open",
-    "license": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+    "license_type": "open",
+    "license": "https://open.canada.ca/en/open-government-licence-canada",
     "organisation": "ECCC",
     "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "2025-11-17",
+    "table_date": "2026-01-14",
     "table_id": "eccc",
-    "terms_of_use": "Canadian Surface Reanalysis data users should acknowledge The Canadian Surface Prediction Archive (CaSPAr) as the original data source (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1)",
+    "description": "Original data source: https://hpfx.collab.science.gc.ca/~scar700/rcas-casr/",
     "type": "reconstruction"
   },
   "dimensions": {
@@ -212,17 +212,17 @@
     },
     "P_SD_LAND": {
       "_use_snapshot": true,
-      "_cf_variable_name": "sndLand",
-      "cell_methods": "time: point",
-      "long_name": "Snow Depth on Land",
+      "_cf_variable_name": "snd",
+      "cell_methods": "time: point area: mean where land",
+      "long_name": "Snow Depth",
       "standard_name": "surface_snow_thickness",
       "units": "m"
     },
     "P_SWE_LAND": {
       "_use_snapshot": true,
-      "_cf_variable_name": "snwLand",
-      "cell_methods": "time: point",
-      "long_name": "Snow Water Equivalent on Land",
+      "_cf_variable_name": "snw",
+      "cell_methods": "time: point area: mean where land",
+      "long_name": "Surface Snow Amount",
       "standard_name": "surface_snow_amount",
       "units": "kg m-2"
     },

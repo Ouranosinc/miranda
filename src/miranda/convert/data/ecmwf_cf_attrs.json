@@ -179,7 +179,7 @@
       "_corrected_units": "Mg m-2",
       "_invert_sign": false,
       "_transformation": false,
-      "cell_methods": "time: point",
+      "cell_methods": "time: point area: mean where land",
       "comments": "Liquid water equivalent of snow converted to snow amount using a water density of 1000 kg/m³.",
       "description": "This parameter is the average amount of snow of a grid box. Its units are kilograms per square metre, so it is the weight of snow spread evenly over the whole grid box. The ECMWF Integrated Forecast System represents snow as a single additional layer over the uppermost soil level. The snow may cover all or part of the grid box.",
       "long_name": "Surface snow amount",
@@ -193,7 +193,7 @@
       },
       "_invert_sign": false,
       "_transformation": false,
-      "cell_methods": "time: point",
+      "cell_methods": "time: point area: mean where land",
       "description": "Snow thickness in m of liquid water equivalent converted to snow thickness using a water density of 1000 kg/m³ and a snow density of 300 kg/m³.",
       "long_name": "Snow depth",
       "standard_name": "surface_snow_thickness",
@@ -631,6 +631,17 @@
       "long_name": "Surface Temperature",
       "standard_name": "surface_temperature",
       "units": "K"
+    },
+    "lsm": {
+      "_cf_variable_name": "sftlf",
+      "_corrected_units": "1",
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "area: mean",
+      "description": "This parameter is the proportion of land, as opposed to ocean or inland waters (lakes, reservoirs, rivers and coastal waters), in a grid box.",
+      "long_name": "Land Area Fraction",
+      "standard_name": "land_area_fraction",
+      "units": "%"
     }
   }
 }
