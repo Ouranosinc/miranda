@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-  "commit": "273d570f627b0ac0fb07c2457f0072e492bff6d7",
+  "commit": "14cbc49f79a6bba2502c8b3a593ff0babaf661ed",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -12,7 +12,7 @@
       "project_slug": "miranda",
       "project_short_description": "Python utilities for climate data collection, conversion, and management.",
       "pypi_username": "Zeitsperre",
-      "version": "0.6.1-dev.18",
+      "version": "0.6.1-dev.19",
       "use_pytest": "y",
       "use_conda": "y",
       "make_docs": "y",
@@ -23,7 +23,7 @@
       "generated_with_cruft": "y",
       "__gh_slug": "https://github.com/Ouranosinc/miranda",
       "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-      "_commit": "273d570f627b0ac0fb07c2457f0072e492bff6d7"
+      "_commit": "14cbc49f79a6bba2502c8b3a593ff0babaf661ed"
     }
   },
   "directory": null
