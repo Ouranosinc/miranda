@@ -182,6 +182,18 @@
       "standard_name": "air_temperature",
       "units": "K"
     },
+    "P_TT_09975": {
+      "_cf_variable_name": "ta",
+      "_corrected_units": {
+        "casr-v31": "degC",
+        "casr-v32": "degC"
+      },
+      "cell_methods": "time: point",
+      "description": "Corresponding coordinate (09975) on the GEM Charney-Phillips vertical grid (https://doi.org/10.1175/MWR-D-13-00255.1). The height of variables with level 0XXXX can be inferred zcrd0XXXX - zcrd10000.",
+      "long_name": "20 metre Air Temperature (height is approximate :  see description)",
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
     "P_UUC_10m": {
       "_cf_variable_name": "uas",
       "cell_methods": "time: point",
