@@ -12,7 +12,7 @@
       "project_slug": "miranda",
       "project_short_description": "Python utilities for climate data collection, conversion, and management.",
       "pypi_username": "Zeitsperre",
-      "version": "0.6.1-dev.19",
+      "version": "0.6.1-dev.20",
       "use_pytest": "y",
       "use_conda": "y",
       "make_docs": "y",
