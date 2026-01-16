@@ -48,7 +48,7 @@ class HiddenPrints:
         self._original_stdout = sys.stdout
         sys.stdout = Path(os.devnull).open("w")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: D105
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):  # noqa: D105
         sys.stdout.close()
         sys.stdout = self._original_stdout
 
