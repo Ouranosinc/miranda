@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
+.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -54,12 +54,14 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint/flake8: ## check style with flake8
+lint: ## check style
 	python -m ruff check src/miranda tests
 	python -m flake8 --config=.flake8 src/miranda tests
+	python -m vulture src/miranda tests
+	codespell src/xclim tests docs
 	python -m numpydoc lint src/miranda/**.py
-
-lint: lint/flake8 ## check style
+	python -m deptry src
+	python -m yamllint --config-file=.yamllint.yaml src/miranda
 
 test: ## run tests quickly with the default Python
 	python -m pytest
@@ -72,6 +74,7 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage report -m
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
+
 initialize-translations: clean-docs ## initialize translations, ignoring autodoc-generated files
 	${MAKE} -C docs gettext
 	sphinx-intl update -p docs/_build/gettext -d docs/locales -l fr

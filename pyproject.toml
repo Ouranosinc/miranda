@@ -38,11 +38,13 @@ dependencies = [
   "cftime",
   "cf-xarray >=0.10.4",
   "dask >=2024.8.1",
-  "distributed",
+  "filelock >=3.14.0",
   "h5netcdf >=1.5.0",
+  "h5py >=3.12.1",
   "numcodecs <0.16",
   "numpy >=1.25",
-  "pandas",
+  "packaging",
+  "pandas >=1.0.0",
   "pyessv",
   "pyyaml",
   "schema",
@@ -55,6 +57,7 @@ dependencies = [
 dev = [
   # Dev tools and testing
   "bump-my-version >=1.2.3",
+  "codespell >=2.4.1",
   "coverage >=7.5.0",
   "flake8 >=7.3.0",
   "flake8-rst-docstrings >=0.4.0",
@@ -71,10 +74,12 @@ dev = [
   "ruff >=0.14.3",
   "tox >=4.30.3",
   "vulture >=2.14",
-  "watchdog >=4.0.0"
+  "watchdog >=4.0.0",
+  "yamllint >=1.35.1"
 ]
 docs = [
   # Documentation and examples
+  "distributed",
   "furo >=2023.07.26",
   "ipykernel",
   "ipython",
@@ -206,6 +211,13 @@ source = ["miranda"]
 [tool.deptry]
 extend_exclude = ["docs"]
 pep621_dev_dependency_groups = ["all", "dev", "docs"]
+
+[tool.deptry.package_module_name_map]
+"ecmwf-api-client" = "ecmwfapi"
+
+[tool.deptry.per_rule_ignores]
+DEP001 = ["netCDF4"]
+DEP002 = ["cf-xarray"]
 
 [tool.flit.sdist]
 include = [

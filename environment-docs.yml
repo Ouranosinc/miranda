@@ -4,6 +4,7 @@ channels:
 dependencies:
   - python >=3.12,<3.13
   # Docs
+  - distributed
   - furo >=2023.07.26
   - ipython
   - ipykernel
