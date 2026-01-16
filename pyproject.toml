@@ -79,6 +79,7 @@ dev = [
 ]
 docs = [
   # Documentation and examples
+  "distributed",
   "furo >=2023.07.26",
   "ipykernel",
   "ipython",
