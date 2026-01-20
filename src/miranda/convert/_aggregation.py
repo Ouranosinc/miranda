@@ -77,6 +77,8 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
         elif variable in [
             "CAPE",
             "cfia",
+            "evspsbl",
+            "evspsblLand",
             "evspsblpot",
             "hfls",
             "hfss",
