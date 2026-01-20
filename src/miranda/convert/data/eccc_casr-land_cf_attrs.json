@@ -1,0 +1,131 @@
+{
+  "Header": {
+    "Conventions": "CF-1.8",
+    "_contact": {
+      "casr-land-v21": "original data : rcas-casr@ec.gc.ca; pavics hosted data : pavics@ouranos.ca"
+    },
+    "_doi": {
+      "casr-land-v21": ""
+    },
+    "_miranda_version": true,
+    "_remove_attrs": {
+      "casr-land-v21": [
+        "",
+        ""
+      ]
+    },
+    "source": "CaSR-Land",
+    "_version": {
+      "casr-land-v21": "v2.1"
+    },
+    "_prefix": {
+      "casr-land-v21": "CaSR_Land_v2.1_"
+    },
+    "institution": "GovCan",
+    "licence_type": "open",
+    "license": "https://open.canada.ca/en/open-government-licence-canada",
+    "organisation": "ECCC",
+    "processing_level": "raw",
+    "realm": "atmos",
+    "table_date": "2026-01-06",
+    "table_id": "eccc",
+    "type": "reconstruction"
+  },
+  "dimensions": {
+    "time": {
+      "_ensure_correct_time": {
+        "casr-land-v21": "h"
+      },
+      "_strict_time": true,
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    }
+  },
+  "variables": {
+    "ACWF_SFC": {
+      "_cf_variable_name": "evspsblLand",
+      "_corrected_units": {
+        "casr-land-v21": "kg m-2"
+      },
+      "_transformation": {
+        "casr-land-v21": "amount2rate"
+      },
+      "cell_methods": "area:mean over land time: mean",
+      "description": "Land surface evaporation flux",
+      "long_name": "Evaporation Including Sublimation and Transpiration",
+      "standard_name": "water_evaporation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "AHFL_SFC": {
+      "_cf_variable_name": "evspsbl",
+      "_corrected_units": {
+        "casr-land-v21": "kg m-2"
+      },
+      "_transformation": {
+        "casr-land-v21": "amount2rate"
+      },
+      "description": "Aggregated surface evaporation flux for all land cover types",
+      "cell_methods": "area:mean time: mean",
+      "long_name": "Evaporation Including Sublimation and Transpiration",
+      "standard_name": "water_evaporation_flux",
+      "units": "kg m-2 s-1"
+    },
+    "WSOL_*": {
+      "_concat_dim": "sdepth",
+      "_expected_layers": {
+        "casr-land-v21": [
+          "WSOL_0-5cm",
+          "WSOL_5-10cm",
+          "WSOL_10-20cm",
+          "WSOL_20-40cm",
+          "WSOL_40-100cm",
+          "WSOL_100-200cm",
+          "WSOL_200-300cm"
+        ]
+      },
+      "_cf_variable_name": "soilMoist",
+      "cell_methods": "area:mean over land time: mean",
+      "description": "Volumetric soil moisture content",
+      "long_name": "Soil Moisture Content",
+      "standard_name": "volumetric_soil_moisture_content",
+      "units": "m3 m-3"
+    },
+    "ALAT_0-2m": {
+      "_cf_variable_name": "mrrob",
+      "_corrected_units": {
+        "casr-land-v21": "kg m-2"
+      },
+      "_transformation": {
+        "casr-land-v21": "amount2rate"
+      },
+      "description": "Lateral sub-surface runoff flux",
+      "cell_methods": "area:mean over land time: mean",
+      "long_name": "Subsurface Runoff",
+      "standard_name": "subsurface_runoff_flux",
+      "units": "kg m-2 s-1"
+    },
+    "O1_2m": {
+      "_cf_variable_name": "baseDrainage",
+      "_corrected_units": {
+        "casr-land-v21": "kg m-2"
+      },
+      "_transformation": {
+        "casr-land-v21": "amount2rate"
+      },
+      "description": "Drainage flux through base of soil model",
+      "cell_methods": "area:mean over land time: mean",
+      "long_name": "Subsurface Runoff",
+      "standard_name": "subsurface_runoff_flux",
+      "units": "kg m-2 s-1"
+    },
+    "SD_Land": {
+      "_use_snapshot": true,
+      "_cf_variable_name": "sndLand",
+      "cell_methods": "time: point",
+      "long_name": "Snow Depth on Land",
+      "standard_name": "surface_snow_thickness",
+      "units": "m"
+    }
+  }
+}
