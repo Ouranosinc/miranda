@@ -12,6 +12,7 @@ from miranda.storage import report_file_size
 logger = logging.getLogger("miranda.convert.data_definitions")
 
 __all__ = [
+    "eccc_casr_land_variables",
     "eccc_rdrs_variables",
     "era5_variables",
     "gather_agcfsr",
@@ -39,6 +40,15 @@ eccc_rdrs_variables["raw"] = [v for v in json.load(_data_folder.joinpath("eccc_c
 eccc_rdrs_variables["cf"] = [
     attrs["_cf_variable_name"]
     for attrs in json.load(_data_folder.joinpath("eccc_casr_cf_attrs.json").open("r", encoding="utf-8"))["variables"].values()
+    if "_cf_variable_name" in attrs
+]
+eccc_casr_land_variables = {}
+eccc_casr_land_variables["raw"] = [
+    v for v in json.load(_data_folder.joinpath("eccc_casr-land_cf_attrs.json").open("r", encoding="utf-8"))["variables"].keys()
+]
+eccc_casr_land_variables["cf"] = [
+    attrs["_cf_variable_name"]
+    for attrs in json.load(_data_folder.joinpath("eccc_casr-land_cf_attrs.json").open("r", encoding="utf-8"))["variables"].values()
     if "_cf_variable_name" in attrs
 ]
 
@@ -211,7 +221,9 @@ def gather_eccc_rdrs(name: str, path: str | os.PathLike, suffix: str, key: str) 
         path = Path(path).expanduser()
 
     files = dict({name: dict()})
-    for vv in eccc_rdrs_variables[key]:
+    var_dict = eccc_casr_land_variables if "casr-land" in name else eccc_rdrs_variables
+
+    for vv in var_dict[key]:
         tmp = _gather(
             name,
             [vv],
