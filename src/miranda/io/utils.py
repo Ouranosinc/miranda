@@ -1,6 +1,7 @@
 """IO Utilities module."""
 
 from __future__ import annotations
+import importlib.util as _util
 import json
 import logging
 import os
@@ -14,11 +15,7 @@ import xarray as xr
 import zarr
 
 
-nc = None
-try:
-    import netCDF4 as nc  # noqa: F401,N813
-except ImportError:  # noqa: S110
-    pass
+HAS_NETCDF4 = bool(_util.find_spec("netCDF4"))
 
 logger = logging.getLogger("miranda.io.utils")
 
@@ -274,8 +271,10 @@ def get_global_attrs(
 
     if isinstance(file, Path):
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            if nc is not None:
-                with nc.Dataset(file, mode="r") as ds:
+            if HAS_NETCDF4:
+                import netCDF4
+
+                with netCDF4.Dataset(file, mode="r") as ds:
                     data = dict()
                     for k in ds.ncattrs():
                         data[k] = getattr(ds, k)
@@ -344,8 +343,10 @@ def get_chunks_on_disk(file: str | os.PathLike[str] | Path) -> dict[str, int]:
     file = Path(file)
 
     if file.suffix.lower() in [".nc", ".nc4"]:
-        if nc is not None:
-            with nc.Dataset(file) as ds:
+        if HAS_NETCDF4:
+            import netCDF4
+
+            with netCDF4.Dataset(file) as ds:
                 for v in ds.variables:
                     chunks[v] = dict()
                     for ii, dim in enumerate(ds[v].dimensions):

@@ -10,12 +10,15 @@ dependencies:
   - dask >=2024.8.1
   - distributed
   - ecmwf-api-client
-  - h5netcdf
+  - filelock >=3.14.0
+  - h5netcdf >=1.5.0
+  - h5py >=3.12.1
   - intake
   - intake-esm
   - netCDF4 >=1.6.4
   - numcodecs <0.16
   - numpy >=1.25
+  - packaging
   - pandas >=1.0.0
   - pyessv
   - pyproj
@@ -33,6 +36,7 @@ dependencies:
   # Dev tools and testing
   - pip >=25.2
   - bump-my-version >=1.2.3
+  - codespell >=2.4.1
   - coverage >=7.5.0
   - deptry >=0.23.0
   - flake8 >=7.3.0
@@ -49,3 +53,4 @@ dependencies:
   - tox >=4.30.3
   - vulture >=2.14
   - watchdog >=4.0.0
+  - yamllint >=1.35.1

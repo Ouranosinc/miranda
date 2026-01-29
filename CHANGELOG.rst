@@ -15,6 +15,12 @@ New features
 * ECMWF: Added support for the land-sea mask variable (`sftlf`)
 * Conversion support has been added for the `NRCanMET` interpolated gridded data.
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Dependencies have been modified to ensure that all imported libraries are listed in the `pyproject.toml`:
+    * `distributed` is now only listed in the `docs` recipe.
+    * `filelock`, `h5py`, and `packaging` are now explicitly installed.
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Updated the `cookiecutter-pypackage` template to the latest version using `cruft`:
@@ -24,6 +30,8 @@ Internal changes
     * `miranda` now uses `deptry` for checking dependency usage.
     * Dependencies have been adjusted in `pyproject.toml`, `environment-*.yml` and `tox.ini` to use modern versions.
     * Contributor Covenant has been updated to version 3.0.
+* Development dependencies and the `Makefile` have been adjusted to support more linting tools (`codespell` `deptry`, `vulture`, `yamllint`).
+* The `netCDF4` library is no longer automatically loaded on `import miranda`.
 
 .. _changes_0.6.0:
 

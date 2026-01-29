@@ -7,10 +7,6 @@ skip_missing_interpreters = true
 
 [env.docs]
 extras = ["docs"]
-commands_pre = [
-  ["pip", "list"],
-  ["pip", "check"]
-]
 commands = [
   ["mkdir", "{envtmpdir}/.esdoc"],
   ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
@@ -23,10 +19,14 @@ allowlist_externals = ["git", "make", "mkdir"]
 [env.lint]
 skip_install = true
 deps = [
+  "codespell >=2.4.1",
+  "deptry >=0.23.1",
   "flake8 >= 7.3.0",
   "flake8-rst-docstrings >= 0.4.0",
   "ruff >= 0.14.3",
-  "numpydoc >= 1.9.0"
+  "numpydoc >= 1.9.0",
+  "vulture >=2.14",
+  "yamllint >=1.35.1"
 ]
 commands_pre = []
 commands = [["make", "lint"]]
