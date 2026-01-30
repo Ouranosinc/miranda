@@ -1,4 +1,5 @@
 from __future__ import annotations
+import importlib.util as ilu
 import logging
 import multiprocessing as mp
 import os
@@ -23,11 +24,8 @@ from miranda.units import check_time_frequency
 from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderError
 
 
-nc = None
-try:
-    import netCDF4 as nc  # noqa: F401,N813
-except ImportError:  # noqa: S110
-    pass
+HAS_NETCDF4 = bool(ilu.find_spec("netCDF4"))
+
 
 if VALIDATION_ENABLED:
     from miranda.cv import INSTITUTIONS, PROJECT_MODELS
@@ -169,39 +167,40 @@ class Decoder:
         return self._file_facets
 
     @classmethod
-    def _from_dataset(cls, file: Path | str) -> (str, str, dict):
-        file_name = Path(file).stem
+    def _from_dataset(cls, file: Path | str) -> tuple[str, str, dict]:
+        file_path = Path(file)
 
         try:
-            variable_name = cls._decode_primary_variable(file)
+            variable_name = str(cls._decode_primary_variable(file_path))
         except DecoderError:
-            msg = f"Unable to open dataset: {file.name}"
+            msg = f"Unable to open dataset: {file_path.name}"
             logger.error(msg)
             raise
 
-        datetimes = file_name.split("_")[-1]
+        datetimes = file_path.name.split("_")[-1]
+        data = {}
 
-        if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            if nc is not None:
-                with nc.Dataset(file, mode="r") as ds:
-                    data = dict()
+        if file_path.is_file() and file_path.suffix in [".nc", ".nc4"]:
+            if HAS_NETCDF4:
+                import netCDF4
+
+                with netCDF4.Dataset(file, mode="r") as ds:
                     for k in ds.ncattrs():
                         data[k] = getattr(ds, k)
             else:
                 with h5netcdf.File(file, mode="r") as ds:
-                    data = dict()
                     for k in ds.attrs:
                         data[k] = ds.attrs[k]
-        elif file.is_dir() and file.suffix == ".zarr":
-            with zarr.open(file, mode="r") as ds:
-                data = ds.attrs.asdict()
+        elif file_path.is_dir() and file_path.suffix == ".zarr":
+            with zarr.open_group(store=file_path, mode="r") as ds:
+                data.update(ds.attrs.asdict())
         else:
-            raise DecoderError(f"Unable to read dataset: `{file.name}`.")
+            raise DecoderError(f"Unable to read dataset: `{file_path.name}`.")
 
         return variable_name, datetimes, data
 
     @staticmethod
-    def _decode_primary_variable(file: Path) -> str:
+    def _decode_primary_variable(file: Path) -> str | None:
         """
         Attempts to find the primary variable of a netCDF
 
@@ -213,7 +212,7 @@ class Decoder:
         -------
         str
         """
-        dimsvar_dict = dict()
+        dimsvar_dict = {}
         coords = (
             "height",
             "lat",
@@ -227,10 +226,13 @@ class Decoder:
             "rotated_pole",
             "time",
         )
+
         try:
             if file.is_file() and file.suffix in [".nc", ".nc4"]:
-                if nc is not None:
-                    with nc.Dataset(file, mode="r") as ds:
+                if HAS_NETCDF4:
+                    import netCDF4
+
+                    with netCDF4.Dataset(file, mode="r") as ds:
                         for var_name, var_attrs in ds.variables.items():
                             dimsvar_dict[var_name] = {k: var_attrs.getncattr(k) for k in var_attrs.ncattrs()}
                 else:
@@ -242,7 +244,7 @@ class Decoder:
                         return str(k)
 
             elif file.is_dir() and file.suffix == ".zarr":
-                with zarr.open(str(file), mode="r") as ds:
+                with zarr.open_group(file, mode="r") as ds:
                     for k in ds.array_keys():
                         if not str(k).startswith(coords) and k in file.stem:
                             return str(k)
@@ -268,14 +270,15 @@ class Decoder:
         -------
         dict
         """
-        if isinstance(file, str):
-            file = Path(file)
+        file_path = Path(file)
 
-        if file.is_file() and file.suffix in [".nc", ".nc4"]:
-            if nc is not None:
-                with nc.Dataset(file, mode="r") as ds:
+        if file_path.is_file() and file_path.suffix in [".nc", ".nc4"]:
+            if HAS_NETCDF4:
+                import netCDF4
+
+                with netCDF4.Dataset(file, mode="r") as ds:
                     if "time" in ds.variables.keys():
-                        hour = nc.num2date(ds["time"][0], ds["time"].units, ds["time"].calendar).hour
+                        hour = netCDF4.num2date(ds["time"][0], ds["time"].units, ds["time"].calendar).hour
                     else:
                         hour = None
                 return dict(hour_of_day=hour)
@@ -283,7 +286,7 @@ class Decoder:
                 warnings.warn("This is not currently implemented for h5netcdf. Install netCDF4.", stacklevel=2)
                 return dict()
 
-        elif file.is_dir() and file.suffix == ".zarr":
+        elif file_path.is_dir() and file_path.suffix == ".zarr":
             warnings.warn("This is not currently implemented for zarr. Install netCDF4.", stacklevel=2)
             return dict()
 
@@ -297,7 +300,7 @@ class Decoder:
         term: str | None = None,
         *,
         field: str | None = None,
-    ) -> str | NaTType:
+    ) -> str | pd.Timedelta | NaTType:
         """
         Decode time information.
 
@@ -310,7 +313,7 @@ class Decoder:
 
         Returns
         -------
-        str or NaTType
+        str or pd.Timedelta or NaTType
         """
         if not file and not data and not term:
             raise ValueError("Nothing passed to parse time info from.")

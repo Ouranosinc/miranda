@@ -1,21 +1,20 @@
 """IO Utilities module."""
 
 from __future__ import annotations
-import importlib.util as _util
+import importlib.util as ilu
 import json
 import logging
 import os
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-import dask
+import dask.delayed
 import h5netcdf
 import xarray as xr
-import zarr
 
 
-HAS_NETCDF4 = bool(_util.find_spec("netCDF4"))
+HAS_NETCDF4 = bool(ilu.find_spec("netCDF4"))
 
 logger = logging.getLogger("miranda.io.utils")
 
@@ -238,7 +237,7 @@ def get_time_attrs(
     if isinstance(file_or_dataset, (str, Path)):
         ds = xr.open_dataset(Path(file_or_dataset).expanduser())
     else:
-        ds = file_or_dataset
+        ds = cast(xr.Dataset, file_or_dataset)
 
     calendar = ds.time.dt.calendar
     time = len(ds.time)
@@ -269,25 +268,23 @@ def get_global_attrs(
     else:
         raise NotImplementedError(f"Type: `{type(file_or_dataset)}`.")
 
+    data = {}
     if isinstance(file, Path):
         if file.is_file() and file.suffix in [".nc", ".nc4"]:
             if HAS_NETCDF4:
                 import netCDF4
 
                 with netCDF4.Dataset(file, mode="r") as ds:
-                    data = dict()
                     for k in ds.ncattrs():
                         data[k] = getattr(ds, k)
             else:
                 with h5netcdf.File(file, mode="r") as ds:
-                    data = dict()
                     for k in ds.attrs:
                         data[k] = ds.attrs[k]
         elif file.is_dir() and file.suffix == ".zarr":
-            with zarr.open(file, mode="r") as ds:  # noqa
-                data = ds.attrs.asdict()
+            raise NotImplementedError("Zarr v3 not yet supported.")
     else:
-        data = file.attrs
+        data.update(file.attrs)
 
     return data
 
@@ -348,21 +345,17 @@ def get_chunks_on_disk(file: str | os.PathLike[str] | Path) -> dict[str, int]:
 
             with netCDF4.Dataset(file) as ds:
                 for v in ds.variables:
-                    chunks[v] = dict()
+                    chunks[v] = {}
                     for ii, dim in enumerate(ds[v].dimensions):
                         if ds[v].chunking():
                             chunks[v][dim] = ds[v].chunking()[ii]
         else:
             with h5netcdf.File(file, mode="r") as ds:
-                data = dict()
+                data = {}
                 for k in ds.attrs:
                     data[k] = ds.attrs[k]
     elif file.suffix.lower() == "zarr" and file.is_dir():
-        with zarr.open(file, "r") as ds:  # noqa
-            for v in ds.arrays():
-                # Check if variable is chunked
-                if v[1]:
-                    chunks[v[0]] = v[1]
+        raise NotImplementedError("Zarr v3 not yet supported.")
     else:
         raise NotImplementedError(f"File type: {file.suffix}.")
     return chunks
