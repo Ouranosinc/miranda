@@ -219,6 +219,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "sphinx-mdinclude" = "sphinx_mdinclude"
 
 [tool.deptry.per_rule_ignores]
+DEP001 = ["netCDF4"]
 DEP002 = ["cf-xarray"]
 DEP003 = ["netCDF4"]
 DEP004 = ["pooch"]
