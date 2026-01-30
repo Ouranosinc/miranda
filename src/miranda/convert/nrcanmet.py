@@ -18,10 +18,10 @@ def convert_nrcanmet(infile: str | Path, engine: str = "h5netcdf") -> xr.Dataset
 
     Parameters
     ----------
-    infolder : str or Path
+    infile : str or Path
         The path to the NRCanMET netCDF files.
-    outfolder : str or Path
-        The output directory.
+    engine : str
+        The engine to use for file read operatons. Default: "h5netcdf". 
     """
     if isinstance(infile, str):
         infile = Path(infile)
