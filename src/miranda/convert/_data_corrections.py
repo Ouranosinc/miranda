@@ -62,6 +62,8 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(data_folder.joinpath("ecmwf_cf_attrs.json").open("r"))
     elif project in ["rdrs-v21"]:
         metadata_definition = json.load(data_folder.joinpath("eccc_rdrs_cf_attrs.json").open("r"))
+    elif project in ["nrcanmet", "NRCanMET"]:
+        metadata_definition = json.load(data_folder.joinpath("nrcan_met_cf_attrs.json").open("r"))
     elif project in ["agcfsr", "agmerra2"]:  # This should handle the AG versions:
         metadata_definition = json.load(data_folder.joinpath("nasa_cf_attrs.json").open("r"))
     elif project in ["cordex", "cmip5", "cmip6"]:
@@ -892,7 +894,7 @@ def dataset_conversion(
     add_version_hashes: bool = True,
     preprocess: Callable | str | None = "auto",
     **xr_kwargs,
-) -> xr.Dataset | xr.DataArray:
+) -> xr.Dataset:
     r"""
     Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
@@ -922,7 +924,7 @@ def dataset_conversion(
 
     Returns
     -------
-    xr.Dataset or xr.DataArray
+    xr.Dataset
     """
     if isinstance(input_files, xr.Dataset):
         ds = input_files
