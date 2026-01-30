@@ -85,8 +85,8 @@ docs = [
   "ipython >=8.15.0",
   "nbsphinx >=0.9.8",
   "sphinx >=8.2",
-  "sphinx_codeautolink >=0.16.2",
-  "sphinx_copybutton",
+  "sphinx-codeautolink >=0.16.2",
+  "sphinx-copybutton",
   "sphinx-intl",
   "sphinx-mdinclude"
 ]
@@ -197,7 +197,7 @@ values = [
 
 [tool.codespell]
 ignore-words-list = "astroid,boun,differentes,empress,nam,noone,vas,socio-economic"
-skip = "src/miranda/convert/melcc.py,src/miranda/convert/data/melcc_cf_attrs.json,src/miranda/convert/hq.py,src/miranda/preprocess/configs/ahccd_gen2_precipitation.csv"
+skip = "docs/_build,src/miranda/convert/melcc.py,src/miranda/convert/data/melcc_cf_attrs.json,src/miranda/convert/hq.py,src/miranda/preprocess/configs/ahccd_gen2_precipitation.csv"
 
 [tool.coverage.paths]
 source = ["src/miranda/", "*/site-packages/miranda/"]
@@ -213,10 +213,15 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.package_module_name_map]
 "ecmwf-api-client" = "ecmwfapi"
+"sphinx-codeautolink" = "sphinx_codeautolink"
+"sphinx-copybutton" = "sphinx_copybutton"
+"sphinx-intl" = "sphinx_intl"
+"sphinx-mdinclude" = "sphinx_mdinclude"
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["netCDF4"]
 DEP002 = ["cf-xarray"]
+DEP003 = ["netCDF4"]
+DEP004 = ["pooch"]
 
 [tool.flit.sdist]
 include = [
