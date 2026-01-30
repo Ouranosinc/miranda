@@ -54,6 +54,56 @@ q_flag_dict = {
 }
 
 
+def _assign_coords_to_dataset(ds: xr.Dataset, list_coords: list[str] | str | None = None) -> xr.Dataset:
+    """
+    Promote one or more data variables to coordinates on an xarray Dataset.
+
+    For each name in ``list_coords`` this function will check whether the
+    name exists in ``ds.data_vars`` and is not already present in
+    ``ds.coords``. If both conditions are met, the corresponding
+    DataArray is assigned as a coordinate on the returned Dataset.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset to modify.
+    list_coords : list[str], str, or None, optional
+        A single variable name, list of variable names to assign as
+        coordinates, or None. If None, the function returns the Dataset
+        unchanged. Names that are not present in ``ds.data_vars`` or are
+        already coordinates are ignored. Default is None.
+
+    Returns
+    -------
+    xr.Dataset
+        The input Dataset with the requested coordinates assigned. The
+        function returns a (possibly) new Dataset object as produced by
+        xarray's ``assign_coords`` method.
+
+    Notes
+    -----
+    - The function does not remove the original data variables; it only
+      creates coordinates that reference the same DataArray objects.
+    - Passing a single string or a list of strings is supported.
+    - If ``list_coords`` is None, the input all data variables without a time dimension are assigned as coords.
+
+    Example
+    -------
+    >>> ds = xr.Dataset({"lon": (("station",), [10.0]), "temp": (("station", "time"), [[1.0]])}, coords={"station": [0], "time": ["2020-01-01"]})
+    >>> ds = _assign_coords_to_dataset(ds, "lon")
+    >>> "lon" in ds.coords
+    True
+    """
+    if list_coords is None:
+        list_coords = [var for var in ds.data_vars if "time" not in ds[var].dims]
+    if isinstance(list_coords, str):
+        list_coords = [list_coords]
+    for cc in list_coords:
+        if cc in ds.data_vars and cc not in ds.coords:
+            ds = ds.assign_coords({cc: ds[cc]})
+    return ds
+
+
 def _add_coords_to_dataset(ds: xr.Dataset, df_stat: pd.DataFrame, float_flag=True) -> xr.Dataset:
     """
     Add coordinates to the dataset from the station metadata.
