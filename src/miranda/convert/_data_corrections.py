@@ -894,7 +894,7 @@ def dataset_conversion(
     add_version_hashes: bool = True,
     preprocess: Callable | str | None = "auto",
     **xr_kwargs,
-) -> xr.Dataset | xr.DataArray:
+) -> xr.Dataset:
     r"""
     Convert an existing Xarray-compatible dataset to another format with variable corrections applied.
 
@@ -924,7 +924,7 @@ def dataset_conversion(
 
     Returns
     -------
-    xr.Dataset or xr.DataArray
+    xr.Dataset
     """
     if isinstance(input_files, xr.Dataset):
         ds = input_files
