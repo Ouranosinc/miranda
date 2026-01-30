@@ -2,7 +2,7 @@ name: miranda
 channels:
   - conda-forge
 dependencies:
-  - python >=3.10,<3.14
+  - python >=3.10,<3.15
   - cdsapi
   - cftime >=1.4.1
   - cf-xarray >=0.10.4
