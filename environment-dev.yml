@@ -2,32 +2,30 @@ name: miranda
 channels:
   - conda-forge
 dependencies:
-  - python >=3.10,<3.14
+  - python >=3.10,<3.15
   - cdsapi
-  - cftime
+  - cftime >=1.4.1
   - cf-xarray >=0.10.4
   - clisops >=0.16.1
   - dask >=2024.8.1
-  - distributed
+  - distributed >=2.0
   - ecmwf-api-client
   - filelock >=3.14.0
   - h5netcdf >=1.5.0
   - h5py >=3.12.1
   - intake
   - intake-esm
-  - netCDF4 >=1.6.4
   - numcodecs <0.16
   - numpy >=1.25
-  - packaging
+  - packaging >=24.0
   - pandas >=1.0.0
   - pyessv
   - pyproj
-  - pyupgrade
-  - pyyaml
+  - pyyaml >=6.0.1
   - regionmask >=0.13.0
   - requests >=2.31.0
   - s3fs
-  - schema
+  - schema >=0.7.7
   - shapely >=2.0
   - xarray >=2023.11.0
   - xclim >=0.57.0

@@ -2,14 +2,14 @@ name: miranda
 channels:
   - conda-forge
 dependencies:
-  - python >=3.12,<3.13
+  - python >=3.13,<3.14
   # Docs
-  - distributed
+  - distributed >=2.0
   - furo >=2023.07.26
-  - ipython
   - ipykernel
-  - nbsphinx >=0.9.5
-  - sphinx >=7.1.0,<8.2
+  - ipython >=8.15.0
+  - nbsphinx >=0.9.8
+  - sphinx >=8.2
   - sphinx-codeautolink >=0.16.2
   - sphinx-copybutton
   - sphinx-intl
