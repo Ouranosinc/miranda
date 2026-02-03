@@ -14,6 +14,7 @@ New features
 * Conversion support has been added for the CaSR v3.2 dataset.
 * ECMWF: Added support for the land-sea mask variable (`sftlf`)
 * Conversion support has been added for the `NRCanMET` interpolated gridded data.
+* `miranda` now officially supports Python 3.14.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
