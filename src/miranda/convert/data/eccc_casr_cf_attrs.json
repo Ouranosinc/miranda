@@ -75,6 +75,7 @@
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
       "long_name": "Precipitation",
       "standard_name": "precipitation_flux",
+      "description": "This field was produced by CaPA to improve its representation of observations. This field is different from the sum of prsn, prra, prfr and prrp, which come directly from the model.",
       "units": "kg m-2 s-1"
     },
     "P_FB_SFC": {
@@ -252,6 +253,7 @@
         "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "This field comes from the model background and is coherent with prmod.",
       "comments": "Converted from Total Liquid Precipitation using a density of 1000 kg/m³.",
       "long_name": "Liquid Precipitation",
       "standard_name": "rainfall_flux",
@@ -271,6 +273,7 @@
         "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "This field comes from the model background and is coherent with prmod.",
       "comments": "Converted from Total Snow amount using a density of 1000 kg/m³.",
       "long_name": "Snowfall Flux",
       "standard_name": "snowfall_flux",
@@ -370,6 +373,7 @@
         "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "This field comes from the model background and is coherent with prmod.",
       "comments": "Converted from Total Freezing Rain using a density of 1000 kg/m³.",
       "long_name": "Freezing Rain",
       "standard_name": "freezing_rain",
@@ -389,6 +393,7 @@
         "casr-v32": "amount2rate"
       },
       "cell_methods": "time: mean (interval: 1 hour)",
+      "description": "This field comes from the model background and is coherent with prmod.",
       "comments": "Converted from Total Refrozen Rain using a density of 1000 kg/m³.",
       "long_name": "Refrozen Rain",
       "standard_name": "refrozen_rain",
