@@ -128,73 +128,72 @@ def convert_rdrs(
             continue
         ds_allvars = None
 
-        if len(ncfiles) >= 28:
-            for nc in ncfiles:
-                eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
-                try:
-                    ds1 = xr.open_dataset(nc, chunks="auto", engine=eng, cache=False)
-                except (OSError, RuntimeError) as e:
-                    msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
-                    logger.error(msg)
-                    raise RuntimeError(msg) from e
-                if isinstance(ds1.indexes["time"], xr.coding.cftimeindex.CFTimeIndex):
-                    ds1 = ds1.copy()
-                    ds1["time"] = ("time", ds1.indexes["time"].to_datetimeindex())
-                if ds_allvars is None:
-                    out_freq = None
-                    ds_allvars = ds1
-                    if out_freq is None:
-                        out_freq, meaning = check_time_frequency(ds1)
-                        out_freq = f"{out_freq[0]}{freq_dict[out_freq[1]]}" if meaning == "hour" else freq_dict[out_freq[1]]
-                    ds_allvars.attrs["frequency"] = out_freq
-                else:
-                    ds_allvars = xr.concat([ds_allvars, ds1], data_vars="minimal", dim="time")
-            ds_allvars = ds_allvars.sel(time=f"{year}")
-            # This is the heart of the conversion utility; We could apply this to multiple projects.
-            for month in unique(ds_allvars.time.dt.month):
-                ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
-                for short_var in var_attrs.keys():
-                    real_var_name = var_name_map[short_var]
-                    drop_vars = _get_drop_vars(ncfiles[0], keep_vars=[real_var_name, "rotated_pole"])
-                    ds_out = ds_month.drop_vars(drop_vars)
-                    ds_out = ds_out.rename({real_var_name: short_var})
-                    ds_out = ds_out.assign_coords(rotated_pole=ds_out["rotated_pole"])
-                    if ds_out[short_var].attrs["units"] == "-":
-                        ds_out[short_var].attrs["units"] = "1"
-                    ds_corr = dataset_conversion(
-                        ds_out,
-                        project=project,
-                        add_version_hashes=False,
-                        overwrite=overwrite,
-                    )
+        for nc in ncfiles:
+            eng = "h5netcdf" if h5py.is_hdf5(nc) else "netcdf4"
+            try:
+                ds1 = xr.open_dataset(nc, chunks="auto", engine=eng, cache=False)
+            except (OSError, RuntimeError) as e:
+                msg = f"Failed to open {nc} with engine {eng}. Error: {e}"
+                logger.error(msg)
+                raise RuntimeError(msg) from e
+            if isinstance(ds1.indexes["time"], xr.coding.cftimeindex.CFTimeIndex):
+                ds1 = ds1.copy()
+                ds1["time"] = ("time", ds1.indexes["time"].to_datetimeindex())
+            if ds_allvars is None:
+                out_freq = None
+                ds_allvars = ds1
+                if out_freq is None:
+                    out_freq, meaning = check_time_frequency(ds1)
+                    out_freq = f"{out_freq[0]}{freq_dict[out_freq[1]]}" if meaning == "hour" else freq_dict[out_freq[1]]
+                ds_allvars.attrs["frequency"] = out_freq
+            else:
+                ds_allvars = xr.concat([ds_allvars, ds1], data_vars="minimal", dim="time")
+        ds_allvars = ds_allvars.sel(time=f"{year}")
+        # This is the heart of the conversion utility; We could apply this to multiple projects.
+        for month in unique(ds_allvars.time.dt.month):
+            ds_month = ds_allvars.sel(time=f"{year}-{str(month).zfill(2)}")
+            for short_var in var_attrs.keys():
+                real_var_name = var_name_map[short_var]
+                drop_vars = _get_drop_vars(ncfiles[0], keep_vars=[real_var_name, "rotated_pole"])
+                ds_out = ds_month.drop_vars(drop_vars)
+                ds_out = ds_out.rename({real_var_name: short_var})
+                ds_out = ds_out.assign_coords(rotated_pole=ds_out["rotated_pole"])
+                if ds_out[short_var].attrs["units"] == "-":
+                    ds_out[short_var].attrs["units"] = "1"
+                ds_corr = dataset_conversion(
+                    ds_out,
+                    project=project,
+                    add_version_hashes=False,
+                    overwrite=overwrite,
+                )
 
-                    # Code to handle _use_snapshot attribute: will write directly to `day` subfolder
-                    modfreq_flg = False
-                    out_freq1 = None
-                    meaning1 = None
-                    if "_use_snapshot" in var_attrs[short_var]:
-                        # make sure it is not explicitly set to False
-                        if var_attrs[short_var]["_use_snapshot"]:
-                            modfreq_flg = True
-                            out_freq1, meaning1 = check_time_frequency(ds_corr, minimum_continuous_period="1h")
-                            out_freq1 = f"{out_freq1[0]}{freq_dict[out_freq1[1]]}" if meaning1 == "hour" else freq_dict[out_freq1[1].lower()]
+                # Code to handle _use_snapshot attribute: will write directly to `day` subfolder
+                modfreq_flg = False
+                out_freq1 = None
+                meaning1 = None
+                if "_use_snapshot" in var_attrs[short_var]:
+                    # make sure it is not explicitly set to False
+                    if var_attrs[short_var]["_use_snapshot"]:
+                        modfreq_flg = True
+                        out_freq1, meaning1 = check_time_frequency(ds_corr, minimum_continuous_period="1h")
+                        out_freq1 = f"{out_freq1[0]}{freq_dict[out_freq1[1]]}" if meaning1 == "hour" else freq_dict[out_freq1[1].lower()]
 
-                    if "level" in ds_corr.dims:
-                        ds_corr = ds_corr.squeeze()
-                        ds_corr = ds_corr.drop_vars(["a", "b", "level"])
-                    chunks = fetch_chunk_config(priority="time", freq=out_freq, dims=ds_corr.dims)
-                    chunks["time"] = len(ds_corr.time)
-                    cf_var = var_attrs[short_var]["_cf_variable_name"] if var_attrs[short_var]["_cf_variable_name"] else short_var
-                    outfolder1 = output_folder.joinpath(out_freq1) if modfreq_flg else output_folder.joinpath(out_freq)
-                    write_dataset_dict(
-                        {cf_var: ds_corr},
-                        output_folder=outfolder1,
-                        temp_folder=working_folder,
-                        output_format=output_format,
-                        overwrite=overwrite,
-                        chunks=chunks,
-                        **dask_kwargs,
-                    )
+                if "level" in ds_corr.dims:
+                    ds_corr = ds_corr.squeeze()
+                    ds_corr = ds_corr.drop_vars(["a", "b", "level"])
+                chunks = fetch_chunk_config(priority="time", freq=out_freq, dims=ds_corr.dims)
+                chunks["time"] = len(ds_corr.time)
+                cf_var = var_attrs[short_var]["_cf_variable_name"] if var_attrs[short_var]["_cf_variable_name"] else short_var
+                outfolder1 = output_folder.joinpath(out_freq1) if modfreq_flg else output_folder.joinpath(out_freq)
+                write_dataset_dict(
+                    {cf_var: ds_corr},
+                    output_folder=outfolder1,
+                    temp_folder=working_folder,
+                    output_format=output_format,
+                    overwrite=overwrite,
+                    chunks=chunks,
+                    **dask_kwargs,
+                )
 
 
 # FIXME: This looks mostly like code to stage writing out files. Should it be moved to an IO module?
