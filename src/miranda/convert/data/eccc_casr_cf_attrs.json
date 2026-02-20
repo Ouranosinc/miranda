@@ -75,7 +75,7 @@
       "comments": "Converted from Total Precipitation using a density of 1000 kg/m³.",
       "long_name": "Precipitation",
       "standard_name": "precipitation_flux",
-      "description": "This field was produced by CaPA to improve its representation of observations. This field is different from the sum of prsn, prra, prfr and prrp, which come directly from the model.",
+      "description": "This field was produced by CaPA to improve its representation of observations. This field is different from the sum of prsnmod, prramod, prfrmod and prrpmod, which come directly from the model.",
       "units": "kg m-2 s-1"
     },
     "P_FB_SFC": {
@@ -241,7 +241,7 @@
     },
     "P_RN0_SFC": {
       "_units_context": "hydro",
-      "_cf_variable_name": "prra",
+      "_cf_variable_name": "prramod",
       "_clip_values": {
         "all": {
           "context": "hydro",
@@ -261,7 +261,7 @@
     },
     "P_SN0_SFC": {
       "_units_context": "hydro",
-      "_cf_variable_name": "prsn",
+      "_cf_variable_name": "prsnmod",
       "_clip_values": {
         "all": {
           "context": "hydro",
@@ -361,7 +361,7 @@
     },
     "P_FR0_SFC": {
       "_units_context": "hydro",
-      "_cf_variable_name": "prfr",
+      "_cf_variable_name": "prfrmod",
       "_clip_values": {
         "all": {
           "context": "hydro",
@@ -381,7 +381,7 @@
     },
     "P_PE0_SFC": {
       "_units_context": "hydro",
-      "_cf_variable_name": "prrp",
+      "_cf_variable_name": "prrpmod",
       "_clip_values": {
         "all": {
           "context": "hydro",
