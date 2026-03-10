@@ -136,12 +136,6 @@ def rechunk_files(
     """
     Rechunks dataset for better loading/reading performance.
 
-    Warnings
-    --------
-    Globbing assumes that target datasets to be rechunked have been saved in NetCDF format.
-    File naming requires the following order of facets: `{variable}_{time_step}_{institute}_{project}_reanalysis_*.nc`.
-    Chunking dimensions are assumed to be CF-Compliant (`lat`, `lon`, `rlat`, `rlon`, `time`).
-
     Parameters
     ----------
     input_folder : str or os.PathLike
@@ -168,6 +162,12 @@ def rechunk_files(
     Returns
     -------
     None
+
+    Warnings
+    --------
+    Globbing assumes that target datasets to be rechunked have been saved in NetCDF format.
+    File naming requires the following order of facets: `{variable}_{time_step}_{institute}_{project}_reanalysis_*.nc`.
+    Chunking dimensions are assumed to be CF-Compliant (`lat`, `lon`, `rlat`, `rlon`, `time`).
     """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder).expanduser()

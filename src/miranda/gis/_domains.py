@@ -24,10 +24,6 @@ def subset_domain(ds: xr.Dataset | xr.DataArray, domain: str, **kwargs) -> xr.Da
     r"""
     Subset an xarray object according to a specific domain.
 
-    Notes
-    -----
-    Requires installation of GIS libraries.
-
     Parameters
     ----------
     ds: xarray.Dataset or xarray.DataArray
@@ -37,6 +33,11 @@ def subset_domain(ds: xr.Dataset | xr.DataArray, domain: str, **kwargs) -> xr.Da
     Returns
     -------
     xarray.Dataset or xarray.DataArray
+
+    Notes
+    -----
+    Requires installation of GIS libraries.
+
     """
     try:
         from clisops.core.subset import subset_bbox  # noqa

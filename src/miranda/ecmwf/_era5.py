@@ -346,11 +346,6 @@ def rename_era5_files(path: os.PathLike | str) -> None:
     """
     Rename badly named ERA5 files.
 
-    Notes
-    -----
-    Requires that the proper ERA5 project name is in the filename, separated by underscores.
-    Assumes that the data
-
     Parameters
     ----------
     path: os.PathLike or str
@@ -359,6 +354,12 @@ def rename_era5_files(path: os.PathLike | str) -> None:
     Returns
     -------
     None
+
+    Notes
+    -----
+    Requires that the proper ERA5 project name is in the filename, separated by underscores.
+    Assumes that the data
+
 
     """
     files = Path(path).glob("*.nc")

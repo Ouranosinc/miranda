@@ -182,10 +182,6 @@ def _read_multiple_daily_summaries(
     """
     Read multiple daily summary files.
 
-    Notes
-    -----
-    This calls `_read_single_eccc_dly` and appends the data in a single Dict.
-
     Parameters
     ----------
     files : list of str or Path, or Generator[Path]
@@ -196,6 +192,10 @@ def _read_multiple_daily_summaries(
     Returns
     -------
     dict
+
+    Notes
+    -----
+    This calls `_read_single_eccc_dly` and appends the data in a single Dict.
     """
     # Extract the data for each files
     all_stations = dict()
@@ -236,10 +236,6 @@ def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
     """
     Read station summary information from CSV header.
 
-    Notes
-    -----
-    Climate Services Canada has changed the way they store metadata and no longer store this information in the CSV heading.
-
     Parameters
     ----------
     file : str or Path
@@ -247,6 +243,11 @@ def _read_single_daily_summaries(file: str | Path) -> tuple[dict, pd.DataFrame]:
     Returns
     -------
     tuple[dict, pd.DataFrame]
+
+    Notes
+    -----
+    Climate Services Canada has changed the way they store metadata and no longer store this information in the CSV heading.
+
     """
     # Read the whole file
     with Path(file).open("r", encoding="utf-8-sig") as fi:
