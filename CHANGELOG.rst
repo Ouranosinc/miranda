@@ -18,6 +18,7 @@ New features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* GHCN hourly data conversion fixed a bug where the `temperature` and `dew_point_temperature` variables were being incorrectly scaled by a factor of 0.1. This has been removed from the conversion configuration.
 * Dependencies have been modified to ensure that all imported libraries are listed in the `pyproject.toml`:
     * `distributed` is now only listed in the `docs` recipe.
     * `filelock`, `h5py`, and `packaging` are now explicitly installed.
