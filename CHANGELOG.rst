@@ -11,6 +11,7 @@ Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:u
 New features
 ^^^^^^^^^^^^
 * Added support for converting `GHCN-Hourly` weather station network dataset.
+* Fixed `GHCN-Hourly` data conversion for an error where the `temperature` and `dew_point_temperature` variables were being incorrectly scaled by a factor of 0.1.
 * Conversion support has been added for the CaSR v3.2 dataset.
 * ECMWF: Added support for the land-sea mask variable (`sftlf`)
 * Conversion support has been added for the `NRCanMET` interpolated gridded data.
