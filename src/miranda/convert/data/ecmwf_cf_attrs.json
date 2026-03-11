@@ -642,6 +642,16 @@
       "long_name": "Land Area Fraction",
       "standard_name": "land_area_fraction",
       "units": "%"
+    },
+    "cl": {
+      "_cf_variable_name": "sftlaf",
+      "_corrected_units": "1",
+      "_invert_sign": false,
+      "_transformation": false,
+      "cell_methods": "area: mean",
+      "long_name": "Percentage of the Grid Cell Occupied by Lake",
+      "standard_name": "lake_area_fraction",
+      "units": "%"
     }
   }
 }
