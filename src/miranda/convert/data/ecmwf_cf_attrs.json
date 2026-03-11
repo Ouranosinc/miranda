@@ -639,7 +639,7 @@
       "_transformation": false,
       "cell_methods": "area: mean",
       "description": "This parameter is the proportion of land, as opposed to ocean or inland waters (lakes, reservoirs, rivers and coastal waters), in a grid box.",
-      "long_name": "Land Area Fraction",
+      "long_name": "Percentage of the Grid Cell Occupied by Land",
       "standard_name": "land_area_fraction",
       "units": "%"
     },
