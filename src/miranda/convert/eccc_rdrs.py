@@ -126,6 +126,8 @@ def convert_rdrs(
             continue
         if year_end and int(year) > year_end:
             continue
+        if not ncfiles:
+            continue
         ds_allvars = None
 
         for nc in ncfiles:
