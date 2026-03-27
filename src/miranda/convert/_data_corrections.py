@@ -86,7 +86,7 @@ def load_json_data_mappings(project: str) -> dict[str, Any]:
         metadata_definition = json.load(data_folder.joinpath("emdna_cf_attrs.json").open("r"))
     elif project in ["ORRC-v10", "ORRC-v11"]:
         metadata_definition = json.load(data_folder.joinpath("ouranos_orrc_cf_attrs.json").open("r"))
-    elif project in ["casr-v31"]:
+    elif project in ["casr-v31", "casr-v32"]:
         metadata_definition = json.load(data_folder.joinpath("eccc_casr_cf_attrs.json").open("r"))
     else:
         msg = f"Project `{project}` not supported."
