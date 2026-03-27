@@ -12,11 +12,10 @@ import xarray as xr
 from numpy import unique
 
 from miranda.io import fetch_chunk_config, write_dataset_dict
-from miranda.treatments.utils import load_json_data_mappings
 from miranda.units import check_time_frequency
 
 from ._aggregation import aggregate
-from ._data_corrections import dataset_conversion
+from ._data_corrections import dataset_conversion, load_json_data_mappings
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
 
 
