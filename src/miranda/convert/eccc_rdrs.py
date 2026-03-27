@@ -16,8 +16,8 @@ from miranda.treatments.utils import load_json_data_mappings
 from miranda.units import check_time_frequency
 
 from ._aggregation import aggregate
+from ._data_corrections import dataset_conversion
 from ._data_definitions import gather_eccc_rdrs, gather_raw_rdrs_by_years
-from .corrections import dataset_conversion
 
 
 logger = logging.getLogger("miranda.convert.eccc_rdrs")
