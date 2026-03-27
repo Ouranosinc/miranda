@@ -101,8 +101,8 @@ def convert_rdrs(
         Additional keyword arguments passed to the Dask scheduler.
     """
     # TODO: This setup configuration is near-universally portable. Should we consider applying it to all conversions?
-    var_attrs = load_json_data_mappings(project, CONFIG_FILES)["variables"]
-    prefix = load_json_data_mappings(project, CONFIG_FILES)["Header"]["_prefix"][project]
+    var_attrs = load_json_data_mappings(project)["variables"]
+    prefix = load_json_data_mappings(project)["Header"]["_prefix"][project]
     if cfvariable_list:
         var_attrs = {
             v: var_attrs[v] for v in var_attrs if "_cf_variable_name" in var_attrs[v] and var_attrs[v]["_cf_variable_name"] in cfvariable_list
