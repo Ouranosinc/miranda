@@ -18,6 +18,7 @@ from xclim.core.calendar import parse_offset
 
 from miranda import __version__ as __miranda_version__
 from miranda.gis import subset_domain
+from miranda.treatments import get_daily_snapshot
 from miranda.units import check_time_frequency
 
 from .utils import date_parser, find_version_hash
@@ -872,6 +873,7 @@ def dataset_corrections(ds: xr.Dataset, project: str) -> xr.Dataset:
     ds = dims_conversion(ds, project, metadata_definition)
     ds = _ensure_correct_time(ds, project, metadata_definition)
     # ds = _offset_time(ds, project, metadata_definition)
+    ds = get_daily_snapshot(ds, project, metadata_definition)
     ds = variable_conversion(ds, project, metadata_definition)
     ds = metadata_conversion(ds, project, metadata_definition)
 
