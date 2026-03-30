@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from .corrections import dataset_corrections
+from ._data_corrections import dataset_corrections
 
 
 __all__ = ["convert_canswe"]
