@@ -16,7 +16,7 @@ from miranda.utils import chunk_iterables
 from miranda.vocabularies import project_institute, xarray_frequencies_to_cmip6like
 
 from ._aggregation import aggregate as aggregate_func
-from .corrections import dataset_corrections
+from ._data_corrections import dataset_corrections
 
 
 logger = logging.getLogger("miranda.convert.reconstruction")

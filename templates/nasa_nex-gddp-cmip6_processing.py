@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import miranda.convert.corrections
 from miranda import convert, io
 
 
@@ -11,7 +10,7 @@ def main():
 
     for path, list_files in nex_files.items():
         # open as dataset
-        ds = miranda.convert.corrections.dataset_conversion(
+        ds = convert.dataset_conversion(
             list_files,
             add_version_hashes=False,
             project="NEX-GDDP-CMIP6",

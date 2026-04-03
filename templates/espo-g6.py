@@ -4,7 +4,6 @@ from pathlib import Path
 
 from dask.diagnostics import ProgressBar
 
-import miranda.convert.corrections
 from miranda import convert, io, structure
 from miranda.decode import Decoder
 
@@ -43,7 +42,7 @@ def main():
                 )
                 if not os.path.exists(new_path):  # and path not in skip:
                     # open as dataset
-                    ds = miranda.convert.corrections.dataset_conversion(
+                    ds = convert.dataset_conversion(
                         [f],
                         add_version_hashes=False,
                         project=project,
