@@ -21,6 +21,11 @@ Welcome to miranda's documentation!
 
    apidoc/modules
 
+.. toctree::
+   :caption: GitHub Repository
+
+   Ouranosinc/miranda <https://github.com/Ouranosinc/miranda>
+
 .. only:: html
 
     Indices and tables

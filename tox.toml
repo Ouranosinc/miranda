@@ -1,43 +1,45 @@
 envlist = [
   "lint",
-  "py3.{10,11,12,13,14}",
+  {product = [{prefix = "py3.", start = 10, stop = 14}]},
   "docs"
 ]
 skip_missing_interpreters = true
 
 [env.docs]
-extras = ["docs"]
+description = "Build the documentation with makefile under {basepython}"
+labels = ["docs"]
+dependency_groups = ["docs"]
 commands = [
   ["mkdir", "{envtmpdir}/.esdoc"],
   ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
-  ["make", "autodoc"],
-  ["make", "--directory=docs", "clean", "html"]
+  ["make", "build-docs"]
 ]
 commands_post = []
 allowlist_externals = ["git", "make", "mkdir"]
 
+[env.extras]
+description = "Run tests with extras under {basepython}"
+extras = ["extras"]
+
 [env.lint]
+description = "Run code quality compliance tests under {basepython}"
+labels = ["lint"]
 skip_install = true
-deps = [
-  "codespell >=2.4.1",
-  "deptry >=0.23.1",
-  "flake8 >= 7.3.0",
-  "flake8-rst-docstrings >= 0.4.0",
-  "ruff >= 0.14.3",
-  "numpydoc >= 1.9.0",
-  "vulture >=2.14",
-  "yamllint >=1.35.1"
-]
+dependency_groups = ["lint"]
 commands_pre = []
-commands = [["make", "lint"]]
+commands = [
+  ["make", "lint"]
+]
 commands_post = []
 allowlist_externals = ["make"]
 
 [env_run_base]
+description = "Run tests with pytest under {basepython}"
 setenv = {HOME = "{envtmpdir}", PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=miranda --cov-report=lcov", PYTHONPATH = "{toxinidir}"}
 passenv = ["CI", "GITHUB_*", "MIRANDA_*", "READTHEDOCS"]
-extras = ["dev", "gis", "remote"]
+extras = ["gis", "remote"]
 download = true
+dependency_groups = ["test"]
 install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
 commands_pre = [
   ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--no-deps", "--force-reinstall", "--no-binary", "h5py", "h5py>=3.12.1"],

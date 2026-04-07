@@ -1,6 +1,7 @@
 name: miranda
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
   - python >=3.13,<3.14
   # Docs
@@ -11,6 +12,6 @@ dependencies:
   - nbsphinx >=0.9.8
   - sphinx >=8.2
   - sphinx-codeautolink >=0.16.2
-  - sphinx-copybutton
+  - sphinx-copybutton >=0.5.2
   - sphinx-intl
   - sphinx-mdinclude
