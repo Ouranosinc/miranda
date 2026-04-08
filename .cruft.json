@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-  "commit": "14cbc49f79a6bba2502c8b3a593ff0babaf661ed",
+  "commit": "efac179f0b0e0ea60fc07b40382041934b9d1698",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -23,7 +23,7 @@
       "generated_with_cruft": "y",
       "__gh_slug": "https://github.com/Ouranosinc/miranda",
       "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-      "_commit": "14cbc49f79a6bba2502c8b3a593ff0babaf661ed"
+      "_commit": "efac179f0b0e0ea60fc07b40382041934b9d1698"
     }
   },
   "directory": null

@@ -94,18 +94,19 @@ Ready to contribute? Here's how to set up ``miranda`` for local development.
 
     .. code-block:: console
 
-        python -m pip install -e .[dev]
-        pre-commit install
+        python -m pip install --group dev
+        python -m pip install --editable .
+        prek install
 
     This installs ``miranda`` in an "editable" state, meaning that changes to the code are immediately seen by the environment. To ensure a consistent coding style, `make dev` also installs the ``pre-commit`` hooks to your local clone.
 
-    On commit, ``pre-commit`` will check that ``flake8``, ``ruff``, and various other checks are passing, perform automatic fixes if possible, and warn of violations that require intervention. If your commit fails the checks initially, simply fix the errors, re-add the files, and re-commit.
+    On commit, ``prek`` will will run ``pre-commit`` checks that ensure code quality checks are passing, perform automatic fixes if possible, and warn of violations that require intervention. If your commit fails the checks initially, simply fix the errors, re-add the files, and re-commit.
 
     You can also run the hooks manually with:
 
     .. code-block:: console
 
-        pre-commit run -a
+        prek run -a
 
     If you want to skip the ``pre-commit`` hooks temporarily, you can pass the `--no-verify` flag to `git commit`.
 
@@ -131,10 +132,10 @@ Ready to contribute? Here's how to set up ``miranda`` for local development.
     .. code-block:: console
 
         git add .
-        git commit -m "Your detailed description of your changes."
+        git commit -s -m "Your detailed description of your changes."
         git push origin name-of-your-bugfix-or-feature
 
-    If ``pre-commit`` hooks fail, try fixing the issues, re-staging the files to be committed, and re-committing your changes (or, if need be, you can skip them with `git commit --no-verify`).
+    If ``pre-commit`` hooks fail, try fixing the issues, re-staging the files to be committed, and re-committing your changes (or, if need be, you can skip them with `--no-verify` flag).
 
 #. Submit a `Pull Request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request>`_ through the GitHub website.
 
