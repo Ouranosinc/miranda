@@ -24,7 +24,7 @@ dependencies:
   - pyproj
   - pyyaml >=6.0.1
   - regionmask >=0.13.0
-  - requests >=2.31.0
+  - requests >=2.33.0
   - s3fs
   - schema >=0.7.7
   - shapely >=2.0
@@ -37,7 +37,7 @@ dependencies:
   - bump-my-version >=1.3.0
   - codespell >=2.4.1
   - coverage >=7.5.0
-  - deptry >=0.24.0
+  - deptry >=0.25.1
   - flake8 >=7.3.0
   - flake8-rst-docstrings >=0.4.0
   - flit >=3.11.0,<4.0
@@ -49,8 +49,8 @@ dependencies:
   - pytest-cov >=7.0.0
   - pytest-xdist >=3.2.0
   - ruff >=0.15.0
-  - tox >=4.41.0
-  - tox-gh >=1.7.0
+  - tox >=4.52.0
+  - tox-gh >=1.7.1
   - vulture >=2.14
   - watchdog >=6.0.0
   - yamllint >=1.35.1
