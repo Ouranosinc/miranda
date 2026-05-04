@@ -51,39 +51,57 @@ Database structuring and facets validation:
 
 Installation
 ------------
-`miranda` can be installed from PyPI::
 
-    $ pip install miranda
+`miranda` can be installed from PyPI:
+
+.. code-block:: shell
+
+    $ python -m pip install miranda
 
 Some functionalities require complex-to-install dependencies.
-In order to gain access to them, we strongly suggest using `Anaconda <https://www.anaconda.com/products/distribution>`_ to manage your environment::
+In order to gain access to them, we strongly suggest using `Anaconda <https://www.anaconda.com/products/distribution>`_ to manage your environment:
+
+.. code-block:: shell
 
     $ conda env create -f environment.yml
     $ conda activate miranda
-    $ pip install miranda[full]
+    $ python -m pip install miranda[full]
 
 For more information about Anaconda/Miniconda/conda-forge:
- * Miniconda: https://docs.conda.io/en/latest/miniconda.html
- * conda-forge: https://conda-forge.org/#about
+    * Miniconda: https://docs.conda.io/en/latest/miniconda.html
+    * conda-forge: https://conda-forge.org/#about
 
 `miranda` also relies on `PyESSV <https://github.com/ES-DOC/pyessv>`_ for its climate data controlled vocabulary.
 This library is optional for users who do not require validation checks,
-but enabling this feature requires additional installation steps::
+but enabling this feature requires additional installation steps:
+
+.. code-block:: shell
 
     $ mkdir -p ~/.esdoc
     $ git clone git@github.com:ES-DOC/pyessv-archive.git ~/.esdoc/pyessv-archive
 
 Contributing
 ------------
+
 See the contributing documentation: https://miranda.readthedocs.io/en/latest/contributing.html
 
-Credits
--------
+Acknowledgments
+---------------
+
+`miranda` development is funded through `Ouranos`_, a not-for-profit collaborative innovation organization fostering resilient adaptation to climate change, based in Québec, Canada.
+
+.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-horizontal-couleur.svg
+        :target: https://www.ouranos.ca/en
+        :align: center
+        :class: ouranos-logo no-theme center
+
+|ouranos-dark| |ouranos-light|
 
 This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pypackage`_ project template.
 
 .. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
-.. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
+.. _Ouranos: https://www.ouranos.ca/en
+.. _Ouranosinc/cookiecutter-pypackage: https://github.com/Ouranosinc/cookiecutter-pypackage
 
 .. |build| image:: https://github.com/Ouranosinc/miranda/actions/workflows/main.yml/badge.svg
         :target: https://github.com/Ouranosinc/miranda/actions
@@ -141,6 +159,18 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://pypi.python.org/pypi/miranda
         :alt: Supported Python Versions
 
-.. |zenodo| image:: https://zenodo.org/badge/203830590.svg
-        :target: https://zenodo.org/badge/latestdoi/203830590
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.17048366.svg
+        :target: https://doi.org/10.5281/zenodo.17048366
         :alt: DOI
+
+.. Ouranos Logos
+
+.. |ouranos-light| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/main/docs/_static/images/empty.png
+        :target: https://www.ouranos.ca/en
+        :alt:
+        :class: ouranos-logo only-light center
+
+.. |ouranos-dark| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/main/docs/_static/images/empty.png
+        :target: https://www.ouranos.ca/en
+        :alt:
+        :class: ouranos-logo only-dark center
