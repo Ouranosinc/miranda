@@ -109,8 +109,8 @@ ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/en/html/index.html
 endif
 
-servedocs: autodoc ## compile the docs while watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+servedocs: autodoc ## generate Sphinx HTML documentation, including API docs, and watch for changes
+	$(MAKE) -C docs livehtml
 
 dist: clean ## builds source and wheel package
 	python -m flit build
