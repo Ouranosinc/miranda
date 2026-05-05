@@ -22,6 +22,7 @@ Breaking changes
 * Dependencies have been modified to ensure that all imported libraries are listed in the `pyproject.toml`:
     * `distributed` is now only listed in the `docs` recipe.
     * `filelock`, `h5py`, and `packaging` are now explicitly installed.
+* Development dependencies are now listed under the new `dependency-groups` category (`PEP 735 <https://peps.python.org/pep-0735/>`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -36,6 +37,13 @@ Internal changes
     * Contributor Covenant has been updated to version 3.0.
 * Development dependencies and the `Makefile` have been adjusted to support more linting tools (`codespell` `deptry`, `vulture`, `yamllint`).
 * The `netCDF4` library is no longer automatically loaded on `import miranda`.
+* Updated the `cookiecutter-pypackage` template to the latest version using `cruft`:
+    * Migrated from `optional-dependencies` to `dependency-groups`.
+    * Set privileged token-based GitHub workflows to run within an `automation` environment.
+    * Updated and synchronized several dependencies.
+    * `pre-commit` has been replaced by `prek`.
+    * `Makefile` now handles some dependency installation logic.
+    * `tox.toml` has been adjusted to use Makefile .
 
 .. _changes_0.6.0:
 
