@@ -26,12 +26,17 @@ env:
 
 jobs:
   lint_and_docs:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-    name: ${{ matrix.tox-env }}
     strategy:
       matrix:
-        tox-env: [ 'lint', 'docs' ]
-        python-version: [ "3.14" ]
+        include:
+          - name: 'Lint'
+            tox-env: 'lint'
+            python-version: "3.14"
+          - name: 'Docs'
+            tox-env: 'docs'
+            python-version: "3.14"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
