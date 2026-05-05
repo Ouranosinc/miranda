@@ -11,7 +11,7 @@ on:
     paths-ignore:
       - ../../CHANGELOG.rst
       - pyproject.toml
-      - tox.ini
+      - tox.toml
       - miranda/__init__.py
       - .github/**.yml
       - .pre-commit-config.yaml

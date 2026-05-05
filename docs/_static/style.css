@@ -1,0 +1,67 @@
+@import url("styles/furo.css");
+
+/* extend furo for inline ".only-dark" elements */
+body .only-dark-inline,
+body .only-light-inline {
+  display: none !important;
+}
+
+@media not print {
+  body[data-theme="dark"] .only-dark-inline,
+  body[data-theme="light"] .only-light-inline {
+    display: inline !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) .only-dark-inline{
+      display: inline !important;
+    }
+  }
+  @media (prefers-color-scheme: light) {
+    body:not([data-theme="dark"]) .only-light-inline{
+      display: inline !important;
+    }
+  }
+}
+
+@media print {
+  .only-light-inline{
+    display: inline !important;
+  }
+  .only-dark-inline{
+    display: none !important;
+  }
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
+img.ouranos-logo.only-dark {
+    width: 300px;
+    height: 150px;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    border-image-width: 0px;
+    background-image: url(https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-blanc.svg);
+}
+
+img.ouranos-logo.only-light {
+    width: 300px;
+    height: 150px;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    border-image-width: 0px;
+    background-image: url(https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-couleur.svg);
+}
+
+img.ouranos-logo.no-theme {
+    display: none;
+    width: 0px;
+}

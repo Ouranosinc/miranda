@@ -101,7 +101,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Miranda"
-copyright = f"2019-{datetime.date.today().year}, Trevor James Smith and contributors"
+copyright = f"2019-{datetime.date.today().year}, Trevor James Smith, Ouranos Inc."
 author = "Miranda project Development Team"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -328,3 +328,6 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+def setup(app):
+    app.add_css_file("style.css")
