@@ -27,6 +27,7 @@ Breaking changes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* Harmonized use of _data_corrections vs .corrections for dataset conversion functions across the codebase. Replaced all calls to `miranda.convert.corrections` with the `miranda.convert._data_corrections` module.
 * Modified CaSR v3.2 output variable names for precipitation variables to avoid confusion with the `pr` variable in the same dataset. The new variable names are `prsnmod`, `prramod`, `prfrmod`, and `prrpmod` which are consistent with `prmod`.
 * Updated the `cookiecutter-pypackage` template to the latest version using `cruft`:
     * Updated `pre-commit` hooks and versions.

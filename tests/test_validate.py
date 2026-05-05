@@ -1,10 +1,11 @@
 from __future__ import annotations
+from pathlib import Path
 
 import pytest
 import xarray as xr
 from schema import SchemaError
 
-from miranda.convert.corrections import CONFIG_FILES
+# from miranda.convert.corrections import CONFIG_FILES
 from miranda.validate import (
     cf_dimensions_schema,
     cf_header_schema,
@@ -12,6 +13,41 @@ from miranda.validate import (
     url_validate,
     validate_json,
 )
+
+
+CONFIG_FOLDER = Path(__file__).parent.parent / "src" / "miranda" / "convert" / "data"
+CONFIG_FILES = {
+    "EMDNA": "emdna_cf_attrs.json",
+    "ESPO-G6-E5L": "espo-g6-e5l_attrs.json",
+    "ESPO-G6-R2": "espo-g6-r2_attrs.json",
+    "NEX-GDDP-CMIP6": "nex-gddp-cmip6_attrs.json",
+    "CMIP": "cmip_ouranos_attrs.json",
+    "CORDEX": "cmip_ouranos_attrs.json",
+    "eccc-canswe": "eccc_canswe_cf_attrs.json",
+    "eccc-ahccd": "eccc_ahccd_cf_attrs.json",
+    "eccc-obs": "eccc_obs_cf_attrs.json",
+    "era5-land": "ecmwf_cf_attrs.json",
+    "era5-land-monthly-means": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels-monthly-means": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels-monthly-means-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "era5-pressure-levels-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "era5-single-levels": "ecmwf_cf_attrs.json",
+    "era5-single-levels-monthly-means": "ecmwf_cf_attrs.json",
+    "era5-single-levels-monthly-means-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "era5-single-levels-preliminary-back-extension": "ecmwf_cf_attrs.json",
+    "ets-grnch": "ets_grnch_cf_attrs.json",
+    "melcc": "melcc_cf_attrs.json",
+    "nrcan-gridded-obs": "nrcan_met_cf_attrs.json",
+    "nrcanmet": "nrcan_met_cf_attrs.json",
+    "rdrs-v21": "eccc_rdrs_cf_attrs.json",
+    "casr-v31": "eccc_casr_cf_attrs.json",
+    "casr-v32": "eccc_casr_cf_attrs.json",
+    "ORRC-v10": "ouranos_orrc_cf_attrs.json",
+    "ORRC-v11": "ouranos_orrc_cf_attrs.json",
+}
+for k, v in CONFIG_FILES.items():
+    CONFIG_FILES[k] = CONFIG_FOLDER / v
 
 
 class TestValidateJSON:
