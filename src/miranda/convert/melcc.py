@@ -22,9 +22,8 @@ from xclim.core.formatting import update_history
 from xclim.core.units import convert_units_to, pint_multiply, str2pint
 
 from miranda import __version__
-from miranda.convert.corrections import dataset_corrections
-from miranda.treatments import metadata_conversion
-from miranda.treatments.utils import load_json_data_mappings
+
+from ._data_corrections import dataset_corrections, load_json_data_mappings, metadata_conversion
 
 
 logger = logging.getLogger("miranda.convert.melcc")
