@@ -61,6 +61,7 @@ Internal changes
     * `Makefile` now handles some dependency installation logic.
     * `tox.toml` has been adjusted to use Makefile .
 * Added the Ouranos logo and a financial acknowledgement statement to ``README.rst`` and documentation landing page. Logo presentation reacts to `furo` theme options.
+* Updated the `pypa/gh-action-pypi-publish` to support modern `ubuntu-latest` image on GiHub.
 
 .. _changes_0.6.0:
 
