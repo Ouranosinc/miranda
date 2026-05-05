@@ -23,6 +23,7 @@ Breaking changes
     * `distributed` is now only listed in the `docs` recipe.
     * `filelock`, `h5py`, and `packaging` are now explicitly installed.
 * Development dependencies are now listed under the new `dependency-groups` category (`PEP 735 <https://peps.python.org/pep-0735/>`).
+* Added `sphinx-autobuild` to docs dependencies. Modified the `make servedocs` recipe to use `sphinx-autobuild` for more reactive documentation development.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -43,6 +44,7 @@ Internal changes
     * `pre-commit` has been replaced by `prek`.
     * `Makefile` now handles some dependency installation logic.
     * `tox.toml` has been adjusted to use Makefile .
+* Added the Ouranos logo and a financial acknowledgement statement to ``README.rst`` and documentation landing page. Logo presentation reacts to `furo` theme options.
 
 .. _changes_0.6.0:
 
