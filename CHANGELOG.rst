@@ -4,8 +4,23 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
---------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+    --------------------------------------------------------------
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.7.0:
+
+`v0.7.0 <https://github.com/Ouranosinc/miranda/tree/v0.7.0>`_ (2026-05-05)
+--------------------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features
