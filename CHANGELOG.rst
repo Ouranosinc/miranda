@@ -19,7 +19,7 @@ Changelog
 
 .. _changes_0.7.0:
 
-`v0.7.0 <https://github.com/Ouranosinc/miranda/tree/v0.7.0>`_ (2026-05-05)
+`v0.7.0 <https://github.com/Ouranosinc/miranda/tree/v0.7.0>`_ (2026-05-06)
 --------------------------------------------------------------------------
 Contributors to this version: Travis Logan (:user:`tlogan2000`), Aslı Beşe (:user:`aslibese`), Trevor James Smith (:user:`Zeitsperre`).
 
