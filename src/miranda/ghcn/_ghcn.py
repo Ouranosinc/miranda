@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 import xarray as xr
 from numpy import nan
+from pandas.errors import EmptyDataError, ParserError
 
 from miranda.convert.utils import (
     _add_coords_to_dataset,
@@ -95,7 +96,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     """
     varlist = [k for k in variable_meta.keys()]
     flaglist = [f"{k}_Quality_Code" for k in varlist]
-    coordlist = [
+    coordlist_alt = [
         "Station_ID",
         "Station_name",
         "Year",
@@ -106,8 +107,27 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
         "Longitude",
         "Elevation",
     ]
+    coordlist = [
+        "STATION",
+        "Station_name",
+        "Year",
+        "Month",
+        "Day",
+        "Hour",
+        "LATITUDE",
+        "LONGITUDE",
+        "ELEVATION",
+    ]
+
     usecols = coordlist + varlist + flaglist
-    df = pd.read_csv(station_id, delimiter="|", low_memory=False, usecols=usecols)
+    usecols_alt = coordlist_alt + varlist + flaglist
+    try:
+        df = pd.read_csv(station_id, delimiter="|", low_memory=False, usecols=usecols)
+        df.rename(columns={"STATION": "STATION_ID"}, inplace=True)
+    except (EmptyDataError, ParserError, ValueError, OSError) as e:
+        msg = f"Failed to read {station_id} with columns {usecols} due to {type(e).__name__}: {e}. Trying alternative column names."
+        logger.warning(msg)
+        df = pd.read_csv(station_id, delimiter="|", low_memory=False, usecols=usecols_alt)
     df.columns = df.columns.str.lower()
     varlist = [k for k in variable_meta.keys() if k in df.columns]
     if varlist:
