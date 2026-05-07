@@ -4,18 +4,17 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
-    --------------------------------------------------------------
-    Contributors:
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+--------------------------------------------------------------
+Contributors:
 
-    Changes
-    ^^^^^^^
-    * No change.
+Changes
+^^^^^^^
+* No change.
 
-    Fixes
-    ^^^^^
-    * No change.
+Fixes
+^^^^^
+* Fix issue with `GHCN-Hourly` data conversion to support v1.1.0 column name changes (see https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-columns.pdf).
 
 .. _changes_0.7.0:
 
