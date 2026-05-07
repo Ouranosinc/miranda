@@ -10,11 +10,7 @@ Contributors:
 
 Changes
 ^^^^^^^
-* No change.
-
-Fixes
-^^^^^
-* Fix issue with `GHCN-Hourly` data conversion to support v1.1.0 column name changes (see https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-columns.pdf).
+`GHCN-Hourly` data conversion tools now support v1.1.0 column name changes (see https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-columns.pdf).
 
 .. _changes_0.7.0:
 
