@@ -6,7 +6,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
 --------------------------------------------------------------
-Contributors:
+Contributors: Travis Logan (:user:`tlogan2000`).
 
 Changes
 ^^^^^^^
