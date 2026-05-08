@@ -139,7 +139,7 @@ all = [
 [tool]
 
 [tool.bumpversion]
-current_version = "0.7.1-dev.0"
+current_version = "0.7.1"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -183,7 +183,7 @@ filename = "CITATION.cff"
 include_bumps = ["release"]
 search = "^version: \"[0-9]+\\.[0-9]+\\.[0-9]\""
 regex = true
-replace = "version: {new_version}"
+replace = "version: \"{new_version}\""
 
 [[tool.bumpversion.files]]
 filename = "src/miranda/__init__.py"
