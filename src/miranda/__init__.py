@@ -23,7 +23,7 @@ from __future__ import annotations
 
 __author__ = """Trevor James Smith"""
 __email__ = "smith.trevorj@ouranos.ca"
-__version__ = "0.7.1"
+__version__ = "0.7.2-dev.0"
 
 
 from . import (
