@@ -4,18 +4,17 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
-    --------------------------------------------------------------
-    Contributors:
+`Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+--------------------------------------------------------------
+Contributors to this version: Aslı Beşe (:user:`aslibese`).
 
-    Changes
-    ^^^^^^^
-    * No change.
+Changes
+^^^^^^^
+* Updated ORRC global attributes to reflect the changes in dataset production processes.
 
-    Fixes
-    ^^^^^
-    * No change.
+Fixes
+^^^^^
+* No change.
 
 .. _changes_0.7.1:
 
