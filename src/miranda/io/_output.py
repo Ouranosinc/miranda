@@ -10,6 +10,7 @@ from typing import Literal
 
 import dask
 import xarray as xr
+from dask.diagnostics import ProgressBar
 from dask.distributed import Client
 
 from ._rechunk import fetch_chunk_config, prepare_chunks_for_ds
@@ -192,3 +193,39 @@ def write_dataset_dict(
         else:
             msg = f"Skipping {outpath.as_posix()} as overwrite is False and time dimension is sufficient."
             warnings.warn(msg, stacklevel=2)
+
+
+def write_zarr(
+    ds: xr.Dataset,
+    out_zarr: Path,
+    chunks: dict,
+    zarr_format: int = 2,
+    overwrite: bool = False,
+) -> None:
+    """
+    Write Zarr file.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset.
+    out_zarr : Path
+        Output Zarr file.
+    chunks : dict
+        Chunk sizes.
+        If an empty dictionary is passed, no chunking will be performed.
+    zarr_format : int
+        Zarr format version (2 or 3). Default is 2.
+    overwrite : bool
+        Whether to overwrite. Default is False.
+    """
+    if not out_zarr.exists() or overwrite:
+        with ProgressBar():
+            for vv in ds.data_vars:
+                if ds[vv].dtype == object:
+                    ds[vv] = ds[vv].astype(str)
+            if len(chunks):
+                ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
+            else:
+                ds.to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
+        shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)

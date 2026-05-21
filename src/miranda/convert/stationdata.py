@@ -19,16 +19,18 @@ from miranda.convert.utils import (
     make_monotonous_time,
     prj_dict,
     q_flag_dict,
-    write_zarr,
 )
 from miranda.eccc._homogenized import create_canhomt_xarray
 from miranda.ghcn import create_ghcn_xarray
+from miranda.io import write_zarr
 
 
 logger = logging.getLogger("miranda.convert.stationdata")
 
+__all__ = ["convert_stationdata"]
 
-def convert_statdata_bychunks(
+
+def convert_stationdata(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
     cfvariable_list: list | None = None,
@@ -86,16 +88,16 @@ def convert_statdata_bychunks(
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if project == "ghcnd":
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
     elif project == "ghcnh":
         readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
-    # exit()
-    elif project == "canhomt_dly":
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
+
+    if n_stations > 0:
+        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
+    else:
+        out_chunks = {}
 
     tz_file = Path(__file__).parent.joinpath("data/timezones-with-oceans-now.shapefile.zip")
 

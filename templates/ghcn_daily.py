@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from dask.diagnostics import ProgressBar
 
-from miranda.convert.stationdata import convert_statdata_bychunks, q_flag_dict
+from miranda.convert.stationdata import convert_stationdata, q_flag_dict
 from miranda.ghcn import download_ghcn
 import xarray as xr
 
@@ -33,7 +33,7 @@ def main():
     )
 
     # convert ghcn data by chunks of n_stations
-    convert_statdata_bychunks(
+    convert_stationdata(
         project=project,
         working_folder=working_folder,
         lon_bnds=lon_bnds,
