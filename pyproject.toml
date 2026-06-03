@@ -5,14 +5,14 @@ build-backend = "flit_core.buildapi"
 [dependency-groups]
 lint = [
   # Linting tools
-  "codespell >=2.4.1",
+  "codespell >=2.4.2",
   "deptry >=0.25.1",
   "flake8 >=7.3.0",
   "flake8-rst-docstrings >=0.4.0",
-  "mypy >=1.19.1",
+  "mypy >=1.20.0",
   "numpydoc >=1.10.0",
   "pylint >=4.0.4",
-  "ruff >=0.15.0",
+  "ruff >=0.15.9",
   "vulture >=2.14",
   "yamllint >=1.38.0"
 ]
@@ -222,6 +222,9 @@ omit = ["tests/*.py"]
 relative_files = true
 source = ["miranda"]
 
+[tool.cruft]
+skip = []
+
 [tool.deptry]
 extend_exclude = ["extras"]
 
@@ -243,19 +246,20 @@ include = [
   ".zenodo.json",
   "AUTHORS.rst",
   "CHANGELOG.rst",
+  "CITATION.cff",
+  "CODE_OF_CONDUCT.md",
   "CONTRIBUTING.rst",
   "LICENSE",
   "Makefile",
   "README.rst",
   "environment-dev.yml",
   "environment-docs.yml",
-  "docs/_static/_images/*.gif",
-  "docs/_static/_images/*.jpg",
-  "docs/_static/_images/*.png",
-  "docs/_static/_images/*.rst",
-  "docs/Makefile",
+  "docs/_static/*",
+  "docs/*.rst",
   "docs/conf.py",
   "docs/make.bat",
+  "docs/Makefile",
+  "pyproject.toml",
   "src/miranda",
   "tests/*.py",
   "tox.toml"
@@ -263,14 +267,15 @@ include = [
 exclude = [
   "*.py[co]",
   "__pycache__",
-  ".coveralls.yml",
   ".editorconfig",
   ".flake8",
+  ".github",
   ".gitignore",
   ".pre-commit-config.yaml",
   ".readthedocs.yml",
   ".yamllint.yaml",
   ".zizmor.yml",
+  "CI/requirements_ci.*",
   "docs/_*",
   "docs/apidoc/modules.rst",
   "docs/apidoc/miranda*.rst",
