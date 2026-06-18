@@ -19,10 +19,7 @@ from .utils import delayed_write, name_output_file
 
 logger = logging.getLogger("miranda.io.output")
 
-__all__ = [
-    "write_dataset",
-    "write_dataset_dict",
-]
+__all__ = ["write_dataset", "write_dataset_dict", "write_zarr"]
 
 
 def write_dataset(
