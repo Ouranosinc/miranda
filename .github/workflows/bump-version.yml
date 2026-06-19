@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: automation
     permissions:
-      actions: read
+      contents: write
     strategy:
       matrix:
         python-version: [ "3.13" ]
@@ -62,6 +62,7 @@ jobs:
         with:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
+          permission-contents: write
 
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
