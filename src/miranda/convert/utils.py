@@ -512,6 +512,7 @@ def write_zarr(
         Output Zarr file.
     chunks : dict
         Chunk sizes.
+        If an empty dictionary is passed, no chunking will be performed.
     zarr_format : int
         Zarr format version (2 or 3). Default is 2.
     overwrite : bool
@@ -522,5 +523,8 @@ def write_zarr(
             for vv in ds.data_vars:
                 if ds[vv].dtype == object:
                     ds[vv] = ds[vv].astype(str)
-            ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
+            if len(chunks):
+                ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
+            else:
+                ds.to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
         shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)

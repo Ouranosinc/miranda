@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from miranda.preprocess.eccc_rdrs import convert_rdrs, rdrs_to_daily
-from miranda.io import concat_rechunk_zarr
+from miranda.io import write_zarr
 
 
 def main():
@@ -50,7 +50,7 @@ def main():
         for variable in [
             v for v in infolder.glob("*") if v.is_dir() and v.name in vars_to_process
         ]:
-            concat_rechunk_zarr(
+            write_zarr(
                 project=project,
                 freq=freq,
                 input_folder=variable,
