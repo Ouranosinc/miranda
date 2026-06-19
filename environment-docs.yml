@@ -11,6 +11,7 @@ dependencies:
   - ipython >=8.15.0
   - nbsphinx >=0.9.8
   - sphinx >=8.2
+  - sphinx-autobuild >=2024.4.16
   - sphinx-codeautolink >=0.16.2
   - sphinx-copybutton >=0.5.2
   - sphinx-intl
