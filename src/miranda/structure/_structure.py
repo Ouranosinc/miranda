@@ -301,7 +301,7 @@ def build_path_from_schema(
                 logger.error(msg)
                 return
         elif facets[branch] not in validation_schemas.keys():
-            msg = (f"No appropriate data schemas found for file matching schema: {facets}",)
+            msg = f"No appropriate data schemas found for file matching schema: {facets}"
             logger.error(
                 msg,
                 ValueError,
@@ -316,11 +316,9 @@ def build_path_from_schema(
 
 
 def structure_datasets(
-    facet_dict: dict[str, str | dict[str, Any]],
+    facet_dict: dict[str, dict[str, Any]],
     output_folder: str | os.PathLike,
     *,
-    project: str | None = None,
-    guess: bool = True,
     dry_run: bool = False,
     method: str = "copy",
     make_dirs: bool = False,
@@ -332,16 +330,10 @@ def structure_datasets(
 
     Parameters
     ----------
-    input_files : str, Path, list of str or Path, or GeneratorType
-        Files to be sorted.
+    facet_dict : dict[str, dict[str, Any]]
+        Facet dictionary object.
     output_folder : str or Path
         The desired location for the folder-tree.
-    project : {"cordex", "cmip5", "cmip6", "isimip-ft", "pcic-candcs-u6", "converted"}, optional
-        Project used to parse the facets of all supplied datasets.
-        If not supplied, will attempt parsing with all available data categories for each file (slow)
-        unless `guess` is True.
-    guess : bool
-        If project not supplied, suggest to decoder that activity is the same for all input_files. Default: True.
     dry_run : bool
         Prints changes that would have been made without performing them. Default: False.
     method : {"move", "copy"}
@@ -361,20 +353,20 @@ def structure_datasets(
     existing_hashes = {}
     version_hash_paths = {}
     errored_files = []
-    for file, facets in facet_dict.items():
+    for files, facets in facet_dict.items():
         output_filepath = build_path_from_schema(facets, output_folder)
         if isinstance(output_filepath, Path):
-            all_file_paths.update({str(file): output_filepath})
+            all_file_paths.update({str(files): output_filepath})
         else:
-            errored_files.append(Path(file).name)
+            errored_files.append(Path(files).name)
             continue
 
         if set_version_hashes:
-            version_hash_file = f"{Path(file).stem}.{facets['version']}"
-            if Path(file).parent.joinpath(version_hash_file).exists():
-                existing_hashes.update({Path(file).parent.joinpath(version_hash_file): output_filepath.joinpath(version_hash_file)})
+            version_hash_file = f"{Path(files).stem}.{facets['version']}"
+            if Path(files).parent.joinpath(version_hash_file).exists():
+                existing_hashes.update({Path(files).parent.joinpath(version_hash_file): output_filepath.joinpath(version_hash_file)})
             else:
-                version_hash_paths.update({Path(file): output_filepath.joinpath(version_hash_file)})
+                version_hash_paths.update({Path(files): output_filepath.joinpath(version_hash_file)})
 
     if errored_files:
         if len(errored_files) < 10:
