@@ -10,11 +10,13 @@ Contributors to this version: Aslı Beşe (:user:`aslibese`), Trevor James Smith
 
 Changes
 ^^^^^^^
-* Updated ORRC global attributes to reflect the changes in dataset production processes.
+* Updated ORRC global attributes to reflect the changes in dataset production processes. (:pull:`355`).
+* Removed a few redundant functions (``miranda.io.concat_rechunk_zarr``, ``miranda.io.merge_rechunk_zarrs``). (:pull:`357`).
+* ``convert_stationdata_bychunks`` has been renamed to ``convert_stationdata``. (:pull:`357`).
 
 Fixes
 ^^^^^
-* No change.
+* The version pin on `h5py` and `h5netcdf` have been removed. Builds on CI no longer compile `h5py` in order to speed up build times. (:pull:`357`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
