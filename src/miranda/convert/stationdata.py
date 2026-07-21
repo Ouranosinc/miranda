@@ -99,6 +99,7 @@ def convert_stationdata(
     else:
         out_chunks = {}
 
+    n_stations = max(len(station_df), 1)
     tz_file = Path(__file__).parent.joinpath("data/timezones-with-oceans-now.shapefile.zip")
 
     tz = gpd.read_file(tz_file).to_crs(epsg=4326)

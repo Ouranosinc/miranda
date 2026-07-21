@@ -7,7 +7,7 @@ import shutil
 from functools import partial
 from pathlib import Path
 from types import GeneratorType
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from schema import SchemaError
@@ -128,16 +128,19 @@ def create_version_hash_files(
     if facet_dict and input_files:
         raise ValueError("Facets dictionary and sequence of filepaths both present. Only one or the other accepted.")
 
-    version_hash_paths = {}
+    version_hash_paths: dict[Path, Path] = {}
     if facet_dict:
         for file, facets in facet_dict.items():
             version_hash_file = f"{Path(file).stem}.{facets['version']}"
+            version_hash_paths[Path(file)] = Path(file).parent.joinpath(version_hash_file)
     elif input_files:
+        if isinstance(input_files, (str, os.PathLike)):
+            input_files = [input_files]
         for file in input_files:
             version_hash_file = f"{Path(file).stem}.sha256"
+            version_hash_paths[Path(file)] = Path(file).parent.joinpath(version_hash_file)
     else:
         raise ValueError("Facets dictionary or sequence of filepaths required.")
-    version_hash_paths.update({Path(file): Path(file).parent.joinpath(version_hash_file)})
 
     hash_func = partial(generate_hash_file, verify=verify_hash)
     with multiprocessing.Pool() as pool:
@@ -320,7 +323,7 @@ def structure_datasets(
     output_folder: str | os.PathLike,
     *,
     dry_run: bool = False,
-    method: str = "copy",
+    method: Literal["move", "copy"] = "copy",
     make_dirs: bool = False,
     set_version_hashes: bool = False,
     verify_hashes: bool = False,

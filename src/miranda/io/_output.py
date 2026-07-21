@@ -216,13 +216,25 @@ def write_zarr(
     overwrite : bool
         Whether to overwrite. Default is False.
     """
-    if not out_zarr.exists() or overwrite:
-        with ProgressBar():
-            for vv in ds.data_vars:
-                if ds[vv].dtype == object:
-                    ds[vv] = ds[vv].astype(str)
-            if len(chunks):
-                ds.chunk(chunks).to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
-            else:
-                ds.to_zarr(out_zarr.with_suffix(".tmp.zarr"), mode="w", zarr_format=zarr_format)
-        shutil.move(out_zarr.with_suffix(".tmp.zarr"), out_zarr)
+    if out_zarr.exists():
+        if not overwrite:
+            warnings.warn("Zarr exists. No changes will be performed.", stacklevel=2)
+            return
+        if out_zarr.is_dir():
+            shutil.rmtree(out_zarr)
+        else:
+            out_zarr.unlink()
+    tmp_zarr = out_zarr.with_suffix(".tmp.zarr")
+
+    if tmp_zarr.exists():
+        shutil.rmtree(tmp_zarr)
+    with ProgressBar():
+        for vv in ds.data_vars:
+            if isinstance(ds[vv].dtype, object):
+                ds[vv] = ds[vv].astype(str)
+        if len(chunks):
+            ds.chunk(chunks).to_zarr(tmp_zarr, mode="w", zarr_format=zarr_format)
+        else:
+            ds.to_zarr(tmp_zarr, mode="w", zarr_format=zarr_format)
+
+    shutil.move(tmp_zarr, out_zarr)

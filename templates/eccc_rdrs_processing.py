@@ -50,16 +50,18 @@ def main():
         for variable in [
             v for v in infolder.glob("*") if v.is_dir() and v.name in vars_to_process
         ]:
-            write_zarr(
-                project=project,
-                freq=freq,
-                input_folder=variable,
-                output_folder=Path(home).joinpath(
-                    "RDRS_v21", f"converted/ECCC/RDRS_v21/NAM/{freq}/{variable.name}"
-                ),
-                overwrite=False,
-                **dask_kwargs,
-            )
+            # FIXME: This needs to be rewritten
+            # write_zarr(
+            #     project=project,
+            #     freq=freq,
+            #     input_folder=variable,
+            #     output_folder=Path(home).joinpath(
+            #         "RDRS_v21", f"converted/ECCC/RDRS_v21/NAM/{freq}/{variable.name}"
+            #     ),
+            #     overwrite=False,
+            #     **dask_kwargs,
+            # )
+            pass
 
 
 if __name__ == "__main__":
