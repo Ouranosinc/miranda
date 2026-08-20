@@ -6,7 +6,7 @@
       "ORRC-v10": ""
     },
     "_doi": {
-      "ORRC-v10": ""
+      "ORRC-v10": "https://doi.org/10.5281/zenodo.21381480"
     },
     "frequency": "1hr",
     "domain": "NAM",
@@ -32,7 +32,7 @@
     "organisation": "Ouranos",
     "processing_level": "raw",
     "realm": "atmos",
-    "table_date": "2026-05-11",
+    "table_date": "2026-08-17",
     "table_id": "ouranos_orrc_cf_attrs",
     "description": "Original data source: The Canadian Surface Prediction Archive (CaSPAr) (https://caspar-data.ca/, https://doi.org/10.1175/BAMS-D-19-0143.1) and GPSC-C (https://hpfx.collab.science.gc.ca/).",
     "type": "reconstruction"
