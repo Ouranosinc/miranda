@@ -4,7 +4,7 @@ import shutil
 from dask.diagnostics import ProgressBar
 from pint.facets.numpy.numpy_func import out_unit
 
-from miranda.convert.stationdata import convert_statdata_bychunks, q_flag_dict
+from miranda.convert.stationdata import convert_stationdata, q_flag_dict
 from miranda.eccc._homogenized import download_canhomt
 import xarray as xr
 
@@ -32,7 +32,7 @@ def main():
     )
 
     # convert ghcn data by chunks of n_stations
-    convert_statdata_bychunks(
+    convert_stationdata(
         project="canhomt_dly",
         working_folder=working_folder,
         lon_bnds=lon_bnds,
