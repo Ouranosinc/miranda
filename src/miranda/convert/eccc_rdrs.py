@@ -209,6 +209,7 @@ def rdrs_to_daily(
     year_end: int | None = None,
     process_variables: list[str] | None = None,
     **dask_kwargs: dict[str, Any],
+    complete_yrs_required: bool = False,
 ) -> None:
     r"""
     Write out RDRS files to daily-timestep files.
@@ -238,6 +239,8 @@ def rdrs_to_daily(
         If not provided, all variables will be processed.
     **dask_kwargs : dict
         Additional keyword arguments passed to the Dask scheduler.
+    complete_yrs_required : bool
+        Whether to require complete years. Default: False.
     """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder).expanduser()
@@ -254,15 +257,25 @@ def rdrs_to_daily(
             files.pop(vv)
     for zarrs in files.values():
         zarrs = sorted(zarrs)
-        if not year_start:
+        if year_start is None:
             year_start = xr.open_zarr(zarrs[0]).time.dt.year.min().values
-        if not year_end:
+        if year_end is None:
             year_end = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
+        with xr.open_zarr(zarrs[0]) as ds:
+            var_name = next(iter(ds.data_vars))
         for year in range(year_start, year_end + 1):
             infiles = [z for z in zarrs if f"_{year}" in z.name]
             if len(infiles) != 12:
-                msg = f"Found {len(infiles)} input files for {year}. The year is incomplete."
-                logger.warning(msg)
+                if len(infiles) > 0 and not complete_yrs_required:
+                    msg = (
+                        f"Found {len(infiles)} input files for {year}. "
+                        f"The year is incomplete for variable {var_name}, but years are not required to be complete. "
+                        f"Proceeding with available files."
+                    )
+                    logger.warning(msg)
+                else:
+                    msg = f"Found {len(infiles)} input files for {year}. The year is incomplete for variable {var_name}. Skipping this year."
+                    logger.warning(msg)
             out_variables = aggregate(xr.open_mfdataset(infiles, engine="zarr"), freq="day")
             dims = set(next(iter(out_variables.values())).dims)
             chunks = fetch_chunk_config(priority="time", freq="day", dims=dims)
