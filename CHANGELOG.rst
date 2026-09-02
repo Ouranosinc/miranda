@@ -11,6 +11,7 @@ Contributors to this version: Aslı Beşe (:user:`aslibese`), Trevor James Smith
 Changes
 ^^^^^^^
 * Updated ORRC global attributes to reflect the changes in dataset production processes.
+* Added a `complete_yrs_required` option to `rdrs_to_daily` to skip incomplete years when required (:pull:``).
 
 Fixes
 ^^^^^
