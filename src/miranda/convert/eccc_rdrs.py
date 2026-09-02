@@ -208,8 +208,8 @@ def rdrs_to_daily(
     year_start: int | None = None,
     year_end: int | None = None,
     process_variables: list[str] | None = None,
-    **dask_kwargs: dict[str, Any],
     complete_yrs_required: bool = False,
+    **dask_kwargs: dict[str, Any],
 ) -> None:
     r"""
     Write out RDRS files to daily-timestep files.
@@ -237,10 +237,10 @@ def rdrs_to_daily(
     process_variables : list of str, optional
         The variables to process.
         If not provided, all variables will be processed.
-    **dask_kwargs : dict
-        Additional keyword arguments passed to the Dask scheduler.
     complete_yrs_required : bool
         Whether to require complete years. Default: False.
+    **dask_kwargs : dict
+        Additional keyword arguments passed to the Dask scheduler.
     """
     if isinstance(input_folder, str):
         input_folder = Path(input_folder).expanduser()
@@ -276,6 +276,7 @@ def rdrs_to_daily(
                 else:
                     msg = f"Found {len(infiles)} input files for {year}. The year is incomplete for variable {var_name}. Skipping this year."
                     logger.warning(msg)
+                    continue
             out_variables = aggregate(xr.open_mfdataset(infiles, engine="zarr"), freq="day")
             dims = set(next(iter(out_variables.values())).dims)
             chunks = fetch_chunk_config(priority="time", freq="day", dims=dims)
