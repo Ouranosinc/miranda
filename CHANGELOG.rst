@@ -13,6 +13,7 @@ Changes
 * Updated ORRC global attributes to reflect the changes in dataset production processes. (:pull:`355`).
 * Removed a few redundant functions (``miranda.io.concat_rechunk_zarr``, ``miranda.io.merge_rechunk_zarrs``). (:pull:`357`).
 * ``convert_stationdata_bychunks`` has been renamed to ``convert_stationdata``. (:pull:`357`).
+* Added a `complete_yrs_required` option to `rdrs_to_daily` to skip incomplete years when required (:pull:`370`).
 
 Fixes
 ^^^^^
