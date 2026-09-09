@@ -75,7 +75,8 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
         elif variable in ["sfcWind"]:
             aggregation_legend[variable] = {"max", "mean"}
         elif variable in ["winddir", "20mWinddir"]:
-            aggregation_legend[variable] = {"circmean"}
+            aggregation_legend[variable] = {"method": "circmean", "kwargs": {"low": 0, "high": 360, "dim": "time"}}
+            aggregation_legend[variable]
         # The following variables are expected as fluxes
         elif variable in [
             "CAPE",
@@ -164,6 +165,9 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
     # Aggregate the dataset
     for variable, transformations in mappings.items():
         for op in transformations:
+            if op == "method":
+                op = transformations[op]
+                kwargs = transformations.get("kwargs", None)
             ds_out = xr.Dataset()
             ds_out.attrs = _ds.attrs.copy()
             ds_out.attrs["frequency"] = freq
@@ -180,13 +184,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
                 r = _ds[variable].resample(time=xarray_agg)
             if op == "circmean":
                 method = f"time: circular_mean (interval: 1 {freq})"
-                if variable in ["winddir", "20mWinddir"]:
-                    if _ds[variable].attrs.get("units") not in ["degrees", "deg", "degree"]:
-                        raise ValueError(f"Expected units to be degrees for variable {variable}, but got {_ds[variable].attrs.get('units')}.")
-                    ds_out[transformed] = _ds[variable].resample(time="D").map(_circular_mean, high=360, low=0, dim="time")
-                else:
-                    raise ValueError(f"Circular mean is not supported for variable {variable}.")
-
+                ds_out[transformed] = _ds[variable].resample(time="D").map(_circular_mean, **kwargs)
                 aggregated[transformed] = ds_out
             else:
                 ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
