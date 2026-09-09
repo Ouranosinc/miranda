@@ -188,7 +188,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
                 aggregated[transformed] = ds_out
             else:
                 ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
-            method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
+                method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
             ds_out[transformed].attrs["cell_methods"] = method
             aggregated[transformed] = ds_out
 
