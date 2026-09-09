@@ -10,12 +10,13 @@ Contributors to this version: Aslı Beşe (:user:`aslibese`), Trevor James Smith
 
 Changes
 ^^^^^^^
+* Implemented circular mean aggregation for wind direction variables in `miranda.convert._aggregation` (:pull:`371`).
 * Updated ORRC global attributes to reflect the changes in dataset production processes.
 * Added a `complete_yrs_required` option to `rdrs_to_daily` to skip incomplete years when required (:pull:`370`).
 
 Fixes
 ^^^^^
-* No change.
+* Removed error where arithmetic mean aggregation was used for wind direction variables in `miranda.convert._aggregation` (:pull:`371`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
