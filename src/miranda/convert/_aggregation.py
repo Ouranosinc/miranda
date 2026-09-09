@@ -76,7 +76,6 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             aggregation_legend[variable] = {"max", "mean"}
         elif variable in ["winddir", "20mWinddir"]:
             aggregation_legend[variable] = {"method": "circmean", "kwargs": {"low": 0, "high": 360, "dim": "time"}}
-            aggregation_legend[variable]
         # The following variables are expected as fluxes
         elif variable in [
             "CAPE",
