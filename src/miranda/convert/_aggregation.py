@@ -3,6 +3,7 @@
 from __future__ import annotations
 import logging
 
+import numpy as np
 import xarray as xr
 from xclim.indices import tas
 
@@ -73,6 +74,8 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             aggregation_legend[variable] = {"max", "mean", "min"}
         elif variable in ["sfcWind"]:
             aggregation_legend[variable] = {"max", "mean"}
+        elif variable in ["winddir", "20mWinddir"]:
+            aggregation_legend[variable] = {"circmean"}
         # The following variables are expected as fluxes
         elif variable in [
             "CAPE",
@@ -110,13 +113,11 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             "va",
             "va100m",
             "vas",
-            "winddir",
             "z",
             "zcrd09944",
             "zcrd09975",
             "zcrd10000",
             "20mWind",
-            "20mWinddir",
             "40mWind",
         ]:
             aggregation_legend[variable] = {"mean"}
@@ -169,7 +170,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
 
             if op in {"max", "min"}:
                 transformed = f"{variable}{op}"
-            elif op == "mean":
+            elif op in ["mean", "circmean"]:
                 transformed = variable
             else:
                 msg = f"Unsupported operation: {op} for variable {variable}."
@@ -177,9 +178,36 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
 
             with xr.set_options(keep_attrs=True):
                 r = _ds[variable].resample(time=xarray_agg)
-            ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
+            if op == "circmean":
+                method = f"time: circular_mean (interval: 1 {freq})"
+                if variable in ["winddir", "20mWinddir"]:
+                    if _ds[variable].attrs.get("units") not in ["degrees", "deg", "degree"]:
+                        raise ValueError(f"Expected units to be degrees for variable {variable}, but got {_ds[variable].attrs.get('units')}.")
+                    ds_out[transformed] = _ds[variable].resample(time="D").map(_circular_mean, high=360, low=0, dim="time")
+                else:
+                    raise ValueError(f"Circular mean is not supported for variable {variable}.")
+
+                aggregated[transformed] = ds_out
+            else:
+                ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
             method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
             ds_out[transformed].attrs["cell_methods"] = method
             aggregated[transformed] = ds_out
 
     return aggregated
+
+
+def _circular_mean(da, dim="time", high=360, low=0):
+    da = da.where((da >= low) & (da <= high))
+    # convert to radians for circular mean calculation
+    ang = np.deg2rad(da)
+    # circular mean calculation using sin and cos components
+    sin_sum = np.sin(ang).sum(dim=dim)
+    cos_sum = np.cos(ang).sum(dim=dim)
+    # convert back to degrees
+    out = np.rad2deg(np.arctan2(sin_sum, cos_sum))
+    # ensure the result is within the specified range
+    out = ((out - low) % (high - low)) + low
+    out.attrs = da.attrs.copy()
+
+    return out
