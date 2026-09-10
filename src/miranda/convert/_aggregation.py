@@ -198,7 +198,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
 
 
 def _circular_mean(da: xr.DataArray, dim: str = "time", high: float = 360, low: float = 0, normalize: bool = True, units=None):
-    known_units = ["degrees"]
+    known_units = ["degrees", "radians"]
     if units not in known_units:
         raise NotImplementedError(f"Circular mean aggregation operation is available for variables with units of {known_units} : received {units}")
     da = da.where((da >= low) & (da <= high))
