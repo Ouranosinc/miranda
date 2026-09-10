@@ -280,9 +280,7 @@ def rdrs_to_daily(
             ds = xr.open_mfdataset(infiles, engine="zarr")
             for coord in ["lat", "lon"]:
                 if "time" in ds[coord].dims:
-                    ds = ds.assign_coords(
-                        {coord: ds[coord].isel(time=0, drop=True)}
-                    )
+                    ds = ds.assign_coords({coord: ds[coord].isel(time=0, drop=True)})
                     msg = f"Coordinate {coord} has a time dimension. Using the first time step for all time steps."
                     logger.warning(msg)
             out_variables = aggregate(ds, freq="day")
