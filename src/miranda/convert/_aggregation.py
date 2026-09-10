@@ -170,6 +170,8 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
             if op == "method":
                 op = transformations[op]
                 kwargs = transformations.get("kwargs", None)
+            elif op == "kwargs":
+                continue
             ds_out = xr.Dataset()
             ds_out.attrs = _ds.attrs.copy()
             ds_out.attrs["frequency"] = freq
