@@ -49,6 +49,8 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
     - For humidity: max, mean, min
     - For wind speed: max, mean
 
+    For wind speed variables the circular mean operation is available
+
     For fluxes (e.g., precipitation, evaporation), only the mean operation is available.
 
     If the dataset has variables that are not present but can be derived (e.g., tas from tasmax and tasmin),
@@ -75,7 +77,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
         elif variable in ["sfcWind"]:
             aggregation_legend[variable] = {"max", "mean"}
         elif variable in ["winddir", "20mWinddir"]:
-            aggregation_legend[variable] = {"method": "circmean", "kwargs": {"low": 0, "high": 360, "dim": "time"}}
+            aggregation_legend[variable] = {"method": "circmean", "kwargs": {"low": 0, "high": 360, "dim": "time", "units": "degrees"}}
             aggregation_legend[variable]
         # The following variables are expected as fluxes
         elif variable in [
@@ -195,17 +197,23 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
     return aggregated
 
 
-def _circular_mean(da, dim="time", high=360, low=0):
+def _circular_mean(da, dim="time", high=360, low=0, normalize=True, units=None):
+    known_units = ["degrees"]
+    if units not in known_units:
+        raise NotImplementedError(f"Circular mean aggregation operation is available for variables with units of {known_units} : received {units}")
     da = da.where((da >= low) & (da <= high))
     # convert to radians for circular mean calculation
-    ang = np.deg2rad(da)
+    if units == "degrees":
+        ang = np.deg2rad(da)
     # circular mean calculation using sin and cos components
     sin_sum = np.sin(ang).sum(dim=dim)
     cos_sum = np.cos(ang).sum(dim=dim)
-    # convert back to degrees
-    out = np.rad2deg(np.arctan2(sin_sum, cos_sum))
-    # ensure the result is within the specified range
-    out = ((out - low) % (high - low)) + low
+    if units == "degrees":
+        # convert back to degrees
+        out = np.rad2deg(np.arctan2(sin_sum, cos_sum))
+    # ensure the result is within the specified low, high range
+    if normalize is True:
+        out = ((out - low) % (high - low)) + low
     out.attrs = da.attrs.copy()
 
     return out
