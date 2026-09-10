@@ -48,8 +48,7 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
     - For temperature: max, mean, min
     - For humidity: max, mean, min
     - For wind speed: max, mean
-
-    For wind speed variables the circular mean operation is available
+    - For wind direction: circmean
 
     For fluxes (e.g., precipitation, evaporation), only the mean operation is available.
 
@@ -188,7 +187,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
                 r = _ds[variable].resample(time=xarray_agg)
             if op == "circmean":
                 method = f"time: circular_mean (interval: 1 {freq})"
-                ds_out[transformed] = _ds[variable].resample(time="D").map(_circular_mean, **kwargs)
+                ds_out[transformed] = _ds[variable].resample(time=xarray_agg).map(_circular_mean, **kwargs)
             else:
                 ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
                 method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
@@ -198,7 +197,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
     return aggregated
 
 
-def _circular_mean(da, dim="time", high=360, low=0, normalize=True, units=None):
+def _circular_mean(da: xr.DataArray, dim: str = "time", high: float = 360, low: float = 0, normalize: bool = True, units=None):
     known_units = ["degrees"]
     if units not in known_units:
         raise NotImplementedError(f"Circular mean aggregation operation is available for variables with units of {known_units} : received {units}")
