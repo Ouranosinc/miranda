@@ -187,7 +187,6 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
             if op == "circmean":
                 method = f"time: circular_mean (interval: 1 {freq})"
                 ds_out[transformed] = _ds[variable].resample(time="D").map(_circular_mean, **kwargs)
-                aggregated[transformed] = ds_out
             else:
                 ds_out[transformed] = getattr(r, op)(dim="time", keep_attrs=True)
                 method = f"time: {op}{'imum' if op != 'mean' else ''} (interval: 1 {freq})"
