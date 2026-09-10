@@ -212,7 +212,7 @@ def _circular_mean(da: xr.DataArray, units: str, dim: str = "time", high: float 
         # convert back to degrees
         out = np.rad2deg(np.arctan2(sin_sum, cos_sum))
     # ensure the result is within the specified low, high range
-    if normalize is True:
+    if normalize:
         out = ((out - low) % (high - low)) + low
     out.attrs = da.attrs.copy()
 
