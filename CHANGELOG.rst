@@ -15,7 +15,7 @@ Changes
 
 Fixes
 ^^^^^
-* No change.
+* Removed wind direction variables aggregation treatment as arithmetic mean was erroneously used for on circular data in `miranda.convert._aggregation` (:pull:`371`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
