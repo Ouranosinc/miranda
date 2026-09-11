@@ -110,13 +110,11 @@ def aggregations_possible(ds: xr.Dataset, freq: str = "day") -> dict[str, set[st
             "va",
             "va100m",
             "vas",
-            "winddir",
             "z",
             "zcrd09944",
             "zcrd09975",
             "zcrd10000",
             "20mWind",
-            "20mWinddir",
             "40mWind",
         ]:
             aggregation_legend[variable] = {"mean"}
