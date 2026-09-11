@@ -18,6 +18,7 @@ Changes
 Fixes
 ^^^^^
 * The version pin on `h5py` and `h5netcdf` have been removed. Builds on CI no longer compile `h5py` in order to speed up build times. (:pull:`357`).
+* Removed wind direction variables aggregation treatment as arithmetic mean was erroneously used for on circular data in `miranda.convert._aggregation` (:pull:`371`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
