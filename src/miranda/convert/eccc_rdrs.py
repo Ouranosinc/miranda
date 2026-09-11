@@ -277,7 +277,13 @@ def rdrs_to_daily(
                     msg = f"Found {len(infiles)} input files for {year}. The year is incomplete for variable {var_name}. Skipping this year."
                     logger.warning(msg)
                     continue
-            out_variables = aggregate(xr.open_mfdataset(infiles, engine="zarr"), freq="day")
+            ds = xr.open_mfdataset(infiles, engine="zarr")
+            for coord in ["lat", "lon"]:
+                if "time" in ds[coord].dims:
+                    ds = ds.assign_coords({coord: ds[coord].isel(time=0, drop=True)})
+                    msg = f"Coordinate {coord} has a time dimension. Using the first time step for all time steps."
+                    logger.warning(msg)
+            out_variables = aggregate(ds, freq="day")
             dims = set(next(iter(out_variables.values())).dims)
             chunks = fetch_chunk_config(priority="time", freq="day", dims=dims)
             chunks["time"] = len(out_variables[list(out_variables.keys())[0]].time)
