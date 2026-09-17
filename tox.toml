@@ -42,7 +42,6 @@ download = true
 dependency_groups = ["test"]
 install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
 commands_pre = [
-  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--no-deps", "--force-reinstall", "--no-binary", "h5py", "h5py>=3.12.1"],
   ["pip", "list"],
   ["pip", "check"]
 ]

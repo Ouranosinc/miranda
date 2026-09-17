@@ -14,7 +14,7 @@ logger = logging.getLogger("miranda.convert.aggregation")
 __all__ = ["aggregate", "aggregations_possible"]
 
 # There needs to be a better way (is there something in xclim?)
-_resampling_keys = dict()
+_resampling_keys = {}
 _resampling_keys["hour"] = "H"
 _resampling_keys["day"] = "D"
 _resampling_keys["month"] = "M"

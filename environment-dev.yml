@@ -12,8 +12,8 @@ dependencies:
   - distributed >=2.0
   - ecmwf-api-client
   - filelock >=3.14.0
-  - h5netcdf >=1.5.0
-  - h5py >=3.12.1
+  - h5netcdf
+  - h5py
   - intake
   - intake-esm
   - numcodecs <0.16
