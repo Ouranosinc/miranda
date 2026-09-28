@@ -72,7 +72,7 @@ lint: install-lint ## check style
 	python -m numpydoc lint src/miranda/**.py
 	python -m vulture src/miranda tests
 	codespell src/miranda tests docs
-	python -m deptry src
+	python -m deptry src/miranda
 	python -m yamllint --config-file=.yamllint.yaml src/miranda
 
 test: install-test ## run tests quickly with the default Python

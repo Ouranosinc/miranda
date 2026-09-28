@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - python >=3.10,<3.15
+  - python >=3.11,<3.15
   - cdsapi
   - cftime >=1.4.1
   - cf-xarray >=0.10.4
@@ -34,23 +34,24 @@ dependencies:
   - zarr
   # Dev tools and testing
   - pip >=26.0.1
-  - bump-my-version >=1.3.0
-  - codespell >=2.4.2
+  - bump-my-version >=1.5.1
+  - codespell >=2.4.3
   - coverage >=7.5.0
   - deptry >=0.25.1
   - flake8 >=7.3.0
   - flake8-rst-docstrings >=0.4.0
   - flit >=3.11.0,<4.0
-  - mypy >=1.20.0
+  - flit-core >=3.11.0,<4.0
+  - mypy >=2.3.0
   - numpydoc >=1.10.0
   - pooch >=1.8.0
-  - prek >=0.3.0
+  - prek >=0.4.0
   - pytest >=9.0.2
   - pytest-cov >=7.0.0
   - pytest-xdist >=3.2.0
-  - ruff >=0.15.9
+  - ruff >=0.16.3
   - tox >=4.52.0
   - tox-gh >=1.7.1
-  - vulture >=2.14
+  - vulture >=2.16
   - watchdog >=6.0.0
   - yamllint >=1.35.1
