@@ -19,16 +19,18 @@ from miranda.convert.utils import (
     make_monotonous_time,
     prj_dict,
     q_flag_dict,
-    write_zarr,
 )
 from miranda.eccc._homogenized import create_canhomt_xarray
 from miranda.ghcn import create_ghcn_xarray
+from miranda.io import write_zarr
 
 
 logger = logging.getLogger("miranda.convert.stationdata")
 
+__all__ = ["convert_stationdata"]
 
-def convert_statdata_bychunks(
+
+def convert_stationdata(
     project: str,
     working_folder: str | os.PathLike[str] | None = None,
     cfvariable_list: list | None = None,
@@ -65,12 +67,15 @@ def convert_statdata_bychunks(
     n_workers : int
         Number of workers to use. Default is 4.
     n_stations : int
-        Number of stations to process. Default is 100.
+        Number of stations to process. Must be a positive int. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
     zarr_format : int
         Zarr format version (2 or 3). Default is 2.
     """
+    if n_stations <= 0:
+        raise ValueError("n_stations must be a positive integer.")
+
     try:
         import geopandas as gpd
         from shapely.geometry import box
@@ -86,17 +91,14 @@ def convert_statdata_bychunks(
     station_df = get_station_meta(project=project, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     if project == "ghcnd":
         readme_url = "https://noaa-ghcn-pds.s3.amazonaws.com/readme.txt"
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
     elif project == "ghcnh":
         readme_url = "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh_DOCUMENTATION.pdf"
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
-    # exit()
-    elif project == "canhomt_dly":
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
     else:
         msg = f"Unknown project {project}"
         raise ValueError(msg)
 
+    out_chunks = {"time": (365 * 4) + 1, "station": n_stations}
+    n_stations = max(len(station_df), 1)
     tz_file = Path(__file__).parent.joinpath("data/timezones-with-oceans-now.shapefile.zip")
 
     tz = gpd.read_file(tz_file).to_crs(epsg=4326)
