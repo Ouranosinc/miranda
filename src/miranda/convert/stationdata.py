@@ -67,12 +67,15 @@ def convert_stationdata(
     n_workers : int
         Number of workers to use. Default is 4.
     n_stations : int
-        Number of stations to process. Default is 100.
+        Number of stations to process. Must be a positive int. Default is 100.
     update_from_raw : bool
         Whether to update from raw data.
     zarr_format : int
         Zarr format version (2 or 3). Default is 2.
     """
+    if n_stations <= 0:
+        raise ValueError("n_stations must be a positive integer.")
+
     try:
         import geopandas as gpd
         from shapely.geometry import box
@@ -94,11 +97,7 @@ def convert_stationdata(
         msg = f"Unknown project {project}"
         raise ValueError(msg)
 
-    if n_stations > 0:
-        out_chunks = dict(time=(365 * 4) + 1, station=n_stations)
-    else:
-        out_chunks = {}
-
+    out_chunks = {"time": (365 * 4) + 1, "station": n_stations}
     n_stations = max(len(station_df), 1)
     tz_file = Path(__file__).parent.joinpath("data/timezones-with-oceans-now.shapefile.zip")
 
