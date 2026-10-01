@@ -141,7 +141,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "0.7.2-dev.11"
+current_version = "0.7.2-dev.12"
 commit = true
 commit_args = "--no-verify"
 tag = false
