@@ -7,5 +7,5 @@ pydantic==2.13.5
 pylint==4.0.9
 tomli==2.4.1
 tox-gh==1.8.0
-tox==4.63.0
+tox==4.64.2
 urllib3==2.8.0

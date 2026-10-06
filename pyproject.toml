@@ -5,14 +5,14 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "miranda"
 authors = [
-  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
+  { name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca" }
 ]
 maintainers = [
-  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"},
-  {name = "Travis Logan", email = "logan.travis@ouranos.ca"},
-  {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
+  { name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca" },
+  { name = "Travis Logan", email = "logan.travis@ouranos.ca" },
+  { name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca" }
 ]
-readme = {file = "README.rst", content-type = "text/x-rst"}
+readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.10.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
 license = "Apache-2.0"
@@ -131,16 +131,16 @@ dev = [
   "pooch >=1.8.0",
   "prek >=0.4.0",
   "watchdog >=6.0.0",
-  {include-group = "docs"},
-  {include-group = "lint"},
-  {include-group = "test"},
-  {include-group = "tox"}
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "test" },
+  { include-group = "tox" }
 ]
 
 [tool]
 
 [tool.bumpversion]
-current_version = "0.7.2-dev.11"
+current_version = "0.7.2-dev.12"
 commit = true
 commit_args = "--no-verify"
 tag = false
