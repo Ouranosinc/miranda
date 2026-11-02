@@ -109,7 +109,7 @@ def fetch_chunk_config(
     dict[str, int]
     """
     if isinstance(dims, (dict, Frozen)):
-        dims = {k for k in dims.keys()}
+        dims = {*dims.keys()}
 
     if priority in default_config:
         if freq in default_config[priority]:

@@ -414,7 +414,7 @@ def convert_flat_files(
         if isinstance(source_files, list) or Path(source_files).is_file():
             list_files.append(source_files)
         else:
-            glob_patterns = [g for g in metadata["_table_name"]]
+            glob_patterns = [*metadata["_table_name"]]
             for pattern in glob_patterns:
                 list_files.extend([f for f in Path(source_files).rglob(f"{pattern}*") if f.is_file()])
         manager = mp.Manager()
@@ -538,7 +538,7 @@ def aggregate_stations(
                     pool.close()
                     pool.join()
 
-                zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
+                zarrs_found = [*Path(temp_dir).glob("*.zarr")]
                 msg = f"Found {len(zarrs_found)} intermediary aggregation files."
 
                 logger.info(msg)

@@ -358,7 +358,7 @@ def get_station_meta(
             station_df = pd.read_fwf(
                 station_url,
                 widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
+                names=[*dtypes.keys()],
                 converters=dtypes,
             )
         except ValueError:
@@ -366,7 +366,7 @@ def get_station_meta(
             station_df = pd.read_fwf(
                 statfile,
                 widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
+                names=[*dtypes.keys()],
                 converters=dtypes,
             )
 
@@ -414,7 +414,7 @@ def _get_ghcn_stations(project: str) -> pd.DataFrame:
             station_df = pd.read_fwf(
                 station_url,
                 widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
+                names=[*dtypes.keys()],
                 converters=dtypes,
             )
         except ValueError:
@@ -422,7 +422,7 @@ def _get_ghcn_stations(project: str) -> pd.DataFrame:
             station_df = pd.read_fwf(
                 statfile,
                 widths=[11, 9, 10, 7, 3, 31, 4, 4, 6],
-                names=[d for d in dtypes.keys()],
+                names=[*dtypes.keys()],
                 converters=dtypes,
             )
     else:

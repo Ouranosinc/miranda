@@ -94,7 +94,7 @@ def _process_ghcnh(station_id: Path, variable_meta: dict, station_meta: pd.DataF
     xr.Dataset, optional
         The processed dataset, or None if no variables found.
     """
-    varlist = [k for k in variable_meta.keys()]
+    varlist = [*variable_meta.keys()]
     flaglist = [f"{k}_Quality_Code" for k in varlist]
     coordlist_alt = [
         "Station_ID",
