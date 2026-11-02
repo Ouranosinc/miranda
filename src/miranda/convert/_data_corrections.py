@@ -934,8 +934,8 @@ def dataset_conversion(
         if isinstance(input_files, (str, os.PathLike)):
             if Path(input_files).is_dir():
                 files = []
-                files.extend([f for f in Path(input_files).glob("*.nc")])
-                files.extend([f for f in Path(input_files).glob("*.zarr")])
+                files.extend([*Path(input_files).glob("*.nc")])
+                files.extend([*Path(input_files).glob("*.zarr")])
             else:
                 files = [Path(input_files)]
         elif isinstance(input_files, (Sequence, Iterator)):

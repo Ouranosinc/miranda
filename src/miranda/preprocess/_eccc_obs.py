@@ -67,7 +67,7 @@ def convert_observation(
         msg = f"Collecting files for variable '{variable}'. Filename patterns containing variable code '{code}: {', '.join(tables)}'."
         logging.info(msg)
         for table in tables:
-            archives.extend([f for f in Path(data_source).rglob(f"{table}*.gz")])
+            archives.extend([*Path(data_source).rglob(f"{table}*.gz")])
 
     # Create the output directory
     output_variable_dir = Path(output_dir).joinpath(variable)
@@ -421,7 +421,7 @@ def merge_stations(
                     pool.close()
                     pool.join()
 
-                zarrs_found = [f for f in Path(temp_dir).glob("*.zarr")]
+                zarrs_found = [*Path(temp_dir).glob("*.zarr")]
                 msg = f"Found {len(zarrs_found)} intermediary aggregation files."
                 logging.info(msg)
 

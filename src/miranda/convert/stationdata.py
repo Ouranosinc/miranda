@@ -214,8 +214,8 @@ def convert_stationdata(
                         if readme_url is not None:
                             desc_str = f"{desc_str}. See the readme file for information of quality flag (QFLAG1) codes : {readme_url}"
                         attrs = {
-                            "flag_values": [c for c in q_flag_dict[project].keys()],
-                            "flag_meanings": [c for c in q_flag_dict[project].values()],
+                            "flag_values": [*q_flag_dict[project].keys()],
+                            "flag_meanings": [*q_flag_dict[project].values()],
                             "standard_name": f"{ds_corr[cf_var].attrs['standard_name']}_quality_flag",
                             "long_name": f"Quality flag for {cf_var}.",
                             "description": desc_str,

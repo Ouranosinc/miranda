@@ -367,7 +367,7 @@ def rename_era5_files(path: os.PathLike | str) -> None:
         file_name = str(f.stem)
 
         ds = xr.open_dataset(f, cache=False)
-        var = [d for d in ds.data_vars]
+        var = [*ds.data_vars]
         var_name = str(var[0])
 
         try:

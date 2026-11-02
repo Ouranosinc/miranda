@@ -291,7 +291,7 @@ def list_paths_with_elements(base_paths: str | list[str] | os.PathLike[str], ele
     paths_elements = []
     for base_path in paths:
         try:
-            path_content = [f for f in Path(base_path).iterdir()]
+            path_content = [*Path(base_path).iterdir()]
         except NotADirectoryError:
             msg = "Not a directory. Skipping..."
             logging.debug(msg)
