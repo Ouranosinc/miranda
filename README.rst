@@ -2,17 +2,17 @@
 Miranda |logo|
 ==============
 
-+----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi| |conda|                                      |
-+----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |versions|                                   |
-+----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |ossf-score| |zenodo|                     |
-+----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |prek| |pre-commit-ci| |ossf-bp| |zizmor|    |
-+----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls|                        |
-+----------------------------+-----------------------------------------------------+
++----------------------------+-----------------------------------------------------------+
+| Versions                   | |pypi| |conda|                                            |
++----------------------------+-----------------------------------------------------------+
+| Documentation and Support  | |docs| |versions|                                         |
++----------------------------+-----------------------------------------------------------+
+| Open Source                | |license| |ossf-score| |zenodo|                           |
++----------------------------+-----------------------------------------------------------+
+| Coding Standards           | |ruff| |prek| |mypy| |pre-commit-ci| |ossf-bp| |zizmor|   |
++----------------------------+-----------------------------------------------------------+
+| Development Status         | |status| |build| |coveralls|                              |
++----------------------------+-----------------------------------------------------------+
 
 Python utilities for climate data collection, conversion, and management.
 
@@ -134,6 +134,10 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/miranda/main/docs/_static/images/miranda-logo-small.png
         :target: https://github.com/Ouranosinc/miranda
         :alt: Miranda
+
+.. |mypy| image:: https://www.mypy-lang.org/static/mypy_badge.svg
+        :target: https://mypy-lang.org/
+        :alt: mypy
 
 .. |pre-commit-ci| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/miranda/main.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/miranda/main
