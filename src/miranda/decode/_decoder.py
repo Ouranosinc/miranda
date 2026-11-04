@@ -18,18 +18,14 @@ import zarr
 from pandas._libs.tslibs import NaTType  # noqa
 
 from miranda.convert.utils import date_parser, find_version_hash  # noqa
-from miranda.cv import VALIDATION_ENABLED
+from miranda.cv import INSTITUTIONS, PROJECT_MODELS
 from miranda.units import check_time_frequency
+from miranda.validate import FACETS_SCHEMA
 
 from ._time import TIME_UNITS_TO_FREQUENCY, TIME_UNITS_TO_TIMEDELTA, DecoderError
 
 
 HAS_NETCDF4 = bool(ilu.find_spec("netCDF4"))
-
-
-if VALIDATION_ENABLED:
-    from miranda.cv import INSTITUTIONS, PROJECT_MODELS
-    from miranda.validate import FACETS_SCHEMA  # noqa
 
 
 logger = logging.getLogger("miranda.decode.decoder")
@@ -55,12 +51,10 @@ def guess_project(file: os.PathLike | str) -> str:
     file_name = Path(file).stem
 
     potential_names = file_name.split("_")
-    if VALIDATION_ENABLED:
-        for project, models in PROJECT_MODELS.items():
-            if any([model in potential_names for model in models]):
-                return project
-        raise DecoderError(f"Unable to determine project from file name: '{file_name}'.")
-    raise DecoderError("Project determination requires pyessv-archive source files.")
+    for project, models in PROJECT_MODELS.items():
+        if any([model in potential_names for model in models]):
+            return project
+    raise DecoderError(f"Unable to determine project from file name: '{file_name}'.")
 
 
 class Decoder:
@@ -96,10 +90,7 @@ class Decoder:
             with lock:
                 _deciphered = getattr(Decoder, decode_function_name)(Path(file))
                 if fail_early:
-                    if VALIDATION_ENABLED:
-                        FACETS_SCHEMA.validate(_deciphered)
-                    else:
-                        print("Validation requires pyessv-archive source files. Skipping validation checks.")
+                    FACETS_SCHEMA.validate(_deciphered)
                 print(f"Deciphered the following from {Path(file).name}:\n{_deciphered.items()}")
                 d[file] = _deciphered
 
@@ -706,16 +697,12 @@ class Decoder:
         driving_institution = ""
 
         driving_institution_parts = str(data["driving_model_id"]).split("-")
-        if VALIDATION_ENABLED:
-            if driving_institution_parts[0] in INSTITUTIONS:
-                driving_institution = driving_institution_parts[0]
-            elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
-                driving_institution = "-".join(driving_institution_parts[:2])
-            elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
-                driving_institution = "-".join(driving_institution_parts[:3])
-        else:
-            logger.warning("CORDEX Metadata validation checks require PyESSV. Driving institution cannot be determined.")
-            driving_model = data["driving_model_id"]
+        if driving_institution_parts[0] in INSTITUTIONS:
+            driving_institution = driving_institution_parts[0]
+        elif "-".join(driving_institution_parts[:2]) in INSTITUTIONS:
+            driving_institution = "-".join(driving_institution_parts[:2])
+        elif "-".join(driving_institution_parts[:3]) in INSTITUTIONS:
+            driving_institution = "-".join(driving_institution_parts[:3])
 
         if data["driving_model_id"].startswith("GFDL"):
             driving_institution = "NOAA-GFDL"
@@ -730,7 +717,7 @@ class Decoder:
             driving_institution = "CNRM-CERFACS"
             driving_model = f"CNRM-CERFACS-{data['driving_model_id']}"
 
-        elif VALIDATION_ENABLED and not driving_institution:
+        elif not driving_institution:
             raise DecoderError(f"driving_institution (from driving_model_id: `{data['driving_model_id']}`) is not valid.")
 
         facets["driving_institution"] = driving_institution.strip()

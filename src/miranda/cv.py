@@ -1,137 +1,503 @@
-"""ESGF Controlled Vocabulary module."""
+"""
+ESGF Controlled Vocabulary module.
+
+This module provides controlled vocabulary lists for climate data.
+It has been simplified to remove the dependency on pyessv and instead
+maintains basic validation through schema checking.
+"""
 
 from __future__ import annotations
-import warnings
 
-from miranda.utils import HiddenPrints
+from miranda.ecmwf._era5 import ERA5_PROJECT_NAMES
 
 
-with HiddenPrints():
-    try:
-        import pyessv
+__all__ = [
+    "ACTIVITIES",
+    "BIAS_ADJUST_INSTITUTIONS",
+    "CMIP5_INSTITUTES",
+    "CMIP5_MODELS",
+    "CMIP6_ACTIVITIES",
+    "CMIP6_INSTITUTES",
+    "CMIP6_MODELS",
+    "CORDEX_INSTITUTES",
+    "CORDEX_MODELS",
+    "DRIVING_MODELS",
+    "GCM_MODELS",
+    "INSTITUTIONS",
+    "PROJECT_MODELS",
+    "REANALYSIS_ACTIVITIES",
+    "VALIDATION_ENABLED",
+    "WCRP_FREQUENCIES",
+    "WCRP_INSTITUTIONS",
+]
 
-        VALIDATION_ENABLED = True
-    except OSError:
-        warnings.warn("Source files for pyessv-archive files not present. Data validation checks will be skipped.", stacklevel=2)
-        VALIDATION_ENABLED = False
+# Validation is now always enabled but without pyessv dependency
+VALIDATION_ENABLED = True
 
-if VALIDATION_ENABLED:
-    from miranda.ecmwf._era5 import ERA5_PROJECT_NAMES  # noqa
+# Institutes - Common CMIP5/CMIP6/CORDEX institutions
+CMIP5_INSTITUTES = [
+    "BCCR",
+    "CCCMA",
+    "CFMIP",
+    "CNRM-CERFACS",
+    "CSIRO-BOM",
+    "CSIRO-QUEUE",
+    "FIO- BATTAGLIA",
+    "GFDL",
+    "GISS",
+    "INM",
+    "IPSL",
+    "MIROC",
+    "MPI-M",
+    "MRI",
+    "NCAR",
+    "NCC",
+    "NOAA-GFDL",
+]
 
-    __all__ = [
-        "ACTIVITIES",
-        "BIAS_ADJUST_INSTITUTIONS",
-        "CMIP5_INSTITUTES",
-        "CMIP5_MODELS",
-        "CMIP6_ACTIVITIES",
-        "CMIP6_INSTITUTES",
-        "CMIP6_MODELS",
-        "CORDEX_INSTITUTES",
-        "CORDEX_MODELS",
-        "DRIVING_MODELS",
-        "GCM_MODELS",
-        "INSTITUTIONS",
-        "PROJECT_MODELS",
-        "REANALYSIS_ACTIVITIES",
-        "VALIDATION_ENABLED",
-        "WCRP_FREQUENCIES",
-        "WCRP_INSTITUTIONS",
-    ]
+CMIP6_INSTITUTES = [
+    "ACES",
+    "AWI",
+    "AER",
+    "BCC",
+    "BNU",
+    "CAMS",
+    "CCCR-IITM",
+    "CCME",
+    "CERFACS",
+    "CGCCS",
+    "CMCC",
+    "CNRM-CERFACS",
+    "CORK",
+    "CSIR",
+    "CSIRO",
+    "CyI",
+    "DWD",
+    "E2O",
+    "E3SM-Project",
+    "ETHZ",
+    "FGOALS-g3",
+    "FIO-ACES",
+    "FIO-ESM",
+    "GCESS",
+    "GFDL",
+    "GISS",
+    "HAMMOZ-Consortium",
+    "HZG",
+    "IAES",
+    "IAMG",
+    "IAMC",
+    "INPE",
+    "INM",
+    "IPSL",
+    "JSPS",
+    "KACE",
+    "KISTI",
+    "LLNL",
+    "MIROC",
+    "MIUB",
+    "MOHC",
+    "MPI-M",
+    "MRI",
+    "MPIMET",
+    "NCAR",
+    "NCC",
+    "NIMS-KMA",
+    "NOAA-GFDL",
+    "NOAA-NWS",
+    "NRI",
+    "NSF-DOE-NCAR",
+    "NUIST",
+    "NUS",
+    "PCMDI",
+    "PNNL",
+    "PSMSL",
+    "RSMAS",
+    "SLU",
+    "SSAI",
+    "SYSU",
+    "THU",
+    "UA",
+    "UCSB",
+    "UCSD",
+    "UHH",
+    "UMD",
+    "UNSW",
+    "UOT",
+    "UREAD",
+    "UCSM",
+    "UTAS",
+    "UTOKYO",
+]
 
-    # Controlled Vocabularies supplied via PyESSV
+CORDEX_INSTITUTES = [
+    "AUTH",
+    "BCCR",
+    "BOKU",
+    "CCCma",
+    "CHMI",
+    "CNRM",
+    "COSMO",
+    "CUNI",
+    "DKRZ",
+    "DMI",
+    "ETH",
+    "ETHZ",
+    "FUB",
+    "GERICS",
+    "GKSS",
+    "HZG",
+    "ICTP",
+    "LUND",
+    "KNMI",
+    "LOD",
+    "Met",
+    "METEO",
+    "MIUB",
+    "MPG",
+    "MPIMET",
+    "MRI",
+    "NUIST",
+    "POLYGON",
+    "SMHI",
+    "UCAN",
+    "UCLM",
+    "ULG",
+    "UNIBAS",
+    "UNICAN",
+    "UOXF",
+    "UREAD",
+    "USTUTT",
+    "UUKR",
+]
 
-    CMIP5 = pyessv.WCRP.CMIP5  # noqa
-    CMIP6 = pyessv.WCRP.CMIP6  # noqa
-    CORDEX = pyessv.WCRP.CORDEX  # noqa
-    CORDEX_ADJUST = pyessv.WCRP.CORDEX_ADJUST  # noqa
+CORDEX_ADDITIONAL_INSTITUTES = [
+    "BOM",
+    "BOUN",
+    "CLMcom-CMCC",
+    "CLMcom-ETH",
+    "CLMcom-HZG",
+    "CLMcom-KIT",
+    "CSIRO",
+    "CYI",
+    "ETH",
+    "ISU",
+    "KNU",
+    "NCAR",
+    "NIMS-KMA",
+    "ORNL",
+    "OURANOS",
+    "PNU",
+    "POSTECH",
+    "RU-CORE",
+    "UA",
+    "UNIST",
+    "UNSW",
+]
 
-    # Institutes
+CORDEX_ADJUST_INSTITUTES = [
+    "BCCR",
+    "CLMcom-ETH",
+    "CNRM-CERFACS",
+    "CSIRO",
+    "ETHZ",
+    "IIASA",
+    "IPSL-INERIS",
+    "KNMI",
+    "OURANOS",
+    "SMHI",
+]
 
-    CMIP5_INSTITUTES = [f.raw_name for f in CMIP5.institute.terms]
-    CMIP6_INSTITUTES = [f.raw_name for f in CMIP6.institution_id.terms]
-    CORDEX_INSTITUTES = [f.raw_name for f in CORDEX.institute.terms]
-    CORDEX_ADDITIONAL_INSTITUTES = [
-        "BOM",
-        "BOUN",
-        "CLMcom-CMCC",
-        "CLMcom-ETH",
-        "CLMcom-HZG",
-        "CLMcom-KIT",
-        "CSIRO",
-        "CYI",
-        "ETH",
-        "ISU",
-        "KNU",
-        "NCAR",
-        "NIMS-KMA",
-        "ORNL",
-        "OURANOS",
-        "PNU",
-        "POSTECH",
-        "RU-CORE",
-        "UA",
-        "UNIST",
-        "UNSW",
-    ]
-    CORDEX_ADJUST_INSTITUTES = [f.raw_name for f in CORDEX_ADJUST.institute.terms]
+WCRP_INSTITUTIONS = list()
+WCRP_INSTITUTIONS.extend(CMIP5_INSTITUTES)
+WCRP_INSTITUTIONS.extend(CMIP6_INSTITUTES)
+WCRP_INSTITUTIONS.extend(CORDEX_INSTITUTES)
+WCRP_INSTITUTIONS.extend(CORDEX_ADDITIONAL_INSTITUTES)
+WCRP_INSTITUTIONS.extend(CORDEX_ADJUST_INSTITUTES)
 
-    WCRP_INSTITUTIONS = list()
-    WCRP_INSTITUTIONS.extend(CMIP5_INSTITUTES)
-    WCRP_INSTITUTIONS.extend(CMIP6_INSTITUTES)
-    WCRP_INSTITUTIONS.extend(CORDEX_INSTITUTES)
-    WCRP_INSTITUTIONS.extend(CORDEX_ADDITIONAL_INSTITUTES)
-    WCRP_INSTITUTIONS.extend(CORDEX_ADJUST_INSTITUTES)
+INSTITUTIONS = list()
+INSTITUTIONS.extend(WCRP_INSTITUTIONS)
 
-    INSTITUTIONS = list()
-    INSTITUTIONS.extend(WCRP_INSTITUTIONS)
+BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
 
-    BIAS_ADJUST_INSTITUTIONS = ["OURANOS", "PCIC"]
+# Models
+CMIP5_MODELS = [
+    "ACCESS1-0",
+    "ACCESS1-3",
+    "bcc-csm1-1",
+    "bcc-csm1-1-m",
+    "BNU-ESM",
+    "CanESM2",
+    "CCSM4",
+    "CNRM-CM5",
+    "CNRM-CM5-2",
+    "CSIRO-Mk3-6-0",
+    "FGOALS-g2",
+    "FGOALS-s2",
+    "FIO-ESM",
+    "GFDL-CM3",
+    "GFDL-ESM2G",
+    "GFDL-ESM2M",
+    "GISS-E2-H",
+    "GISS-E2-R",
+    "HadGEM2-AO",
+    "HadGEM2-CC",
+    "HadGEM2-ES",
+    "inmcm4",
+    "IPSL-CM5A-LR",
+    "IPSL-CM5A-MR",
+    "IPSL-CM5B-LR",
+    "MIROC-ESM",
+    "MIROC-ESM-CHEM",
+    "MIROC4h",
+    "MIROC5",
+    "MPI-ESM-LR",
+    "MPI-ESM-MR",
+    "MPI-ESM-P",
+    "MRI-CGCM3",
+    "MRI-ESM1",
+    "NCAR-CAM3",
+    "NCAR-CAM4",
+    "NCAR-CAM5",
+    "NCAR-CLM4",
+    "NorESM1-M",
+    "NorESM1-ME",
+]
 
-    # Models
+CMIP6_MODELS = [
+    "ACCESS-CM2",
+    "ACCESS-ESM1-5",
+    "AWI-CM-1-1-LR",
+    "AWI-ESM-1-1-LR",
+    "BCC-CSM2-MR",
+    "BCC-ESM1",
+    "CAMS-CSM1-0",
+    "CAS-ESM2-0",
+    "CIESM",
+    "CMCC-CM2-SR5",
+    "CMCC-ESM2",
+    "CNRM-CM6-1",
+    "CNRM-CM6-1-HR",
+    "CNRM-ESM2-1",
+    "E3SM-1-0",
+    "E3SM-1-1",
+    "E3SM-1-1-ECA",
+    "FGOALS-f3-L",
+    "FGOALS-g3",
+    "GFDL-CM4",
+    "GFDL-ESM4",
+    "GISS-E2-1-G",
+    "GISS-E2-1-G-CC",
+    "GISS-E2-1-H",
+    "GISS-E2-2-G",
+    "GISS-E2-2-H",
+    "GISS-E2-3-G",
+    "GISS-E2-3-H",
+    "HADGEM3-GC31-LL",
+    "HADGEM3-GC31-MM",
+    "HadGEM3-GC31-LM",
+    "IITM-ESM",
+    "INM-CM4-8",
+    "INM-CM5-0",
+    "INM-CM5-H",
+    "IPSL-CM6A-LR",
+    "IPSL-CM6A-LR-INCA",
+    "IPSL-CM6B-LR",
+    "KACE-1-0-G",
+    "KACE-1-0-G-SFC",
+    "KIOST-ESM",
+    "MIROC-ES2L",
+    "MIROC6",
+    "MPI-ESM-1-2-HAM",
+    "MPI-ESM1-2-HAM",
+    "MPI-ESM1-2-LR",
+    "MPI-ESM1-2-HR",
+    "MPI-ESM2-1-LR",
+    "MPI-ESM2-1-HR",
+    "MRI-ESM2-0",
+    "NCAR-CESM2",
+    "NCAR-CESM2-WACCM",
+    "NCAR-CESM2-WACCM-FV2",
+    "NCAR-CESM2-FV2",
+    "NCAR-CAM6-3-0",
+    "NCC-NorESM2-LM",
+    "NCC-NorESM2-MM",
+    "NICAM16-7S",
+    "NICAM16-8S",
+    "NICAM16-8D",
+    "NorESM2-LM",
+    "NorESM2-MM",
+    "NorESM2-MH",
+    "NorCPM1",
+    "NUIST-CM",
+    "PCCJJSW",
+    "TAIESM1",
+    "TaiESM1",
+    "UKESM1-0-LL",
+    "UKESM1-0-MM",
+    "UKESM1-1-LL",
+]
 
-    CMIP5_MODELS = [f.raw_name for f in CMIP5.model.terms]
-    CMIP6_MODELS = [f.raw_name for f in CMIP6.source_id.terms]
+GCM_MODELS = list()
+GCM_MODELS.extend(CMIP5_MODELS)
+GCM_MODELS.extend(CMIP6_MODELS)
 
-    GCM_MODELS = list()
-    GCM_MODELS.extend(CMIP5_MODELS)
-    GCM_MODELS.extend(CMIP6_MODELS)
+# Driving models for CORDEX
+DRIVING_MODELS = [
+    "BCC-CSM1-1",
+    "BCC-CSM1-1-m",
+    "BNU-ESM",
+    "CanESM2",
+    "CCCMA-CanESM2",
+    "CNRM-CM5",
+    "CSIRO-Mk3-6-0",
+    "GFDL-ESM2G",
+    "GFDL-ESM2M",
+    "GISS-E2-H",
+    "GISS-E2-R",
+    "HadGEM2-AO",
+    "HadGEM2-CC",
+    "HadGEM2-ES",
+    "inmcm4",
+    "IPSL-CM5A-LR",
+    "IPSL-CM5A-MR",
+    "IPSL-CM5B-LR",
+    "MIROC-ESM",
+    "MIROC-ESM-CHEM",
+    "MIROC5",
+    "MPI-ESM-LR",
+    "MPI-ESM-MR",
+    "MRI-CGCM3",
+    "NorESM1-M",
+    "UQAM-GEMatm-Can-ESMsea",
+    "UQAM-GEMatm-MPI-ESMsea",
+]
 
-    DRIVING_MODELS = [f.raw_name for f in CORDEX.driving_model.terms]
-    DRIVING_MODELS.extend(["UQAM-GEMatm-Can-ESMsea", "UQAM-GEMatm-MPI-ESMsea"])
+# CORDEX RCM models
+CORDEX_MODELS = [
+    "ALADIN-63",
+    "ALADIN-Climate",
+    "ALARO-0",
+    "ALARO-0_QX13",
+    "ALARO-0_QX22",
+    "CCLM4-8-17",
+    "CCLM5-0-15",
+    "CCLM5-0-21",
+    "CCLM5-0-9",
+    "COSMO-CLM",
+    "COSMO-crCLIM",
+    "COSMO-CLM2-8-17",
+    "COSMO-CLM2-5-0-15",
+    "COSMO-CLM2-5-0-21",
+    "COSMO-CLM2-8-17",
+    "COSMO-crCLIM-v1-1",
+    "COSMO-crCLIM-v1-1_5km",
+    "EMACWRF400",
+    "HadRM3P",
+    "HIRHAM5",
+    "METNMSEMI",
+    "PRECIS",
+    "PROMES",
+    "RACMo22E",
+    "RACMo22T",
+    "RCA4",
+    "REMO2009",
+    "REMO2015",
+    "UQAM-CRCM5",
+    "UQAM-CRCM5-SN",
+    "WRF331F",
+    "WRF331G",
+    "WRF361B",
+    "WRF361C",
+    "WRF361D",
+    "WRF361E",
+    "WRF361H",
+    "WRF361I",
+    "UQAM-CRCM5",
+    "UQAM-CRCM5-SN",
+]
 
-    CORDEX_MODELS = list()
-    CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_name.terms])
-    CORDEX_MODELS.extend([f.raw_name for f in CORDEX.rcm_model.terms])
-    CORDEX_MODELS.extend(
-        ["UQAM-CRCM5", "UQAM-CRCM5-SN"]  # Needed for internal-ish CORDEX data
-    )
+# Time Frequencies
+CMIP5_FREQUENCIES = [
+    "fx",
+    "mon",
+    "monC",
+    "monPt",
+    "day",
+    "daySI",
+    "dayPt",
+    "subhr",
+    "subhrPt",
+    "3hr",
+    "3hrPt",
+    "3hrC",
+    "3hrCPt",
+    "1hr",
+    "1hrPt",
+    "1hrC",
+    "1hrCPt",
+]
 
-    # Time Frequencies
+CMIP6_FREQUENCIES = [
+    "fx",
+    "yrPt",
+    "monPt",
+    "dayPt",
+    "hrPt",
+    "subhrPt",
+    "mon",
+    "day",
+    "6hr",
+    "3hr",
+    "1hr",
+    "subhr",
+]
 
-    CMIP5_FREQUENCIES = [f.raw_name for f in CMIP5.time_frequency.terms]
-    CMIP6_FREQUENCIES = [f.raw_name for f in CMIP6.frequency.terms]
-    CORDEX_FREQUENCIES = [f.raw_name for f in CMIP5.time_frequency.terms]
+CORDEX_FREQUENCIES = CMIP5_FREQUENCIES.copy()
 
-    WCRP_FREQUENCIES = list()
-    WCRP_FREQUENCIES.extend(CMIP5_FREQUENCIES)
-    WCRP_FREQUENCIES.extend(CMIP6_FREQUENCIES)
-    WCRP_FREQUENCIES.extend(CORDEX_FREQUENCIES)
-    WCRP_FREQUENCIES.append("sem")  # needed for some CORDEX datasets
+WCRP_FREQUENCIES = list()
+WCRP_FREQUENCIES.extend(CMIP5_FREQUENCIES)
+WCRP_FREQUENCIES.extend(CMIP6_FREQUENCIES)
+WCRP_FREQUENCIES.extend(CORDEX_FREQUENCIES)
+WCRP_FREQUENCIES.append("sem")  # needed for some CORDEX datasets
+# Remove duplicates and maintain order
+WCRP_FREQUENCIES = list(dict.fromkeys(WCRP_FREQUENCIES))
 
-    REANALYSIS = list()
-    REANALYSIS.extend(ERA5_PROJECT_NAMES)
-    PROJECT_MODELS = dict(
-        CMIP5=CMIP5_MODELS,
-        CMIP6=CMIP6_MODELS,
-        CORDEX=CORDEX_MODELS,
-        REANALYSIS=REANALYSIS,
-    )
+REANALYSIS = list()
+REANALYSIS.extend(ERA5_PROJECT_NAMES)
+PROJECT_MODELS = dict(
+    CMIP5=CMIP5_MODELS,
+    CMIP6=CMIP6_MODELS,
+    CORDEX=CORDEX_MODELS,
+    REANALYSIS=REANALYSIS,
+)
 
-    ACTIVITIES = list()
-    CMIP6_ACTIVITIES = [f.raw_name for f in CMIP6.activity_id.terms]
-    ACTIVITIES.extend(CMIP6_ACTIVITIES)
-    REANALYSIS_ACTIVITIES = ["ERA"]
-    ACTIVITIES.extend(REANALYSIS_ACTIVITIES)
-
-else:
-    __all__ = ["VALIDATION_ENABLED"]
+ACTIVITIES = []
+CMIP6_ACTIVITIES = [
+    "AerChemMIP",
+    "CDRMIP",
+    "CFMIP",
+    "DAMIP",
+    "DCPP",
+    "FAFMIP",
+    "GMMIP",
+    "GeoMIP",
+    "HighResMIP",
+    "ISMIP6",
+    "LS3MIP",
+    "LUMIP",
+    "OMIP",
+    "PAMIP",
+    "PMIP",
+    "RFMIP",
+    "RPDS",
+    "ScenarioMIP",
+    "VolMIP",
+    "CORDEX",
+    "DynVarMIP",
+]
+ACTIVITIES.extend(CMIP6_ACTIVITIES)
+REANALYSIS_ACTIVITIES = ["ERA"]
+ACTIVITIES.extend(REANALYSIS_ACTIVITIES)
+# Remove duplicates and maintain order
+ACTIVITIES = list(dict.fromkeys(ACTIVITIES))

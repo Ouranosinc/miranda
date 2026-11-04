@@ -14,6 +14,7 @@ Changes
 * Removed a few redundant functions (``miranda.io.concat_rechunk_zarr``, ``miranda.io.merge_rechunk_zarrs``). (:pull:`357`).
 * ``convert_stationdata_bychunks`` has been renamed to ``convert_stationdata``. (:pull:`357`).
 * Added a `complete_yrs_required` option to `rdrs_to_daily` to skip incomplete years when required (:pull:`370`).
+* Removed the dependency on PyESSV and embedded controlled vocabulary lists for CMIP5, CMIP6, and CORDEX within the package. Validation now uses schema-based checking instead of external controlled vocabulary archives. (:issue:`#`, :pull:`#`).
 
 Fixes
 ^^^^^

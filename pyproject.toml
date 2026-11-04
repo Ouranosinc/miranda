@@ -45,7 +45,6 @@ dependencies = [
   "numpy >=1.25",
   "packaging >=24.0",
   "pandas >=1.0.0",
-  "pyessv",
   "pyyaml >=6.0.1",
   "schema >=0.7.7",
   "xarray >=2023.11.0",
@@ -213,7 +212,7 @@ values = [
 ]
 
 [tool.codespell]
-ignore-words-list = "astroid,boun,differentes,empress,nam,noone,vas,socio-economic,thirdparty"
+ignore-words-list = "aer,astroid,boun,differentes,empress,lod,nam,noone,vas,socio-economic,thirdparty"
 skip = "docs/_build,src/miranda/convert/melcc.py,src/miranda/convert/data/melcc_cf_attrs.json,src/miranda/convert/hq.py,src/miranda/preprocess/configs/ahccd_gen2_precipitation.csv"
 
 [tool.coverage.paths]

@@ -10,12 +10,10 @@ description = "Build the documentation with makefile under {basepython}"
 labels = ["docs"]
 dependency_groups = ["docs"]
 commands = [
-  ["mkdir", "{envtmpdir}/.esdoc"],
-  ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
   ["make", "build-docs"]
 ]
 commands_post = []
-allowlist_externals = ["git", "make", "mkdir"]
+allowlist_externals = ["make"]
 
 [env.extras]
 description = "Run tests with extras under {basepython}"
@@ -46,14 +44,12 @@ commands_pre = [
   ["pip", "check"]
 ]
 commands = [
-  ["mkdir", "{envtmpdir}/.esdoc"],
-  ["git", "clone", "https://github.com/ES-DOC/pyessv-archive.git", "{envtmpdir}/.esdoc/pyessv-archive"],
   ["pytest", "{posargs}"]
 ]
 commands_post = [
   ["coverage", "report"]
 ]
-allowlist_externals = ["git", "mkdir"]
+allowlist_externals = []
 
 [gh.python]
 "3.11" = ["py3.11"]

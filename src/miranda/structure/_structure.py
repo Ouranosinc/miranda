@@ -12,11 +12,8 @@ from typing import Any, Literal
 import yaml
 from schema import SchemaError
 
-from miranda.cv import VALIDATION_ENABLED
+from miranda.validate import validation_schemas
 
-
-if VALIDATION_ENABLED:
-    from miranda.validate import validation_schemas
 
 logger = logging.getLogger("miranda.structure.structure")
 
@@ -295,7 +292,7 @@ def build_path_from_schema(
     tree = parse_schema(facets, schema, top_folder)
     branch = tree[0]
 
-    if validate and VALIDATION_ENABLED:
+    if validate:
         if facets[branch] in validation_schemas.keys():
             try:
                 validation_schemas[facets[branch]].validate(facets)
@@ -310,8 +307,6 @@ def build_path_from_schema(
                 ValueError,
             )
             return
-    elif validate and not VALIDATION_ENABLED:
-        logger.warning("Facets validation requires pyessv-archive source files. Skipping validation checks.")
 
     # Remove spaces in folder paths
     file_location = [str(facets[facet]).replace(" ", "-") for facet in tree]
