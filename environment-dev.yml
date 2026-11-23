@@ -11,15 +11,15 @@ dependencies:
   - dask >=2024.8.1
   - distributed >=2.0
   - ecmwf-api-client
-  - filelock >=3.14.0
+  - filelock >=4.2.1
   - h5netcdf
   - h5py
   - intake
   - intake-esm
   - numcodecs <0.16
-  - numpy >=1.25
+  - numpy >=2.2.0
   - packaging >=24.0
-  - pandas >=1.0.0
+  - pandas >=2.2.0
   - pyessv
   - pyproj
   - pyyaml >=6.0.1
@@ -28,8 +28,8 @@ dependencies:
   - s3fs
   - schema >=0.7.7
   - shapely >=2.0
-  - xarray >=2023.11.0
-  - xclim >=0.57.0
+  - xarray >=2024.11.0
+  - xclim >=1.0.0
   - xesmf
   - zarr
   # Dev tools and testing
