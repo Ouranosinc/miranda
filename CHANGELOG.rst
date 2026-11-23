@@ -14,7 +14,7 @@ Changes
 * Removed a few redundant functions (``miranda.io.concat_rechunk_zarr``, ``miranda.io.merge_rechunk_zarrs``). (:pull:`357`).
 * ``miranda.convert.stationdata.convert_stationdata_bychunks`` has been renamed to ``miranda.convert.stationdata.convert_stationdata``. (:pull:`357`).
 * Added a ``complete_yrs_required`` option to ``miranda.convert.eccc_rdrs.rdrs_to_daily`` to skip incomplete years when required. (:pull:`370`).
-* `miranda` now requires `filelock >=4.2.1`, `numpy >=2.2.0`, `pandas >=2.2.0`, `xarray >=2024.11.0`, and `xclim >=1.0.0`.
+* ``miranda`` now requires Python 3.11 or newer, ``filelock >=4.2.1``, ``numpy >=2.2.0``, ``pandas >=2.2.0``, ``xarray >=2024.11.0``, and ``xclim >=1.0.0``.
 
 Fixes
 ^^^^^
