@@ -60,7 +60,7 @@ default_testdata_cache: Path | None
 if HAS_POOCH:
     import pooch
 
-    default_testdata_cache = Path(pooch.os_cache("xclim-testdata"))
+    default_testdata_cache = Path(pooch.os_cache("miranda-testdata"))
     """Default location for the testing data cache."""
 else:
     warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.", stacklevel=2)
