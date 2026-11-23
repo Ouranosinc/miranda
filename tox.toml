@@ -35,7 +35,7 @@ allowlist_externals = ["make"]
 
 [env_run_base]
 description = "Run tests with pytest under {basepython}"
-setenv = { HOME = "{envtmpdir}", PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=miranda --cov-report=lcov", PYTHONPATH = "{toxinidir}" }
+setenv = { HOME = "{envtmpdir}", PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=miranda --cov-report=lcov", PYTHONPATH = "{toxinidir}", CFLAGS = "-std=gnu17" }
 passenv = ["CI", "GITHUB_*", "MIRANDA_*", "READTHEDOCS"]
 extras = ["gis", "remote"]
 download = true
