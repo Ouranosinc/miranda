@@ -3,6 +3,7 @@
 from __future__ import annotations
 import importlib.metadata as ilm
 import importlib.resources as ilr
+import importlib.util as ilu
 import logging
 import os
 import re
@@ -27,12 +28,6 @@ from xclim.testing.utils import show_versions as _show_versions
 
 import miranda
 
-
-try:
-    import pooch
-except ImportError:
-    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.", stacklevel=2)
-    pooch = None
 
 logger = logging.getLogger("miranda")
 
@@ -60,10 +55,15 @@ default_testdata_version = "v2025.5.16"
 default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/miranda-testdata/"
 """Default URL of the testing data repository to use when fetching datasets."""
 
-try:
-    default_testdata_cache = Path(pooch.os_cache("miranda-testdata"))
+HAS_POOCH = bool(ilu.find_spec("pooch"))
+default_testdata_cache: Path | None
+if HAS_POOCH:
+    import pooch
+
+    default_testdata_cache = Path(pooch.os_cache("xclim-testdata"))
     """Default location for the testing data cache."""
-except (AttributeError, TypeError):
+else:
+    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.", stacklevel=2)
     default_testdata_cache = None
 
 TESTDATA_REPO_URL = str(os.getenv("MIRANDA_TESTDATA_REPO_URL", default_testdata_repo_url))
@@ -334,7 +334,7 @@ def load_registry(branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL) 
 def cassini(
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    cache_dir: str | Path = TESTDATA_CACHE_DIR,
+    cache_dir: str | Path | None = TESTDATA_CACHE_DIR,
     allow_updates: bool = True,
 ):
     """
@@ -346,7 +346,7 @@ def cassini(
         URL of the repository to use when fetching testing datasets.
     branch : str
         Branch of repository to use when fetching testing datasets.
-    cache_dir : str or Path
+    cache_dir : str or Path, optional
         The path to the directory where the data files are stored.
     allow_updates : bool
         If True, allow updates to the data files. Default is True.
@@ -380,11 +380,16 @@ def cassini(
         example_file = cassini().fetch("example.nc")
         data = xr.open_dataset(example_file)
     """
-    if pooch is None:
+    if not HAS_POOCH:
         raise ImportError(
-            "The `pooch` package is required to fetch the miranda testing data. "
-            "You can install it with `pip install pooch` or `pip install miranda[dev]`."
+            "The `pooch` package is required to fetch the xclim testing data. "
+            "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
+    import pooch  # pylint: disable=import-outside-toplevel
+
+    if cache_dir is None:
+        cache_dir = Path().cwd()
+        warnings.warn(f"cache_dir is not set. Using `{cache_dir}`.", stacklevel=2)
     if not repo.endswith("/"):
         repo = f"{repo}/"
     remote = audit_url(urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data"))
