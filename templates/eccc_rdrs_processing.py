@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 
-from miranda.preprocess.eccc_rdrs import convert_rdrs, rdrs_to_daily
-from miranda.io import write_zarr
+from miranda.convert.eccc_rdrs import convert_rdrs, rdrs_to_daily
+# from miranda.io import write_zarr
 
 
 def main():
@@ -27,6 +27,8 @@ def main():
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM"),
         output_format="zarr",
         working_folder=Path(home).joinpath("tmpout", "rdrs"),
+        year_start=None,
+        year_end= None,
         cfvariable_list=vars_to_process,
         overwrite=False,
         **dask_kwargs,
@@ -38,9 +40,11 @@ def main():
         output_folder=Path(home).joinpath("RDRS_v21", "tmp/ECCC/RDRS_v21/NAM/day"),
         working_folder=Path(home).joinpath("tmpout", "rdrs1"),
         overwrite=False,
+        output_format="zarr",
         year_start=None,
         year_end=None,
         process_variables=vars_to_process,
+        complete_yrs_required=False,
         **dask_kwargs,
     )
     # #

@@ -28,18 +28,16 @@ __all__ = [
 
 
 def _verify(hash_value: str, hash_file: os.PathLike) -> None:
+    msg = ""
     try:
         with Path(hash_file).open("r") as f:
             found_sha256sum = f.read()
+            msg = f"Found sha256sum (starting: {found_sha256sum[:6]}). "
 
         if hash_value != found_sha256sum:
             raise ValueError()
     except ValueError:
-        msg = (
-            f"Found sha256sum (starting: {found_sha256sum[:6]}) "
-            f"does not match current value (starting: {hash_value[:6]}) "
-            f"for file `{Path(hash_file).name}."
-        )
+        msg = f"{msg}File does not match current value (starting: {hash_value[:6]}) for file `{Path(hash_file).name}."
         logger.error(msg)
 
 

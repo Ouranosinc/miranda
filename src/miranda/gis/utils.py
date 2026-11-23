@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import datetime
+import importlib.util as ilu
 import logging
 import warnings
 
@@ -10,6 +11,9 @@ import xarray as xr
 
 
 logger = logging.getLogger("miranda.gis.utils")
+
+HAS_XESMF = bool(ilu.find_spec("xesmf"))
+
 
 __all__ = [
     "conservative_regrid",
@@ -66,11 +70,10 @@ def conservative_regrid(ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | 
     xr.DataArray or xr.Dataset
         The regridded dataset.
     """
-    try:
-        import xesmf as xe  # noqa
-    except ModuleNotFoundError:
-        logger.error("This function requires the `xesmf` library which is not installed. Regridding step will be skipped.")
-        raise
+    if not HAS_XESMF:
+        raise ImportError("This function requires the `xesmf` library which is not installed. Regridding step will be skipped.")
+
+    import xesmf as xe  # noqa
 
     ref_grid = _simple_fix_dims(ref_grid)
     method = "conservative_normed"
@@ -78,11 +81,11 @@ def conservative_regrid(ds: xr.DataArray | xr.Dataset, ref_grid: xr.DataArray | 
     msg = f"Performing regridding and masking with `xesmf` using method: {method}."
     logging.info(msg)
 
-    regridder = xe.Regridder(ds, ref_grid, method, periodic=False)
-    ds = regridder(ds)
+    regridder = xe.Regridder(ds_in=ds, ds_out=ref_grid, method=method, periodic=False)
+    regridded: xr.DataArray | xr.Dataset = regridder(ds)
 
-    ds.attrs["history"] = f"{datetime.datetime.now()}:Regridded dataset using xesmf with method: {method}. {ds.attrs.get('history')}".strip()
-    return ds
+    regridded.attrs["history"] = f"{datetime.datetime.now()}:Regridded dataset using xesmf with method: {method}. {ds.attrs.get('history')}".strip()
+    return regridded
 
 
 def threshold_mask(

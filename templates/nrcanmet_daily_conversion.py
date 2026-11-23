@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-import xarray as xr
+
 from dask.diagnostics import ProgressBar
 
 from miranda.convert.nrcanmet import convert_nrcanmet
