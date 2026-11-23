@@ -23,14 +23,15 @@ logger = logging.getLogger("miranda.convert.eccc_rdrs")
 
 
 CONFIG_FOLDER = pathlib.Path(__file__).parent / "data"
-CONFIG_FILES = {
+FILE_DICT = {
     "rdrs-v21": "eccc_rdrs_cf_attrs.json",
     "casr-v31": "eccc_casr_cf_attrs.json",
     "casr-v32": "eccc_casr_cf_attrs.json",
     "ORRC-v10": "ouranos_orrc_cf_attrs.json",
     "ORRC-v11": "ouranos_orrc_cf_attrs.json",
 }
-for k, v in CONFIG_FILES.items():
+CONFIG_FILES = {}
+for k, v in FILE_DICT.items():
     CONFIG_FILES[k] = CONFIG_FOLDER / v
 
 
@@ -70,7 +71,7 @@ def convert_rdrs(
     year_start: int | None = None,
     year_end: int | None = None,
     cfvariable_list: list | None = None,
-    **dask_kwargs: dict[str, Any],
+    **dask_kwargs: Any,
 ) -> None:
     r"""
     Convert RDRS dataset.
@@ -209,7 +210,7 @@ def rdrs_to_daily(
     year_end: int | None = None,
     process_variables: list[str] | None = None,
     complete_yrs_required: bool = False,
-    **dask_kwargs: dict[str, Any],
+    **dask_kwargs: Any,
 ) -> None:
     r"""
     Write out RDRS files to daily-timestep files.
@@ -258,12 +259,16 @@ def rdrs_to_daily(
     for zarrs in files.values():
         zarrs = sorted(zarrs)
         if year_start is None:
-            year_start = xr.open_zarr(zarrs[0]).time.dt.year.min().values
+            _year_start = xr.open_zarr(zarrs[0]).time.dt.year.min().values
+        else:
+            _year_start = year_start
         if year_end is None:
-            year_end = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
+            _year_end = xr.open_zarr(zarrs[-1]).time.dt.year.max().values
+        else:
+            _year_end = year_end
         with xr.open_zarr(zarrs[0]) as ds:
             var_name = next(iter(ds.data_vars))
-        for year in range(year_start, year_end + 1):
+        for year in range(_year_start, _year_end + 1):
             infiles = [z for z in zarrs if f"_{year}" in z.name]
             if len(infiles) != 12:
                 if len(infiles) > 0 and not complete_yrs_required:

@@ -13,7 +13,7 @@ maintainers = [
   { name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca" }
 ]
 readme = { file = "README.rst", content-type = "text/x-rst" }
-requires-python = ">=3.10.0"
+requires-python = ">=3.11.0"
 keywords = ["xarray", "climate", "meteorology", "hydrology", "archiving", "collection", "conversion", "miranda"]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -24,7 +24,6 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -38,18 +37,18 @@ dependencies = [
   "cftime >=1.4.1",
   "cf-xarray >=0.10.4",
   "dask >=2024.8.1",
-  "filelock >=3.14.0",
+  "filelock >=4.2.1",
   "h5netcdf",
   "h5py",
   "numcodecs <0.16",
-  "numpy >=1.25",
+  "numpy >=2.2.0",
   "packaging >=24.0",
-  "pandas >=1.0.0",
+  "pandas >=2.2.0",
   "pyessv",
   "pyyaml >=6.0.1",
   "schema >=0.7.7",
-  "xarray >=2023.11.0",
-  "xclim >=0.57.0",
+  "xarray >=2024.11.0",
+  "xclim >=1.0.0",
   "zarr"
 ]
 
@@ -100,6 +99,7 @@ lint = [
 test = [
   # Base testing support
   "coverage[toml] >=7.13.4",
+  "pooch >=1.8.0",
   "pytest >=9.0.2",
   "pytest-cov >=7.0.0",
   "pytest-xdist >=3.2.0"
@@ -111,6 +111,7 @@ docs = [
   "ipython >=8.15.0",
   "jupyter_client",
   "nbsphinx >=0.9.8",
+  "pooch >=1.8.0",
   "sphinx >=8.2.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints >=3.10.2",
@@ -128,7 +129,6 @@ dev = [
   "bump-my-version >=1.5.1",
   "flit >=4.0,<5.0",
   "pip >=26.2.1",
-  "pooch >=1.8.0",
   "prek >=0.4.0",
   "watchdog >=6.0.0",
   { include-group = "docs" },

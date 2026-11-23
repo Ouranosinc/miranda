@@ -12,13 +12,14 @@ Changes
 ^^^^^^^
 * Updated ORRC global attributes to reflect the changes in dataset production processes. (:pull:`355`).
 * Removed a few redundant functions (``miranda.io.concat_rechunk_zarr``, ``miranda.io.merge_rechunk_zarrs``). (:pull:`357`).
-* ``convert_stationdata_bychunks`` has been renamed to ``convert_stationdata``. (:pull:`357`).
-* Added a `complete_yrs_required` option to `rdrs_to_daily` to skip incomplete years when required (:pull:`370`).
+* ``miranda.convert.stationdata.convert_stationdata_bychunks`` has been renamed to ``miranda.convert.stationdata.convert_stationdata``. (:pull:`357`).
+* Added a ``complete_yrs_required`` option to ``miranda.convert.eccc_rdrs.rdrs_to_daily`` to skip incomplete years when required. (:pull:`370`).
+* ``miranda`` now requires Python 3.11 or newer, ``filelock >=4.2.1``, ``numpy >=2.2.0``, ``pandas >=2.2.0``, ``xarray >=2024.11.0``, and ``xclim >=1.0.0``.
 
 Fixes
 ^^^^^
-* The version pin on `h5py` and `h5netcdf` have been removed. Builds on CI no longer compile `h5py` in order to speed up build times. (:pull:`357`).
-* Removed wind direction variables aggregation treatment as arithmetic mean was erroneously used for on circular data in `miranda.convert._aggregation` (:pull:`371`)
+* The version pins on `h5py` and `h5netcdf` have been removed. Builds on CI no longer compile `h5py` in order to speed up build times. (:pull:`357`).
+* Removed wind direction variables aggregation treatment as arithmetic mean was erroneously used for on circular data in ``miranda.convert._aggregation``. (:pull:`371`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

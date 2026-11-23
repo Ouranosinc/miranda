@@ -26,7 +26,7 @@ repos:
         args: [ '--branch', 'main' ]
       - id: trailing-whitespace
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.25.0
+    rev: v0.26.0
     hooks:
       - id: toml-sort-fix
   - repo: https://github.com/adrienverge/yamllint.git
@@ -46,7 +46,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.3
+    rev: v0.17.6
     hooks:
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
@@ -88,12 +88,12 @@ repos:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.31.1
+    rev: v1.33.1
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.0
+    rev: v8.30.1
     hooks:
       - id: gitleaks
   - repo: meta

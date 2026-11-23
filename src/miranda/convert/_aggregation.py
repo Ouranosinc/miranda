@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 import xarray as xr
-from xclim.indices import tas
+from xclim.compute import tas_from_tasmin_tasmax
 
 from miranda.units import check_time_frequency
 
@@ -152,7 +152,7 @@ def aggregate(ds: xr.Dataset, freq: str = "day") -> dict[str, xr.Dataset]:
             min_var = f"{var}min"
             max_var = f"{var}max"
             with xr.set_options(keep_attrs=True):
-                _ds[var] = tas(tasmin=ds[min_var], tasmax=ds[max_var])
+                _ds[var] = tas_from_tasmin_tasmax(tasmin=ds[min_var], tasmax=ds[max_var])
             offset, meaning = check_time_frequency(ds, minimum_continuous_period="1h")
             method = f"time: mean (interval: {offset} {meaning})"
             _ds[var].attrs["cell_methods"] = method

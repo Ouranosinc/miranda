@@ -76,7 +76,6 @@ autodoc_mock_imports = [
     "ecmwfapi",
     "intake",
     "numcodecs",
-    "pooch",
     "regionmask",
     "s3fs",
 ]
